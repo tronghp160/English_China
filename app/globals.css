@@ -321,3 +321,9 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* QR codes stay dark-on-light in both themes so every scanner reads them */
+.qr-paper {
+  background: #ffffff;
+  color: #1e2a4a;
+}

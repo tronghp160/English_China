@@ -96,3 +96,20 @@ export async function setShareLink(
   revalidatePath(`/decks/${deckId}`);
   return ok({ slug });
 }
+
+/** Let group members add/edit words in a group deck the caller owns. */
+export async function setMemberEdit(deckId: string, allowed: boolean): Promise<ActionResult> {
+  await requireUser();
+  if (!idSchema.safeParse(deckId).success || typeof allowed !== "boolean") return fail("Bộ từ không hợp lệ.");
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("decks")
+    .update({ allow_member_edit: allowed })
+    .eq("id", deckId)
+    .eq("visibility", "group")
+    .select("id, group_id");
+  if (error || !data?.length) return fail("Không đổi được quyền sửa.");
+  revalidatePath(`/decks/${deckId}`);
+  if (data[0].group_id) revalidatePath(`/groups/${data[0].group_id}`);
+  return ok();
+}

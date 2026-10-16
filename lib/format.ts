@@ -34,3 +34,17 @@ export function formatDuration(ms: number): string {
   const rest = s % 60;
   return rest ? `${m} phút ${rest} giây` : `${m} phút`;
 }
+
+/** "vừa xong", "5 phút trước", "hôm qua", "3 ngày trước", or a date. */
+export function formatAgo(iso: string | Date, now = new Date()): string {
+  const diff = now.getTime() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60_000);
+  if (min < 1) return "vừa xong";
+  if (min < 60) return `${min} phút trước`;
+  const hours = Math.floor(min / 60);
+  if (hours < 24) return `${hours} giờ trước`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "hôm qua";
+  if (days < 7) return `${days} ngày trước`;
+  return formatShortDate(iso);
+}

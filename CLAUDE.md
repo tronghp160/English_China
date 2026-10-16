@@ -39,3 +39,4 @@ Full product spec and phased plan: [docs/PLAN.md](docs/PLAN.md). Work phase by p
 - Reviews carry a client-generated `client_id` (unique per user) so the offline outbox (`lib/srs/outbox.ts`) can resend safely; the server recomputes FSRS from the stored card and skips stale (older-than-last-review) results.
 - Practice answers also count in `daily_stats.reviews` (streak/goal); XP is +1 only when correct. Review/practice pages live in the `app/(study)` route group (full-screen, no nav).
 - `frontend-design` skill is not installed here; §12 is followed manually and verified with screenshots.
+- Groups (migration 000007): deleting a group or leaving it turns the affected group decks back into private decks of their owners (the decks check constraint would otherwise fail); groups cap at 100 members. Activity feed streaks are computed in TS from group mates' `daily_stats`; the group owner toggles "thành viên được sửa" per deck they own in group settings.

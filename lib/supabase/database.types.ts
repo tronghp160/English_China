@@ -694,6 +694,21 @@ export type Database = {
             word: Json;
           }[];
       };
+      group_activity: {
+        Args: {
+          p_group_id: string;
+          p_limit?: number;
+        };
+        Returns: {
+            kind: string;
+            user_id: string;
+            display_name: string;
+            deck_id: string;
+            deck_name: string;
+            n: number;
+            at: string;
+          }[];
+      };
       group_preview: {
         Args: {
           p_code: string;
@@ -752,6 +767,20 @@ export type Database = {
             new_count: number;
             share_slug: string;
             updated_at: string;
+          }[];
+      };
+      my_groups: {
+        Args: never;
+        Returns: {
+            id: string;
+            name: string;
+            description: string;
+            owner_id: string;
+            role: Database["public"]["Enums"]["group_role"];
+            member_count: number;
+            deck_count: number;
+            week_xp: number;
+            joined_at: string;
           }[];
       };
       new_cards_left: {

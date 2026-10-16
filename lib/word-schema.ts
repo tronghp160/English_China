@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { POS_CODES } from "@/lib/pos";
 
-const text = (max: number) => z.string().trim().max(max, `Tối đa ${max} ký tự`);
-const optionalText = (max: number) =>
+export const text = (max: number) => z.string().trim().max(max, `Tối đa ${max} ký tự`);
+export const optionalText = (max: number) =>
   text(max)
     .optional()
     .nullable()

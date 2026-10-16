@@ -1,10 +1,10 @@
 "use client";
 
-import { BookmarkMinus, BookmarkPlus, Loader2 } from "lucide-react";
+import { BookmarkMinus, BookmarkPlus, CopyPlus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { subscribeDeck, unsubscribeDeck } from "@/lib/actions/sharing";
+import { cloneDeck, subscribeDeck, unsubscribeDeck } from "@/lib/actions/sharing";
 import { cn } from "@/lib/utils";
 
 export function SubscribeButton({ deckId, subscribed }: { deckId: string; subscribed: boolean }) {
@@ -35,6 +35,30 @@ export function SubscribeButton({ deckId, subscribed }: { deckId: string; subscr
         <BookmarkPlus className="size-4" aria-hidden />
       )}
       {subscribed ? "Bỏ theo học" : "Học bộ này"}
+    </button>
+  );
+}
+
+export function CloneDeckButton({ deckId }: { deckId: string }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() =>
+        start(async () => {
+          const res = await cloneDeck({ deckId });
+          if (!res.ok) return void toast.error(res.error);
+          toast.success("Đã sao chép về bộ từ của bạn");
+          router.push(`/decks/${res.data.deckId}`);
+          router.refresh();
+        })
+      }
+      className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[10px] border border-rule bg-surface px-3.5 text-sm font-medium text-ink hover:bg-muted"
+    >
+      {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <CopyPlus className="size-4 text-ink-soft" aria-hidden />}
+      Sao chép
     </button>
   );
 }

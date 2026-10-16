@@ -6,7 +6,7 @@ import { AddWordFab } from "@/components/app-shell/fab";
 import { BackLink } from "@/components/app-shell/back-link";
 import { DeckWords } from "@/components/deck/deck-words";
 import { ShareDeckDialog } from "@/components/deck/share-deck-dialog";
-import { SubscribeButton } from "@/components/deck/subscribe-button";
+import { CloneDeckButton, SubscribeButton } from "@/components/deck/subscribe-button";
 import { getDeck, getMyDecks } from "@/lib/data/decks";
 import { LANGUAGES } from "@/lib/lang/registry";
 import { createClient } from "@/lib/supabase/server";
@@ -96,6 +96,7 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
           <Download className="size-4 text-ink-soft" aria-hidden />
           Xuất CSV
         </a>
+        {!isOwner && <CloneDeckButton deckId={deckId} />}
         {isOwner && <ActionLink href={`/decks/${deckId}/settings`} icon={Settings}>Cài đặt</ActionLink>}
         {isSubscribed && <SubscribeButton deckId={deckId} subscribed />}
       </div>

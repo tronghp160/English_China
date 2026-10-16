@@ -24,9 +24,11 @@ const DAILY_OPTIONS = [5, 10, 15, 20] as const;
 export function WelcomeForm({
   initialName,
   initialUsername,
+  next = "/today",
 }: {
   initialName: string;
   initialUsername: string;
+  next?: string;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
@@ -62,7 +64,7 @@ export function WelcomeForm({
         toast.error(res.error);
         return;
       }
-      router.replace("/today");
+      router.replace(next);
       router.refresh();
     });
   }
