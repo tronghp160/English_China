@@ -8,9 +8,9 @@ import { InvitePanel } from "@/components/group/invite-panel";
 import { Leaderboard } from "@/components/group/leaderboard";
 import { LeaveGroupButton } from "@/components/group/leave-delete-buttons";
 import { MemberList } from "@/components/group/member-list";
+import { LangFlag } from "@/components/lang-flag";
 import { getGroup } from "@/lib/data/groups";
 import { publicEnv } from "@/lib/env";
-import { LANGUAGES } from "@/lib/lang/registry";
 
 export async function generateMetadata({ params }: PageProps<"/groups/[groupId]">): Promise<Metadata> {
   const view = await getGroup((await params).groupId);
@@ -63,16 +63,13 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
             {decks.length ? (
               <ul className="ruled-list overflow-hidden rounded-[12px] border border-rule bg-surface">
                 {decks.map((d) => {
-                  const def = LANGUAGES[d.language];
                   return (
                     <li key={d.id}>
                       <Link
                         href={`/decks/${d.id}`}
                         className="flex min-h-16 items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/60"
                       >
-                        <span className="text-2xl" aria-label={def.label}>
-                          {def.flag}
-                        </span>
+                        <LangFlag lang={d.language} label className="text-lg" />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate font-medium text-ink">{d.name}</span>
                           <span className="block truncate text-sm text-ink-soft">

@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { UserAvatar } from "@/components/app-shell/user-menu";
 import { updateAvatar } from "@/lib/actions/profile";
 import { compressImage, extensionFor } from "@/lib/image-compress";
-import { createClient } from "@/lib/supabase/client";
 
 export function AvatarUpload({
   userId,
@@ -33,6 +32,7 @@ export function AvatarUpload({
     try {
       const blob = await compressImage(file, { maxSize: 256, maxBytes: 200 * 1024, square: true });
       const path = `${userId}/${crypto.randomUUID()}.${extensionFor(blob)}`;
+      const { createClient } = await import("@/lib/supabase/client"); // ~65 KB gzip, load on demand
       const supabase = createClient();
       const { error } = await supabase.storage
         .from("avatars")

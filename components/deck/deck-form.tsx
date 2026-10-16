@@ -4,6 +4,7 @@ import { Globe2, Loader2, Lock, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { LangFlag } from "@/components/lang-flag";
 import { SwitchRow } from "@/components/settings/study-prefs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,7 +109,7 @@ export function DeckForm({
                   v.language === code ? "border-ink-blue bg-wash-blue font-medium" : "border-rule",
                 )}
               >
-                <span aria-hidden>{LANGUAGES[code].flag}</span> {LANGUAGES[code].label}
+                <LangFlag lang={code} /> {LANGUAGES[code].label}
               </button>
             ))}
           </div>

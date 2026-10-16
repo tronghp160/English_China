@@ -37,9 +37,12 @@ export function UserAvatar({
   return (
     <Avatar className={className}>
       {url && <AvatarImage src={url} alt="" />}
-      <AvatarFallback className="bg-wash-blue text-sm font-medium text-ink-blue">
-        {initials(name)}
-      </AvatarFallback>
+      {/* Initials as CSS content: decorative (the name is always next to it or in the label),
+          and not text that would clash with the trigger aria-label (WCAG 2.5.3). */}
+      <AvatarFallback
+        data-initials={initials(name)}
+        className="bg-wash-blue text-sm font-medium text-ink-blue after:content-[attr(data-initials)]"
+      />
     </Avatar>
   );
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, Globe2, Link2, Lock, Users } from "lucide-react";
-import { LANGUAGES } from "@/lib/lang/registry";
+import { LangFlag } from "@/components/lang-flag";
 import type { Database } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 
@@ -8,8 +8,8 @@ type DeckRow = Database["public"]["Functions"]["my_decks"]["Returns"][number];
 
 const FILTERS = [
   { value: null, label: "Tất cả" },
-  { value: "en", label: "🇬🇧 Tiếng Anh" },
-  { value: "zh", label: "🇨🇳 Tiếng Trung" },
+  { value: "en", label: "Tiếng Anh" },
+  { value: "zh", label: "Tiếng Trung" },
 ] as const;
 
 const RELATION_TITLE: Record<string, string> = {
@@ -46,6 +46,7 @@ export function DeckList({ decks, langFilter }: { decks: DeckRow[]; langFilter: 
                 active ? "border-ink-blue bg-wash-blue font-medium text-ink" : "border-rule text-ink-soft",
               )}
             >
+              {f.value && <LangFlag lang={f.value} className="mr-1.5" />}
               {f.label}
             </Link>
           );
@@ -70,16 +71,13 @@ export function DeckList({ decks, langFilter }: { decks: DeckRow[]; langFilter: 
           <h2 className="mb-2 text-sm font-medium text-ink-soft">{RELATION_TITLE[rel]}</h2>
           <ul className="ruled-list overflow-hidden rounded-xl border border-rule bg-surface">
             {items.map((d) => {
-              const def = LANGUAGES[d.language];
               return (
                 <li key={d.id}>
                   <Link
                     href={`/decks/${d.id}`}
                     className="flex min-h-[4.5rem] items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/60"
                   >
-                    <span className="text-2xl" aria-label={def.label}>
-                      {def.flag}
-                    </span>
+                    <LangFlag lang={d.language} label className="text-lg" />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
                         <span className="truncate font-medium text-ink">{d.name}</span>

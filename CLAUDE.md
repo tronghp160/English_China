@@ -14,8 +14,9 @@ Full product spec and phased plan: [docs/PLAN.md](docs/PLAN.md). Work phase by p
 
 ## Commands
 - `pnpm dev` (port 3000 may be taken on this machine → `pnpm dev --port 3100`)
-- `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm test:e2e`
-- `pnpm db:push` (apply migrations to linked project) · `pnpm db:types` (regenerate `lib/supabase/database.types.ts`)
+- `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm test:e2e` (builds and serves prod on :3200 next to `pnpm dev`; uses the Supabase project in `.env.local`, creates/deletes its own users; AI and image search are mocked in the browser unless `E2E_REAL_AI=1`)
+- `node scripts/gen-icons.mjs` regenerates the PWA icons and favicon
+- `pnpm db:push [--dry-run]` (apply migrations to the Cloud project in `SUPABASE_DB_URL`, no `supabase link`) · `pnpm db:types:local` (regenerate `lib/supabase/database.types.ts` from the migrations via PGlite; matches the live schema)
 - UI screenshots at 390px and 1280px: `MSYS_NO_PATHCONV=1 BASE_URL=http://localhost:3100 node scripts/screenshot.mjs /path name [--dark]`
 
 ## Conventions
@@ -40,3 +41,6 @@ Full product spec and phased plan: [docs/PLAN.md](docs/PLAN.md). Work phase by p
 - Practice answers also count in `daily_stats.reviews` (streak/goal); XP is +1 only when correct. Review/practice pages live in the `app/(study)` route group (full-screen, no nav).
 - `frontend-design` skill is not installed here; §12 is followed manually and verified with screenshots.
 - Groups (migration 000007): deleting a group or leaving it turns the affected group decks back into private decks of their owners (the decks check constraint would otherwise fail); groups cap at 100 members. Activity feed streaks are computed in TS from group mates' `daily_stats`; the group owner toggles "thành viên được sửa" per deck they own in group settings.
+- Language flags are SVGs (`components/lang-flag.tsx`, `public/flags/*.svg`), not emoji: Windows has no flag glyphs (showed "GB"/"CN"). `<option>` labels carry no flag. Flag emoji inside user content still render on Windows through a flag-only webfont (`public/fonts/TwemojiCountryFlags.woff2`, Twemoji CC-BY 4.0) first in `--font-sans`, limited by `unicode-range`.
+- Fonts (Lighthouse): the Chinese webfonts are variable and only loaded by the `(app)`, `(study)` and `(public)` layouts (`lib/fonts.ts`); `globals.css` names them by family so portals get them too. The landing page uses a 2-glyph subset for its 坚强 sample (`public/fonts/hero-hanzi.woff2`), and IPA uses an ~11 KB Noto Sans subset (`public/fonts/ipa.woff2`) instead of next/font Noto Sans (~200 KB). Logo letter and avatar initials are CSS `content` so they don't clash with link/button labels (WCAG 2.5.3).
+- Phase 6: photo import already shipped in Phase 3. PWA = `app/manifest.ts` + `public/sw.js` (cache-first static assets, network-first pages with `/offline` fallback; pages are never cached so data can't leak between accounts on one device; registered only in production). Account export is `/api/export?format=json|csv`; account deletion removes the user's Storage files, then the auth user (everything else cascades). A valid JWT whose account is gone goes through `/auth/signout` (clears cookies only if the auth server confirms the user is gone) instead of looping between `/today` and `/login`. Server TTS and Web Push (optional) are not built.

@@ -7,8 +7,8 @@ import { BackLink } from "@/components/app-shell/back-link";
 import { DeckWords } from "@/components/deck/deck-words";
 import { ShareDeckDialog } from "@/components/deck/share-deck-dialog";
 import { CloneDeckButton, SubscribeButton } from "@/components/deck/subscribe-button";
+import { LangFlag } from "@/components/lang-flag";
 import { getDeck, getMyDecks } from "@/lib/data/decks";
-import { LANGUAGES } from "@/lib/lang/registry";
 import { createClient } from "@/lib/supabase/server";
 import { publicEnv } from "@/lib/env";
 
@@ -34,7 +34,6 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
   const view = await getDeck(deckId);
   if (!view) notFound();
   const { deck, isOwner, canEdit, isSubscribed } = view;
-  const def = LANGUAGES[deck.language];
 
   const supabase = await createClient();
   const [{ data: topics }, myDecks] = await Promise.all([
@@ -51,9 +50,7 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
     <div>
       <BackLink href="/decks" label="Bộ từ" />
       <header className="flex items-start gap-3">
-        <span className="mt-0.5 text-3xl" aria-label={def.label}>
-          {def.flag}
-        </span>
+        <LangFlag lang={deck.language} label className="mt-2 text-2xl" />
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold break-words text-ink">{deck.name}</h1>
           <p className="text-sm text-ink-soft">

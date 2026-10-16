@@ -4,6 +4,7 @@ import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { LangFlag } from "@/components/lang-flag";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,10 +14,10 @@ import { displayNameSchema, usernameSchema } from "@/lib/validation";
 
 type Lang = "en" | "zh";
 
-const LANG_OPTIONS: { value: Lang[]; label: string; flag: string }[] = [
-  { value: ["en"], label: "Tiếng Anh", flag: "🇬🇧" },
-  { value: ["zh"], label: "Tiếng Trung", flag: "🇨🇳" },
-  { value: ["en", "zh"], label: "Cả hai", flag: "🇬🇧 🇨🇳" },
+const LANG_OPTIONS: { value: Lang[]; label: string }[] = [
+  { value: ["en"], label: "Tiếng Anh" },
+  { value: ["zh"], label: "Tiếng Trung" },
+  { value: ["en", "zh"], label: "Cả hai" },
 ];
 
 const DAILY_OPTIONS = [5, 10, 15, 20] as const;
@@ -138,7 +139,11 @@ export function WelcomeForm({
                       : "border-rule text-ink",
                   )}
                 >
-                  <span aria-hidden>{opt.flag}</span>
+                  <span className="flex gap-1">
+                    {opt.value.map((l) => (
+                      <LangFlag key={l} lang={l} />
+                    ))}
+                  </span>
                   <span className="flex-1">{opt.label}</span>
                   {selected && <Check className="size-5 text-ink-blue" aria-hidden />}
                 </button>

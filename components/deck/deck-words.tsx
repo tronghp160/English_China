@@ -400,7 +400,7 @@ export function DeckWords({
           <AlertDialogFooter>
             <AlertDialogCancel className="min-h-11 rounded-[10px]">Giữ lại</AlertDialogCancel>
             <AlertDialogAction
-              className="min-h-11 rounded-[10px] bg-danger text-white hover:bg-danger/90"
+              className="min-h-11 rounded-[10px] bg-danger text-paper hover:bg-danger/90"
               onClick={() => runBulk({ action: "delete", wordIds: ids }, "Đã xóa")}
             >
               Xóa từ

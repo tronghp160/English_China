@@ -69,7 +69,7 @@ export function MemberList({
                   <AlertDialogFooter>
                     <AlertDialogCancel className="min-h-11 rounded-[10px]">Thôi</AlertDialogCancel>
                     <AlertDialogAction
-                      className="min-h-11 rounded-[10px] bg-danger text-white hover:bg-danger/90"
+                      className="min-h-11 rounded-[10px] bg-danger text-paper hover:bg-danger/90"
                       onClick={() =>
                         start(async () => {
                           const res = await removeMember(groupId, m.user_id);

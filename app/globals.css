@@ -5,6 +5,45 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
+ * Flag emoji (🇬🇧 🇨🇳): Windows ships no flag glyphs and shows "GB"/"CN".
+ * unicode-range limits this face to regional indicators, so it is only
+ * fetched when a flag is on screen; systems with native flags use local().
+ * Twemoji art, CC-BY 4.0 (public/fonts/TwemojiCountryFlags.LICENSE.md).
+ */
+@font-face {
+  font-family: "Flag Emoji";
+  src: local("Apple Color Emoji"), local("Noto Color Emoji"), url("/fonts/TwemojiCountryFlags.woff2") format("woff2");
+  unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
+  font-display: swap;
+}
+
+/*
+ * Chinese webfonts (Noto Serif SC / Sans SC, ~35 KB of @font-face CSS each) are
+ * only loaded by layouts that show words (lib/fonts.ts). Elsewhere --font-hanzi
+ * falls back to this 2-glyph subset (坚强, Noto Serif SC 700, OFL) used by the
+ * landing page, then to system fonts.
+ */
+/*
+ * IPA: Noto Sans (OFL) subset to ASCII + the IPA symbols English dictionaries
+ * use (~11 KB; the full Noto Sans subsets cost ~200 KB). Other glyphs fall
+ * back per character to the system fonts in --font-ipa.
+ */
+@font-face {
+  font-family: "IPA Sans";
+  src: url("/fonts/ipa.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Hero Hanzi";
+  src: url("/fonts/hero-hanzi.woff2") format("woff2");
+  unicode-range: U+575A, U+5F3A;
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+/*
  * Design system "Trang vở" (see docs/PLAN.md §12).
  * Plan colors are kept verbatim for surfaces and decoration. A few text
  * colors were darkened in light mode to pass WCAG AA (4.5:1):
@@ -120,11 +159,11 @@
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
-  --font-ipa: var(--font-noto-sans), "Segoe UI", "Lucida Sans Unicode", sans-serif;
-  --font-hanzi: var(--font-noto-serif-sc), "Songti SC", "SimSun", serif;
-  --font-hanzi-sans: var(--font-noto-sans-sc), "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-sans: "Flag Emoji", var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Flag Emoji", var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+  --font-ipa: "IPA Sans", "Noto Sans", "Segoe UI", "Lucida Sans Unicode", sans-serif;
+  --font-hanzi: "Noto Serif SC", "Hero Hanzi", "Songti SC", "SimSun", serif;
+  --font-hanzi-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono: ui-monospace, monospace;
 
   /* Type scale (rem) from §12.3 */
@@ -326,4 +365,27 @@
 .qr-paper {
   background: #ffffff;
   color: #1e2a4a;
+}
+
+/*
+ * Language flags as SVG files (public/flags, components/lang-flag.tsx), not
+ * emoji: Windows has no flag glyphs, and an emoji font would sit on the
+ * critical rendering path.
+ */
+.lang-flag {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 1.4em;
+  height: 1em;
+  border-radius: 0.15em;
+  background-position: center;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+  vertical-align: -0.125em;
+}
+.lang-flag-en {
+  background-image: url("/flags/en.svg");
+}
+.lang-flag-zh {
+  background-image: url("/flags/zh.svg");
 }

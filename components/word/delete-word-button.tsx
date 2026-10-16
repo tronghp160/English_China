@@ -35,7 +35,7 @@ export function DeleteWordButton({ wordId, term }: { wordId: string; term: strin
           <AlertDialogCancel className="min-h-11 rounded-[10px]">Giữ lại</AlertDialogCancel>
           <AlertDialogAction
             disabled={pending}
-            className="min-h-11 rounded-[10px] bg-danger text-white hover:bg-danger/90"
+            className="min-h-11 rounded-[10px] bg-danger text-paper hover:bg-danger/90"
             onClick={() =>
               start(async () => {
                 const res = await deleteWord(wordId);

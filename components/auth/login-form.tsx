@@ -5,7 +5,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
 
 function GoogleIcon() {
   return (
@@ -16,6 +15,12 @@ function GoogleIcon() {
       <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9Z" />
     </svg>
   );
+}
+
+/** supabase-js is ~65 KB gzip: load it when the user submits, not with the page. */
+async function loadSupabase() {
+  const { createClient } = await import("@/lib/supabase/client");
+  return createClient();
 }
 
 export function LoginForm({ next }: { next: string }) {
@@ -29,7 +34,7 @@ export function LoginForm({ next }: { next: string }) {
   async function signInWithGoogle() {
     setError(null);
     setStatus("google");
-    const { error } = await createClient().auth.signInWithOAuth({
+    const { error } = await (await loadSupabase()).auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: callbackUrl() },
     });
@@ -47,7 +52,7 @@ export function LoginForm({ next }: { next: string }) {
       return;
     }
     setStatus("sending");
-    const { error } = await createClient().auth.signInWithOtp({
+    const { error } = await (await loadSupabase()).auth.signInWithOtp({
       email: email.trim(),
       options: { emailRedirectTo: callbackUrl() },
     });

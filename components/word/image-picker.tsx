@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { compressImage, extensionFor } from "@/lib/image-compress";
 import { providerLabel, type ImageResult } from "@/lib/images/types";
-import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import type { ImageSource } from "@/lib/word-schema";
 
@@ -114,6 +113,7 @@ export function ImagePicker({
     try {
       const blob = await compressImage(file, { maxSize: 800, maxBytes: 300 * 1024 });
       const path = `${userId}/${crypto.randomUUID()}.${extensionFor(blob)}`;
+      const { createClient } = await import("@/lib/supabase/client"); // ~65 KB gzip, load on demand
       const supabase = createClient();
       const { error } = await supabase.storage.from("word-images").upload(path, blob, { contentType: blob.type });
       if (error) throw error;

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ShareActions } from "@/components/deck/share-actions";
+import { LangFlag } from "@/components/lang-flag";
 import { getMe } from "@/lib/auth";
 import { getSharedDeck, SHARE_PREVIEW_LIMIT } from "@/lib/data/share";
 import { LANGUAGES } from "@/lib/lang/registry";
@@ -43,9 +44,7 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
   return (
     <div className="pt-2">
       <header className="flex items-start gap-3">
-        <span className="mt-0.5 text-3xl" aria-label={def.label}>
-          {def.flag}
-        </span>
+        <LangFlag lang={deck.language} label className="mt-2 text-2xl" />
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold break-words text-ink">{deck.name}</h1>
           <p className="text-sm text-ink-soft">

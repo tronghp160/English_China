@@ -9,7 +9,7 @@ export function Logo({ className }: { className?: string }) {
         className="relative grid size-8 place-items-center rounded-[8px] border border-rule bg-surface"
       >
         <span className="absolute inset-y-1 left-[9px] w-[2px] rounded bg-margin-red" />
-        <span className="ml-1.5 text-[0.95rem] leading-none text-ink-blue">S</span>
+        <span className="ml-1.5 text-[0.95rem] leading-none text-ink-blue before:content-['S']" />
       </span>
       <span className="text-lg tracking-tight">Sổ Từ</span>
     </span>

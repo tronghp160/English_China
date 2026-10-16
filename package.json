@@ -13,7 +13,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:types": "supabase gen types typescript --linked --schema public > lib/supabase/database.types.ts",
-    "db:push": "supabase db push",
+    "db:push": "node scripts/db-push.mjs",
     "db:types:local": "node scripts/gen-db-types.mjs"
   },
   "dependencies": {

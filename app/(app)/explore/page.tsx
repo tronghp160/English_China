@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight, Search } from "lucide-react";
+import { LangFlag } from "@/components/lang-flag";
 import { EXPLORE_PAGE_SIZE, getPublicDecks, type ExploreSort } from "@/lib/data/explore";
-import { LANGUAGES } from "@/lib/lang/registry";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Khám phá" };
 
 const LANG_FILTERS = [
   { value: null, label: "Tất cả" },
-  { value: "en", label: "🇬🇧 Tiếng Anh" },
-  { value: "zh", label: "🇨🇳 Tiếng Trung" },
+  { value: "en", label: "Tiếng Anh" },
+  { value: "zh", label: "Tiếng Trung" },
 ] as const;
 
 const SORTS: { value: ExploreSort; label: string }[] = [
@@ -73,6 +73,7 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
                   active ? "border-ink-blue bg-wash-blue font-medium text-ink" : "border-rule text-ink-soft",
                 )}
               >
+                {f.value && <LangFlag lang={f.value} className="mr-1.5" />}
                 {f.label}
               </Link>
             );
@@ -98,16 +99,13 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
       {decks.length ? (
         <ul className="ruled-list mt-4 overflow-hidden rounded-[12px] border border-rule bg-surface">
           {decks.map((d) => {
-            const def = LANGUAGES[d.language];
             return (
               <li key={d.id}>
                 <Link
                   href={`/decks/${d.id}`}
                   className="flex min-h-[4.5rem] items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/60"
                 >
-                  <span className="text-2xl" aria-label={def.label}>
-                    {def.flag}
-                  </span>
+                  <LangFlag lang={d.language} label className="text-lg" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium text-ink">{d.name}</span>
                     {d.description && <span className="block truncate text-sm text-ink">{d.description}</span>}

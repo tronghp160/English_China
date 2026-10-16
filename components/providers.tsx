@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { setupPwa } from "@/lib/pwa";
 import { applyThemePreference, readThemePreference } from "@/lib/theme";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -13,6 +14,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } },
       }),
   );
+
+  useEffect(setupPwa, []);
 
   // Follow OS theme changes while the preference is "system".
   useEffect(() => {

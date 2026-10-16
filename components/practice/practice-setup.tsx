@@ -130,12 +130,12 @@ export function PracticeSetup({
         >
           {langs.map((l) => (
             <option key={l} value={`lang:${l}`}>
-              {LANGUAGES[l].flag} Mọi bộ {LANGUAGES[l].label.toLowerCase()}
+              Mọi bộ {LANGUAGES[l].label.toLowerCase()}
             </option>
           ))}
           {decks.map((d) => (
             <option key={d.id} value={d.id}>
-              {LANGUAGES[d.language].flag} {d.name} ({d.wordCount})
+              {d.name} ({d.wordCount})
             </option>
           ))}
         </select>

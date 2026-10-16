@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { deleteGroup, removeMember } from "@/lib/actions/groups";
 
 const DANGER_BTN = "min-h-11 rounded-[10px] bg-wash-red px-4 text-sm font-medium text-danger";
-const CONFIRM_BTN = "min-h-11 rounded-[10px] bg-danger text-white hover:bg-danger/90";
+const CONFIRM_BTN = "min-h-11 rounded-[10px] bg-danger text-paper hover:bg-danger/90";
 
 export function LeaveGroupButton({ groupId, userId, name }: { groupId: string; userId: string; name: string }) {
   const router = useRouter();

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Flame, PenLine, Play, Plus } from "lucide-react";
+import { LangFlag } from "@/components/lang-flag";
 import { Heatmap } from "@/components/stats/heatmap";
 import { getMyDecks } from "@/lib/data/decks";
 import { getStudySummary } from "@/lib/data/study";
@@ -93,9 +94,7 @@ export default async function TodayPage() {
                     href={`/review?lang=${l.language}`}
                     className="-mx-2 flex min-h-11 items-center gap-3 rounded-[10px] px-2 hover:bg-muted"
                   >
-                    <span aria-hidden className="text-xl">
-                      {LANGUAGES[l.language].flag}
-                    </span>
+                    <LangFlag lang={l.language} className="text-xl" />
                     <span className="flex-1 text-ink">{LANGUAGES[l.language].label}</span>
                     <span className="text-sm text-ink-soft tabular-nums">
                       {l.due} cần ôn · {l.newToday} mới

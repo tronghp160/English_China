@@ -42,6 +42,8 @@ export const getMe = cache(async (): Promise<Me | null> => {
 
 export async function requireMe(): Promise<Me> {
   const me = await getMe();
-  if (!me) redirect("/login");
+  // A valid JWT without a profile means the account was deleted (e.g. on another device):
+  // clear that session, or "/" → /today → /login → /today would loop.
+  if (!me) redirect((await getUser()) ? "/auth/signout" : "/login");
   return me;
 }

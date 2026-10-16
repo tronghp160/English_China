@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { LangFlag } from "@/components/lang-flag";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +15,8 @@ import { cn } from "@/lib/utils";
 import { settingsSchema, type SettingsInput } from "@/lib/validation";
 
 const LANGS = [
-  { value: "en", label: "🇬🇧 Tiếng Anh" },
-  { value: "zh", label: "🇨🇳 Tiếng Trung" },
+  { value: "en", label: "Tiếng Anh" },
+  { value: "zh", label: "Tiếng Trung" },
 ] as const;
 
 function Field({
@@ -134,6 +135,7 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
                         )
                       }
                     />
+                    <LangFlag lang={l.value} className="mr-1.5" />
                     {l.label}
                   </label>
                 );

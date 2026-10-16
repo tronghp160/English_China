@@ -3,6 +3,8 @@ import { SettingsForm } from "@/components/settings/settings-form";
 import { VoiceSettings } from "@/components/settings/voice-settings";
 import { StudyPrefs } from "@/components/settings/study-prefs";
 import { AvatarUpload } from "@/components/settings/avatar-upload";
+import { DeleteAccount, ExportData } from "@/components/settings/account-data";
+import { InstallApp } from "@/components/settings/install-app";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireMe } from "@/lib/auth";
 import { readPrefs } from "@/lib/validation";
@@ -49,6 +51,15 @@ export default async function SettingsPage() {
       </Section>
       <Section title="Giao diện">
         <ThemeToggle />
+      </Section>
+      <Section title="Ứng dụng">
+        <InstallApp />
+      </Section>
+      <Section title="Dữ liệu của bạn">
+        <ExportData />
+      </Section>
+      <Section title="Xóa tài khoản">
+        <DeleteAccount username={me.profile.username} />
       </Section>
     </div>
   );

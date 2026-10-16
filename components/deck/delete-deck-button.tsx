@@ -36,7 +36,7 @@ export function DeleteDeckButton({ deckId, name }: { deckId: string; name: strin
           <AlertDialogCancel className="min-h-11 rounded-[10px]">Giữ lại</AlertDialogCancel>
           <AlertDialogAction
             disabled={confirm.trim() !== name.trim() || pending}
-            className="min-h-11 rounded-[10px] bg-danger text-white hover:bg-danger/90"
+            className="min-h-11 rounded-[10px] bg-danger text-paper hover:bg-danger/90"
             onClick={() =>
               start(async () => {
                 const res = await deleteDeck(deckId);

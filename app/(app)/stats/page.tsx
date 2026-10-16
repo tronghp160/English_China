@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LangFlag } from "@/components/lang-flag";
 import { Heatmap } from "@/components/stats/heatmap";
 import { ReviewsChart } from "@/components/stats/reviews-chart";
 import { getStudySummary } from "@/lib/data/study";
@@ -107,7 +108,7 @@ export default async function StatsPage() {
               <div key={lang}>
                 {langs.length > 1 && (
                   <p className="mb-2 font-medium text-ink">
-                    <span aria-hidden>{LANGUAGES[lang].flag}</span> {LANGUAGES[lang].label} ·{" "}
+                    <LangFlag lang={lang} /> {LANGUAGES[lang].label} ·{" "}
                     {c.total} từ
                   </p>
                 )}

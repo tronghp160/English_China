@@ -18,10 +18,18 @@ export function ttsSupported() {
 let voicesCache: SpeechSynthesisVoice[] = [];
 const listeners = new Set<() => void>();
 
+function sameVoices(a: SpeechSynthesisVoice[], b: SpeechSynthesisVoice[]) {
+  return a.length === b.length && a.every((v, i) => v.voiceURI === b[i].voiceURI);
+}
+
+/**
+ * Notifies listeners only when the list really changed: a listener that calls
+ * loadVoices() again (VoiceSettings does) would otherwise recurse forever.
+ */
 function refreshVoices() {
   if (!ttsSupported()) return;
   const v = window.speechSynthesis.getVoices();
-  if (v.length) {
+  if (v.length && !sameVoices(v, voicesCache)) {
     voicesCache = v;
     listeners.forEach((l) => l());
   }

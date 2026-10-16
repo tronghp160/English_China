@@ -1,7 +1,7 @@
 "use client";
 
 import { Volume2 } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useSyncExternalStore, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -33,12 +33,15 @@ const RATES = [
   { value: 1, label: "Bình thường" },
 ] as const;
 const AUTO = "__auto__";
+const noSubscribe = () => () => {};
 
 export function VoiceSettings({ prefs }: { prefs: Required<Prefs> }) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [state, setState] = useState(prefs);
   const [, startTransition] = useTransition();
+  // Server and hydration render as supported, then the real value: avoids a hydration mismatch.
+  const supported = useSyncExternalStore(noSubscribe, ttsSupported, () => true);
 
   useEffect(() => {
     let alive = true;
@@ -62,7 +65,7 @@ export function VoiceSettings({ prefs }: { prefs: Required<Prefs> }) {
     });
   }
 
-  if (!ttsSupported()) {
+  if (!supported) {
     return <p className="text-sm text-ink-soft">Trình duyệt này không hỗ trợ đọc phát âm.</p>;
   }
 

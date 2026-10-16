@@ -5,6 +5,7 @@ import { UserMenu } from "@/components/app-shell/user-menu";
 import { Logo } from "@/components/brand/logo";
 import { MeProvider } from "@/components/app-shell/me-provider";
 import { requireMe } from "@/lib/auth";
+import { cjkFontVariables } from "@/lib/fonts";
 import { readPrefs } from "@/lib/validation";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
@@ -22,7 +23,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       }}
     >
       <SideNav />
-      <div className="flex min-h-dvh flex-1 flex-col lg:pl-60">
+      <div className={`${cjkFontVariables} flex min-h-dvh flex-1 flex-col lg:pl-60`}>
         <header className="sticky top-0 z-30 border-b border-rule bg-paper/90 backdrop-blur">
           <div className="flex h-14 max-w-[960px] items-center justify-between px-4 lg:mx-0 lg:px-8">
             <Link href="/today" className="rounded-[10px] lg:invisible" aria-label="Sổ Từ — Hôm nay">
