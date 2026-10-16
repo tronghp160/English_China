@@ -1,0 +1,306 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system "Trang vở" (see docs/PLAN.md §12).
+ * Plan colors are kept verbatim for surfaces and decoration. A few text
+ * colors were darkened in light mode to pass WCAG AA (4.5:1):
+ *   --danger (#C4373D) for red text/buttons, the margin line keeps #E0484E;
+ *   --jade-text (#137A5D); tone colors 1–3 (see --tone-*).
+ */
+:root {
+  --paper: #f7f9fc;
+  --surface: #ffffff;
+  --ink: #1e2a4a;
+  --ink-soft: #5b6785;
+  --ink-blue: #2f5bd3;
+  --margin-red: #e0484e;
+  --danger: #c4373d;
+  --highlight: #ffe45c;
+  --jade: #178a6a;
+  --jade-text: #137a5d;
+  --rule: #dce3f0;
+  --wash-blue: #eaf0fb;
+  --wash-jade: #e3f4ee;
+  --wash-red: #fdecec;
+  --wash-yellow: #fff7c9;
+
+  --tone-1: #c8302f;
+  --tone-2: #a65f00;
+  --tone-3: #1f7f3c;
+  --tone-4: #2f5bd3;
+  --tone-5: var(--ink-soft);
+
+  /* shadcn tokens mapped onto the palette */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink-blue);
+  --primary-foreground: #ffffff;
+  --secondary: var(--wash-blue);
+  --secondary-foreground: var(--ink);
+  --muted: #eef2f8;
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--wash-blue);
+  --accent-foreground: var(--ink);
+  --destructive: var(--danger);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--ink-blue);
+  --chart-1: var(--ink-blue);
+  --chart-2: var(--jade);
+  --chart-3: #e0a400;
+  --chart-4: var(--margin-red);
+  --chart-5: var(--ink-soft);
+  --radius: 0.625rem;
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--ink-blue);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--wash-blue);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--rule);
+  --sidebar-ring: var(--ink-blue);
+}
+
+.dark {
+  --paper: #14171f;
+  --surface: #1c2029;
+  --ink: #e6eaf2;
+  --ink-soft: #9aa4bc;
+  --ink-blue: #7c9bf0;
+  --margin-red: #f07378;
+  --danger: #f07378;
+  --highlight: #c9a93a;
+  --jade: #4cc4a0;
+  --jade-text: #4cc4a0;
+  --rule: #2a303d;
+  --wash-blue: #1f2a45;
+  --wash-jade: #17312b;
+  --wash-red: #3a1f24;
+  --wash-yellow: #3a3420;
+
+  --tone-1: #f07070;
+  --tone-2: #f0a030;
+  --tone-3: #4cc46a;
+  --tone-4: #7c9bf0;
+
+  --primary-foreground: #14171f;
+  --muted: #232835;
+  --sidebar-primary-foreground: #14171f;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-blue: var(--ink-blue);
+  --color-margin-red: var(--margin-red);
+  --color-danger: var(--danger);
+  --color-highlight: var(--highlight);
+  --color-jade: var(--jade);
+  --color-jade-text: var(--jade-text);
+  --color-rule: var(--rule);
+  --color-wash-blue: var(--wash-blue);
+  --color-wash-jade: var(--wash-jade);
+  --color-wash-red: var(--wash-red);
+  --color-wash-yellow: var(--wash-yellow);
+  --color-tone-1: var(--tone-1);
+  --color-tone-2: var(--tone-2);
+  --color-tone-3: var(--tone-3);
+  --color-tone-4: var(--tone-4);
+  --color-tone-5: var(--tone-5);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+  --font-ipa: var(--font-noto-sans), "Segoe UI", "Lucida Sans Unicode", sans-serif;
+  --font-hanzi: var(--font-noto-serif-sc), "Songti SC", "SimSun", serif;
+  --font-hanzi-sans: var(--font-noto-sans-sc), "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, monospace;
+
+  /* Type scale (rem) from §12.3 */
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.3125rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.5rem;
+  --text-word: 4rem;
+  --text-hanzi: 5rem;
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Radius hierarchy: button 10px, card 12px, sheet/dialog 20px */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
+  --radius-btn: 0.625rem;
+  --radius-card: 0.75rem;
+  --radius-sheet: 1.25rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: var(--text-base);
+    line-height: 1.55;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ink-blue);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Notebook card: 2px red margin line 20px from the left edge */
+  .notebook-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-card);
+  }
+  .notebook-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 20px;
+    width: 2px;
+    background: var(--margin-red);
+    opacity: 0.85;
+    pointer-events: none;
+  }
+
+  /* A word sitting on a ruled line, like handwriting in a notebook */
+  .ruled-word {
+    display: inline-block;
+    padding-bottom: 0.15em;
+    background-image: linear-gradient(var(--rule), var(--rule));
+    background-repeat: no-repeat;
+    background-size: 100% 2px;
+    background-position: 0 100%;
+  }
+
+  /* Ruled list rows (no per-row cards) */
+  .ruled-list > * + * {
+    border-top: 1px solid var(--rule);
+  }
+
+  /* Highlighter marker stroke behind text */
+  .highlighter {
+    background-image: linear-gradient(
+      100deg,
+      transparent 0.2em,
+      color-mix(in oklab, var(--highlight) 85%, transparent) 0.3em,
+      color-mix(in oklab, var(--highlight) 75%, transparent) calc(100% - 0.3em),
+      transparent calc(100% - 0.2em)
+    );
+    background-repeat: no-repeat;
+    background-size: 100% 0.55em;
+    background-position: 0 88%;
+    padding: 0 0.1em;
+  }
+  .highlighter-animate {
+    animation: highlighter-sweep 700ms 200ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
+  }
+}
+
+@keyframes highlighter-sweep {
+  from {
+    background-size: 0% 0.55em;
+  }
+  to {
+    background-size: 100% 0.55em;
+  }
+}
+
+/* Unlayered so padding utilities (p-6…) never pull content onto the margin line. */
+.notebook-card {
+  padding-left: 2.75rem;
+}
+
+/* Flashcard flip */
+.flip-scene {
+  perspective: 1400px;
+}
+.flip-card {
+  transform-style: preserve-3d;
+  transition: transform 300ms cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+.flip-card[data-flipped="true"] {
+  transform: rotateY(180deg);
+}
+.flip-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flip-back {
+  transform: rotateY(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flip-card {
+    transition: none;
+  }
+  .highlighter-animate {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
