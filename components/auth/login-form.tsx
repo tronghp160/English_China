@@ -1,134 +1,177 @@
 "use client";
 
 import { Loader2, Mail } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { emailSchema } from "@/lib/validation";
+import {
+  authErrorMessage,
+  callbackUrl,
+  EmailField,
+  FormAlert,
+  GoogleButton,
+  loadSupabase,
+  OrDivider,
+  PasswordField,
+} from "./auth-shared";
 
-function GoogleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-      <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.7Z" />
-      <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24Z" />
-      <path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1Z" />
-      <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9Z" />
-    </svg>
-  );
-}
-
-/** supabase-js is ~65 KB gzip: load it when the user submits, not with the page. */
-async function loadSupabase() {
-  const { createClient } = await import("@/lib/supabase/client");
-  return createClient();
-}
+type Status = "idle" | "busy" | "link-sent" | "confirm-sent";
 
 export function LoginForm({ next }: { next: string }) {
+  const router = useRouter();
+  const [mode, setMode] = useState<"password" | "link">("password");
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "google" | "sending" | "sent">("idle");
+  const [password, setPassword] = useState("");
+  const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [unconfirmed, setUnconfirmed] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
-  const callbackUrl = () =>
-    `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  function checkEmail() {
+    const parsed = emailSchema.safeParse(email);
+    if (!parsed.success) {
+      setFieldErrors({ email: parsed.error.issues[0].message });
+      return null;
+    }
+    return parsed.data;
+  }
 
-  async function signInWithGoogle() {
+  async function signInWithPassword(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
-    setStatus("google");
-    const { error } = await (await loadSupabase()).auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: callbackUrl() },
-    });
+    setUnconfirmed(false);
+    setFieldErrors({});
+    const addr = checkEmail();
+    if (!addr) return;
+    if (!password) return setFieldErrors({ password: "Nhập mật khẩu" });
+    setStatus("busy");
+    const { error } = await (await loadSupabase()).auth.signInWithPassword({ email: addr, password });
     if (error) {
       setStatus("idle");
-      setError("Không mở được đăng nhập Google. Thử lại hoặc dùng email.");
+      setUnconfirmed(error.code === "email_not_confirmed");
+      return setError(authErrorMessage(error));
     }
+    router.replace(next);
+    router.refresh();
   }
 
   async function sendMagicLink(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setError("Email chưa đúng định dạng, ví dụ: ban@gmail.com");
-      return;
-    }
-    setStatus("sending");
+    setFieldErrors({});
+    const addr = checkEmail();
+    if (!addr) return;
+    setStatus("busy");
     const { error } = await (await loadSupabase()).auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: callbackUrl() },
+      email: addr,
+      options: { emailRedirectTo: callbackUrl(next) },
     });
     if (error) {
       setStatus("idle");
-      setError(
-        error.status === 429
-          ? "Bạn vừa yêu cầu link. Đợi một phút rồi gửi lại."
-          : "Không gửi được email. Kiểm tra địa chỉ rồi thử lại.",
-      );
-      return;
+      return setError(authErrorMessage(error));
     }
-    setStatus("sent");
+    setStatus("link-sent");
   }
 
-  if (status === "sent") {
+  async function resendConfirmation() {
+    const addr = checkEmail();
+    if (!addr) return;
+    setStatus("busy");
+    const { error } = await (await loadSupabase()).auth.resend({
+      type: "signup",
+      email: addr,
+      options: { emailRedirectTo: callbackUrl(next) },
+    });
+    if (error) {
+      setStatus("idle");
+      return setError(authErrorMessage(error));
+    }
+    setError(null);
+    setUnconfirmed(false);
+    setStatus("confirm-sent");
+  }
+
+  if (status === "link-sent" || status === "confirm-sent") {
     return (
-      <div className="mt-6 rounded-[10px] bg-wash-jade px-4 py-4 text-sm text-ink" role="status">
-        <p className="font-medium">Đã gửi link đăng nhập tới {email}.</p>
-        <p className="mt-1 text-ink-soft">Mở email trên thiết bị này và bấm vào link. Không thấy thì xem thư mục Spam.</p>
+      <div className="mt-6">
+        <FormAlert tone="success">
+          <p className="font-medium">
+            {status === "link-sent" ? `Đã gửi link đăng nhập tới ${email.trim()}.` : `Đã gửi lại email xác nhận tới ${email.trim()}.`}
+          </p>
+          <p className="mt-1 text-ink-soft">Mở email trên thiết bị này và bấm vào link. Không thấy thì xem thư mục Spam.</p>
+        </FormAlert>
         <button
           type="button"
           className="mt-3 min-h-11 text-sm font-medium text-ink-blue underline-offset-4 hover:underline"
           onClick={() => setStatus("idle")}
         >
-          Dùng email khác
+          Quay lại
         </button>
       </div>
     );
   }
 
+  const busy = status === "busy";
   return (
     <div className="mt-6 space-y-6">
-      <Button
-        type="button"
-        variant="outline"
-        className="h-12 w-full gap-3 rounded-[10px] text-base"
-        onClick={signInWithGoogle}
-        disabled={status !== "idle"}
-      >
-        {status === "google" ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <GoogleIcon />}
-        Tiếp tục với Google
-      </Button>
+      <GoogleButton next={next} disabled={busy} onError={setError} />
+      <OrDivider>{mode === "password" ? "hoặc dùng email" : "hoặc nhận link qua email"}</OrDivider>
 
-      <div className="flex items-center gap-3 text-sm text-ink-soft">
-        <span className="h-px flex-1 bg-rule" />
-        hoặc nhận link qua email
-        <span className="h-px flex-1 bg-rule" />
-      </div>
-
-      <form onSubmit={sendMagicLink} className="space-y-3" noValidate>
-        <div className="space-y-1.5">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            placeholder="ban@gmail.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="h-12 rounded-[10px] text-base"
-            aria-invalid={Boolean(error) || undefined}
-            aria-describedby={error ? "login-error" : undefined}
+      <form onSubmit={mode === "password" ? signInWithPassword : sendMagicLink} className="space-y-4" noValidate>
+        <EmailField value={email} onChange={setEmail} error={fieldErrors.email} />
+        {mode === "password" && (
+          <PasswordField
+            value={password}
+            onChange={setPassword}
+            autoComplete="current-password"
+            error={fieldErrors.password}
+            labelAction={
+              <Link
+                href={`/forgot-password${email ? `?email=${encodeURIComponent(email.trim())}` : ""}`}
+                className="inline-flex min-h-11 items-center text-sm font-medium text-ink-blue underline-offset-4 hover:underline"
+              >
+                Quên mật khẩu?
+              </Link>
+            }
           />
-        </div>
-        {error && (
-          <p id="login-error" role="alert" className="text-sm text-danger">
-            {error}
-          </p>
         )}
-        <Button type="submit" className="h-12 w-full gap-2 rounded-[10px] text-base" disabled={status !== "idle"}>
-          {status === "sending" ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <Mail className="size-5" aria-hidden />}
-          Gửi link đăng nhập
+        {error && (
+          <FormAlert>
+            <p>{error}</p>
+            {unconfirmed && (
+              <button
+                type="button"
+                onClick={resendConfirmation}
+                className="mt-2 min-h-11 font-medium text-ink-blue underline-offset-4 hover:underline"
+              >
+                Gửi lại email xác nhận
+              </button>
+            )}
+          </FormAlert>
+        )}
+        <Button type="submit" className="h-12 w-full gap-2 rounded-[10px] text-base" disabled={busy}>
+          {busy ? (
+            <Loader2 className="size-5 animate-spin" aria-hidden />
+          ) : (
+            mode === "link" && <Mail className="size-5" aria-hidden />
+          )}
+          {mode === "password" ? "Đăng nhập" : "Gửi link đăng nhập"}
         </Button>
       </form>
+
+      <button
+        type="button"
+        onClick={() => {
+          setMode(mode === "password" ? "link" : "password");
+          setError(null);
+          setFieldErrors({});
+        }}
+        className="min-h-11 w-full text-sm font-medium text-ink-blue underline-offset-4 hover:underline"
+      >
+        {mode === "password" ? "Đăng nhập không cần mật khẩu (nhận link qua email)" : "Đăng nhập bằng mật khẩu"}
+      </button>
     </div>
   );
 }

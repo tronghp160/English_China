@@ -48,7 +48,7 @@ export default function MarketingPage() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild className="min-h-12 rounded-[10px] px-6 text-base">
-              <Link href="/login">Bắt đầu ghi từ</Link>
+              <Link href="/signup">Bắt đầu ghi từ</Link>
             </Button>
             <Button asChild variant="outline" className="min-h-12 rounded-[10px] px-6 text-base">
               <Link href="#tinh-nang">Xem tính năng</Link>

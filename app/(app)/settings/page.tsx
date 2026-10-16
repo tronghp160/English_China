@@ -5,6 +5,7 @@ import { StudyPrefs } from "@/components/settings/study-prefs";
 import { AvatarUpload } from "@/components/settings/avatar-upload";
 import { DeleteAccount, ExportData } from "@/components/settings/account-data";
 import { InstallApp } from "@/components/settings/install-app";
+import { NewPasswordForm } from "@/components/auth/new-password-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireMe } from "@/lib/auth";
 import { readPrefs } from "@/lib/validation";
@@ -42,6 +43,19 @@ export default async function SettingsPage() {
             study_langs: me.settings.study_langs,
           }}
         />
+      </Section>
+      <Section title="Mật khẩu">
+        <p className="mb-4 text-sm text-ink-soft">
+          Đặt hoặc đổi mật khẩu để đăng nhập bằng email
+          {me.user.email && (
+            <>
+              {" "}
+              <span className="text-ink">{me.user.email}</span>
+            </>
+          )}
+          , kể cả khi bạn đang dùng Google.
+        </p>
+        <NewPasswordForm />
       </Section>
       <Section title="Ôn tập">
         <StudyPrefs prefs={prefs} />

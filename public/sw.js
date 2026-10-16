@@ -4,7 +4,7 @@
 // Pages themselves are not cached, so one account's data never shows up for
 // the next person on a shared device. Reviews made offline go through the
 // IndexedDB outbox (lib/srs/outbox.ts), not through this worker.
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC_CACHE = `static-${VERSION}`;
 const SHELL_CACHE = `shell-${VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -35,7 +35,10 @@ self.addEventListener("activate", (event) => {
     (async () => {
       const keep = new Set([STATIC_CACHE, SHELL_CACHE]);
       for (const key of await caches.keys()) if (!keep.has(key)) await caches.delete(key);
-      if (self.registration.navigationPreload) await self.registration.navigationPreload.enable();
+      // No navigation preload: it requests every navigation a second time, also the
+      // ones this worker leaves alone, so /auth/callback ran twice and the second run
+      // failed on the already-used one-time token ("link expired"). v1 had it on.
+      if (self.registration.navigationPreload) await self.registration.navigationPreload.disable();
       await self.clients.claim();
     })(),
   );
@@ -69,8 +72,6 @@ async function cacheFirst(request) {
 
 async function networkFirstPage(event) {
   try {
-    const preload = await event.preloadResponse;
-    if (preload) return preload;
     return await fetch(event.request);
   } catch {
     const offline = await caches.match(OFFLINE_URL);

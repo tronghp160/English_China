@@ -22,6 +22,7 @@ test("đăng nhập bằng link email và hoàn tất màn hình chào", async (
   // Don't send a real email (Supabase's built-in mailer allows only a few per hour).
   await page.route("**/auth/v1/otp**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
   await page.goto("/login");
+  await page.getByRole("button", { name: /Đăng nhập không cần mật khẩu/ }).click();
   await page.getByLabel("Email").fill(email);
   await page.getByRole("button", { name: "Gửi link đăng nhập" }).click();
   await expect(page.getByText(`Đã gửi link đăng nhập tới ${email}.`)).toBeVisible();

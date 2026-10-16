@@ -12,6 +12,21 @@ export const displayNameSchema = z
   .min(1, "Nhập tên hiển thị")
   .max(50, "Tối đa 50 ký tự");
 
+export const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .max(254, "Email quá dài")
+  .email("Email chưa đúng định dạng, ví dụ: ban@gmail.com");
+
+/** 8–72 characters (bcrypt only uses the first 72 bytes), at least one letter and one digit. */
+export const passwordSchema = z
+  .string()
+  .min(8, "Mật khẩu cần ít nhất 8 ký tự")
+  .max(72, "Mật khẩu tối đa 72 ký tự")
+  .regex(/\p{L}/u, "Mật khẩu cần có ít nhất một chữ cái")
+  .regex(/\d/, "Mật khẩu cần có ít nhất một chữ số");
+
 export const langSchema = z.enum(["en", "zh"]);
 
 export const onboardingSchema = z.object({

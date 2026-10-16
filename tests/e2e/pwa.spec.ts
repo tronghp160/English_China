@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { deleteUserByEmail, magicLinkPath, testEmail } from "./helpers";
 
 test.describe("PWA", () => {
   test("manifest và icon hợp lệ", async ({ request }) => {
@@ -28,5 +29,25 @@ test.describe("PWA", () => {
     await expect(page.getByRole("heading", { name: "Bạn đang offline" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Thử lại" })).toBeVisible();
     await context.setOffline(false);
+  });
+
+  test("link đăng nhập qua email vẫn chạy khi service worker đang bật", async ({ page }) => {
+    // Regression: navigation preload made /auth/callback run twice, and the second
+    // run failed on the already-used one-time token.
+    await page.goto("/login");
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+    });
+    await page.reload();
+    await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+
+    const email = testEmail();
+    try {
+      await page.goto(await magicLinkPath(email, "/reset-password"));
+      await expect(page).toHaveURL(/\/reset-password$/);
+      await expect(page.getByRole("heading", { name: "Đặt mật khẩu mới" })).toBeVisible();
+    } finally {
+      await deleteUserByEmail(email);
+    }
   });
 });

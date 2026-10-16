@@ -1,7 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/", "/login", "/auth", "/join", "/d", "/offline", "/manifest.webmanifest"];
+const PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password", // shows "link expired" itself when there is no session
+  "/auth",
+  "/join",
+  "/d",
+  "/offline",
+  "/manifest.webmanifest",
+];
+/** Pages for signed-out visitors only: a signed-in user goes to /today instead. */
+const GUEST_ONLY = new Set(["/", "/login", "/signup", "/forgot-password"]);
 
 function isPublic(pathname: string) {
   return PUBLIC_PATHS.some((p) => (p === "/" ? pathname === "/" : pathname === p || pathname.startsWith(`${p}/`)));
@@ -40,7 +53,7 @@ export async function updateSession(request: NextRequest) {
     return redirectKeepingCookies(loginUrl, response);
   }
 
-  if (signedIn && (pathname === "/" || pathname === "/login")) {
+  if (signedIn && GUEST_ONLY.has(pathname)) {
     const appUrl = request.nextUrl.clone();
     appUrl.pathname = "/today";
     appUrl.search = "";
