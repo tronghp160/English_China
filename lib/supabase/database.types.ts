@@ -642,6 +642,15 @@ export type Database = {
         };
         Returns: string;
       };
+      deck_topics: {
+        Args: {
+          p_deck_id: string;
+        };
+        Returns: {
+            topic: string;
+            n: number;
+          }[];
+      };
       ensure_user_cards: {
         Args: {
           p_deck_id?: string;
@@ -714,6 +723,26 @@ export type Database = {
         };
         Returns: string;
       };
+      my_decks: {
+        Args: never;
+        Returns: {
+            id: string;
+            name: string;
+            description: string;
+            language: Database["public"]["Enums"]["lang_code"];
+            visibility: Database["public"]["Enums"]["deck_visibility"];
+            group_id: string;
+            group_name: string;
+            owner_id: string;
+            owner_name: string;
+            relation: string;
+            word_count: number;
+            due_count: number;
+            new_count: number;
+            share_slug: string;
+            updated_at: string;
+          }[];
+      };
       new_cards_left: {
         Args: {
           p_user_id: string;
@@ -746,6 +775,42 @@ export type Database = {
           p_group_id: string;
         };
         Returns: string;
+      };
+      search_deck_words: {
+        Args: {
+          p_deck_id: string;
+          p_q?: string;
+          p_topic?: string;
+          p_pos?: string;
+          p_status?: string;
+          p_level?: string;
+          p_sort?: string;
+          p_offset?: number;
+          p_limit?: number;
+        };
+        Returns: {
+            id: string;
+            term: string;
+            reading: string;
+            meaning_vi: string;
+            parts_of_speech: string[];
+            topic: string;
+            emoji: string;
+            image_url: string;
+            lang_extra: Json;
+            created_at: string;
+            card_state: Database["public"]["Enums"]["card_state"];
+            due: string;
+            lapses: number;
+            suspended: boolean;
+          }[];
+      };
+      set_suspended: {
+        Args: {
+          p_word_ids: string[];
+          p_suspended: boolean;
+        };
+        Returns: number;
       };
       shares_group_with: {
         Args: {
@@ -792,6 +857,20 @@ export type Database = {
             avatar_url: string;
             xp: number;
             reviews: number;
+          }[];
+      };
+      word_progress: {
+        Args: {
+          p_word_id: string;
+        };
+        Returns: {
+            direction: string;
+            state: Database["public"]["Enums"]["card_state"];
+            due: string;
+            last_review: string;
+            reps: number;
+            lapses: number;
+            suspended: boolean;
           }[];
       };
     };

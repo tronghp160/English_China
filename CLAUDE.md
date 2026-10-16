@@ -35,4 +35,5 @@ Full product spec and phased plan: [docs/PLAN.md](docs/PLAN.md). Work phase by p
 - Light-mode text colors darkened for WCAG AA: `--danger #C4373D`, `--jade-text #137A5D`, tones 1–3 (see `app/globals.css`).
 - `words.created_by` is nullable (plan had `not null` + `on delete set null`, which conflict).
 - `review_mode` enum also contains `cloze` (the plan lists cloze as a practice mode).
+- AI enrichment uses `effort: "low"` instead of temperature 0.2–0.3 (current Haiku rejects non-default sampling params); see `lib/ai/enrich.ts`.
 - `frontend-design` skill is not installed here; §12 is followed manually and verified with screenshots.
