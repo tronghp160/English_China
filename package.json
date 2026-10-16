@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:types": "supabase gen types typescript --linked --schema public > lib/supabase/database.types.ts",
-    "db:push": "supabase db push"
+    "db:push": "supabase db push",
+    "db:types:local": "node scripts/gen-db-types.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.80",
@@ -46,6 +47,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/turbopack": "^4",
     "@testing-library/react": "^16.3.3",

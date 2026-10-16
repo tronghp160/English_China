@@ -6,6 +6,7 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   test: {
     environment: "node",
-    include: ["tests/unit/**/*.test.{ts,tsx}"],
+    include: ["tests/unit/**/*.test.{ts,tsx}", "tests/db/**/*.test.ts"],
+    testTimeout: 60_000,
   },
 });
