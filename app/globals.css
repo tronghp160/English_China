@@ -271,6 +271,23 @@
   padding-left: 2.75rem;
 }
 
+/* Activity heatmap: one hue (ink blue), light -> dark, mixed with the surface per theme */
+.heat-0 {
+  background: var(--muted);
+}
+.heat-1 {
+  background: color-mix(in oklab, var(--ink-blue) 25%, var(--surface));
+}
+.heat-2 {
+  background: color-mix(in oklab, var(--ink-blue) 48%, var(--surface));
+}
+.heat-3 {
+  background: color-mix(in oklab, var(--ink-blue) 72%, var(--surface));
+}
+.heat-4 {
+  background: var(--ink-blue);
+}
+
 /* Flashcard flip */
 .flip-scene {
   perspective: 1400px;

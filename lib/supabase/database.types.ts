@@ -342,6 +342,7 @@ export type Database = {
       };
       review_logs: {
         Row: {
+          client_id: string | null;
           direction: string;
           duration_ms: number | null;
           id: number;
@@ -354,6 +355,7 @@ export type Database = {
           word_id: string;
         };
         Insert: {
+          client_id?: string | null;
           direction: string;
           duration_ms?: number | null;
           id?: number;
@@ -366,6 +368,7 @@ export type Database = {
           word_id: string;
         };
         Update: {
+          client_id?: string | null;
           direction?: string;
           duration_ms?: number | null;
           id?: number;
@@ -635,6 +638,14 @@ export type Database = {
         };
         Returns: boolean;
       };
+      card_distribution: {
+        Args: never;
+        Returns: {
+            language: Database["public"]["Enums"]["lang_code"];
+            bucket: string;
+            n: number;
+          }[];
+      };
       clone_deck: {
         Args: {
           p_user_id: string;
@@ -755,6 +766,19 @@ export type Database = {
         };
         Returns: string;
       };
+      practice_words: {
+        Args: {
+          p_deck_id: string;
+          p_language: Database["public"]["Enums"]["lang_code"];
+          p_source?: string;
+          p_limit?: number;
+        };
+        Returns: {
+            word: Json;
+            lapses: number;
+            card_state: Database["public"]["Enums"]["card_state"];
+          }[];
+      };
       record_review: {
         Args: {
           p_user_id: string;
@@ -767,6 +791,7 @@ export type Database = {
           p_update_card: boolean;
           p_card: Json;
           p_reviewed_at?: string;
+          p_client_id?: string;
         };
         Returns: Json;
       };
@@ -838,6 +863,19 @@ export type Database = {
             due_count: number;
             new_available: number;
             total_cards: number;
+          }[];
+      };
+      today_overview: {
+        Args: never;
+        Returns: {
+            language: Database["public"]["Enums"]["lang_code"];
+            due_count: number;
+            new_available: number;
+            due_tomorrow: number;
+            total_cards: number;
+            new_left: number;
+            reviews_left: number;
+            study_day: string;
           }[];
       };
       user_tz: {

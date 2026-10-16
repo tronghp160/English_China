@@ -36,4 +36,6 @@ Full product spec and phased plan: [docs/PLAN.md](docs/PLAN.md). Work phase by p
 - `words.created_by` is nullable (plan had `not null` + `on delete set null`, which conflict).
 - `review_mode` enum also contains `cloze` (the plan lists cloze as a practice mode).
 - AI enrichment uses `effort: "low"` instead of temperature 0.2–0.3 (current Haiku rejects non-default sampling params); see `lib/ai/enrich.ts`.
+- Reviews carry a client-generated `client_id` (unique per user) so the offline outbox (`lib/srs/outbox.ts`) can resend safely; the server recomputes FSRS from the stored card and skips stale (older-than-last-review) results.
+- Practice answers also count in `daily_stats.reviews` (streak/goal); XP is +1 only when correct. Review/practice pages live in the `app/(study)` route group (full-screen, no nav).
 - `frontend-design` skill is not installed here; §12 is followed manually and verified with screenshots.
