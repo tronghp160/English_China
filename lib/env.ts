@@ -24,6 +24,12 @@ const serverSchema = z.object({
   AI_GLOBAL_DAILY_LIMIT: z.coerce.number().int().positive().default(3000),
   /** Sign-ups (and pending-account confirms) per client IP per hour. */
   SIGNUP_LIMIT_PER_HOUR: z.coerce.number().int().positive().default(8),
+  /** Web Push reminders (npx web-push generate-vapid-keys); off when the keys are missing. */
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().default("mailto:sotu@example.com"),
+  /** Bearer token Vercel Cron sends to /api/cron/reminders. */
+  CRON_SECRET: z.string().optional(),
   PEXELS_API_KEY: z.string().optional(),
   UNSPLASH_ACCESS_KEY: z.string().optional(),
 });

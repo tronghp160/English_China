@@ -421,6 +421,38 @@ export type Database = {
 
         ];
       };
+      push_subscriptions: {
+        Row: {
+          auth: string;
+          created_at: string;
+          endpoint: string;
+          p256dh: string;
+          user_id: string;
+        };
+        Insert: {
+          auth: string;
+          created_at?: string;
+          endpoint: string;
+          p256dh: string;
+          user_id: string;
+        };
+        Update: {
+          auth?: string;
+          created_at?: string;
+          endpoint?: string;
+          p256dh?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       rate_limits: {
         Row: {
           bucket: string;
@@ -583,6 +615,7 @@ export type Database = {
           daily_review_limit: number;
           onboarded: boolean;
           prefs: Json;
+          reminded_on: string | null;
           study_langs: Database["public"]["Enums"]["lang_code"][];
           timezone: string;
           updated_at: string;
@@ -594,6 +627,7 @@ export type Database = {
           daily_review_limit?: number;
           onboarded?: boolean;
           prefs?: Json;
+          reminded_on?: string | null;
           study_langs?: Database["public"]["Enums"]["lang_code"][];
           timezone?: string;
           updated_at?: string;
@@ -605,6 +639,7 @@ export type Database = {
           daily_review_limit?: number;
           onboarded?: boolean;
           prefs?: Json;
+          reminded_on?: string | null;
           study_langs?: Database["public"]["Enums"]["lang_code"][];
           timezone?: string;
           updated_at?: string;
@@ -868,6 +903,12 @@ export type Database = {
         };
         Returns: string;
       };
+      mark_reminded: {
+        Args: {
+          p_user_ids: string[];
+        };
+        Returns: undefined;
+      };
       my_decks: {
         Args: never;
         Returns: {
@@ -948,6 +989,13 @@ export type Database = {
           p_group_id: string;
         };
         Returns: string;
+      };
+      reminder_targets: {
+        Args: never;
+        Returns: {
+            user_id: string;
+            due_count: number;
+          }[];
       };
       search_deck_words: {
         Args: {

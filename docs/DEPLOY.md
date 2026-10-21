@@ -37,6 +37,9 @@ Secret key và mật khẩu database từng bị dán vào chat, nên coi như �
 | `GOOGLE_GENERATIVE_AI_API_KEY` | key miễn phí ở aistudio.google.com, nếu dùng Gemini |
 | `ANTHROPIC_API_KEY` | nếu dùng Claude (nhập từ ảnh chụp vở bắt buộc phải có key này) |
 | `PEXELS_API_KEY`, `UNSPLASH_ACCESS_KEY` | key ở pexels.com/api và unsplash.com/developers |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | lấy từ `.env.local` (hoặc tạo mới bằng `pnpm exec web-push generate-vapid-keys`; đổi khóa thì mọi máy phải bật lại nhắc ôn) |
+| `VAPID_SUBJECT` | `mailto:` + email liên hệ của bạn |
+| `CRON_SECRET` | một chuỗi ngẫu nhiên dài; Vercel tự gửi nó khi chạy lịch nhắc ôn 19:00 (`vercel.json`) |
 | `AI_DAILY_LIMIT_PER_USER`, `AI_GLOBAL_DAILY_LIMIT`, `SIGNUP_LIMIT_PER_HOUR` | có thể bỏ trống để dùng mặc định (100 / 3000 / 8) |
 
 Không thêm `SUPABASE_DB_URL` lên Vercel; biến này chỉ dùng cho `pnpm db:push` trên máy bạn.

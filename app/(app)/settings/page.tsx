@@ -5,9 +5,11 @@ import { StudyPrefs } from "@/components/settings/study-prefs";
 import { AvatarUpload } from "@/components/settings/avatar-upload";
 import { DeleteAccount, ExportData } from "@/components/settings/account-data";
 import { InstallApp } from "@/components/settings/install-app";
+import { ReminderSettings } from "@/components/settings/reminder-settings";
 import { NewPasswordForm } from "@/components/auth/new-password-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireMe } from "@/lib/auth";
+import { vapidPublicKey } from "@/lib/push";
 import { readPrefs } from "@/lib/validation";
 
 export const metadata: Metadata = { title: "Cài đặt" };
@@ -59,6 +61,9 @@ export default async function SettingsPage() {
       </Section>
       <Section title="Ôn tập">
         <StudyPrefs prefs={prefs} />
+      </Section>
+      <Section title="Thông báo">
+        <ReminderSettings publicKey={vapidPublicKey()} />
       </Section>
       <Section title="Phát âm">
         <VoiceSettings prefs={prefs} />
