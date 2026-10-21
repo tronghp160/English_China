@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   "/join",
   "/d",
   "/offline",
+  "/lien-he",
   "/manifest.webmanifest",
 ];
 /** Pages for signed-out visitors only: a signed-in user goes to /today instead. */
