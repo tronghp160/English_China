@@ -1,6 +1,8 @@
 "use client";
 
+import { MessageCircleHeart } from "lucide-react";
 import Link from "next/link";
+import { startChat } from "@/lib/actions/chat";
 import { formatDuration } from "@/lib/format";
 import type { LangCode } from "@/lib/lang/types";
 import { cn } from "@/lib/utils";
@@ -63,6 +65,13 @@ export function SessionSummary({
   ];
 
   const mood = cheer(pct);
+  // A session can mix languages; the tutor thread uses the one most missed.
+  const missedLang: LangCode | undefined = missed.length
+    ? missed.filter((m) => m.language === "zh").length > missed.length / 2
+      ? "zh"
+      : "en"
+    : undefined;
+  const missedTerms = missed.filter((m) => m.language === missedLang).slice(0, 15).map((m) => m.term);
 
   return (
     <div className="relative flex flex-1 flex-col py-6">
@@ -130,6 +139,29 @@ export function SessionSummary({
               </li>
             ))}
           </ul>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <form action={startChat}>
+              <input type="hidden" name="language" value={missedLang} />
+              <input
+                type="hidden"
+                name="prompt"
+                value={`Mình vừa quên các từ: ${missedTerms.join(", ")}. Giúp mình nhớ chúng: giải thích ngắn, cho mẹo nhớ, rồi hỏi lại mình từng từ.`}
+              />
+              <button
+                type="submit"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-btn bg-wash-grape px-4 text-sm font-semibold text-grape-text hover:brightness-95"
+              >
+                <MessageCircleHeart className="size-4" aria-hidden />
+                Nhờ gia sư giúp nhớ
+              </button>
+            </form>
+            <Link
+              href={`/hard-words?lang=${missedLang}`}
+              className="inline-flex min-h-11 items-center rounded-btn border border-rule bg-surface px-4 text-sm font-semibold text-ink hover:bg-muted"
+            >
+              Xem tất cả từ hay quên
+            </Link>
+          </div>
         </section>
       )}
 

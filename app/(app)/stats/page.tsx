@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LangFlag } from "@/components/lang-flag";
 import { Heatmap } from "@/components/stats/heatmap";
 import { ReviewsChart } from "@/components/stats/reviews-chart";
@@ -106,7 +107,12 @@ export default async function StatsPage() {
       </section>
 
       <section className="rounded-card border border-rule bg-surface p-4 shadow-card">
-        <h2 className="mb-3 text-base text-ink">Trạng thái thẻ</h2>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-base text-ink">Trạng thái thẻ</h2>
+          <Link href="/hard-words" className="inline-flex min-h-11 items-center text-sm font-semibold text-ink-blue hover:underline">
+            Từ hay quên →
+          </Link>
+        </div>
         {langs.length === 0 && <p className="text-ink-soft">Chưa có thẻ nào.</p>}
         <div className="flex flex-col gap-6">
           {langs.map((lang) => {

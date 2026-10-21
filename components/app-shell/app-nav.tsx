@@ -35,6 +35,7 @@ const SECONDARY: NavItem[] = [
 
 function isActive(pathname: string, href: string) {
   if (href === "/decks") return pathname.startsWith("/decks") || pathname.startsWith("/words");
+  if (href === "/practice") return pathname.startsWith("/practice") || pathname.startsWith("/hard-words");
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
