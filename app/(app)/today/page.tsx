@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ContactLinks } from "@/components/contact/contact-links";
+import { CONTACT } from "@/lib/contact";
 import { DeckCover } from "@/components/deck/deck-cover";
 import { SampleDecksButton } from "@/components/deck/sample-decks-button";
 import { LangFlag } from "@/components/lang-flag";
@@ -363,7 +364,7 @@ export default async function TodayPage() {
       >
         <div>
           <h2 id="today-contact" className="text-base text-ink">
-            Liên hệ với mình 👋
+            Liên hệ với {CONTACT.nickname} 👋
           </h2>
           <p className="text-sm text-ink-soft">Gặp lỗi, có góp ý hay muốn học cùng? Nhắn mình nhé.</p>
         </div>

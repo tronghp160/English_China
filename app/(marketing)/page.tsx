@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, BookOpenCheck, Sparkles, Users, Volume2 } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { ContactLinks } from "@/components/contact/contact-links";
+import { CONTACT } from "@/lib/contact";
 import { PinyinText } from "@/components/zh/pinyin-text";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -181,7 +182,7 @@ export default function MarketingPage() {
 
       <footer className="mt-16 flex flex-col gap-4 border-t border-rule pt-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="font-heading text-lg font-black text-ink">Liên hệ với mình</p>
+          <p className="font-heading text-lg font-black text-ink">Liên hệ với {CONTACT.nickname}</p>
           <p className="text-sm text-ink-soft">
             Góp ý, báo lỗi hay muốn học cùng?{" "}
             <Link href="/lien-he" className="font-semibold text-ink-blue underline-offset-2 hover:underline">

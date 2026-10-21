@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { ContactLinks } from "@/components/contact/contact-links";
+import { CONTACT } from "@/lib/contact";
 
 export const metadata: Metadata = {
   title: "Liên hệ",
-  description: "Góp ý, báo lỗi hoặc hỏi về Sổ Từ qua Facebook và Zalo.",
+  description: "Góp ý, báo lỗi hoặc hỏi về Sổ Từ: nhắn Xễu Đùng Đùng qua Facebook và Zalo.",
 };
 
 const TOPICS = [
@@ -19,9 +20,9 @@ export default function ContactPage() {
         <span aria-hidden className="animate-float text-5xl">
           👋
         </span>
-        <h1 className="mt-3 text-2xl text-ink">Liên hệ với mình</h1>
+        <h1 className="mt-3 text-2xl text-ink">Liên hệ với {CONTACT.nickname}</h1>
         <p className="mt-2 max-w-md text-ink-soft">
-          Sổ Từ do mình tự làm để học tiếng Anh và tiếng Trung. Có gì cần, bạn cứ nhắn qua Facebook hoặc Zalo nhé, mình sẽ trả lời sớm nhất có thể.
+          Chào bạn, mình là <span className="font-bold text-ink">{CONTACT.nickname}</span>, người làm Sổ Từ để học tiếng Anh và tiếng Trung. Có gì cần, bạn cứ nhắn qua Facebook hoặc Zalo nhé, mình sẽ trả lời sớm nhất có thể.
         </p>
       </div>
 

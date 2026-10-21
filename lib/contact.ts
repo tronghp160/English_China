@@ -1,5 +1,7 @@
 /** The owner's public contact info, shown on /lien-he, the landing footer and Settings. */
 export const CONTACT = {
+  /** The owner's nickname; the app itself stays "Sổ Từ". */
+  nickname: "Xễu Đùng Đùng",
   facebook: "https://www.facebook.com/trong.huynh.961169",
   zaloPhone: "0332412829",
 } as const;

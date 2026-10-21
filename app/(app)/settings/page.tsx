@@ -5,6 +5,7 @@ import { StudyPrefs } from "@/components/settings/study-prefs";
 import { AvatarUpload } from "@/components/settings/avatar-upload";
 import { DeleteAccount, ExportData } from "@/components/settings/account-data";
 import { ContactLinks } from "@/components/contact/contact-links";
+import { CONTACT } from "@/lib/contact";
 import { InstallApp } from "@/components/settings/install-app";
 import { ReminderSettings } from "@/components/settings/reminder-settings";
 import { NewPasswordForm } from "@/components/auth/new-password-form";
@@ -76,7 +77,7 @@ export default async function SettingsPage() {
         <InstallApp />
       </Section>
       <Section title="Liên hệ & góp ý">
-        <p className="mb-3 text-sm text-ink-soft">Gặp lỗi hay muốn góp ý? Nhắn trực tiếp cho người làm Sổ Từ nhé.</p>
+        <p className="mb-3 text-sm text-ink-soft">Gặp lỗi hay muốn góp ý? Nhắn trực tiếp cho {CONTACT.nickname}, người làm Sổ Từ nhé.</p>
         <ContactLinks />
       </Section>
       <Section title="Dữ liệu của bạn">
