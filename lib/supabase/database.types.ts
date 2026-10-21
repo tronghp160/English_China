@@ -32,6 +32,93 @@ export type Database = {
           },
         ];
       };
+      chat_messages: {
+        Row: {
+          created_at: string;
+          id: string;
+          parts: Json;
+          role: string;
+          thread_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id: string;
+          parts: Json;
+          role: string;
+          thread_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          parts?: Json;
+          role?: string;
+          thread_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_thread_id_fkey";
+            columns: ["thread_id"];
+            isOneToOne: false;
+            referencedRelation: "chat_threads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "chat_messages_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      chat_threads: {
+        Row: {
+          created_at: string;
+          deck_id: string | null;
+          id: string;
+          language: Database["public"]["Enums"]["lang_code"];
+          title: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          deck_id?: string | null;
+          id?: string;
+          language: Database["public"]["Enums"]["lang_code"];
+          title?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          deck_id?: string | null;
+          id?: string;
+          language?: Database["public"]["Enums"]["lang_code"];
+          title?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "chat_threads_deck_id_fkey";
+            columns: ["deck_id"];
+            isOneToOne: false;
+            referencedRelation: "decks";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "chat_threads_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       daily_stats: {
         Row: {
           correct: number;

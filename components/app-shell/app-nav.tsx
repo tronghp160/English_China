@@ -5,6 +5,7 @@ import {
   BookOpen,
   CalendarCheck,
   Compass,
+  MessageCircleHeart,
   PenLine,
   Settings,
   Users,
@@ -22,6 +23,7 @@ const PRIMARY: NavItem[] = [
   { href: "/today", label: "Hôm nay", icon: CalendarCheck, tone: "text-ink-blue bg-wash-blue" },
   { href: "/decks", label: "Bộ từ", icon: BookOpen, tone: "text-sun-text bg-wash-yellow" },
   { href: "/practice", label: "Luyện tập", icon: PenLine, tone: "text-jade-text bg-wash-jade" },
+  { href: "/chat", label: "Gia sư", icon: MessageCircleHeart, tone: "text-grape-text bg-wash-grape" },
   { href: "/groups", label: "Nhóm", icon: Users, tone: "text-pink-text bg-wash-pink" },
 ];
 
@@ -44,7 +46,7 @@ export function BottomNav() {
       aria-label="Điều hướng chính"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-rule bg-surface/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgb(88_72_232/0.25)] backdrop-blur lg:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4 px-2">
+      <ul className="mx-auto grid max-w-md grid-cols-5 px-1">
         {PRIMARY.map(({ href, label, icon: Icon, tone }) => {
           const active = isActive(pathname, href);
           return (
@@ -59,7 +61,7 @@ export function BottomNav() {
               >
                 <span
                   className={cn(
-                    "grid h-8 w-14 place-items-center rounded-full transition-colors",
+                    "grid h-8 w-12 place-items-center rounded-full transition-colors",
                     active && cn(tone, "animate-pop-in"),
                   )}
                 >

@@ -20,6 +20,8 @@ export type LanguageDef = {
   normalize: (term: string) => string;
   /** Extra search key stored in words.reading_key (toneless pinyin for zh). */
   readingKey: (reading: string | null | undefined) => string | null;
+  /** Language-specific rules for the study tutor chat (lib/ai/chat-prompt.ts). */
+  tutorHint: string;
 };
 
 /**
@@ -42,6 +44,8 @@ export const LANGUAGES: Record<LangCode, LanguageDef> = {
     termFontClass: "font-sans",
     normalize: (t) => normalizeTerm(t, "en"),
     readingKey: () => null,
+    tutorHint:
+      "Khi giới thiệu một từ tiếng Anh, ghi kèm phiên âm IPA kiểu Mỹ lần đầu nhắc tới, ví dụ resilient /rɪˈzɪliənt/. Ưu tiên tiếng Anh tự nhiên, phổ biến.",
   },
   zh: {
     code: "zh",
@@ -57,6 +61,8 @@ export const LANGUAGES: Record<LangCode, LanguageDef> = {
     termFontClass: "font-hanzi",
     normalize: (t) => normalizeTerm(t, "zh"),
     readingKey: (r) => (r ? pinyinSearchKey(r) || null : null),
+    tutorHint:
+      "Luôn viết chữ Hán giản thể. Mỗi khi viết từ hoặc câu tiếng Trung, ghi pinyin có dấu thanh ngay sau trong ngoặc, ví dụ 坚强 (jiānqiáng). Câu đóng vai ngắn, hợp trình độ người học.",
   },
 };
 

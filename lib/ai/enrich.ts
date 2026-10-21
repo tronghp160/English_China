@@ -40,13 +40,13 @@ function quotaDay() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
 }
 
-function requireProvider(): AiProvider {
+export function requireProvider(): AiProvider {
   const p = aiProvider();
   if (!p) throw new AiError("not_configured", "Tính năng Gợi ý AI chưa được bật (thiếu ANTHROPIC_API_KEY hoặc GOOGLE_GENERATIVE_AI_API_KEY).");
   return p;
 }
 
-function model(p: AiProvider) {
+export function model(p: AiProvider) {
   return p.provider === "google"
     ? createGoogleGenerativeAI({ apiKey: p.apiKey })(p.model)
     : createAnthropic({ apiKey: p.apiKey })(p.model);

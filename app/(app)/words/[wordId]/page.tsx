@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PenLine, Pencil, Plus } from "lucide-react";
+import { MessageCircleHeart, PenLine, Pencil, Plus } from "lucide-react";
 import { BackLink } from "@/components/app-shell/back-link";
 import { StatusDot } from "@/components/deck/status-dot";
 import { ImageCredit } from "@/components/word/image-picker";
@@ -11,9 +11,11 @@ import { PronounceButton } from "@/components/word/pronounce-button";
 import { SuspendToggle } from "@/components/word/suspend-toggle";
 import { PinyinText } from "@/components/zh/pinyin-text";
 import { StrokeOrder } from "@/components/zh/stroke-order";
+import { startChat } from "@/lib/actions/chat";
 import { getMe } from "@/lib/auth";
 import { getDeck } from "@/lib/data/decks";
 import { getWord } from "@/lib/data/words";
+import { aiProvider } from "@/lib/env";
 import { formatRelativeDue, formatShortDate } from "@/lib/format";
 import { LANGUAGES } from "@/lib/lang/registry";
 import { POS, isPosCode } from "@/lib/pos";
@@ -185,6 +187,24 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
               <PenLine className="size-4" aria-hidden />
               Luyện viết
             </Link>
+          )}
+          {aiProvider() !== null && (
+            <form action={startChat}>
+              <input type="hidden" name="language" value={word.language} />
+              <input type="hidden" name="deck_id" value={word.deck_id} />
+              <input
+                type="hidden"
+                name="prompt"
+                value={`Giải thích kỹ hơn giúp mình từ "${word.term}" (${word.meaning_vi}): cách dùng, từ hay nhầm, và cho mình đặt thử một câu.`}
+              />
+              <button
+                type="submit"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-btn bg-wash-grape px-4 text-sm font-semibold text-grape-text hover:brightness-95"
+              >
+                <MessageCircleHeart className="size-4" aria-hidden />
+                Hỏi gia sư
+              </button>
+            </form>
           )}
         </div>
       </div>
