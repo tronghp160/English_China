@@ -2,14 +2,10 @@ import "server-only";
 import { tool, type InferUITools, type UIMessage } from "ai";
 import { z } from "zod";
 import type { LangCode } from "@/lib/lang/types";
+import { searchMyWords } from "@/lib/search";
 import type { ServerSupabase } from "@/lib/supabase/server";
 
 type StoredWord = { term: string; reading: string | null; meaning_vi: string };
-
-/** PostgREST filter syntax uses , ( ) and ilike wildcards; keep only plain search text. */
-export function sanitizeSearch(q: string) {
-  return q.replace(/[%_,()*\\"]/g, " ").replace(/\s+/g, " ").trim();
-}
 
 /**
  * Tools of the study tutor. They read through the signed-in user's client, so RLS
@@ -28,24 +24,8 @@ export function chatTools(supabase: ServerSupabase, ctx: { language: LangCode; d
         "Tìm trong sổ từ của người học (các bộ từ họ đang học, đúng ngôn ngữ của cuộc trò chuyện) theo từ hoặc nghĩa tiếng Việt.",
       inputSchema: z.object({ query: z.string().trim().min(1).max(80).describe("Từ hoặc một phần nghĩa tiếng Việt") }),
       execute: async ({ query }) => {
-        const decks = await studyDecks();
-        const q = sanitizeSearch(query);
-        if (!decks.length || !q) return { found: [] };
-        const names = new Map(decks.map((d) => [d.id, d.name]));
-        const { data } = await supabase
-          .from("words")
-          .select("term, reading, meaning_vi, deck_id")
-          .in("deck_id", [...names.keys()])
-          .or(`term.ilike.%${q}%,meaning_vi.ilike.%${q}%`)
-          .limit(8);
-        return {
-          found: (data ?? []).map((w) => ({
-            term: w.term,
-            reading: w.reading,
-            meaning_vi: w.meaning_vi,
-            deck: names.get(w.deck_id) ?? "",
-          })),
-        };
+        const { words } = await searchMyWords(supabase, query, { language: ctx.language, limit: 8 });
+        return { found: words.map(({ term, reading, meaning_vi, deck }) => ({ term, reading, meaning_vi, deck })) };
       },
     }),
 

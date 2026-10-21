@@ -4,6 +4,7 @@ import { BottomNav, SideNav } from "@/components/app-shell/app-nav";
 import { UserMenu } from "@/components/app-shell/user-menu";
 import { Logo } from "@/components/brand/logo";
 import { MeProvider } from "@/components/app-shell/me-provider";
+import { QuickSearch } from "@/components/app-shell/quick-search";
 import { requireMe } from "@/lib/auth";
 import { cjkFontVariables } from "@/lib/fonts";
 import { readPrefs } from "@/lib/validation";
@@ -29,11 +30,14 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             <Link href="/today" className="rounded-btn lg:invisible" aria-label="Sổ Từ — Hôm nay">
               <Logo />
             </Link>
-            <UserMenu
-              displayName={me.profile.display_name}
-              username={me.profile.username}
-              avatarUrl={me.profile.avatar_url}
-            />
+            <div className="flex items-center gap-2">
+              <QuickSearch />
+              <UserMenu
+                displayName={me.profile.display_name}
+                username={me.profile.username}
+                avatarUrl={me.profile.avatar_url}
+              />
+            </div>
           </div>
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-5 pb-28 lg:px-10 lg:pb-12">{children}</main>

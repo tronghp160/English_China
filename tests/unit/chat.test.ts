@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { threadTitle, tutorInstructions } from "@/lib/ai/chat-prompt";
-import { sanitizeSearch } from "@/lib/ai/chat-tools";
+import { rankByTerm, sanitizeSearch } from "@/lib/search";
 import { toBlocks } from "@/components/chat/message-text";
 
 describe("tutorInstructions", () => {
@@ -38,6 +38,13 @@ describe("sanitizeSearch", () => {
     expect(sanitizeSearch("a,b)(c%_*d")).toBe("a b c d");
     expect(sanitizeSearch("kiên cường")).toBe("kiên cường");
     expect(sanitizeSearch(",,,")).toBe("");
+  });
+});
+
+describe("rankByTerm", () => {
+  it("puts exact and prefix matches first, keeping order otherwise", () => {
+    const rows = ["unhappy", "happy hour", "happy", "a happy day"].map((term) => ({ term }));
+    expect(rankByTerm(rows, "Happy").map((r) => r.term)).toEqual(["happy", "happy hour", "unhappy", "a happy day"]);
   });
 });
 
