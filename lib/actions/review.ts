@@ -99,7 +99,7 @@ export async function submitReviews(input: ReviewSubmission[]): Promise<SubmitRe
     // but must not rewind the schedule.
     const stale =
       current.last_review !== null && Date.parse(current.last_review) > reviewedAt.getTime();
-    const updateCard = (item.mode === "flashcard" || item.updateCard) && !stale;
+    const updateCard = item.updateCard && !stale;
     const next = updateCard ? schedule(current, item.rating as RatingValue, reviewedAt) : null;
 
     const { data, error } = await admin.rpc("record_review", {

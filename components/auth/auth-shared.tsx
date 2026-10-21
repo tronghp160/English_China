@@ -1,9 +1,8 @@
 "use client";
 
 import type { AuthError } from "@supabase/supabase-js";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -18,7 +17,7 @@ export async function loadSupabase() {
   return createClient();
 }
 
-/** Where Supabase sends the user back after Google, an email link or a password reset. */
+/** Where Supabase sends the user back after a password-reset email link. */
 export function callbackUrl(next: string) {
   return `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
 }
@@ -29,7 +28,7 @@ export function authErrorMessage(error: Pick<AuthError, "code" | "status" | "mes
     case "invalid_credentials":
       return "Email hoặc mật khẩu không đúng.";
     case "email_not_confirmed":
-      return "Email này chưa được xác nhận. Mở email xác nhận Sổ Từ đã gửi, hoặc gửi lại bên dưới.";
+      return "Email này chưa được xác nhận. Thử đăng nhập lại.";
     case "user_already_exists":
     case "email_exists":
       return "Email này đã có tài khoản. Hãy đăng nhập, hoặc dùng “Quên mật khẩu”.";
@@ -40,10 +39,10 @@ export function authErrorMessage(error: Pick<AuthError, "code" | "status" | "mes
     case "email_address_invalid":
       return "Email chưa đúng hoặc không nhận được thư. Kiểm tra lại địa chỉ.";
     case "email_address_not_authorized":
-      return "Hệ thống email của Sổ Từ chưa gửi được tới địa chỉ này. Hãy dùng “Tiếp tục với Google”.";
+      return "Hệ thống email của Sổ Từ chưa gửi được tới địa chỉ này.";
     case "signup_disabled":
     case "email_provider_disabled":
-      return "Hiện chưa mở đăng ký bằng email. Hãy dùng “Tiếp tục với Google”.";
+      return "Hiện chưa mở đăng ký bằng email.";
     case "over_email_send_rate_limit":
       return "Đã gửi quá nhiều email. Đợi vài phút rồi thử lại.";
     case "over_request_rate_limit":
@@ -53,57 +52,6 @@ export function authErrorMessage(error: Pick<AuthError, "code" | "status" | "mes
   }
   if (error.status === 429) return "Bạn thử quá nhiều lần. Đợi một lát rồi thử lại.";
   return "Có lỗi khi kết nối máy chủ. Thử lại sau.";
-}
-
-function GoogleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-      <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.7Z" />
-      <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24Z" />
-      <path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1Z" />
-      <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9Z" />
-    </svg>
-  );
-}
-
-export function GoogleButton({ next, disabled, onError }: { next: string; disabled?: boolean; onError: (m: string) => void }) {
-  const [busy, setBusy] = useState(false);
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      className="h-12 w-full gap-3 rounded-[10px] text-base"
-      disabled={disabled || busy}
-      onClick={async () => {
-        setBusy(true);
-        const { error } = await (await loadSupabase()).auth.signInWithOAuth({
-          provider: "google",
-          options: { redirectTo: callbackUrl(next) },
-        });
-        if (error) {
-          setBusy(false);
-          onError(
-            error.code === "validation_failed" || error.status === 400
-              ? "Đăng nhập Google chưa được bật. Hãy dùng email."
-              : "Không mở được đăng nhập Google. Thử lại hoặc dùng email.",
-          );
-        }
-      }}
-    >
-      {busy ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <GoogleIcon />}
-      Tiếp tục với Google
-    </Button>
-  );
-}
-
-export function OrDivider({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3 text-sm text-ink-soft">
-      <span className="h-px flex-1 bg-rule" />
-      {children}
-      <span className="h-px flex-1 bg-rule" />
-    </div>
-  );
 }
 
 export function EmailField({
@@ -128,7 +76,7 @@ export function EmailField({
         placeholder="ban@gmail.com"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-12 rounded-[10px] text-base"
+        className="h-12 text-base"
         aria-invalid={Boolean(error) || undefined}
         aria-describedby={error ? "email-error" : undefined}
       />
@@ -178,7 +126,7 @@ export function PasswordField({
           spellCheck={false}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-12 rounded-[10px] pr-12 text-base"
+          className="h-12 pr-12 text-base"
           aria-invalid={Boolean(error) || undefined}
           aria-describedby={describedBy}
         />
@@ -188,7 +136,7 @@ export function PasswordField({
           aria-label={shown ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
           aria-pressed={shown}
           aria-controls={id}
-          className="absolute inset-y-0 right-0 grid w-12 place-items-center rounded-r-[10px] text-ink-soft hover:text-ink"
+          className="absolute inset-y-0 right-0 grid w-12 place-items-center rounded-r-btn text-ink-soft hover:text-ink"
         >
           {shown ? <EyeOff className="size-5" aria-hidden /> : <Eye className="size-5" aria-hidden />}
         </button>
@@ -213,7 +161,7 @@ export function FormAlert({ children, tone = "error" }: { children: React.ReactN
     <div
       role={tone === "error" ? "alert" : "status"}
       className={cn(
-        "rounded-[10px] px-4 py-3 text-sm",
+        "rounded-btn px-4 py-3 text-sm",
         tone === "error" ? "bg-wash-red text-danger" : "bg-wash-jade text-ink",
       )}
     >

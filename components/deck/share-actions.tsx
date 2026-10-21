@@ -27,7 +27,7 @@ export function ShareActions({ deckRef, showSubscribe = true }: { deckRef: Ref; 
     });
   }
 
-  const base = "inline-flex min-h-12 items-center justify-center gap-2 rounded-[10px] px-5 text-base font-medium";
+  const base = "inline-flex min-h-12 items-center justify-center gap-2 rounded-btn px-5 text-base font-medium";
   return (
     <div className="flex flex-col gap-2 sm:flex-row">
       {showSubscribe && (

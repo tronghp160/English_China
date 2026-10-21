@@ -6,7 +6,7 @@ import { WordForm } from "@/components/word/word-form";
 import { requireUser } from "@/lib/auth";
 import { getDeck } from "@/lib/data/decks";
 import { getWord } from "@/lib/data/words";
-import { serverEnv } from "@/lib/env";
+import { aiProvider } from "@/lib/env";
 import { rowToWordInput } from "@/lib/word-mapper";
 
 export const metadata: Metadata = { title: "Sửa từ" };
@@ -20,10 +20,10 @@ export default async function EditWordPage({ params }: PageProps<"/words/[wordId
   if (!view?.canEdit) redirect(`/words/${wordId}`);
 
   return (
-    <div className="max-w-2xl">
+    <div className="mx-auto max-w-2xl">
       <BackLink href={`/words/${wordId}`} label={word.term} />
       <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-ink">Sửa từ</h1>
+        <h1 className="text-xl text-ink">Sửa từ</h1>
         <DeleteWordButton wordId={wordId} term={word.term} />
       </div>
       <WordForm
@@ -34,7 +34,7 @@ export default async function EditWordPage({ params }: PageProps<"/words/[wordId
         language={word.language}
         userId={user.id}
         initial={rowToWordInput(word)}
-        aiEnabled={Boolean(serverEnv().ANTHROPIC_API_KEY)}
+        aiEnabled={aiProvider() !== null}
       />
     </div>
   );

@@ -32,8 +32,8 @@ const ICONS = { words: PenLine, joined: UserPlus, created: Users, streak: Flame 
 
 export function ActivityFeed({ items }: { items: FeedItem[] }) {
   return (
-    <section aria-labelledby="feed-title" className="rounded-[12px] border border-rule bg-surface">
-      <h2 id="feed-title" className="px-4 pt-4 pb-2 font-bold text-ink">
+    <section aria-labelledby="feed-title" className="rounded-card border border-rule bg-surface">
+      <h2 id="feed-title" className="px-4 pt-4 pb-2 text-ink">
         Hoạt động gần đây
       </h2>
       {items.length ? (

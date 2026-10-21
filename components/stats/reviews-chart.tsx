@@ -23,7 +23,7 @@ function Tip({ active, payload }: TooltipContentProps<number, string>) {
   if (!active || !p) return null;
   const pct = p.reviews ? Math.round((p.correct / p.reviews) * 100) : 0;
   return (
-    <div className="rounded-[10px] border border-rule bg-surface px-3 py-2 text-sm shadow-sm">
+    <div className="rounded-btn border border-rule bg-surface px-3 py-2 text-sm shadow-sm">
       <p className="font-medium text-ink">{short(p.day)}</p>
       <p className="text-ink-soft">
         <span className="text-ink tabular-nums">{p.reviews}</span> lượt ôn

@@ -1,13 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro } from "next/font/google";
+import { Be_Vietnam_Pro, Nunito } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
 const beVietnam = Be_Vietnam_Pro({
   variable: "--font-be-vietnam",
-  weight: ["400", "500", "700"],
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin", "latin-ext", "vietnamese"],
+  display: "swap",
+});
+
+// Rounded display face for headings and big numbers (font-heading).
+const nunito = Nunito({
+  variable: "--font-nunito",
+  weight: ["800", "900"],
+  subsets: ["latin", "vietnamese"],
   display: "swap",
 });
 
@@ -23,8 +31,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F7F9FC" },
-    { media: "(prefers-color-scheme: dark)", color: "#14171F" },
+    { media: "(prefers-color-scheme: light)", color: "#F6F4FF" },
+    { media: "(prefers-color-scheme: dark)", color: "#13111F" },
   ],
 };
 
@@ -38,7 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="vi"
       suppressHydrationWarning
-      className={`${beVietnam.variable} h-full antialiased`}
+      className={`${beVietnam.variable} ${nunito.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

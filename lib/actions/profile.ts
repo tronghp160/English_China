@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
   onboardingSchema,
   prefsSchema,
-  readPrefs,
   settingsSchema,
   type OnboardingInput,
   type Prefs,
@@ -109,7 +108,9 @@ export async function updatePrefs(patch: Prefs): Promise<ActionResult> {
   if (!parsed.success) return fail("Cài đặt không hợp lệ.");
   const supabase = await createClient();
   const { data } = await supabase.from("user_settings").select("prefs").eq("user_id", user.id).single();
-  const merged = { ...readPrefs(data?.prefs), ...parsed.data };
+  // Store only what the user set, so changing a default later reaches them too.
+  const stored = prefsSchema.safeParse(data?.prefs ?? {});
+  const merged = { ...(stored.success ? stored.data : {}), ...parsed.data };
   const { error } = await supabase.from("user_settings").update({ prefs: merged }).eq("user_id", user.id);
   if (error) return fail("Không lưu được cài đặt. Thử lại.");
   revalidatePath("/", "layout");

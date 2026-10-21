@@ -1,10 +1,11 @@
 "use client";
 
-import { Camera, ImageOff, Loader2, RefreshCw, Search } from "lucide-react";
+import { Camera, ImageOff, ImagePlus, Loader2, Search } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { ImageSuggestion } from "@/lib/ai/to-word";
 import { compressImage, extensionFor } from "@/lib/image-compress";
 import { providerLabel, type ImageResult } from "@/lib/images/types";
 import { cn } from "@/lib/utils";
@@ -43,38 +44,62 @@ export function ImagePicker({
   userId,
   emoji,
   autoSearchKey,
+  suggestions = [],
 }: {
   value: ImageValue;
   onChange: (v: ImageValue) => void;
   suggestedQuery: string;
   userId: string;
   emoji?: string | null;
+  /** One search per meaning of the word (from the AI), shown as chips. */
+  suggestions?: ImageSuggestion[];
   /** Changing this triggers a fresh search with suggestedQuery (e.g. after AI fill). */
   autoSearchKey?: string | number;
 }) {
   const [query, setQuery] = useState(suggestedQuery);
   const [results, setResults] = useState<ImageResult[] | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState<{ q: string; page: number; hasMore: boolean } | null>(null);
+  const [loading, setLoading] = useState<"new" | "more" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  // Pages already fetched in this form, so switching between meanings is instant and free.
+  const cache = useRef(new Map<string, { results: ImageResult[]; hasMore: boolean }>());
+  const latest = useRef("");
 
-  const search = useCallback(async (q: string) => {
+  const search = useCallback(async (q: string, page = 1) => {
     const term = q.trim();
     if (!term) return;
-    setLoading(true);
+    const key = `${term.toLowerCase()}|${page}`;
+    latest.current = key;
     setError(null);
-    try {
-      const res = await fetch(`/api/images/search?q=${encodeURIComponent(term)}`);
-      const body = (await res.json()) as { results?: ImageResult[]; error?: string };
-      if (!res.ok) throw new Error(body.error || "Không tìm được ảnh.");
-      setResults(body.results ?? []);
-    } catch (e) {
-      setError((e as Error).message);
-      setResults([]);
-    } finally {
-      setLoading(false);
+    let hit = cache.current.get(key);
+    if (!hit) {
+      setLoading(page > 1 ? "more" : "new");
+      try {
+        const res = await fetch(`/api/images/search?q=${encodeURIComponent(term)}&page=${page}`);
+        const body = (await res.json()) as { results?: ImageResult[]; hasMore?: boolean; error?: string };
+        if (!res.ok) throw new Error(body.error || "Không tìm được ảnh.");
+        hit = { results: body.results ?? [], hasMore: Boolean(body.hasMore) };
+        cache.current.set(key, hit);
+      } catch (e) {
+        if (latest.current === key) {
+          setError((e as Error).message);
+          if (page === 1) setResults([]);
+          setLoading(null);
+        }
+        return;
+      }
     }
+    if (latest.current !== key) return; // a newer search won
+    const found = hit.results;
+    setResults((prev) => {
+      if (page === 1 || !prev) return found;
+      const ids = new Set(prev.map((r) => `${r.provider}-${r.id}`));
+      return [...prev, ...found.filter((r) => !ids.has(`${r.provider}-${r.id}`))];
+    });
+    setSearched({ q: term.toLowerCase(), page, hasMore: hit.hasMore });
+    setLoading(null);
   }, []);
 
   // New AI suggestion: adopt its query (state adjusted during render, not in an effect).
@@ -130,7 +155,7 @@ export function ImagePicker({
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-3">
-        <div className="relative grid size-24 shrink-0 place-items-center overflow-hidden rounded-[12px] border border-rule bg-wash-blue">
+        <div className="relative grid size-24 shrink-0 place-items-center overflow-hidden rounded-card border border-rule bg-wash-blue">
           {value.image_url ? (
             <Image src={value.image_url} alt="Ảnh đã chọn" fill sizes="96px" className="object-cover" />
           ) : (
@@ -153,7 +178,7 @@ export function ImagePicker({
             />
             <label
               htmlFor="word-image-upload"
-              className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-[10px] border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted"
+              className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-btn border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted"
             >
               {uploading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Camera className="size-4" aria-hidden />}
               Tải ảnh của tôi lên
@@ -162,7 +187,7 @@ export function ImagePicker({
               <button
                 type="button"
                 onClick={() => onChange({ image_url: null, image_source: null })}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-[10px] px-3 text-sm text-ink-soft hover:bg-muted"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-btn px-3 text-sm text-ink-soft hover:bg-muted"
               >
                 <ImageOff className="size-4" aria-hidden />
                 Không dùng ảnh
@@ -182,7 +207,7 @@ export function ImagePicker({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Từ khóa tiếng Anh, ví dụ: tree in rock"
-          className="h-11 min-w-0 flex-1 rounded-[10px] border border-rule bg-surface px-3 text-base"
+          className="h-11 min-w-0 flex-1 rounded-btn border border-rule bg-surface px-3 text-base"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -193,17 +218,48 @@ export function ImagePicker({
         <button
           type="button"
           onClick={() => void search(query)}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-[10px] border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-btn border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted"
         >
-          {results ? <RefreshCw className="size-4" aria-hidden /> : <Search className="size-4" aria-hidden />}
-          {results ? "Tìm ảnh khác" : "Tìm ảnh"}
+          <Search className="size-4" aria-hidden />
+          Tìm ảnh
         </button>
       </div>
 
-      {loading ? (
+      {suggestions.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-sm text-ink-soft">Ảnh theo từng nghĩa:</p>
+          <div className="flex flex-wrap gap-2">
+            {suggestions.map((s) => {
+              const active = searched?.q === s.query.toLowerCase();
+              return (
+                <button
+                  key={s.query}
+                  type="button"
+                  aria-pressed={active}
+                  title={s.query}
+                  onClick={() => {
+                    setQuery(s.query);
+                    void search(s.query);
+                  }}
+                  className={cn(
+                    "inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-full border-2 px-3 text-sm font-semibold",
+                    active
+                      ? "border-ink-blue bg-ink-blue text-primary-foreground"
+                      : "border-rule bg-surface text-ink-soft hover:text-ink",
+                  )}
+                >
+                  <span className="truncate">{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {loading === "new" ? (
         <div className="grid grid-cols-4 gap-2">
-          {Array.from({ length: 8 }, (_, i) => (
-            <Skeleton key={i} className="aspect-square rounded-[10px]" />
+          {Array.from({ length: 12 }, (_, i) => (
+            <Skeleton key={i} className="aspect-square rounded-btn" />
           ))}
         </div>
       ) : error ? (
@@ -211,8 +267,9 @@ export function ImagePicker({
       ) : results && results.length === 0 ? (
         <p className="text-sm text-ink-soft">Không có ảnh phù hợp. Thử từ khóa cụ thể hơn.</p>
       ) : results ? (
+        <>
         <ul className="grid grid-cols-4 gap-2" aria-label="Ảnh gợi ý">
-          {results.slice(0, 8).map((r) => {
+          {results.map((r) => {
             const active = value.image_url === r.url;
             return (
               <li key={`${r.provider}-${r.id}`}>
@@ -222,7 +279,7 @@ export function ImagePicker({
                   aria-pressed={active}
                   aria-label={`Chọn ảnh của ${r.author} (${providerLabel(r.provider)})`}
                   className={cn(
-                    "relative block aspect-square w-full overflow-hidden rounded-[10px] border-2",
+                    "relative block aspect-square w-full overflow-hidden rounded-btn border-2",
                     active ? "border-ink-blue" : "border-transparent",
                   )}
                 >
@@ -232,6 +289,22 @@ export function ImagePicker({
             );
           })}
         </ul>
+        {searched?.hasMore && (
+          <button
+            type="button"
+            disabled={loading === "more"}
+            onClick={() => void search(searched.q, searched.page + 1)}
+            className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-btn border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted disabled:opacity-60"
+          >
+            {loading === "more" ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <ImagePlus className="size-4" aria-hidden />
+            )}
+            Xem thêm ảnh
+          </button>
+        )}
+        </>
       ) : null}
     </div>
   );

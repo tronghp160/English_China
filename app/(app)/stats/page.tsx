@@ -19,11 +19,14 @@ const BUCKETS = [
   { key: "suspended", label: "Tạm ẩn", tone: "bg-rule" },
 ] as const;
 
-function Tile({ label, value, note }: { label: string; value: string; note?: string }) {
+function Tile({ label, value, note, emoji, tone }: { label: string; value: string; note?: string; emoji: string; tone: string }) {
   return (
-    <div className="rounded-[12px] border border-rule bg-surface p-4">
-      <p className="text-sm text-ink-soft">{label}</p>
-      <p className="mt-1 text-3xl font-semibold text-ink tabular-nums">{value}</p>
+    <div className={cn("relative overflow-hidden rounded-card p-4", tone)}>
+      <span aria-hidden className="absolute top-3 right-3 text-2xl">
+        {emoji}
+      </span>
+      <p className="text-sm font-semibold text-ink-soft">{label}</p>
+      <p className="mt-1 font-heading text-3xl font-black text-ink tabular-nums">{value}</p>
       {note && <p className="mt-0.5 text-xs text-ink-soft">{note}</p>}
     </div>
   );
@@ -55,25 +58,29 @@ export default async function StatsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-bold text-ink">Thống kê</h1>
+      <h1 className="text-xl text-ink">Thống kê</h1>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Tile label="Lượt ôn 30 ngày" value={reviews30.toLocaleString("vi-VN")} />
+        <Tile label="Lượt ôn 30 ngày" value={reviews30.toLocaleString("vi-VN")} emoji="🃏" tone="bg-wash-grape" />
         <Tile
           label="Tỉ lệ nhớ"
           value={retention === null ? "—" : `${retention}%`}
           note="30 ngày qua"
+          emoji="🎯"
+          tone="bg-wash-jade"
         />
         <Tile
           label="Chuỗi ngày"
           value={String(s.streak.current)}
           note={`${activeDays30}/30 ngày có ôn`}
+          emoji="🔥"
+          tone="bg-wash-yellow"
         />
-        <Tile label="XP 30 ngày" value={xp30.toLocaleString("vi-VN")} />
+        <Tile label="XP 30 ngày" value={xp30.toLocaleString("vi-VN")} emoji="⭐" tone="bg-wash-sky" />
       </div>
 
-      <section className="rounded-[12px] border border-rule bg-surface p-4">
-        <h2 className="mb-3 text-sm font-medium text-ink-soft">Số lượt ôn mỗi ngày</h2>
+      <section className="rounded-card border border-rule bg-surface p-4 shadow-card">
+        <h2 className="mb-3 text-base text-ink">Số lượt ôn mỗi ngày</h2>
         {reviews30 ? (
           <>
             <ReviewsChart data={last30} />
@@ -98,8 +105,8 @@ export default async function StatsPage() {
         )}
       </section>
 
-      <section className="rounded-[12px] border border-rule bg-surface p-4">
-        <h2 className="mb-3 text-sm font-medium text-ink-soft">Trạng thái thẻ</h2>
+      <section className="rounded-card border border-rule bg-surface p-4 shadow-card">
+        <h2 className="mb-3 text-base text-ink">Trạng thái thẻ</h2>
         {langs.length === 0 && <p className="text-ink-soft">Chưa có thẻ nào.</p>}
         <div className="flex flex-col gap-6">
           {langs.map((lang) => {
@@ -139,8 +146,8 @@ export default async function StatsPage() {
         </div>
       </section>
 
-      <section className="rounded-[12px] border border-rule bg-surface p-4">
-        <h2 className="mb-3 text-sm font-medium text-ink-soft">26 tuần gần đây</h2>
+      <section className="rounded-card border border-rule bg-surface p-4 shadow-card">
+        <h2 className="mb-3 text-base text-ink">26 tuần gần đây</h2>
         <Heatmap
           days={s.days.map((d) => ({ day: d.day, reviews: d.reviews }))}
           today={s.today}

@@ -31,11 +31,12 @@ test.describe("đăng ký, đăng nhập bằng mật khẩu", () => {
     expect(errors).toEqual([]);
   });
 
-  test("form đăng ký kiểm tra dữ liệu và báo đã gửi email xác nhận", async ({ page }) => {
+  test("form đăng ký kiểm tra dữ liệu, vào thẳng app không cần xác nhận email", async ({ page, context }) => {
     await page.goto("/signup");
     await page.getByLabel("Email").fill("ban@gmail");
     await page.getByLabel("Mật khẩu", { exact: true }).fill("ngan");
     await page.getByRole("button", { name: "Tạo tài khoản" }).click();
+    await expect(page.getByText("Nhập tên hiển thị")).toBeVisible();
     await expect(page.getByText("Email chưa đúng định dạng")).toBeVisible();
     await expect(page.getByText("Mật khẩu cần ít nhất 8 ký tự")).toBeVisible();
 
@@ -43,31 +44,31 @@ test.describe("đăng ký, đăng nhập bằng mật khẩu", () => {
     await page.getByRole("button", { name: "Hiện mật khẩu" }).click();
     await expect(page.getByLabel("Mật khẩu", { exact: true })).toHaveAttribute("type", "text");
 
-    // Supabase would email a confirmation link: answer like it does, without sending mail.
-    let body: { email?: string; password?: string } = {};
-    await page.route("**/auth/v1/signup**", async (route) => {
-      body = route.request().postDataJSON();
-      await route.fulfill({
-        json: { id: crypto.randomUUID(), aud: "authenticated", role: "", email: body.email, identities: [{ id: "x" }], created_at: new Date().toISOString() },
-      });
-    });
-    const email = testEmail();
+    const email = fresh();
+    await page.getByLabel("Tên của bạn").fill("Người Thử");
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Mật khẩu", { exact: true }).fill(PASSWORD);
     await page.getByRole("button", { name: "Tạo tài khoản" }).click();
-    await expect(page.getByText(`Gần xong! Kiểm tra email ${email}.`)).toBeVisible();
-    expect(body).toMatchObject({ email, password: PASSWORD });
+    await expect(page).toHaveURL(/\/welcome/);
 
-    // An address that already has an account comes back without identities.
-    await page.unroute("**/auth/v1/signup**");
-    await page.route("**/auth/v1/signup**", (route) =>
-      route.fulfill({ json: { id: crypto.randomUUID(), aud: "authenticated", role: "", email, identities: [], created_at: new Date().toISOString() } }),
-    );
-    await page.getByRole("button", { name: "Dùng email khác" }).click();
+    // The same address again → already has an account.
+    await context.clearCookies();
+    await page.goto("/signup");
+    await page.getByLabel("Tên của bạn").fill("Người Khác");
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Mật khẩu", { exact: true }).fill(PASSWORD);
     await page.getByRole("button", { name: "Tạo tài khoản" }).click();
-    await expect(page.getByText("Email này đã có tài khoản.", { exact: false })).toBeVisible();
+    await expect(page.getByText("Email này đã có tài khoản.", { exact: false }).first()).toBeVisible();
+  });
+
+  test("tài khoản tạo lúc còn bật xác nhận email vẫn đăng nhập được", async ({ page }) => {
+    const email = fresh();
+    await admin().auth.admin.createUser({ email, password: PASSWORD, email_confirm: false });
+    await page.goto("/login");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Mật khẩu", { exact: true }).fill(PASSWORD);
+    await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
+    await expect(page).toHaveURL(/\/welcome/);
   });
 
   test("quên mật khẩu → đặt mật khẩu mới → đăng nhập bằng mật khẩu mới", async ({ page, context }) => {

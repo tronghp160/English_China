@@ -120,16 +120,16 @@ function Options({
             onClick={() => onPick(o.id)}
             lang={lang === "zh" ? "zh-CN" : undefined}
             className={cn(
-              "flex min-h-14 items-center gap-3 rounded-[10px] border px-4 py-3 text-left text-ink disabled:cursor-default",
-              !outcome && "border-rule bg-surface hover:bg-muted",
-              outcome && isAnswer && "border-jade-text bg-wash-jade",
-              outcome && picked && !isAnswer && "border-danger bg-wash-red",
-              outcome && !isAnswer && !picked && "border-rule bg-surface opacity-60",
+              "btn-3d flex min-h-14 items-center gap-3 rounded-btn border-2 px-4 py-3 text-left font-medium text-ink disabled:cursor-default",
+              !outcome && "border-rule bg-surface [--edge-color:var(--rule)] hover:border-ink-blue/40 hover:bg-wash-blue",
+              outcome && isAnswer && "animate-pop-in border-jade bg-wash-jade [--edge-color:var(--jade)]",
+              outcome && picked && !isAnswer && "border-margin-red bg-wash-red [--edge-color:var(--margin-red)]",
+              outcome && !isAnswer && !picked && "border-rule bg-surface opacity-60 [--edge-color:var(--rule)]",
               big && "text-2xl",
               lang === "zh" && "font-hanzi text-2xl",
             )}
           >
-            <kbd className="hidden w-4 shrink-0 font-sans text-xs text-ink-soft lg:block">
+            <kbd className="hidden size-6 shrink-0 place-items-center rounded-md border-2 border-rule font-sans text-xs font-bold text-ink-soft lg:grid">
               {i + 1}
             </kbd>
             <span className="min-w-0 flex-1 break-words">{o.label}</span>
@@ -226,7 +226,7 @@ export function PracticeSession({
 
   const pick = useCallback(
     (id: string) => {
-      if (!q || q.kind === "typing" || q.kind === "writing") return;
+      if (!q || q.kind === "typing" || q.kind === "writing" || q.kind === "flashcard") return;
       finish({ correct: id === q.answerId, picked: id });
     },
     [finish, q],
@@ -396,7 +396,7 @@ export function PracticeSession({
               onChange={(e) => setTyped(e.target.value)}
               lang={zh ? "zh-CN" : "en"}
               className={cn(
-                "h-14 rounded-[10px] border bg-surface px-4 text-xl text-ink outline-none focus:border-ink-blue",
+                "h-14 rounded-btn border-2 bg-surface px-4 text-xl text-ink outline-none focus:border-ink-blue",
                 typingResult === "wrong"
                   ? "border-danger"
                   : typingResult
@@ -408,14 +408,14 @@ export function PracticeSession({
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="min-h-12 flex-1 rounded-[10px] bg-primary font-medium text-primary-foreground"
+                  className="btn-3d min-h-12 flex-1 rounded-btn bg-primary font-bold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
                 >
                   Kiểm tra
                 </button>
                 <button
                   type="button"
                   onClick={() => finish({ correct: false })}
-                  className="min-h-12 rounded-[10px] border border-rule bg-surface px-4 text-ink"
+                  className="btn-3d min-h-12 rounded-btn border-2 border-rule bg-surface px-4 font-semibold text-ink [--edge-color:var(--rule)]"
                 >
                   Không nhớ
                 </button>
@@ -462,16 +462,16 @@ export function PracticeSession({
         <div
           role="status"
           className={cn(
-            "sticky bottom-0 -mx-4 mt-4 flex flex-col gap-3 border-t px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)]",
-            outcome.correct ? "border-jade-text/40 bg-wash-jade" : "border-danger/40 bg-wash-red",
+            "sticky bottom-0 -mx-4 mt-4 flex animate-pop-in flex-col gap-3 rounded-t-sheet border-t-2 px-4 pt-4 pb-[max(env(safe-area-inset-bottom),0.75rem)]",
+            outcome.correct ? "border-jade/50 bg-wash-jade" : "border-margin-red/50 bg-wash-red",
           )}
         >
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
               <p
-                className={cn("font-semibold", outcome.correct ? "text-jade-text" : "text-danger")}
+                className={cn("font-heading text-xl font-black", outcome.correct ? "text-jade-text" : "text-danger")}
               >
-                {outcome.close ? "Gần đúng!" : outcome.correct ? "Đúng rồi!" : "Chưa đúng"}
+                {outcome.close ? "Gần đúng! 👌" : outcome.correct ? "Đúng rồi! 🎉" : "Chưa đúng 😅"}
               </p>
               <p className="mt-0.5 text-ink">
                 <span
@@ -490,7 +490,12 @@ export function PracticeSession({
             ref={continueRef}
             type="button"
             onClick={next}
-            className="min-h-12 rounded-[10px] bg-primary font-medium text-primary-foreground"
+            className={cn(
+              "btn-3d min-h-14 rounded-btn text-lg font-extrabold text-white dark:text-paper",
+              outcome.correct
+                ? "bg-jade-text [--edge-color:color-mix(in_oklab,var(--jade-text),black_30%)]"
+                : "bg-danger [--edge-color:color-mix(in_oklab,var(--danger),black_30%)]",
+            )}
           >
             {index + 1 >= questions.length ? "Xem kết quả" : "Tiếp tục"}
             <kbd className="ml-2 hidden text-xs font-normal opacity-70 lg:inline">Enter</kbd>

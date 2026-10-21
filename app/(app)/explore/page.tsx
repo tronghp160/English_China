@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight, Search } from "lucide-react";
+import { DeckCover } from "@/components/deck/deck-cover";
 import { LangFlag } from "@/components/lang-flag";
+import { LANGUAGES } from "@/lib/lang/registry";
 import { EXPLORE_PAGE_SIZE, getPublicDecks, type ExploreSort } from "@/lib/data/explore";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +39,7 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-ink">Khám phá</h1>
+      <h1 className="text-xl text-ink">Khám phá</h1>
       <p className="mt-1 text-sm text-ink-soft">Bộ từ công khai do mọi người chia sẻ. Học trực tiếp hoặc sao chép về.</p>
 
       <form action="/explore" role="search" className="mt-4 flex gap-2">
@@ -51,10 +53,10 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
             defaultValue={q}
             placeholder="Tìm theo tên bộ từ"
             aria-label="Tìm theo tên bộ từ"
-            className="h-11 w-full rounded-[10px] border border-rule bg-surface pr-3 pl-9 text-base text-ink placeholder:text-ink-soft"
+            className="h-11 w-full rounded-btn border-2 border-rule bg-surface pr-3 pl-9 text-base text-ink placeholder:text-ink-soft focus:border-ink-blue"
           />
         </div>
-        <button type="submit" className="h-11 shrink-0 rounded-[10px] border border-rule bg-surface px-4 text-sm font-medium text-ink hover:bg-muted">
+        <button type="submit" className="btn-3d h-11 shrink-0 rounded-btn bg-primary px-4 text-sm font-bold text-primary-foreground [--edge-color:var(--ink-blue-shade)]">
           Tìm
         </button>
       </form>
@@ -69,8 +71,8 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
                 href={href({ lang: f.value })}
                 aria-current={active ? "true" : undefined}
                 className={cn(
-                  "inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 text-sm",
-                  active ? "border-ink-blue bg-wash-blue font-medium text-ink" : "border-rule text-ink-soft",
+                  "inline-flex min-h-11 shrink-0 items-center rounded-full border-2 px-4 text-sm font-semibold transition-colors",
+                  active ? "border-ink-blue bg-ink-blue text-primary-foreground" : "border-rule bg-surface text-ink-soft hover:text-ink",
                 )}
               >
                 {f.value && <LangFlag lang={f.value} className="mr-1.5" />}
@@ -86,8 +88,8 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
               href={href({ sort: s.value === "popular" ? null : s.value })}
               aria-current={s.value === sort ? "true" : undefined}
               className={cn(
-                "inline-flex min-h-11 items-center rounded-[10px] px-3 text-sm",
-                s.value === sort ? "font-medium text-ink" : "text-ink-soft hover:text-ink",
+                "inline-flex min-h-11 items-center rounded-btn px-3 text-sm",
+                s.value === sort ? "font-bold text-ink-blue underline decoration-2 underline-offset-8" : "text-ink-soft hover:text-ink",
               )}
             >
               {s.label}
@@ -97,20 +99,20 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
       </div>
 
       {decks.length ? (
-        <ul className="ruled-list mt-4 overflow-hidden rounded-[12px] border border-rule bg-surface">
+        <ul className="mt-4 grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
           {decks.map((d) => {
             return (
-              <li key={d.id}>
+              <li key={d.id} className="min-w-0">
                 <Link
                   href={`/decks/${d.id}`}
-                  className="flex min-h-[4.5rem] items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/60"
+                  className="group flex h-full items-center gap-4 rounded-card border border-rule bg-surface p-4 shadow-card transition-transform hover:-translate-y-0.5"
                 >
-                  <LangFlag lang={d.language} label className="text-lg" />
+                  <DeckCover id={d.id} language={d.language} className="transition-transform group-hover:-rotate-6" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium text-ink">{d.name}</span>
+                    <span className="line-clamp-2 font-bold leading-snug text-ink">{d.name}</span>
                     {d.description && <span className="block truncate text-sm text-ink">{d.description}</span>}
                     <span className="block truncate text-sm text-ink-soft">
-                      {d.word_count} từ · {d.learner_count} người học · {d.isMine ? "của bạn" : d.owner?.display_name}
+                      {LANGUAGES[d.language].label} · {d.word_count} từ · {d.learner_count} người học · {d.isMine ? "của bạn" : d.owner?.display_name}
                       {d.isSubscribed && (
                         <>
                           {" · "}
@@ -126,8 +128,11 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
           })}
         </ul>
       ) : (
-        <div className="notebook-card mt-6 px-6 py-8">
-          <p className="font-medium text-ink">{q ? `Không có bộ từ nào tên có “${q}”.` : "Chưa có bộ từ công khai nào."}</p>
+        <div className="notebook-card mt-6 flex flex-col items-center px-6 py-10 text-center">
+          <span aria-hidden className="animate-float text-6xl">
+            🔭
+          </span>
+          <p className="mt-4 font-heading text-xl font-black text-ink">{q ? `Không có bộ từ nào tên có “${q}”.` : "Chưa có bộ từ công khai nào."}</p>
           <p className="mt-1 text-sm text-ink-soft">
             Đặt một bộ từ của bạn ở chế độ “Công khai” trong cài đặt bộ từ để mọi người cùng học.
           </p>
@@ -137,7 +142,7 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
       {pages > 1 && (
         <nav aria-label="Trang" className="mt-4 flex items-center justify-between gap-2">
           {page > 1 ? (
-            <Link href={href({ page: String(page - 1) })} className="inline-flex min-h-11 items-center rounded-[10px] px-3 text-sm font-medium text-ink-blue">
+            <Link href={href({ page: String(page - 1) })} className="inline-flex min-h-11 items-center rounded-btn px-3 text-sm font-medium text-ink-blue">
               ← Trang trước
             </Link>
           ) : (
@@ -147,7 +152,7 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
             Trang {page}/{pages}
           </span>
           {page < pages ? (
-            <Link href={href({ page: String(page + 1) })} className="inline-flex min-h-11 items-center rounded-[10px] px-3 text-sm font-medium text-ink-blue">
+            <Link href={href({ page: String(page + 1) })} className="inline-flex min-h-11 items-center rounded-btn px-3 text-sm font-medium text-ink-blue">
               Trang sau →
             </Link>
           ) : (

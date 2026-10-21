@@ -92,7 +92,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
   }
 
   return (
-    <article className="max-w-2xl">
+    <article className="mx-auto max-w-2xl">
       <BackLink href={`/decks/${word.deck_id}`} label={view.deck.name} />
 
       <div className="notebook-card px-5 py-6 sm:px-7">
@@ -139,12 +139,12 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
           </div>
           {word.image_url ? (
             <div className="shrink-0">
-              <div className="relative size-24 overflow-hidden rounded-[12px] border border-rule sm:size-32">
+              <div className="relative size-24 overflow-hidden rounded-card border border-rule sm:size-32">
                 <Image src={word.image_url} alt="" fill sizes="128px" className="object-cover" />
               </div>
             </div>
           ) : word.emoji ? (
-            <span className="grid size-20 shrink-0 place-items-center rounded-[12px] bg-wash-blue text-5xl" aria-hidden>
+            <span className="grid size-20 shrink-0 place-items-center rounded-card bg-wash-blue text-5xl" aria-hidden>
               {word.emoji}
             </span>
           ) : null}
@@ -170,18 +170,18 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
           </p>
         )}
         {extra.needs_review && (
-          <p className="mt-3 rounded-[10px] bg-wash-yellow px-3 py-2 text-sm text-ink">Pinyin có chữ đa âm — nên kiểm tra lại.</p>
+          <p className="mt-3 rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">Pinyin có chữ đa âm — nên kiểm tra lại.</p>
         )}
 
         <div className="mt-5 flex flex-wrap gap-2">
           {view.canEdit && (
-            <Link href={`/words/${wordId}/edit`} className="inline-flex min-h-11 items-center gap-1.5 rounded-[10px] border border-rule bg-surface px-4 text-sm font-medium hover:bg-muted">
+            <Link href={`/words/${wordId}/edit`} className="inline-flex min-h-11 items-center gap-1.5 rounded-btn border border-rule bg-surface px-4 text-sm font-medium hover:bg-muted">
               <Pencil className="size-4" aria-hidden />
               Sửa
             </Link>
           )}
           {isZh && (
-            <Link href={`/practice/writing?word=${wordId}`} className="inline-flex min-h-11 items-center gap-1.5 rounded-[10px] border border-rule bg-surface px-4 text-sm font-medium hover:bg-muted">
+            <Link href={`/practice/writing?word=${wordId}`} className="inline-flex min-h-11 items-center gap-1.5 rounded-btn border border-rule bg-surface px-4 text-sm font-medium hover:bg-muted">
               <PenLine className="size-4" aria-hidden />
               Luyện viết
             </Link>
@@ -305,7 +305,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
 
         {word.personal_note && (
           <Section title="Ghi chú riêng">
-            <p className="rounded-[10px] bg-wash-yellow px-4 py-3 whitespace-pre-line text-ink">{word.personal_note}</p>
+            <p className="rounded-btn bg-wash-yellow px-4 py-3 whitespace-pre-line text-ink">{word.personal_note}</p>
           </Section>
         )}
 

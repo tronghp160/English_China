@@ -14,10 +14,12 @@
     "test:e2e": "playwright test",
     "db:types": "supabase gen types typescript --linked --schema public > lib/supabase/database.types.ts",
     "db:push": "node scripts/db-push.mjs",
-    "db:types:local": "node scripts/gen-db-types.mjs"
+    "db:types:local": "node scripts/gen-db-types.mjs",
+    "db:seed": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-demo.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.80",
+    "@ai-sdk/google": "^4.0.99",
     "@hookform/resolvers": "^5.9.1",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.3",

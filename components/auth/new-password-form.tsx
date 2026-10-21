@@ -64,7 +64,7 @@ export function NewPasswordForm({ redirectTo, className }: { redirectTo?: string
         error={fieldErrors.confirm}
       />
       {error && <FormAlert>{error}</FormAlert>}
-      <Button type="submit" className="h-12 w-full gap-2 rounded-[10px] text-base sm:w-auto sm:px-8" disabled={busy}>
+      <Button type="submit" className="h-12 w-full gap-2 rounded-btn text-base sm:w-auto sm:px-8" disabled={busy}>
         {busy && <Loader2 className="size-5 animate-spin" aria-hidden />}
         Lưu mật khẩu
       </Button>

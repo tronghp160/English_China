@@ -1,5 +1,16 @@
 "use client";
 
+import {
+  Brush,
+  Check,
+  Headphones,
+  Keyboard,
+  Layers,
+  ListChecks,
+  Music,
+  Puzzle,
+  type LucideIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
@@ -9,6 +20,17 @@ import { MODE_INFO } from "@/lib/practice/questions";
 import { cn } from "@/lib/utils";
 
 type DeckOption = { id: string; name: string; language: LangCode; wordCount: number };
+
+// Icon + candy color per mode (tile text/wash, and the border when selected).
+const MODE_LOOK: Record<PracticeMode, { icon: LucideIcon; tile: string; ring: string }> = {
+  flashcard: { icon: Layers, tile: "bg-wash-red text-danger", ring: "border-margin-red" },
+  quiz: { icon: ListChecks, tile: "bg-wash-grape text-grape-text", ring: "border-grape" },
+  typing: { icon: Keyboard, tile: "bg-wash-sky text-sky-text", ring: "border-sky" },
+  listening: { icon: Headphones, tile: "bg-wash-pink text-pink-text", ring: "border-pink" },
+  cloze: { icon: Puzzle, tile: "bg-wash-yellow text-sun-text", ring: "border-sun" },
+  writing: { icon: Brush, tile: "bg-wash-jade text-jade-text", ring: "border-jade" },
+  tones: { icon: Music, tile: "bg-wash-blue text-ink-blue", ring: "border-ink-blue" },
+};
 
 const SOURCES = [
   { value: "all", label: "Tất cả" },
@@ -32,16 +54,16 @@ function Chips<T extends string | number>({
 }) {
   return (
     <fieldset>
-      <legend className="mb-2 text-sm font-medium text-ink-soft">{legend}</legend>
+      <legend className="mb-2 font-heading text-base font-extrabold text-ink">{legend}</legend>
       <div className="flex flex-wrap gap-2">
         {options.map((o) => (
           <label
             key={String(o.value)}
             className={cn(
-              "inline-flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm has-focus-visible:outline-2 has-focus-visible:outline-ink-blue",
+              "inline-flex min-h-11 cursor-pointer items-center rounded-full border-2 px-4 text-sm font-semibold transition-colors has-focus-visible:outline-2 has-focus-visible:outline-ink-blue",
               value === o.value
-                ? "border-ink-blue bg-wash-blue font-medium text-ink"
-                : "border-rule bg-surface text-ink-soft",
+                ? "border-ink-blue bg-ink-blue text-primary-foreground"
+                : "border-rule bg-surface text-ink-soft hover:text-ink",
             )}
           >
             <input
@@ -82,10 +104,13 @@ export function PracticeSetup({
   const [source, setSource] = useState<(typeof SOURCES)[number]["value"]>("all");
   const [countsToSrs, setCountsToSrs] = useState(false);
   const activeMode = modes.includes(mode) ? mode : "quiz";
+  // Flashcards go fast, so they offer bigger sets (200 = the whole deck in practice).
+  const counts = activeMode === "flashcard" ? [20, 50, 200] : [10, 20, 30];
+  const activeCount = counts.includes(count) ? count : counts[0];
 
   function start(e: React.FormEvent) {
     e.preventDefault();
-    const q = new URLSearchParams({ n: String(count), source });
+    const q = new URLSearchParams({ n: String(activeCount), source });
     if (scope.startsWith("lang:")) q.set("lang", language);
     else q.set("deck", scope);
     if (countsToSrs) q.set("srs", "1");
@@ -95,38 +120,51 @@ export function PracticeSetup({
   return (
     <form onSubmit={start} className="flex flex-col gap-6">
       <fieldset>
-        <legend className="mb-2 text-sm font-medium text-ink-soft">Chế độ</legend>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {modes.map((m) => (
-            <label
-              key={m}
-              className={cn(
-                "flex min-h-16 cursor-pointer flex-col justify-center rounded-[12px] border px-4 py-3 has-focus-visible:outline-2 has-focus-visible:outline-ink-blue",
-                activeMode === m
-                  ? "border-ink-blue bg-wash-blue"
-                  : "border-rule bg-surface hover:bg-muted",
-              )}
-            >
-              <input
-                type="radio"
-                name="mode"
-                className="sr-only"
-                checked={activeMode === m}
-                onChange={() => setMode(m)}
-              />
-              <span className="font-medium text-ink">{MODE_INFO[m].label}</span>
-              <span className="text-sm text-ink-soft">{MODE_INFO[m].hint}</span>
-            </label>
-          ))}
+        <legend className="mb-2 font-heading text-base font-extrabold text-ink">Chế độ</legend>
+        <div className="grid grid-cols-2 gap-3">
+          {modes.map((m) => {
+            const look = MODE_LOOK[m];
+            const Icon = look.icon;
+            const selected = activeMode === m;
+            return (
+              <label
+                key={m}
+                className={cn(
+                  "relative flex min-h-32 cursor-pointer flex-col gap-2 rounded-card border-2 bg-surface p-3.5 shadow-card transition-transform has-focus-visible:outline-2 has-focus-visible:outline-ink-blue",
+                  selected
+                    ? cn(look.ring, "-translate-y-0.5")
+                    : "border-transparent hover:-translate-y-0.5",
+                )}
+              >
+                <input
+                  type="radio"
+                  name="mode"
+                  className="sr-only"
+                  checked={activeMode === m}
+                  onChange={() => setMode(m)}
+                />
+                <span className={cn("icon-tile size-11", look.tile)}>
+                  <Icon className="size-6" aria-hidden />
+                </span>
+                {selected && (
+                  <span className="absolute top-3 right-3 grid size-6 animate-pop-in place-items-center rounded-full bg-ink-blue text-primary-foreground">
+                    <Check className="size-4" strokeWidth={3} aria-hidden />
+                  </span>
+                )}
+                <span className="font-bold text-ink">{MODE_INFO[m].label}</span>
+                <span className="text-sm leading-snug text-ink-soft">{MODE_INFO[m].hint}</span>
+              </label>
+            );
+          })}
         </div>
       </fieldset>
 
       <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-ink-soft">Bộ từ</span>
+        <span className="font-heading text-base font-extrabold text-ink">Bộ từ</span>
         <select
           value={scope}
           onChange={(e) => setScope(e.target.value)}
-          className="h-12 rounded-[10px] border border-rule bg-surface px-3 text-ink"
+          className="h-12 rounded-btn border-2 border-rule bg-surface px-3 font-medium text-ink"
         >
           {langs.map((l) => (
             <option key={l} value={`lang:${l}`}>
@@ -143,10 +181,13 @@ export function PracticeSetup({
 
       <Chips
         name="count"
-        legend="Số câu"
-        value={count}
+        legend={activeMode === "flashcard" ? "Số thẻ" : "Số câu"}
+        value={activeCount}
         onChange={setCount}
-        options={[10, 20, 30].map((n) => ({ value: n, label: `${n} câu` }))}
+        options={counts.map((n) => ({
+          value: n,
+          label: n === 200 ? "Cả bộ" : activeMode === "flashcard" ? `${n} thẻ` : `${n} câu`,
+        }))}
       />
       <Chips
         name="source"
@@ -156,7 +197,7 @@ export function PracticeSetup({
         options={[...SOURCES]}
       />
 
-      <label className="flex min-h-12 items-center justify-between gap-4 rounded-[12px] border border-rule bg-surface px-4 py-3">
+      <label className="flex min-h-12 items-center justify-between gap-4 rounded-card border border-rule bg-surface px-4 py-3 shadow-card">
         <span>
           <span className="block font-medium text-ink">Tính vào ôn tập</span>
           <span className="block text-sm text-ink-soft">
@@ -172,9 +213,9 @@ export function PracticeSetup({
 
       <button
         type="submit"
-        className="min-h-14 rounded-[10px] bg-primary text-lg font-medium text-primary-foreground"
+        className="btn-3d min-h-14 rounded-btn bg-primary text-lg font-extrabold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
       >
-        Bắt đầu luyện
+        Bắt đầu luyện 🚀
       </button>
     </form>
   );

@@ -20,13 +20,13 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
   if (!group) {
     return (
       <div className="notebook-card mt-6 px-6 py-8">
-        <h1 className="text-lg font-bold text-ink">Mã mời không dùng được</h1>
+        <h1 className="text-lg text-ink">Mã mời không dùng được</h1>
         <p className="mt-1 text-[0.9375rem] text-ink-soft">
           Mã “{code}” không đúng hoặc chủ nhóm đã đổi mã mới. Hãy hỏi lại người mời bạn.
         </p>
         <Link
           href="/groups"
-          className="mt-5 inline-flex min-h-11 items-center rounded-[10px] border border-rule bg-surface px-4 text-sm font-medium text-ink"
+          className="mt-5 inline-flex min-h-11 items-center rounded-btn border border-rule bg-surface px-4 text-sm font-medium text-ink"
         >
           Nhập mã khác
         </Link>
@@ -52,7 +52,7 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
         <Users className="size-4" aria-hidden />
         {group.owner_name} mời bạn vào nhóm
       </p>
-      <h1 className="mt-2 text-xl font-bold break-words text-ink">{group.name}</h1>
+      <h1 className="mt-2 text-xl break-words text-ink">{group.name}</h1>
       {group.description && <p className="mt-2 text-[0.9375rem] text-ink">{group.description}</p>}
       <p className="mt-2 text-sm text-ink-soft">{group.member_count} thành viên</p>
 
@@ -68,7 +68,7 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
         ) : (
           <Link
             href={`/login?next=${encodeURIComponent(path)}`}
-            className="inline-flex min-h-12 w-full items-center justify-center rounded-[10px] bg-primary px-6 text-base font-medium text-primary-foreground sm:w-auto"
+            className="inline-flex min-h-12 w-full items-center justify-center rounded-btn bg-primary px-6 text-base font-medium text-primary-foreground sm:w-auto"
           >
             Đăng nhập để vào nhóm
           </Link>

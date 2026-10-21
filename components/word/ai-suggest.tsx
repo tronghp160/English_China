@@ -1,46 +1,93 @@
 "use client";
 
-import { Loader2, MessageSquareText, Sparkles } from "lucide-react";
+import { Check, Loader2, MessageSquareText, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useOptionalMe } from "@/components/app-shell/me-provider";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { enrichToWord, type SenseChoice } from "@/lib/ai/to-word";
+import { enrichToWord, imageSuggestions, type ImageSuggestion } from "@/lib/ai/to-word";
 import type { EnrichResult } from "@/lib/ai/schemas";
 import type { LangCode } from "@/lib/lang/types";
 import { POS, isPosCode } from "@/lib/pos";
 import { cn } from "@/lib/utils";
 import type { WordInput } from "@/lib/word-schema";
 
-export type AiFillResult = { values: Partial<WordInput>; imageQuery: string | null };
+export type AiFillResult = {
+  values: Partial<WordInput>;
+  /** One photo search per sense, chosen senses first. */
+  images: ImageSuggestion[];
+  /** Search to run now (the sense just picked), or null to leave the photos alone. */
+  focusQuery: string | null;
+};
 
 type State =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "done"; result: EnrichResult; cached: boolean; remaining: number | null; choice: SenseChoice };
+  | {
+      status: "done";
+      result: EnrichResult;
+      /** "dict" = free dictionary (Wiktionary / CVDICT), shown while the AI works or instead of it. */
+      source: "ai" | "dict";
+      cached: boolean;
+      remaining: number | null;
+      chosen: number[];
+      /** The AI is still working on a better answer. */
+      aiPending: boolean;
+      /** Why the AI answer is missing (quota, outage), shown under a dictionary result. */
+      aiNote: string | null;
+    };
 
-/** Hook that owns the AI suggestion request; the form renders the button and panel. */
+async function postJson(url: string, body: unknown, signal: AbortSignal) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+    signal,
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || "Không lấy được gợi ý.");
+  return json;
+}
+
+/**
+ * Hook that owns the suggestion requests; the form renders the button and panel.
+ * The free dictionary and the AI are asked together: the dictionary fills the
+ * form within a second, the AI answer (richer, with photo searches per meaning)
+ * replaces it when it arrives. Without AI or quota the dictionary answer stays.
+ */
 export function useAiSuggest({
   language,
   getTerm,
   onApply,
   term,
+  autoEnabled = true,
+  aiAvailable = true,
 }: {
   language: LangCode;
   getTerm: () => string;
   onApply: (r: AiFillResult) => void;
   term: string;
+  /** Off when editing a saved word, so opening it never overwrites it. */
+  autoEnabled?: boolean;
+  /** An AI key is configured on the server; otherwise only the free dictionary is used. */
+  aiAvailable?: boolean;
 }) {
   const me = useOptionalMe();
   const [state, setState] = useState<State>({ status: "idle" });
   const [context, setContext] = useState("");
   const lastTerm = useRef<string>("");
   const abort = useRef<AbortController | null>(null);
+  const inflight = useRef<string | null>(null);
 
   const apply = useCallback(
-    (result: EnrichResult, choice: SenseChoice) => {
-      onApply({ values: enrichToWord(result, choice), imageQuery: result.image_query || null });
+    (result: EnrichResult, chosen: number[], focus: number | null) => {
+      const images = imageSuggestions(result, chosen);
+      const focused = focus === null ? null : result.senses[focus];
+      onApply({
+        values: enrichToWord(result, chosen),
+        images,
+        focusQuery: focused ? focused.image_query || images[0]?.query || null : null,
+      });
     },
     [onApply],
   );
@@ -48,56 +95,121 @@ export function useAiSuggest({
   const suggest = useCallback(
     async (override?: string) => {
       const t = (override ?? getTerm()).trim();
-      if (!t) return;
+      // Blur and a click on "Gợi ý" can both ask for the same word: send it once.
+      if (!t || t === inflight.current) return;
+      inflight.current = t;
       abort.current?.abort();
       const ctrl = new AbortController();
       abort.current = ctrl;
       lastTerm.current = t;
       setState({ status: "loading" });
+      // With a context sentence the user wants the AI to pick the sense; skip the dictionary then.
+      const useDict = !context.trim() || !aiAvailable;
+      const dict: Promise<EnrichResult | null> = useDict
+        ? postJson("/api/dict", { language, term: t }, ctrl.signal).then(
+            (b) => (b.result as EnrichResult | null) ?? null,
+            () => null,
+          )
+        : Promise.resolve(null);
+      let aiDone = false;
+      let dictShown = false;
+      const showDict = (result: EnrichResult, aiPending: boolean, aiNote: string | null) => {
+        setState({ status: "done", result, source: "dict", cached: false, remaining: null, chosen: [0], aiPending, aiNote });
+        apply(result, [0], 0);
+        dictShown = true;
+      };
+      void dict.then((r) => {
+        if (r && !aiDone && !ctrl.signal.aborted) showDict(r, aiAvailable, null);
+      });
+
       try {
-        const res = await fetch("/api/ai/enrich", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ language, term: t, context: context.trim() || null }),
-          signal: ctrl.signal,
-        });
-        const body = await res.json();
-        if (!res.ok) throw new Error(body.error || "Không lấy được gợi ý.");
+        if (!aiAvailable) {
+          const r = await dict;
+          if (!r && !ctrl.signal.aborted) {
+            setState({ status: "error", message: "Từ điển miễn phí chưa có từ này. Bạn tự nhập nhé." });
+          }
+          return;
+        }
+        const body = await postJson("/api/ai/enrich", { language, term: t, context: context.trim() || null }, ctrl.signal);
+        aiDone = true;
         const result = body.result as EnrichResult;
-        setState({ status: "done", result, cached: Boolean(body.cached), remaining: body.remaining ?? null, choice: 0 });
-        if (result.is_valid_word || !result.did_you_mean) apply(result, 0);
+        setState({
+          status: "done",
+          result,
+          source: "ai",
+          cached: Boolean(body.cached),
+          remaining: body.remaining ?? null,
+          chosen: [0],
+          aiPending: false,
+          aiNote: null,
+        });
+        if (result.is_valid_word || !result.did_you_mean) apply(result, [0], 0);
       } catch (e) {
-        if ((e as Error).name === "AbortError") return;
-        setState({ status: "error", message: (e as Error).message });
+        aiDone = true;
+        if ((e as Error).name === "AbortError" || ctrl.signal.aborted) return;
+        const r = await dict;
+        if (ctrl.signal.aborted) return;
+        const note = `${(e as Error).message} Đang dùng gợi ý từ từ điển miễn phí.`;
+        if (!r) setState({ status: "error", message: (e as Error).message });
+        else if (dictShown) setState((s) => (s.status === "done" ? { ...s, aiPending: false, aiNote: note } : s));
+        else showDict(r, false, note);
+      } finally {
+        if (inflight.current === t) inflight.current = null;
       }
     },
-    [apply, context, getTerm, language],
+    [aiAvailable, apply, context, getTerm, language],
   );
 
-  // Optional auto-suggest after 600 ms without typing (off by default, §7.1).
-  const auto = me?.prefs.ai_auto_suggest ?? false;
+  // Suggest on its own once typing pauses (setting "Tự gợi ý khi ngừng gõ", on by default).
+  // Chinese words can be a single character; English needs 2 letters.
+  const auto = autoEnabled && (me?.prefs.ai_autofill ?? true);
+  const minLength = language === "zh" ? 1 : 2;
+  // `suggest` changes identity on most renders (getTerm is inline), so the timer
+  // reads it from a ref; otherwise every re-render would restart the pause.
+  const suggestRef = useRef(suggest);
+  useEffect(() => {
+    suggestRef.current = suggest;
+  }, [suggest]);
   useEffect(() => {
     if (!auto) return;
     const t = term.trim();
-    if (t.length < 2 || t === lastTerm.current) return;
-    const timer = setTimeout(() => void suggest(t), 600);
+    if (t.length < minLength || t === lastTerm.current) return;
+    const timer = setTimeout(() => void suggestRef.current(t), 900);
     return () => clearTimeout(timer);
-  }, [auto, term, suggest]);
+  }, [auto, minLength, term]);
 
-  const choose = (choice: SenseChoice) => {
+  /** Leaving the word field suggests at once instead of waiting for the pause. */
+  const suggestIfNew = useCallback(() => {
+    const t = getTerm().trim();
+    if (auto && t.length >= minLength && t !== lastTerm.current) void suggest(t);
+  }, [auto, getTerm, minLength, suggest]);
+
+  /** Tick or untick a sense; at least one stays chosen. */
+  const toggle = (i: number) => {
     if (state.status !== "done") return;
-    setState({ ...state, choice });
-    apply(state.result, choice);
+    const on = state.chosen.includes(i);
+    if (on && state.chosen.length === 1) return;
+    const chosen = on ? state.chosen.filter((x) => x !== i) : [...state.chosen, i].sort((a, b) => a - b);
+    setState({ ...state, chosen });
+    apply(state.result, chosen, on ? null : i);
+  };
+
+  const chooseAll = () => {
+    if (state.status !== "done") return;
+    const chosen = state.result.senses.map((_, i) => i);
+    setState({ ...state, chosen });
+    apply(state.result, chosen, null);
   };
 
   const reset = () => {
     abort.current?.abort();
+    inflight.current = null;
     lastTerm.current = "";
     setState({ status: "idle" });
     setContext("");
   };
 
-  return { state, suggest, choose, context, setContext, reset };
+  return { state, suggest, suggestIfNew, toggle, chooseAll, context, setContext, reset, aiAvailable };
 }
 
 export function AiSuggestButton({ loading, onClick }: { loading: boolean; onClick: () => void }) {
@@ -106,7 +218,7 @@ export function AiSuggestButton({ loading, onClick }: { loading: boolean; onClic
       type="button"
       onClick={onClick}
       disabled={loading}
-      className="h-14 gap-2 rounded-[10px] bg-ink-blue px-4 text-base"
+      className="h-16 gap-2 rounded-btn bg-ink-blue px-4 text-base"
     >
       {loading ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <Sparkles className="size-5" aria-hidden />}
       Gợi ý
@@ -121,52 +233,35 @@ export function AiSuggestPanel({
   ai: ReturnType<typeof useAiSuggest>;
   onUseSpelling: (term: string) => void;
 }) {
-  const { state, choose, context, setContext } = ai;
+  const { state, toggle, chooseAll, context, setContext } = ai;
   const [showContext, setShowContext] = useState(false);
 
-  return (
-    <div className="-mt-3 space-y-3" aria-live="polite">
-      {!showContext && state.status !== "loading" && (
-        <button
-          type="button"
-          onClick={() => setShowContext(true)}
-          className="inline-flex min-h-10 items-center gap-1.5 text-sm text-ink-soft hover:text-ink"
-        >
-          <MessageSquareText className="size-4" aria-hidden />
-          Thêm câu bạn gặp từ này (để AI chọn đúng nghĩa)
-        </button>
-      )}
-      {showContext && (
-        <textarea
-          value={context}
-          onChange={(e) => setContext(e.target.value)}
-          rows={2}
-          maxLength={300}
-          aria-label="Câu bạn gặp từ này"
-          placeholder="Ví dụ: The company proved resilient during the crisis."
-          className="w-full rounded-[10px] border border-rule bg-surface px-3 py-2 text-base"
-        />
-      )}
+  const credit =
+    state.status !== "done" || state.source !== "dict"
+      ? null
+      : state.result.language === "zh"
+        ? { name: "CVDICT", href: "https://github.com/ph0ngp/CVDICT" }
+        : { name: "Wiktionary", href: "https://vi.wiktionary.org" };
 
+  return (
+    <div className="space-y-2.5" aria-live="polite">
       {state.status === "loading" && (
-        <div className="space-y-2 rounded-[12px] border border-rule bg-surface p-4" role="status">
-          <p className="text-sm text-ink-soft">Đang gợi ý…</p>
-          <Skeleton className="h-4 w-2/3" />
-          <Skeleton className="h-4 w-1/2" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
+        <p role="status" className="flex items-center gap-2 px-1 text-sm text-ink-soft">
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+          Đang tìm phiên âm, nghĩa và ví dụ…
+        </p>
       )}
 
       {state.status === "error" && (
-        <p role="alert" className="rounded-[10px] bg-wash-red px-3 py-2 text-sm text-danger">
+        <p role="alert" className="rounded-btn bg-wash-red px-3 py-2 text-sm text-danger">
           {state.message}
         </p>
       )}
 
       {state.status === "done" && (
-        <div className="space-y-3">
+        <>
           {state.result.did_you_mean && (
-            <div className="flex flex-wrap items-center gap-2 rounded-[10px] bg-wash-yellow px-3 py-2 text-sm text-ink">
+            <div className="flex flex-wrap items-center gap-2 rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">
               <span>
                 Có phải bạn muốn gõ <em className="font-medium not-italic">{state.result.did_you_mean}</em>?
               </span>
@@ -176,7 +271,7 @@ export function AiSuggestPanel({
                   onUseSpelling(state.result.did_you_mean!);
                   void ai.suggest(state.result.did_you_mean!);
                 }}
-                className="min-h-9 rounded-[8px] bg-surface px-3 font-medium text-ink-blue"
+                className="min-h-9 rounded-btn bg-surface px-3 font-medium text-ink-blue"
               >
                 Áp dụng
               </button>
@@ -184,52 +279,97 @@ export function AiSuggestPanel({
           )}
 
           {state.result.senses.length > 1 && (state.result.is_valid_word || !state.result.did_you_mean) && (
-            <fieldset className="rounded-[12px] border border-rule bg-surface p-3">
-              <legend className="px-1 text-sm font-medium text-ink">Từ này có nhiều nghĩa — chọn nghĩa chính</legend>
-              <div className="mt-1 grid gap-1.5">
-                {state.result.senses.map((s, i) => (
-                  <label
-                    key={i}
-                    className={cn(
-                      "flex min-h-11 cursor-pointer items-start gap-2 rounded-[10px] px-2 py-2",
-                      state.choice === i && "bg-wash-blue",
-                    )}
+            <fieldset>
+              <legend className="mb-1.5 px-1 text-sm text-ink-soft">
+                {state.result.senses.length} nghĩa, chạm để chọn nghĩa muốn lưu
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {state.result.senses.map((s, i) => {
+                  const on = state.chosen.includes(i);
+                  const pos = s.pos.filter(isPosCode).map((p) => POS[p].label).join(", ");
+                  return (
+                    <label
+                      key={i}
+                      title={[s.meaning_en, s.examples[0]?.text].filter(Boolean).join(" — ")}
+                      className={cn(
+                        "inline-flex min-h-10 max-w-full cursor-pointer items-center gap-1.5 rounded-full border-2 px-3 text-sm has-focus-visible:outline-2 has-focus-visible:outline-ink-blue",
+                        on ? "border-ink-blue bg-wash-blue text-ink" : "border-rule bg-surface text-ink-soft hover:text-ink",
+                      )}
+                    >
+                      <input type="checkbox" checked={on} onChange={() => toggle(i)} className="sr-only" />
+                      {on && <Check className="size-3.5 shrink-0 text-ink-blue" strokeWidth={3} aria-hidden />}
+                      <span className="truncate font-medium">{s.meaning_vi}</span>
+                      {pos && <span className="shrink-0 text-xs text-ink-soft">{pos}</span>}
+                    </label>
+                  );
+                })}
+                {state.chosen.length < state.result.senses.length && (
+                  <button
+                    type="button"
+                    onClick={chooseAll}
+                    className="min-h-10 rounded-full px-2 text-sm font-medium text-ink-blue hover:underline"
                   >
-                    <input type="radio" name="sense" checked={state.choice === i} onChange={() => choose(i)} className="mt-1 accent-ink-blue" />
-                    <span>
-                      <span className="font-medium text-ink">{s.meaning_vi}</span>
-                      <span className="ml-2 text-xs text-ink-soft">
-                        {s.pos.filter(isPosCode).map((p) => POS[p].label).join(", ")}
-                      </span>
-                      <span className="block text-sm text-ink-soft">{s.meaning_en}</span>
-                    </span>
-                  </label>
-                ))}
-                <label
-                  className={cn(
-                    "flex min-h-11 cursor-pointer items-center gap-2 rounded-[10px] px-2",
-                    state.choice === "merge" && "bg-wash-blue",
-                  )}
-                >
-                  <input type="radio" name="sense" checked={state.choice === "merge"} onChange={() => choose("merge")} className="accent-ink-blue" />
-                  <span className="text-sm text-ink">Gộp tất cả các nghĩa</span>
-                </label>
+                    Chọn tất cả
+                  </button>
+                )}
               </div>
             </fieldset>
           )}
 
           {state.result.checks.pinyin_needs_review && (
-            <p className="rounded-[10px] bg-wash-yellow px-3 py-2 text-sm text-ink">
-              Từ có chữ đa âm — hãy kiểm tra lại pinyin.
-            </p>
+            <p className="rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">Từ có chữ đa âm — hãy kiểm tra lại pinyin.</p>
           )}
+          {state.aiNote && <p className="rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">{state.aiNote}</p>}
 
-          <p className="text-xs text-ink-soft">
-            {state.cached ? "Lấy từ bộ nhớ chung, không tốn lượt gợi ý." : "Các trường có viền vàng do AI điền — hãy xem lại."}
-            {state.remaining !== null && ` Còn ${state.remaining} lượt hôm nay.`}
+          <p className="flex items-start gap-1.5 px-1 text-xs text-ink-soft">
+            {state.aiPending ? (
+              <Loader2 className="mt-px size-3.5 shrink-0 animate-spin" aria-hidden />
+            ) : (
+              <Sparkles className="mt-px size-3.5 shrink-0 text-ink-blue" aria-hidden />
+            )}
+            <span>
+              {state.aiPending ? "AI đang bổ sung thêm. " : ""}
+              Đã tự điền
+              {credit ? (
+                <>
+                  {" "}từ{" "}
+                  <a href={credit.href} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                    {credit.name}
+                  </a>{" "}
+                  (CC BY-SA)
+                </>
+              ) : state.cached ? (
+                " (không tốn lượt)"
+              ) : null}
+              , hãy xem lại trước khi lưu.
+              {state.remaining !== null && ` Còn ${state.remaining} lượt AI hôm nay.`}
+            </span>
           </p>
-        </div>
+        </>
       )}
+
+      {ai.aiAvailable &&
+        state.status !== "loading" &&
+        (showContext ? (
+          <textarea
+            value={context}
+            onChange={(e) => setContext(e.target.value)}
+            rows={2}
+            maxLength={300}
+            aria-label="Câu bạn gặp từ này"
+            placeholder="Câu bạn gặp từ này, ví dụ: The company proved resilient during the crisis."
+            className="w-full rounded-btn border border-rule bg-surface px-3 py-2 text-base"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowContext(true)}
+            className="inline-flex min-h-10 items-center gap-1.5 px-1 text-sm text-ink-soft hover:text-ink"
+          >
+            <MessageSquareText className="size-4" aria-hidden />
+            Thêm câu bạn gặp từ này để chọn đúng nghĩa
+          </button>
+        ))}
     </div>
   );
 }

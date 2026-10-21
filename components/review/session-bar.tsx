@@ -39,14 +39,16 @@ export function SessionBar({
           aria-valuemax={total}
           aria-valuenow={done}
           aria-label="Tiến độ phiên"
-          className="h-2 flex-1 overflow-hidden rounded-full bg-muted"
+          className="h-4 flex-1 overflow-hidden rounded-full bg-muted"
         >
           <div
-            className="h-full rounded-full bg-ink-blue transition-[width] duration-300"
+            className="relative h-full min-w-4 rounded-full bg-jade transition-[width] duration-500"
             style={{ width: `${pct}%` }}
-          />
+          >
+            <span className="absolute inset-x-2 top-1 h-1 rounded-full bg-white/40" />
+          </div>
         </div>
-        <span className="min-w-12 text-right text-sm text-ink-soft tabular-nums">
+        <span className="min-w-12 text-right text-sm font-bold text-ink-soft tabular-nums">
           {done}/{total}
         </span>
         {sync.pending > 0 && (
@@ -64,7 +66,7 @@ export function SessionBar({
         )}
       </div>
       {sync.pending > 0 && sync.error && !sync.syncing && (
-        <p role="status" className="rounded-[10px] bg-wash-yellow px-3 py-2 text-sm text-ink">
+        <p role="status" className="rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">
           {sync.error}
         </p>
       )}

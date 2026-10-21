@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FlashcardDeck } from "@/components/practice/flashcard-deck";
 import { PracticeSession } from "@/components/practice/practice-session";
 import { LANGUAGES, type PracticeMode } from "@/lib/lang/registry";
 import type { LangCode } from "@/lib/lang/types";
@@ -29,7 +30,8 @@ export default async function PracticeModePage({
   const [{ mode }, sp] = await Promise.all([params, searchParams]);
   if (!isMode(mode)) notFound();
   const deckId = typeof sp.deck === "string" && UUID.test(sp.deck) ? sp.deck : null;
-  const n = [10, 20, 30].includes(Number(sp.n)) ? Number(sp.n) : 10;
+  const counts = mode === "flashcard" ? [20, 50, 200] : [10, 20, 30];
+  const n = counts.includes(Number(sp.n)) ? Number(sp.n) : counts[0];
   const source = SOURCES.find((s) => s === sp.source) ?? "all";
   const srs = sp.srs === "1";
 
@@ -55,12 +57,15 @@ export default async function PracticeModePage({
       p_source: source,
       p_limit: needsFilter ? n * 4 : n,
     }),
-    supabase.rpc("practice_words", {
-      p_deck_id: deckId as string,
-      p_language: language,
-      p_source: "all",
-      p_limit: 200,
-    }),
+    // Flashcards need no distractors.
+    mode === "flashcard"
+      ? { data: [] }
+      : supabase.rpc("practice_words", {
+          p_deck_id: deckId as string,
+          p_language: language,
+          p_source: "all",
+          p_limit: 200,
+        }),
   ]);
   const words = (targets ?? []).map((t) => t.word as unknown as StudyWord);
   const questions = buildQuestions(
@@ -69,7 +74,11 @@ export default async function PracticeModePage({
     (pool ?? []).map((p) => p.word as unknown as StudyWord),
   ).slice(0, n);
 
-  const back = deckId ? `/practice?deck=${deckId}` : "/practice";
+  const back = deckId
+    ? sp.from === "deck"
+      ? `/decks/${deckId}`
+      : `/practice?deck=${deckId}`
+    : "/practice";
   const query = new URLSearchParams(
     Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === "string"),
   );
@@ -86,15 +95,25 @@ export default async function PracticeModePage({
             : "Bộ này chưa có từ nào.";
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-        <h1 className="text-2xl font-bold text-ink">Chưa luyện được</h1>
+        <h1 className="text-2xl text-ink">Chưa luyện được</h1>
         <p className="text-ink-soft">{why}</p>
         <Link
           href={back}
-          className="inline-flex min-h-12 items-center rounded-[10px] bg-primary px-5 font-medium text-primary-foreground"
+          className="inline-flex min-h-12 items-center rounded-btn bg-primary px-5 font-medium text-primary-foreground"
         >
           Chọn cách luyện khác
         </Link>
       </div>
+    );
+  }
+
+  if (mode === "flashcard") {
+    return (
+      <FlashcardDeck
+        words={questions.map((q) => q.word)}
+        countsToSrs={srs}
+        exitHref={back}
+      />
     );
   }
 

@@ -49,7 +49,7 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
   if (!items.length) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-        <h1 className="text-2xl font-bold text-ink">
+        <h1 className="text-2xl text-ink">
           <span className="highlighter">Bạn đã ôn xong hôm nay.</span>
         </h1>
         <p className="text-ink-soft">
@@ -60,13 +60,13 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
         <div className="mt-2 flex flex-wrap justify-center gap-2">
           <Link
             href="/today"
-            className="inline-flex min-h-12 items-center rounded-[10px] bg-primary px-5 font-medium text-primary-foreground"
+            className="inline-flex min-h-12 items-center rounded-btn bg-primary px-5 font-medium text-primary-foreground"
           >
             Về trang Hôm nay
           </Link>
           <Link
             href={deckParam ? `/practice?deck=${deckParam}` : "/practice"}
-            className="inline-flex min-h-12 items-center rounded-[10px] border border-rule bg-surface px-5 font-medium text-ink"
+            className="inline-flex min-h-12 items-center rounded-btn border border-rule bg-surface px-5 font-medium text-ink"
           >
             Luyện tập thêm
           </Link>

@@ -185,7 +185,7 @@ export function DeckWords({
           onChange={(e) => setQ(e.target.value)}
           placeholder={language === "zh" ? "Tìm chữ Hán, pinyin không dấu, nghĩa…" : "Tìm từ hoặc nghĩa…"}
           aria-label="Tìm trong bộ từ"
-          className="h-12 w-full rounded-[10px] border border-rule bg-surface pr-4 pl-11 text-base text-ink placeholder:text-ink-soft"
+          className="h-12 w-full rounded-btn border border-rule bg-surface pr-4 pl-11 text-base text-ink placeholder:text-ink-soft"
         />
       </div>
 
@@ -244,7 +244,7 @@ export function DeckWords({
               }}
               aria-pressed={selecting}
               className={cn(
-                "inline-flex min-h-11 items-center gap-1.5 rounded-[10px] px-3 text-sm",
+                "inline-flex min-h-11 items-center gap-1.5 rounded-btn px-3 text-sm",
                 selecting ? "bg-wash-blue font-medium text-ink" : "text-ink-soft hover:bg-muted",
               )}
             >
@@ -252,7 +252,7 @@ export function DeckWords({
               {selecting ? "Xong" : "Chọn"}
             </button>
           )}
-          <div role="group" aria-label="Kiểu hiển thị" className="flex rounded-[10px] border border-rule bg-surface p-0.5">
+          <div role="group" aria-label="Kiểu hiển thị" className="flex rounded-btn border border-rule bg-surface p-0.5">
             <button
               type="button"
               aria-label="Dạng danh sách"
@@ -289,7 +289,7 @@ export function DeckWords({
             <>
               <p className="font-medium text-ink">Bộ này chưa có từ nào.</p>
               {canEdit && (
-                <Link href={`/decks/${deckId}/add`} className="mt-3 inline-flex min-h-11 items-center rounded-[10px] bg-primary px-5 font-medium text-primary-foreground">
+                <Link href={`/decks/${deckId}/add`} className="mt-3 inline-flex min-h-11 items-center rounded-btn bg-primary px-5 font-medium text-primary-foreground">
                   Thêm từ đầu tiên
                 </Link>
               )}
@@ -329,7 +329,7 @@ export function DeckWords({
         <div
           role="toolbar"
           aria-label="Thao tác với từ đã chọn"
-          className="fixed inset-x-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-[20px] border border-rule bg-surface p-3 shadow-lg lg:bottom-6 lg:left-64"
+          className="fixed inset-x-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-sheet border border-rule bg-surface p-3 shadow-lg lg:bottom-6 lg:left-64"
         >
           <span className="mr-auto pl-1 text-sm font-medium text-ink">Đã chọn {ids.length}</span>
           {moveTargets.length > 0 && (
@@ -341,7 +341,7 @@ export function DeckWords({
                 if (e.target.value) runBulk({ action: "move", wordIds: ids, targetDeckId: e.target.value }, "Đã chuyển");
                 e.target.value = "";
               }}
-              className="h-11 max-w-36 rounded-[10px] border border-rule bg-surface px-2 text-sm"
+              className="h-11 max-w-36 rounded-btn border border-rule bg-surface px-2 text-sm"
             >
               <option value="">Chuyển bộ…</option>
               {moveTargets.map((d) => (
@@ -359,7 +359,7 @@ export function DeckWords({
               if (e.target.value) runBulk({ action: "topic", wordIds: ids, topic: e.target.value === "__none" ? null : e.target.value }, "Đã đổi chủ đề");
               e.target.value = "";
             }}
-            className="h-11 max-w-36 rounded-[10px] border border-rule bg-surface px-2 text-sm"
+            className="h-11 max-w-36 rounded-btn border border-rule bg-surface px-2 text-sm"
           >
             <option value="">Chủ đề…</option>
             <option value="__none">Bỏ chủ đề</option>
@@ -373,7 +373,7 @@ export function DeckWords({
             type="button"
             disabled={pending}
             onClick={() => runBulk({ action: "suspend", wordIds: ids, suspended: status !== "suspended" }, status === "suspended" ? "Đã bỏ ẩn" : "Đã tạm ẩn")}
-            className="min-h-11 rounded-[10px] border border-rule px-3 text-sm"
+            className="min-h-11 rounded-btn border border-rule px-3 text-sm"
           >
             {status === "suspended" ? "Bỏ ẩn" : "Tạm ẩn"}
           </button>
@@ -381,26 +381,26 @@ export function DeckWords({
             type="button"
             disabled={pending}
             onClick={() => setConfirmDelete(true)}
-            className="min-h-11 rounded-[10px] bg-wash-red px-3 text-sm font-medium text-danger"
+            className="min-h-11 rounded-btn bg-wash-red px-3 text-sm font-medium text-danger"
           >
             Xóa
           </button>
-          <button type="button" aria-label="Bỏ chọn" onClick={() => setSelected(new Set())} className="grid size-11 place-items-center rounded-[10px] text-ink-soft">
+          <button type="button" aria-label="Bỏ chọn" onClick={() => setSelected(new Set())} className="grid size-11 place-items-center rounded-btn text-ink-soft">
             <X className="size-5" aria-hidden />
           </button>
         </div>
       )}
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <AlertDialogContent className="rounded-[20px]">
+        <AlertDialogContent className="rounded-sheet">
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa {ids.length} từ?</AlertDialogTitle>
             <AlertDialogDescription>Tiến độ ôn của mọi người với các từ này cũng bị xóa. Không hoàn tác được.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-11 rounded-[10px]">Giữ lại</AlertDialogCancel>
+            <AlertDialogCancel className="min-h-11 rounded-btn">Giữ lại</AlertDialogCancel>
             <AlertDialogAction
-              className="min-h-11 rounded-[10px] bg-danger text-paper hover:bg-danger/90"
+              className="min-h-11 rounded-btn bg-danger text-paper hover:bg-danger/90"
               onClick={() => runBulk({ action: "delete", wordIds: ids }, "Đã xóa")}
             >
               Xóa từ

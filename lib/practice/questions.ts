@@ -22,6 +22,7 @@ export type Question =
       options: Option[];
       answerId: string;
     }
+  | { id: string; kind: "flashcard"; word: StudyWord }
   | { id: string; kind: "typing"; word: StudyWord }
   | {
       id: string;
@@ -90,6 +91,8 @@ export function buildQuestions(
             answerId: word.id,
             options: choiceOptions(word, all, rng).map((o) => ({ id: o.id, label: o.term })),
           };
+        case "flashcard":
+          return { id, kind: "flashcard", word };
         case "typing":
           return { id, kind: "typing", word };
         case "cloze": {
@@ -121,6 +124,7 @@ export function buildQuestions(
 }
 
 export const MODE_INFO: Record<PracticeMode, { label: string; hint: string }> = {
+  flashcard: { label: "Lật thẻ", hint: "Lật qua lật lại, tự đánh dấu thuộc hay chưa." },
   quiz: { label: "Trắc nghiệm", hint: "Chọn nghĩa đúng của từ, hoặc từ đúng với nghĩa." },
   typing: { label: "Gõ từ", hint: "Nhìn nghĩa, gõ lại từ." },
   listening: { label: "Nghe", hint: "Nghe đọc rồi chọn từ đúng." },

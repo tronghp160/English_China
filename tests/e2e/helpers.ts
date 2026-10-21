@@ -33,7 +33,8 @@ export async function signUp(page: Page, email: string, displayName = "Người 
   await page.getByLabel("Tên người dùng").fill(username);
   await page.getByRole("button", { name: "Tiếp tục" }).click();
   await page.getByRole("radio", { name: /Tiếng Anh/ }).click();
-  await page.getByRole("button", { name: "Bắt đầu học" }).click();
+  await page.getByRole("switch", { name: "Thêm bộ từ mẫu" }).click(); // tests start from an empty notebook
+  await page.getByRole("button", { name: /Bắt đầu học/ }).click();
   await page.waitForURL(/\/today/);
   return { username };
 }

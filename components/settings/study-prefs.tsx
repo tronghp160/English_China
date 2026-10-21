@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { updatePrefs } from "@/lib/actions/profile";
 import type { Prefs } from "@/lib/validation";
 
-type BoolPref = "auto_speak" | "hide_images" | "hide_pinyin_front" | "tone_colors" | "ai_auto_suggest";
+type BoolPref = "auto_speak" | "hide_images" | "hide_pinyin_front" | "tone_colors" | "ai_autofill";
 
 const ROWS: { key: BoolPref; label: string; hint: string }[] = [
   { key: "auto_speak", label: "Tự đọc từ khi lật thẻ", hint: "Phát âm ngay khi xem mặt sau." },
@@ -22,9 +22,9 @@ const ROWS: { key: BoolPref; label: string; hint: string }[] = [
   },
   { key: "tone_colors", label: "Tô màu thanh điệu pinyin", hint: "Dấu thanh vẫn luôn hiển thị." },
   {
-    key: "ai_auto_suggest",
+    key: "ai_autofill",
     label: "Tự gợi ý khi ngừng gõ",
-    hint: "Tốn lượt gợi ý AI hơn. Mặc định tắt.",
+    hint: "Tự điền phiên âm, nghĩa, ví dụ và tìm ảnh khi thêm từ (từ điển miễn phí, thêm AI nếu có).",
   },
 ];
 

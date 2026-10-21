@@ -17,13 +17,13 @@ export default async function GroupSettingsPage({ params }: PageProps<"/groups/[
   const ownDecks = decks.filter((d) => d.owner_id === userId);
 
   return (
-    <div className="max-w-xl">
+    <div className="mx-auto max-w-xl">
       <BackLink href={`/groups/${groupId}`} label={group.name} />
-      <h1 className="mb-6 text-xl font-bold text-ink">Cài đặt nhóm</h1>
+      <h1 className="mb-6 text-xl text-ink">Cài đặt nhóm</h1>
       <GroupForm groupId={groupId} initial={{ name: group.name, description: group.description }} />
 
       <section className="mt-10 border-t border-rule pt-6">
-        <h2 className="font-bold text-ink">Thành viên được sửa bộ từ</h2>
+        <h2 className="text-ink">Thành viên được sửa bộ từ</h2>
         <p className="mt-1 text-sm text-ink-soft">
           Bật để cả nhóm cùng thêm từ vào bộ của bạn. Bộ từ do thành viên khác tạo thì người đó tự quyết.
         </p>
@@ -37,7 +37,7 @@ export default async function GroupSettingsPage({ params }: PageProps<"/groups/[
       </section>
 
       <section className="mt-10 border-t border-rule pt-6">
-        <h2 className="font-bold text-ink">Xóa nhóm</h2>
+        <h2 className="text-ink">Xóa nhóm</h2>
         <p className="mt-1 mb-4 text-sm text-ink-soft">
           Không hoàn tác được. Bộ từ và tiến độ ôn của mọi người vẫn còn.
         </p>

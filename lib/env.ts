@@ -14,6 +14,11 @@ const serverSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, "Thiếu SUPABASE_SERVICE_ROLE_KEY"),
   ANTHROPIC_API_KEY: z.string().optional(),
   AI_MODEL: z.string().default("claude-haiku-5-5"),
+  /** Free tier option for word suggestions (Google AI Studio key). */
+  GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
+  AI_MODEL_GOOGLE: z.string().default("gemini-3.8-flash"),
+  /** Which provider word suggestions use when both keys are set (default: anthropic). */
+  AI_PROVIDER: z.enum(["anthropic", "google"]).optional(),
   AI_VISION_MODEL: z.string().default("claude-sonnet-5-5"),
   AI_DAILY_LIMIT_PER_USER: z.coerce.number().int().positive().default(100),
   AI_GLOBAL_DAILY_LIMIT: z.coerce.number().int().positive().default(3000),
@@ -59,6 +64,21 @@ export function serverEnv() {
   }
   cachedServer = parsed.data;
   return cachedServer;
+}
+
+export type AiProvider = { provider: "anthropic" | "google"; apiKey: string; model: string };
+
+/** Provider for word suggestions: the one named in AI_PROVIDER, else whichever key is set. */
+export function aiProvider(): AiProvider | null {
+  const env = serverEnv();
+  const anthropic = env.ANTHROPIC_API_KEY
+    ? { provider: "anthropic" as const, apiKey: env.ANTHROPIC_API_KEY, model: env.AI_MODEL }
+    : null;
+  const google = env.GOOGLE_GENERATIVE_AI_API_KEY
+    ? { provider: "google" as const, apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY, model: env.AI_MODEL_GOOGLE }
+    : null;
+  if (env.AI_PROVIDER === "google") return google ?? anthropic;
+  return anthropic ?? google;
 }
 
 export function requireAnthropicKey() {

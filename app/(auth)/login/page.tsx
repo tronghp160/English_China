@@ -18,7 +18,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
   return (
     <AuthCard
-      title="Đăng nhập Sổ Từ"
+      title="Chào mừng trở lại! 👋"
+      subtitle="Đăng nhập để tiếp tục chuỗi ngày học của bạn."
       alert={error}
       footer={
         <>

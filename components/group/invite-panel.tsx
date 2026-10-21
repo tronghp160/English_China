@@ -22,7 +22,7 @@ import { regenerateInviteCode } from "@/lib/actions/groups";
 const noop = () => () => {};
 
 const BTN =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-[10px] border border-rule bg-surface px-3.5 text-sm font-medium text-ink hover:bg-muted";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-btn border border-rule bg-surface px-3.5 text-sm font-medium text-ink hover:bg-muted";
 
 export function InvitePanel({
   groupId,
@@ -74,7 +74,7 @@ export function InvitePanel({
   }
 
   return (
-    <section aria-labelledby="invite-title" className="rounded-[12px] border border-rule bg-surface p-4">
+    <section aria-labelledby="invite-title" className="rounded-card border border-rule bg-surface p-4">
       <h2 id="invite-title" className="text-sm font-medium text-ink-soft">
         Mời bạn bè
       </h2>
@@ -86,7 +86,7 @@ export function InvitePanel({
         value={url}
         aria-label="Link mời"
         onFocus={(e) => e.currentTarget.select()}
-        className="mt-2 h-10 w-full min-w-0 rounded-[10px] border border-rule bg-muted px-3 text-sm text-ink-soft"
+        className="mt-2 h-10 w-full min-w-0 rounded-btn border border-rule bg-muted px-3 text-sm text-ink-soft"
       />
       <div className="mt-3 flex flex-wrap gap-2">
         <button type="button" onClick={copy} className={BTN}>
@@ -104,12 +104,12 @@ export function InvitePanel({
             <QrCode className="size-4 text-ink-soft" aria-hidden />
             Mã QR
           </DialogTrigger>
-          <DialogContent className="rounded-[20px] sm:max-w-sm">
+          <DialogContent className="rounded-sheet sm:max-w-sm">
             <DialogHeader>
               <DialogTitle>Quét để vào nhóm</DialogTitle>
               <DialogDescription>{groupName}</DialogDescription>
             </DialogHeader>
-            <div className="qr-paper mx-auto rounded-[12px] p-4">
+            <div className="qr-paper mx-auto rounded-card p-4">
               <QRCodeSVG
                 value={url}
                 size={232}
@@ -129,7 +129,7 @@ export function InvitePanel({
               <RefreshCw className="size-4 text-ink-soft" aria-hidden />
               Đổi mã
             </AlertDialogTrigger>
-            <AlertDialogContent className="rounded-[20px]">
+            <AlertDialogContent className="rounded-sheet">
               <AlertDialogHeader>
                 <AlertDialogTitle>Tạo mã mời mới?</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -137,8 +137,8 @@ export function InvitePanel({
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="min-h-11 rounded-[10px]">Giữ mã cũ</AlertDialogCancel>
-                <AlertDialogAction className="min-h-11 rounded-[10px]" onClick={regenerate}>
+                <AlertDialogCancel className="min-h-11 rounded-btn">Giữ mã cũ</AlertDialogCancel>
+                <AlertDialogAction className="min-h-11 rounded-btn" onClick={regenerate}>
                   Tạo mã mới
                 </AlertDialogAction>
               </AlertDialogFooter>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { capEnrichResult, cleanEmoji, EnrichResultEN, EnrichResultZH, type EnrichEN, type EnrichZH } from "@/lib/ai/schemas";
-import { enrichToWord } from "@/lib/ai/to-word";
+import { enrichToWord, imageSuggestions } from "@/lib/ai/to-word";
 import { verifyChinese } from "@/lib/ai/verify";
 import { wordInputSchema } from "@/lib/word-schema";
 
@@ -14,10 +14,11 @@ const en: EnrichEN = {
   ipa_uk: "",
   cefr: "B2",
   senses: [
-    { pos: ["adj", "adj"], meaning_vi: "kiên cường", meaning_en: "Able to recover quickly.", examples: ex(5) },
-    { pos: ["adj"], meaning_vi: "đàn hồi", meaning_en: "Returning to shape.", examples: ex(2) },
-    { pos: ["adj"], meaning_vi: "a", meaning_en: "a", examples: ex(2) },
-    { pos: ["adj"], meaning_vi: "b", meaning_en: "b", examples: ex(2) },
+    { pos: ["adj", "adj"], meaning_vi: "kiên cường", meaning_en: "Able to recover quickly.", examples: ex(5), image_query: " tree growing through rock " },
+    { pos: ["adj"], meaning_vi: "đàn hồi, co giãn", meaning_en: "Returning to shape.", examples: ex(2), image_query: "rubber band stretch" },
+    { pos: ["adj"], meaning_vi: "a", meaning_en: "a", examples: ex(2), image_query: "Tree growing through rock" },
+    { pos: ["adj"], meaning_vi: "b", meaning_en: "b", examples: ex(2), image_query: "" },
+    ...Array.from({ length: 4 }, (_, i) => ({ pos: ["adj" as const], meaning_vi: `x${i}`, meaning_en: "x", examples: ex(1), image_query: `x${i}` })),
   ],
   synonyms: ["tough", "tough", "strong", "hardy", "robust", "flexible", "buoyant", "irrepressible"],
   antonyms: ["fragile", "weak", "brittle", "delicate", "frail"],
@@ -38,7 +39,8 @@ describe("AI schemas", () => {
 
   it("caps arrays and cleans empty strings", () => {
     const c = capEnrichResult(en);
-    expect(c.senses).toHaveLength(3);
+    expect(c.senses).toHaveLength(6);
+    expect(c.senses[0].image_query).toBe("tree growing through rock");
     expect(c.senses[0].examples).toHaveLength(3);
     expect(c.senses[0].pos).toEqual(["adj"]);
     expect(c.synonyms).toEqual(["tough", "strong", "hardy", "robust", "flexible", "buoyant"]);
@@ -75,7 +77,7 @@ const zh: EnrichZH = {
   pinyin: "jiānqiǎng", // wrong tone on purpose (强 is polyphonic: qiáng / qiǎng / jiàng)
   pinyin_numbered: "jian1 qiang3",
   hsk: { level: 5, version: "2.0" },
-  senses: [{ pos: ["adj"], meaning_vi: "kiên cường", meaning_en: "strong", examples: ex(2) }],
+  senses: [{ pos: ["adj"], meaning_vi: "kiên cường", meaning_en: "strong", examples: ex(2), image_query: "strong person" }],
   measure_words: [],
   characters: [
     { char: "坚", pinyin: "jiān", meaning_vi: "vững", radical: "土" },
@@ -126,7 +128,7 @@ describe("enrichToWord", () => {
   it("maps the chosen sense into a valid word form (EN)", () => {
     const r = { language: "en" as const, ...capEnrichResult(en), checks: {} };
     const values = enrichToWord(r, 1);
-    expect(values.meaning_vi).toBe("đàn hồi");
+    expect(values.meaning_vi).toBe("đàn hồi, co giãn");
     expect(values.reading).toBe("/rɪˈzɪliənt/");
     const parsed = wordInputSchema.safeParse({ term: "resilient", ...values });
     expect(parsed.success).toBe(true);
@@ -134,7 +136,29 @@ describe("enrichToWord", () => {
 
   it("merges senses", () => {
     const r = { language: "en" as const, ...capEnrichResult(en), checks: {} };
-    expect(enrichToWord(r, "merge").meaning_vi).toBe("kiên cường; đàn hồi; a");
+    expect(enrichToWord(r, "merge").meaning_vi).toBe("kiên cường; đàn hồi, co giãn; a; b; x0; x1");
+  });
+
+  it("joins several chosen senses with 2 examples each", () => {
+    const r = { language: "en" as const, ...capEnrichResult(en), checks: {} };
+    const values = enrichToWord(r, [2, 0]);
+    expect(values.meaning_vi).toBe("kiên cường; a");
+    expect(values.meaning_en).toBe("Able to recover quickly. / a");
+    expect(values.examples).toHaveLength(4);
+    expect(enrichToWord(r, [9]).meaning_vi).toBe("kiên cường"); // out of range falls back
+    expect(wordInputSchema.safeParse({ term: "resilient", ...values }).success).toBe(true);
+  });
+
+  it("keeps joined meanings within the column limits", () => {
+    const long = "y".repeat(120);
+    const r = {
+      language: "en" as const,
+      ...capEnrichResult({ ...en, senses: en.senses.map((s) => ({ ...s, meaning_vi: `${s.meaning_vi} ${long}` })) }),
+      checks: {},
+    };
+    const values = enrichToWord(r, "merge");
+    expect(values.meaning_vi!.length).toBeLessThanOrEqual(300);
+    expect(values.meaning_vi!.split("; ")).toHaveLength(2);
   });
 
   it("maps a Chinese entry with extras", () => {
@@ -142,5 +166,22 @@ describe("enrichToWord", () => {
     const values = enrichToWord({ language: "zh", ...result, checks }, 0);
     expect(values.lang_extra).toMatchObject({ traditional: "堅強", han_viet: "kiên cường", needs_review: true });
     expect(wordInputSchema.safeParse({ term: "坚强", ...values }).success).toBe(true);
+  });
+});
+
+describe("imageSuggestions", () => {
+  const r = { language: "en" as const, ...capEnrichResult(en), checks: {} };
+
+  it("gives one search per sense, chosen senses first, without duplicates", () => {
+    const list = imageSuggestions(r, [1]);
+    expect(list[0]).toEqual({ label: "đàn hồi", query: "rubber band stretch" });
+    expect(list[1]).toEqual({ label: "kiên cường", query: "tree growing through rock" });
+    // sense "a" repeats the first query (case-insensitive) and "b" has none
+    expect(list.map((x) => x.label)).toEqual(["đàn hồi", "kiên cường", "x0", "x1"]);
+  });
+
+  it("falls back to the top-level query for entries without per-sense ones", () => {
+    const old = { ...r, senses: r.senses.map((s) => ({ ...s, image_query: "" })) };
+    expect(imageSuggestions(old, 0)).toEqual([{ label: "kiên cường", query: "tree growing through rock" }]);
   });
 });

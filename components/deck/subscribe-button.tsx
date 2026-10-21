@@ -23,7 +23,7 @@ export function SubscribeButton({ deckId, subscribed }: { deckId: string; subscr
         })
       }
       className={cn(
-        "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[10px] px-4 text-sm font-medium",
+        "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-btn px-4 text-sm font-medium",
         subscribed ? "border border-rule bg-surface text-ink hover:bg-muted" : "bg-primary text-primary-foreground",
       )}
     >
@@ -55,7 +55,7 @@ export function CloneDeckButton({ deckId }: { deckId: string }) {
           router.refresh();
         })
       }
-      className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[10px] border border-rule bg-surface px-3.5 text-sm font-medium text-ink hover:bg-muted"
+      className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-btn border border-rule bg-surface px-3.5 text-sm font-medium text-ink hover:bg-muted"
     >
       {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <CopyPlus className="size-4 text-ink-soft" aria-hidden />}
       Sao chép

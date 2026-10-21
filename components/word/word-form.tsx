@@ -1,11 +1,24 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertTriangle, ChevronDown, Loader2, Wand2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ImageIcon,
+  Info,
+  Link2,
+  Loader2,
+  MessageSquareQuote,
+  StickyNote,
+  Tag,
+  Wand2,
+  type LucideIcon,
+} from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch, type FieldErrors } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,9 +34,11 @@ import { emptyWord, wordInputSchema, type WordData, type WordInput } from "@/lib
 import { CollocationsEditor, ExamplesEditor, FamilyEditor, TagInput } from "./list-editors";
 import { ImagePicker } from "./image-picker";
 import { PronounceButton } from "./pronounce-button";
+import type { ImageSuggestion } from "@/lib/ai/to-word";
 import { AiSuggestButton, AiSuggestPanel, useAiSuggest, type AiFillResult } from "./ai-suggest";
 
 type Mode = "create" | "edit";
+type SectionId = "examples" | "image" | "tags" | "related" | "more" | "note";
 
 /** Drop empty rows/objects so optional sections don't fail validation. */
 function clean(v: WordInput): WordInput {
@@ -46,36 +61,89 @@ function clean(v: WordInput): WordInput {
   };
 }
 
+/** Which collapsed section holds a field, so a validation error can open it. */
+function sectionsWithErrors(errors: FieldErrors<WordInput>): SectionId[] {
+  const out: SectionId[] = [];
+  if (errors.examples) out.push("examples");
+  if (errors.image_url || errors.image_source) out.push("image");
+  if (errors.parts_of_speech || errors.topic || errors.emoji) out.push("tags");
+  if (errors.collocations || errors.synonyms || errors.antonyms || errors.word_family) out.push("related");
+  if (errors.meaning_en || errors.lang_extra) out.push("more");
+  if (errors.personal_note) out.push("note");
+  return out;
+}
+
 function Field({
   label,
   htmlFor,
   error,
-  hint,
-  ai,
   children,
   className,
 }: {
   label: string;
   htmlFor?: string;
   error?: string;
-  hint?: React.ReactNode;
-  ai?: boolean;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
     <div className={cn("space-y-1.5", className)}>
-      <div className="flex items-center gap-2">
-        <Label htmlFor={htmlFor}>{label}</Label>
-        {ai && (
-          <span className="rounded-full bg-wash-yellow px-2 py-0.5 text-xs font-medium text-tone-2">AI gợi ý</span>
-        )}
-      </div>
-      <div className={cn(ai && "rounded-[12px] ring-2 ring-highlight/70 ring-offset-1 ring-offset-paper")}>{children}</div>
-      {(error || hint) && <p className={cn("text-sm", error ? "text-danger" : "text-ink-soft")}>{error ?? hint}</p>}
+      <Label htmlFor={htmlFor}>{label}</Label>
+      {children}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }
+
+/** One optional part of the word: a tappable row with a short summary that opens in place. */
+function Section({
+  id,
+  icon: Icon,
+  tone,
+  title,
+  summary,
+  open,
+  onToggle,
+  children,
+}: {
+  id: SectionId;
+  icon: LucideIcon;
+  tone: string;
+  title: string;
+  summary: React.ReactNode;
+  open: boolean;
+  onToggle: (id: SectionId) => void;
+  children: React.ReactNode;
+}) {
+  const panelId = `section-${id}`;
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => onToggle(id)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="flex min-h-15 w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-muted/50"
+      >
+        <span className={cn("icon-tile size-9", tone)}>
+          <Icon className="size-[18px]" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-medium text-ink">{title}</span>
+          <span className="block truncate text-sm text-ink-soft">{summary}</span>
+        </span>
+        <ChevronDown className={cn("size-5 shrink-0 text-ink-soft transition-transform", open && "rotate-180")} aria-hidden />
+      </button>
+      {open && (
+        <div id={panelId} className="space-y-5 px-4 pt-1 pb-5">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const joinParts = (parts: (string | number | null | undefined | false)[]) => parts.filter(Boolean).join(" · ");
 
 export function WordForm({
   mode,
@@ -106,17 +174,39 @@ export function WordForm({
   const { register, control, handleSubmit, reset, setValue, getValues, setError, formState, setFocus } = form;
   const errors = formState.errors;
   const [pending, startTransition] = useTransition();
-  const [detailsOpen, setDetailsOpen] = useState(mode === "edit");
+  const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set());
   const [duplicates, setDuplicates] = useState<DuplicateHit[]>([]);
-  const [aiFields, setAiFields] = useState<Set<string>>(new Set());
   const [imageQuery, setImageQuery] = useState("");
   const [imageSearchKey, setImageSearchKey] = useState<number | undefined>(undefined);
+  const [imageSuggestions, setImageSuggestions] = useState<ImageSuggestion[]>([]);
   const termRef = useRef<HTMLInputElement | null>(null);
+  // Last meaning the AI wrote, so picking other senses can replace it but a typed one is kept.
+  // A ref, not state: the suggestion hook keeps an older applyAi while its requests run.
+  // No reset on save: the form clears meaning_vi then, so nothing is kept anyway.
+  const aiMeaning = useRef<string | null>(null);
 
   const term = useWatch({ control, name: "term" }) ?? "";
   const emoji = useWatch({ control, name: "emoji" });
   const imageUrl = useWatch({ control, name: "image_url" });
   const imageSource = useWatch({ control, name: "image_source" });
+  const examples = useWatch({ control, name: "examples" }) ?? [];
+  const pos = useWatch({ control, name: "parts_of_speech" }) ?? [];
+  const topic = useWatch({ control, name: "topic" });
+  const collocations = useWatch({ control, name: "collocations" }) ?? [];
+  const synonyms = useWatch({ control, name: "synonyms" }) ?? [];
+  const antonyms = useWatch({ control, name: "antonyms" }) ?? [];
+  const family = useWatch({ control, name: "word_family" }) ?? [];
+  const meaningEn = useWatch({ control, name: "meaning_en" });
+  const extra = useWatch({ control, name: "lang_extra" }) ?? {};
+  const note = useWatch({ control, name: "personal_note" });
+
+  const toggleSection = (id: SectionId) =>
+    setOpenSections((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   // Live duplicate warning (§11.4)
   useEffect(() => {
@@ -137,24 +227,30 @@ export function WordForm({
   }
 
   const applyAi = useCallback((result: AiFillResult) => {
-    const keepMeaning = getValues("meaning_vi")?.trim();
-    const filled = new Set<string>();
+    const typed = getValues("meaning_vi")?.trim();
+    const keepMeaning = Boolean(typed) && typed !== aiMeaning.current;
     for (const [k, v] of Object.entries(result.values) as [keyof WordInput, unknown][]) {
       if (k === "meaning_vi" && keepMeaning) continue;
       if (v === undefined) continue;
       setValue(k, v as never, { shouldDirty: true });
-      filled.add(k);
+      if (k === "meaning_vi") aiMeaning.current = String(v ?? "").trim();
     }
-    setAiFields(filled);
     setValue("ai_generated", true);
-    setDetailsOpen(true);
-    if (result.imageQuery) {
-      setImageQuery(result.imageQuery);
+    setImageSuggestions(result.images);
+    if (result.focusQuery) {
+      setImageQuery(result.focusQuery);
       setImageSearchKey(Date.now());
     }
   }, [getValues, setValue]);
 
-  const ai = useAiSuggest({ language, getTerm: () => getValues("term"), onApply: applyAi, term });
+  const ai = useAiSuggest({
+    language,
+    getTerm: () => getValues("term"),
+    onApply: applyAi,
+    term,
+    autoEnabled: mode === "create",
+    aiAvailable: aiEnabled,
+  });
 
   const onSubmit = handleSubmit(
     (values) =>
@@ -172,11 +268,11 @@ export function WordForm({
             action: { label: "Xem", onClick: () => router.push(`/words/${res.data.id}`) },
           });
           reset(emptyWord());
-          setAiFields(new Set());
           setDuplicates([]);
           setImageQuery("");
           setImageSearchKey(undefined);
-          setDetailsOpen(false);
+          setImageSuggestions([]);
+          setOpenSections(new Set());
           ai.reset();
           requestAnimationFrame(() => setFocus("term"));
         } else {
@@ -185,18 +281,57 @@ export function WordForm({
           router.refresh();
         }
       }),
-    () => toast.error("Kiểm tra lại các trường được đánh dấu."),
+    (errs) => {
+      const hidden = sectionsWithErrors(errs);
+      if (hidden.length) setOpenSections((s) => new Set([...s, ...hidden]));
+      toast.error("Kiểm tra lại các trường được đánh dấu.");
+    },
   );
 
   const termReg = register("term");
 
+  // One-line summaries for the collapsed sections.
+  const exampleCount = examples.filter((e) => e.text?.trim()).length;
+  const relatedCount = {
+    collocations: collocations.filter((c) => c.text?.trim()).length,
+    synonyms: synonyms.length,
+    antonyms: antonyms.length,
+    family: family.filter((w) => w.text?.trim()).length,
+  };
+  const hskLevel = extra.hsk?.level;
+  const summaries: Record<SectionId, string> = {
+    examples: exampleCount ? `${exampleCount} câu` : "Chưa có câu nào",
+    image: imageUrl ? "Đã chọn ảnh" : "Chưa có ảnh",
+    tags: joinParts([pos.map((p) => POS[p].label).join(", "), topic?.trim(), emoji]) || "Loại từ, chủ đề, emoji",
+    related:
+      joinParts([
+        relatedCount.collocations > 0 && `${relatedCount.collocations} cụm từ`,
+        relatedCount.synonyms > 0 && `${relatedCount.synonyms} đồng nghĩa`,
+        relatedCount.antonyms > 0 && `${relatedCount.antonyms} trái nghĩa`,
+        relatedCount.family > 0 && `${relatedCount.family} từ cùng họ`,
+      ]) || (language === "en" ? "Cụm từ, đồng nghĩa, họ từ" : "Cụm từ, đồng nghĩa, trái nghĩa"),
+    more:
+      (language === "zh"
+        ? joinParts([hskLevel && `HSK ${hskLevel}`, extra.han_viet?.trim() && `Hán Việt: ${extra.han_viet.trim()}`, extra.traditional?.trim() && `Phồn thể: ${extra.traditional.trim()}`])
+        : joinParts([extra.cefr, extra.us_ipa?.trim(), meaningEn?.trim()])) ||
+      (language === "zh" ? "Phồn thể, Hán Việt, HSK, lượng từ" : "CEFR, IPA, dạng từ, giải nghĩa tiếng Anh"),
+    note: note?.trim() || "Mẹo nhớ chỉ mình bạn thấy",
+  };
+
   return (
-    <form onSubmit={(e) => void onSubmit(e)} className="space-y-6" noValidate>
-      <Field label="Từ" htmlFor="term" error={errors.term?.message}>
+    <form onSubmit={(e) => void onSubmit(e)} className="space-y-5" noValidate>
+      <div className="space-y-3">
         <div className="flex gap-2">
+          <Label htmlFor="term" className="sr-only">
+            Từ
+          </Label>
           <Input
             id="term"
             {...termReg}
+            onBlur={(e) => {
+              void termReg.onBlur(e);
+              ai.suggestIfNew();
+            }}
             ref={(el) => {
               termReg.ref(el);
               termRef.current = el;
@@ -207,161 +342,234 @@ export function WordForm({
             spellCheck={false}
             lang={language === "zh" ? "zh-CN" : "en"}
             placeholder={def.termPlaceholder}
-            className={cn("h-14 flex-1 rounded-[10px] text-xl font-medium", language === "zh" && "font-hanzi-sans")}
+            className={cn("h-16 flex-1 rounded-btn px-4 text-2xl font-semibold md:text-2xl", language === "zh" && "font-hanzi-sans")}
             aria-invalid={Boolean(errors.term) || undefined}
           />
-          {aiEnabled && <AiSuggestButton loading={ai.state.status === "loading"} onClick={() => void ai.suggest()} />}
+          <AiSuggestButton loading={ai.state.status === "loading"} onClick={() => void ai.suggest()} />
         </div>
-      </Field>
+        {errors.term?.message && <p className="text-sm text-danger">{errors.term.message}</p>}
 
-      {aiEnabled && <AiSuggestPanel ai={ai} onUseSpelling={(t) => setValue("term", t, { shouldDirty: true })} />}
+        <AiSuggestPanel ai={ai} onUseSpelling={(t) => setValue("term", t, { shouldDirty: true })} />
 
-      {term.trim() && duplicates.length > 0 && (
-        <p role="status" className="-mt-3 flex items-start gap-2 rounded-[10px] bg-wash-yellow px-3 py-2 text-sm text-ink">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-tone-2" aria-hidden />
-          <span>
-            Từ này đã có trong bộ{" "}
-            {duplicates.map((d, i) => (
-              <span key={d.wordId}>
-                {i > 0 && ", "}
-                <Link href={`/words/${d.wordId}`} className="font-medium underline underline-offset-2">
-                  {d.deckName}
-                </Link>
-              </span>
-            ))}
-          </span>
-        </p>
-      )}
-
-      <Field
-        label={def.readingLabel}
-        htmlFor="reading"
-        ai={aiFields.has("reading")}
-        hint={language === "zh" ? "Pinyin có dấu, ví dụ jiānqiáng" : undefined}
-      >
-        <div className="flex gap-2">
-          <Input
-            id="reading"
-            {...register("reading")}
-            placeholder={def.readingPlaceholder}
-            className={cn("h-11 flex-1 rounded-[10px] text-base", language === "en" && "font-ipa")}
-          />
-          {language === "zh" && (
-            <Button type="button" variant="outline" onClick={fillPinyin} className="h-11 gap-1.5 rounded-[10px] px-3">
-              <Wand2 className="size-4" aria-hidden />
-              Tự điền
-            </Button>
-          )}
-          {term.trim() && <PronounceButton text={term} lang={language} />}
-        </div>
-      </Field>
-
-      <Field label="Nghĩa tiếng Việt" htmlFor="meaning_vi" error={errors.meaning_vi?.message} ai={aiFields.has("meaning_vi")}>
-        <Input
-          id="meaning_vi"
-          {...register("meaning_vi")}
-          placeholder="kiên cường, mau phục hồi"
-          className="h-12 rounded-[10px] text-base"
-          aria-invalid={Boolean(errors.meaning_vi) || undefined}
-        />
-      </Field>
-
-      <Controller
-        control={control}
-        name="parts_of_speech"
-        render={({ field }) => (
-          <fieldset className={cn(aiFields.has("parts_of_speech") && "rounded-[12px] p-2 ring-2 ring-highlight/70")}>
-            <legend className="mb-2 text-sm font-medium">
-              Loại từ{" "}
-              {aiFields.has("parts_of_speech") && (
-                <span className="ml-1 rounded-full bg-wash-yellow px-2 py-0.5 text-xs font-medium text-tone-2">AI gợi ý</span>
-              )}
-            </legend>
-            <div className="flex flex-wrap gap-2">
-              {posFor(language).map((p) => {
-                const on = (field.value ?? []).includes(p);
-                return (
-                  <button
-                    key={p}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => field.onChange(on ? field.value!.filter((x) => x !== p) : [...(field.value ?? []), p])}
-                    className={cn(
-                      "min-h-10 rounded-full border px-3 text-sm",
-                      on ? cn("border-transparent font-medium", POS[p].wash, POS[p].badge) : "border-rule text-ink-soft",
-                    )}
-                  >
-                    {POS[p].label}
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
+        {term.trim() && duplicates.length > 0 && (
+          <p role="status" className="flex items-start gap-2 rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-tone-2" aria-hidden />
+            <span>
+              Từ này đã có trong bộ{" "}
+              {duplicates.map((d, i) => (
+                <span key={d.wordId}>
+                  {i > 0 && ", "}
+                  <Link href={`/words/${d.wordId}`} className="font-medium underline underline-offset-2">
+                    {d.deckName}
+                  </Link>
+                </span>
+              ))}
+            </span>
+          </p>
         )}
-      />
+      </div>
 
-      <div className="rounded-[12px] border border-rule bg-surface">
-        <button
-          type="button"
-          onClick={() => setDetailsOpen((o) => !o)}
-          aria-expanded={detailsOpen}
-          className="flex min-h-14 w-full items-center justify-between px-4 text-left font-medium text-ink"
-        >
-          Thêm chi tiết
-          <span className="flex items-center gap-2 text-sm font-normal text-ink-soft">
-            Câu ví dụ, ảnh, cụm từ…
-            <ChevronDown className={cn("size-5 transition-transform", detailsOpen && "rotate-180")} aria-hidden />
-          </span>
-        </button>
+      <div className="notebook-card space-y-4 p-4">
+        <Field label={def.readingLabel} htmlFor="reading">
+          <div className="flex gap-2">
+            <Input
+              id="reading"
+              {...register("reading")}
+              placeholder={def.readingPlaceholder}
+              className={cn("h-12 flex-1 rounded-btn text-base", language === "en" && "font-ipa")}
+            />
+            {language === "zh" && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={fillPinyin}
+                aria-label="Tự điền pinyin"
+                title="Tự điền pinyin"
+                className="size-12 rounded-btn p-0"
+              >
+                <Wand2 className="size-5" aria-hidden />
+              </Button>
+            )}
+            {term.trim() && <PronounceButton text={term} lang={language} />}
+          </div>
+        </Field>
 
-        {detailsOpen && (
-          <div className="space-y-6 border-t border-rule px-4 py-5">
-            <Field label="Câu ví dụ" ai={aiFields.has("examples")}>
-              <ExamplesEditor control={control} register={register} language={language} />
-            </Field>
+        <Field label="Nghĩa tiếng Việt" htmlFor="meaning_vi" error={errors.meaning_vi?.message}>
+          <Input
+            id="meaning_vi"
+            {...register("meaning_vi")}
+            placeholder="kiên cường, mau phục hồi"
+            className="h-12 rounded-btn text-base"
+            aria-invalid={Boolean(errors.meaning_vi) || undefined}
+          />
+        </Field>
+      </div>
 
-            <Field label="Ảnh minh họa">
-              <ImagePicker
-                value={{ image_url: imageUrl ?? null, image_source: imageSource ?? null }}
-                onChange={(v) => {
-                  setValue("image_url", v.image_url, { shouldDirty: true });
-                  setValue("image_source", v.image_source, { shouldDirty: true });
-                }}
-                suggestedQuery={imageQuery || (language === "en" ? term : "")}
-                autoSearchKey={imageSearchKey}
-                userId={userId}
-                emoji={emoji}
-              />
-            </Field>
+      <section aria-labelledby="details-heading" className="space-y-2">
+        <h2 id="details-heading" className="px-1 text-base text-ink">
+          Thêm chi tiết <span className="font-sans text-sm font-normal text-ink-soft">(không bắt buộc)</span>
+        </h2>
+        <div className="notebook-card divide-y divide-rule overflow-hidden">
+          <Section
+            id="examples"
+            icon={MessageSquareQuote}
+            tone="bg-wash-sky text-sky-text"
+            title="Câu ví dụ"
+            summary={summaries.examples}
+            open={openSections.has("examples")}
+            onToggle={toggleSection}
+          >
+            <ExamplesEditor control={control} register={register} language={language} />
+          </Section>
 
-            <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
-              <Field label="Chủ đề" htmlFor="topic" ai={aiFields.has("topic")}>
-                <Input id="topic" list="topic-options" {...register("topic")} placeholder="Cảm xúc" className="h-11 rounded-[10px] text-base" />
+          <Section
+            id="image"
+            icon={ImageIcon}
+            tone="bg-wash-pink text-pink-text"
+            title="Ảnh minh họa"
+            summary={
+              imageUrl ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="relative inline-block size-5 overflow-hidden rounded-md align-middle">
+                    <Image src={imageUrl} alt="" fill sizes="20px" className="object-cover" />
+                  </span>
+                  {summaries.image}
+                </span>
+              ) : (
+                summaries.image
+              )
+            }
+            open={openSections.has("image")}
+            onToggle={toggleSection}
+          >
+            <ImagePicker
+              value={{ image_url: imageUrl ?? null, image_source: imageSource ?? null }}
+              onChange={(v) => {
+                setValue("image_url", v.image_url, { shouldDirty: true });
+                setValue("image_source", v.image_source, { shouldDirty: true });
+              }}
+              suggestedQuery={imageQuery || (language === "en" ? term : "")}
+              suggestions={imageSuggestions}
+              autoSearchKey={imageSearchKey}
+              userId={userId}
+              emoji={emoji}
+            />
+          </Section>
+
+          <Section
+            id="tags"
+            icon={Tag}
+            tone="bg-wash-yellow text-sun-text"
+            title="Loại từ & chủ đề"
+            summary={summaries.tags}
+            open={openSections.has("tags")}
+            onToggle={toggleSection}
+          >
+            <Controller
+              control={control}
+              name="parts_of_speech"
+              render={({ field }) => (
+                <fieldset>
+                  <legend className="mb-2 text-sm font-medium">Loại từ</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {posFor(language).map((p) => {
+                      const on = (field.value ?? []).includes(p);
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => field.onChange(on ? field.value!.filter((x) => x !== p) : [...(field.value ?? []), p])}
+                          className={cn(
+                            "min-h-10 rounded-full border px-3 text-sm",
+                            on ? cn("border-transparent font-medium", POS[p].wash, POS[p].badge) : "border-rule text-ink-soft",
+                          )}
+                        >
+                          {POS[p].label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              )}
+            />
+            <div className="grid grid-cols-[1fr_6rem] gap-3">
+              <Field label="Chủ đề" htmlFor="topic">
+                <Input id="topic" list="topic-options" {...register("topic")} placeholder="Cảm xúc" className="h-11 rounded-btn text-base" />
                 <datalist id="topic-options">
                   {STANDARD_TOPICS.map((t) => (
                     <option key={t} value={t} />
                   ))}
                 </datalist>
               </Field>
-              <Field label="Emoji" htmlFor="emoji" ai={aiFields.has("emoji")}>
-                <Input id="emoji" {...register("emoji")} placeholder="🌱" className="h-11 rounded-[10px] text-center text-xl" maxLength={8} />
+              <Field label="Emoji" htmlFor="emoji">
+                <Input id="emoji" {...register("emoji")} placeholder="🌱" className="h-11 rounded-btn text-center text-xl" maxLength={8} />
               </Field>
             </div>
+          </Section>
 
-            <Field label="Giải nghĩa tiếng Anh" htmlFor="meaning_en" ai={aiFields.has("meaning_en")}>
-              <Input id="meaning_en" {...register("meaning_en")} placeholder="Able to recover quickly from difficulties." className="h-11 rounded-[10px] text-base" />
+          <Section
+            id="related"
+            icon={Link2}
+            tone="bg-wash-jade text-jade-text"
+            title="Từ liên quan"
+            summary={summaries.related}
+            open={openSections.has("related")}
+            onToggle={toggleSection}
+          >
+            <Field label="Cụm từ thường gặp">
+              <CollocationsEditor control={control} register={register} language={language} />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Controller
+                control={control}
+                name="synonyms"
+                render={({ field }) => (
+                  <Field label="Đồng nghĩa" htmlFor="synonyms">
+                    <TagInput id="synonyms" value={field.value ?? []} onChange={field.onChange} placeholder="Gõ rồi nhấn Enter" />
+                  </Field>
+                )}
+              />
+              <Controller
+                control={control}
+                name="antonyms"
+                render={({ field }) => (
+                  <Field label="Trái nghĩa" htmlFor="antonyms">
+                    <TagInput id="antonyms" value={field.value ?? []} onChange={field.onChange} placeholder="Gõ rồi nhấn Enter" />
+                  </Field>
+                )}
+              />
+            </div>
+            {language === "en" && (
+              <Field label="Họ từ">
+                <FamilyEditor control={control} register={register} language={language} />
+              </Field>
+            )}
+          </Section>
+
+          <Section
+            id="more"
+            icon={Info}
+            tone="bg-wash-grape text-grape-text"
+            title="Thông tin thêm"
+            summary={summaries.more}
+            open={openSections.has("more")}
+            onToggle={toggleSection}
+          >
+            <Field label="Giải nghĩa tiếng Anh" htmlFor="meaning_en">
+              <Input id="meaning_en" {...register("meaning_en")} placeholder="Able to recover quickly from difficulties." className="h-11 rounded-btn text-base" />
             </Field>
 
             {language === "zh" ? (
               <div className="grid gap-4 sm:grid-cols-3">
-                <Field label="Phồn thể" htmlFor="traditional" ai={aiFields.has("lang_extra")}>
-                  <Input id="traditional" {...register("lang_extra.traditional")} placeholder="堅強" className="h-11 rounded-[10px] font-hanzi-sans text-base" />
+                <Field label="Phồn thể" htmlFor="traditional">
+                  <Input id="traditional" {...register("lang_extra.traditional")} placeholder="堅強" className="h-11 rounded-btn font-hanzi-sans text-base" />
                 </Field>
-                <Field label="Âm Hán Việt" htmlFor="han_viet" ai={aiFields.has("lang_extra")}>
-                  <Input id="han_viet" {...register("lang_extra.han_viet")} placeholder="kiên cường" className="h-11 rounded-[10px] text-base" />
+                <Field label="Âm Hán Việt" htmlFor="han_viet">
+                  <Input id="han_viet" {...register("lang_extra.han_viet")} placeholder="kiên cường" className="h-11 rounded-btn text-base" />
                 </Field>
-                <Field label="HSK" htmlFor="hsk" ai={aiFields.has("lang_extra")}>
-                  <select id="hsk" {...register("lang_extra.hsk.level")} className="h-11 w-full rounded-[10px] border border-rule bg-surface px-3 text-base">
+                <Field label="HSK" htmlFor="hsk">
+                  <select id="hsk" {...register("lang_extra.hsk.level")} className="h-11 w-full rounded-btn border border-rule bg-surface px-3 text-base">
                     <option value="">Không rõ</option>
                     {def.levels.map((l) => (
                       <option key={l} value={l}>
@@ -374,7 +582,7 @@ export function WordForm({
                   control={control}
                   name="lang_extra.measure_words"
                   render={({ field }) => (
-                    <Field label="Lượng từ" htmlFor="measure" hint="Ví dụ: 个 gè" className="sm:col-span-3">
+                    <Field label="Lượng từ" htmlFor="measure" className="sm:col-span-3">
                       <TagInput
                         id="measure"
                         max={3}
@@ -395,8 +603,8 @@ export function WordForm({
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-3">
-                <Field label="CEFR" htmlFor="cefr" ai={aiFields.has("lang_extra")}>
-                  <select id="cefr" {...register("lang_extra.cefr")} className="h-11 w-full rounded-[10px] border border-rule bg-surface px-3 text-base">
+                <Field label="CEFR" htmlFor="cefr">
+                  <select id="cefr" {...register("lang_extra.cefr")} className="h-11 w-full rounded-btn border border-rule bg-surface px-3 text-base">
                     <option value="">Không rõ</option>
                     {def.levels.map((l) => (
                       <option key={l} value={l}>
@@ -406,13 +614,13 @@ export function WordForm({
                   </select>
                 </Field>
                 <Field label="IPA Mỹ" htmlFor="us_ipa">
-                  <Input id="us_ipa" {...register("lang_extra.us_ipa")} className="h-11 rounded-[10px] font-ipa text-base" />
+                  <Input id="us_ipa" {...register("lang_extra.us_ipa")} className="h-11 rounded-btn font-ipa text-base" />
                 </Field>
                 <Field label="IPA Anh" htmlFor="uk_ipa">
-                  <Input id="uk_ipa" {...register("lang_extra.uk_ipa")} className="h-11 rounded-[10px] font-ipa text-base" />
+                  <Input id="uk_ipa" {...register("lang_extra.uk_ipa")} className="h-11 rounded-btn font-ipa text-base" />
                 </Field>
                 <Field label="Số nhiều" htmlFor="plural">
-                  <Input id="plural" {...register("lang_extra.plural")} className="h-11 rounded-[10px] text-base" />
+                  <Input id="plural" {...register("lang_extra.plural")} className="h-11 rounded-btn text-base" />
                 </Field>
                 <fieldset className="space-y-1.5 sm:col-span-3">
                   <legend className="text-sm font-medium">Dạng động từ</legend>
@@ -425,53 +633,39 @@ export function WordForm({
                         ["third_person", "Ngôi 3 số ít"],
                       ] as const
                     ).map(([k, l]) => (
-                      <Input key={k} aria-label={l} placeholder={l} {...register(`lang_extra.verb_forms.${k}`)} className="h-11 rounded-[10px] text-base" />
+                      <Input key={k} aria-label={l} placeholder={l} {...register(`lang_extra.verb_forms.${k}`)} className="h-11 rounded-btn text-base" />
                     ))}
                   </div>
                 </fieldset>
               </div>
             )}
+          </Section>
 
-            <Field label="Cụm từ thường gặp" ai={aiFields.has("collocations")}>
-              <CollocationsEditor control={control} register={register} language={language} />
-            </Field>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Controller
-                control={control}
-                name="synonyms"
-                render={({ field }) => (
-                  <Field label="Đồng nghĩa" htmlFor="synonyms" ai={aiFields.has("synonyms")}>
-                    <TagInput id="synonyms" value={field.value ?? []} onChange={field.onChange} placeholder="Gõ rồi nhấn Enter" />
-                  </Field>
-                )}
-              />
-              <Controller
-                control={control}
-                name="antonyms"
-                render={({ field }) => (
-                  <Field label="Trái nghĩa" htmlFor="antonyms" ai={aiFields.has("antonyms")}>
-                    <TagInput id="antonyms" value={field.value ?? []} onChange={field.onChange} placeholder="Gõ rồi nhấn Enter" />
-                  </Field>
-                )}
-              />
-            </div>
-
-            {language === "en" && (
-              <Field label="Họ từ" ai={aiFields.has("word_family")}>
-                <FamilyEditor control={control} register={register} language={language} />
-              </Field>
-            )}
-
-            <Field label="Ghi chú riêng (mẹo nhớ)" htmlFor="personal_note" ai={aiFields.has("personal_note")} error={errors.personal_note?.message}>
-              <Textarea id="personal_note" {...register("personal_note")} rows={3} className="rounded-[10px] text-base" placeholder="Chỉ mình bạn thấy khi ôn." />
-            </Field>
-          </div>
-        )}
-      </div>
+          <Section
+            id="note"
+            icon={StickyNote}
+            tone="bg-wash-red text-danger"
+            title="Ghi chú riêng"
+            summary={summaries.note}
+            open={openSections.has("note")}
+            onToggle={toggleSection}
+          >
+            <Textarea
+              id="personal_note"
+              aria-label="Ghi chú riêng (mẹo nhớ)"
+              {...register("personal_note")}
+              rows={3}
+              className="rounded-btn text-base"
+              placeholder="Chỉ mình bạn thấy khi ôn."
+              aria-invalid={Boolean(errors.personal_note) || undefined}
+            />
+            {errors.personal_note?.message && <p className="text-sm text-danger">{errors.personal_note.message}</p>}
+          </Section>
+        </div>
+      </section>
 
       <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 border-t border-rule bg-paper/95 px-4 py-3 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
-        <Button type="submit" disabled={pending} className="h-12 w-full gap-2 rounded-[10px] text-base sm:w-auto sm:px-10">
+        <Button type="submit" disabled={pending} className="h-12 w-full gap-2 rounded-btn text-base sm:w-auto sm:px-10">
           {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
           Lưu từ
         </Button>

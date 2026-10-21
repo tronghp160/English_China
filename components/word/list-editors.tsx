@@ -59,7 +59,7 @@ function AddButton({ onClick, children }: { onClick: () => void; children: React
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex min-h-11 items-center gap-1.5 rounded-[10px] px-2 text-sm font-medium text-ink-blue hover:bg-wash-blue"
+      className="inline-flex min-h-11 items-center gap-1.5 rounded-btn px-2 text-sm font-medium text-ink-blue hover:bg-wash-blue"
     >
       <Plus className="size-4" aria-hidden />
       {children}
@@ -67,7 +67,7 @@ function AddButton({ onClick, children }: { onClick: () => void; children: React
   );
 }
 
-const inputCls = "h-11 rounded-[10px] text-base";
+const inputCls = "h-11 rounded-btn text-base";
 
 export function ExamplesEditor({
   control,
@@ -84,7 +84,7 @@ export function ExamplesEditor({
   return (
     <div className="space-y-3">
       {fields.map((f, i) => (
-        <div key={f.id} className="flex gap-2 rounded-[12px] border border-rule bg-surface p-3">
+        <div key={f.id} className="flex gap-2 rounded-card border border-rule bg-surface p-3">
           <div className="min-w-0 flex-1 space-y-2">
             <Input
               aria-label={`Câu ví dụ ${i + 1}`}
@@ -125,7 +125,7 @@ export function CollocationsEditor({
   return (
     <div className="space-y-3">
       {fields.map((f, i) => (
-        <div key={f.id} className="flex gap-2 rounded-[12px] border border-rule bg-surface p-3">
+        <div key={f.id} className="flex gap-2 rounded-card border border-rule bg-surface p-3">
           <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
             <Input aria-label={`Cụm từ ${i + 1}`} placeholder="Cụm từ" className={inputCls} {...register(`collocations.${i}.text`)} />
             {language === "zh" && (
@@ -156,12 +156,12 @@ export function FamilyEditor({
   return (
     <div className="space-y-3">
       {fields.map((f, i) => (
-        <div key={f.id} className="flex gap-2 rounded-[12px] border border-rule bg-surface p-3">
+        <div key={f.id} className="flex gap-2 rounded-card border border-rule bg-surface p-3">
           <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-3">
             <Input aria-label={`Từ cùng họ ${i + 1}`} placeholder="resilience" className={inputCls} {...register(`word_family.${i}.text`)} />
             <select
               aria-label={`Loại từ ${i + 1}`}
-              className="h-11 rounded-[10px] border border-rule bg-surface px-2 text-base"
+              className="h-11 rounded-btn border border-rule bg-surface px-2 text-base"
               {...register(`word_family.${i}.pos`)}
             >
               <option value="">Loại từ</option>
@@ -206,7 +206,7 @@ export function TagInput({
     setDraft("");
   }
   return (
-    <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-[10px] border border-rule bg-surface px-2 py-1.5">
+    <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-btn border border-rule bg-surface px-2 py-1.5">
       {value.map((t) => (
         <span key={t} className="inline-flex items-center gap-1 rounded-full bg-wash-blue py-1 pr-1 pl-3 text-sm text-ink">
           {t}

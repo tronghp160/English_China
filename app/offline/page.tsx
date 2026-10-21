@@ -14,7 +14,7 @@ export default function OfflinePage() {
       </header>
       <main className="notebook-card mt-6 px-6 py-8">
         <WifiOff className="size-8 text-ink-soft" aria-hidden />
-        <h1 className="mt-4 text-xl font-bold text-ink">Bạn đang offline</h1>
+        <h1 className="mt-4 text-xl text-ink">Bạn đang offline</h1>
         <p className="mt-2 text-ink-soft">
           Trang này cần mạng để tải. Nếu đang ôn dở, kết quả đã lưu trên máy và sẽ tự gửi khi có mạng lại.
         </p>

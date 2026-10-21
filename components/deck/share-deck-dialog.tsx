@@ -43,11 +43,11 @@ export function ShareDeckDialog({ deckId, slug, siteUrl }: { deckId: string; slu
 
   return (
     <Dialog>
-      <DialogTrigger className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[10px] border border-rule bg-surface px-3.5 text-sm font-medium text-ink hover:bg-muted">
+      <DialogTrigger className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-btn border border-rule bg-surface px-3.5 text-sm font-medium text-ink hover:bg-muted">
         <Share2 className="size-4 text-ink-soft" aria-hidden />
         Chia sẻ
       </DialogTrigger>
-      <DialogContent className="rounded-[20px]">
+      <DialogContent className="rounded-sheet">
         <DialogHeader>
           <DialogTitle>Chia sẻ bộ từ</DialogTitle>
           <DialogDescription>
@@ -66,10 +66,10 @@ export function ShareDeckDialog({ deckId, slug, siteUrl }: { deckId: string; slu
               readOnly
               value={url}
               aria-label="Link chia sẻ"
-              className="h-11 min-w-0 flex-1 rounded-[10px] border border-rule bg-muted px-3 text-sm text-ink"
+              className="h-11 min-w-0 flex-1 rounded-btn border border-rule bg-muted px-3 text-sm text-ink"
               onFocus={(e) => e.currentTarget.select()}
             />
-            <Button type="button" onClick={copy} className="h-11 gap-1.5 rounded-[10px] px-4">
+            <Button type="button" onClick={copy} className="h-11 gap-1.5 rounded-btn px-4">
               {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
               Sao chép
             </Button>

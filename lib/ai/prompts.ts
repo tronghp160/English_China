@@ -3,19 +3,20 @@ import { POS_CODES } from "@/lib/pos";
 import { STANDARD_TOPICS } from "@/lib/topics";
 
 /** Bump whenever prompts or schemas change: old dictionary_cache rows stop being used. */
-export const PROMPT_VERSION = 1;
+export const PROMPT_VERSION = 2;
 
 const COMMON = `Bạn là từ điển song ngữ cho người Việt học ngoại ngữ. Trả về đúng một mục từ theo schema.
 
 Quy tắc chung:
 - Nghĩa tiếng Việt (meaning_vi) tự nhiên, phổ biến, ngắn gọn: 1–6 từ, nhiều nghĩa gần nhau thì cách nhau bằng dấu phẩy. Không dịch máy móc.
 - meaning_en: giải nghĩa một câu tiếng Anh đơn giản.
-- Mỗi nghĩa (senses) có 2–3 câu ví dụ ngắn, đời thường, đúng trình độ của từ (từ dễ dùng câu dễ), kèm bản dịch tiếng Việt tự nhiên. Không dùng nội dung nhạy cảm, bạo lực, chính trị.
-- Tối đa 3 nghĩa, nghĩa phổ biến nhất đứng đầu. Nếu người dùng cho ngữ cảnh, đặt nghĩa khớp ngữ cảnh lên đầu.
+- senses: liệt kê ĐẦY ĐỦ các nghĩa thông dụng mà người học hay gặp, tối đa 6, nghĩa phổ biến nhất đứng đầu. Tách thành nghĩa riêng khi khác loại từ hoặc khác hẳn ý (ví dụ "bank": ngân hàng / bờ sông; "run": chạy / điều hành). Không bịa nghĩa hiếm, không tách hai cách nói của cùng một ý. Nếu người dùng cho ngữ cảnh hoặc ghi sẵn nghĩa, đặt nghĩa khớp lên đầu.
+- Mỗi nghĩa có 2–3 câu ví dụ ngắn, đời thường, đúng trình độ của từ (từ dễ dùng câu dễ), dùng đúng nghĩa đó, kèm bản dịch tiếng Việt tự nhiên. Không dùng nội dung nhạy cảm, bạo lực, chính trị.
+- senses[].image_query: 2–4 từ tiếng Anh tả một bức ảnh thật minh họa ĐÚNG nghĩa đó, đủ cụ thể để không ra ảnh của nghĩa khác (ví dụ "bank" nghĩa bờ sông → "grassy river bank", nghĩa ngân hàng → "bank building entrance"). Từ trừu tượng thì tả một cảnh minh họa (ví dụ "resilient" → "tree growing through rock").
 - pos dùng mã: ${POS_CODES.join(", ")}.
 - topic_vi chọn một trong: ${STANDARD_TOPICS.join(", ")}.
 - emoji: đúng 1 emoji minh họa.
-- image_query: 1–3 từ tiếng Anh, cụ thể, chụp được bằng ảnh thật; từ trừu tượng thì mô tả một cảnh minh họa (ví dụ "resilient" → "tree growing through rock").
+- image_query: giống image_query của nghĩa đầu tiên.
 - memory_tip_vi: một mẹo nhớ ngắn bằng tiếng Việt, hoặc null nếu không có mẹo hay.
 - Nếu đầu vào không phải từ/cụm từ có thật: is_valid_word = false và gợi ý did_you_mean (từ đúng chính tả gần nhất) nếu có; vẫn điền các trường khác tốt nhất có thể cho từ gợi ý. Nếu từ đúng thì did_you_mean = null.
 - Mảng không có dữ liệu thì để rỗng; trường không áp dụng thì null.`;
@@ -59,5 +60,5 @@ export function batchPrompt(lang: LangCode, items: { term: string; meaning_vi?: 
   const lines = items
     .map((it, i) => `${i + 1}. "${it.term}"${it.meaning_vi ? ` (người dùng ghi nghĩa: ${it.meaning_vi})` : ""}`)
     .join("\n");
-  return `Điền mục từ cho từng từ ${label} sau, giữ đúng thứ tự, trả về mảng entries cùng số phần tử:\n${lines}`;
+  return `Điền mục từ cho từng từ ${label} sau, giữ đúng thứ tự, trả về mảng entries cùng số phần tử. Nhập hàng loạt nên mỗi từ chỉ cần tối đa 3 nghĩa, mỗi nghĩa 2 câu ví dụ:\n${lines}`;
 }

@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { deleteAccount } from "@/lib/actions/account";
 
 const LINK_BTN =
-  "inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-rule bg-surface px-4 text-sm font-medium text-ink hover:bg-muted";
+  "inline-flex min-h-11 items-center gap-2 rounded-btn border border-rule bg-surface px-4 text-sm font-medium text-ink hover:bg-muted";
 
 export function ExportData() {
   return (
@@ -59,10 +59,10 @@ export function DeleteAccount({ username }: { username: string }) {
           setError(null);
         }}
       >
-        <AlertDialogTrigger className="mt-3 min-h-11 rounded-[10px] bg-wash-red px-4 text-sm font-medium text-danger">
+        <AlertDialogTrigger className="mt-3 min-h-11 rounded-btn bg-wash-red px-4 text-sm font-medium text-danger">
           Xóa tài khoản
         </AlertDialogTrigger>
-        <AlertDialogContent className="rounded-[20px]">
+        <AlertDialogContent className="rounded-sheet">
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa tài khoản vĩnh viễn?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -86,7 +86,7 @@ export function DeleteAccount({ username }: { username: string }) {
               spellCheck={false}
               aria-invalid={Boolean(error) || undefined}
               aria-describedby={error ? "delete-confirm-error" : undefined}
-              className="mt-1.5 h-11 rounded-[10px] text-base"
+              className="mt-1.5 h-11 rounded-btn text-base"
             />
             {error && (
               <p id="delete-confirm-error" className="mt-1.5 text-sm text-danger">
@@ -95,12 +95,12 @@ export function DeleteAccount({ username }: { username: string }) {
             )}
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending} className="min-h-11 rounded-[10px]">
+            <AlertDialogCancel disabled={pending} className="min-h-11 rounded-btn">
               Giữ tài khoản
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={!matches || pending}
-              className="min-h-11 gap-2 rounded-[10px] bg-danger text-paper hover:bg-danger/90"
+              className="min-h-11 gap-2 rounded-btn bg-danger text-paper hover:bg-danger/90"
               onClick={(e) => {
                 e.preventDefault(); // keep the dialog open until the server answers
                 start(async () => {

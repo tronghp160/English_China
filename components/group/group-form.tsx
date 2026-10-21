@@ -54,7 +54,7 @@ export function GroupForm({
           onChange={(e) => setName(e.target.value)}
           placeholder="Ví dụ: Lớp HSK 3 tối thứ Năm"
           maxLength={60}
-          className="h-12 rounded-[10px] text-base"
+          className="h-12 rounded-btn text-base"
           aria-invalid={Boolean(errors.name) || undefined}
           autoFocus={!groupId}
         />
@@ -68,11 +68,11 @@ export function GroupForm({
           onChange={(e) => setDescription(e.target.value)}
           maxLength={300}
           rows={2}
-          className="rounded-[10px] text-base"
+          className="rounded-btn text-base"
         />
         {errors.description && <p className="text-sm text-danger">{errors.description}</p>}
       </div>
-      <Button type="submit" disabled={pending} className="h-12 w-full rounded-[10px] text-base sm:w-auto sm:px-6">
+      <Button type="submit" disabled={pending} className="h-12 w-full rounded-btn text-base sm:w-auto sm:px-6">
         {groupId ? "Lưu" : "Tạo nhóm"}
       </Button>
     </form>

@@ -15,7 +15,7 @@ export function RetryButton() {
     <button
       type="button"
       onClick={() => window.location.reload()}
-      className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-[10px] bg-primary px-5 text-base font-medium text-primary-foreground"
+      className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-btn bg-primary px-5 text-base font-medium text-primary-foreground"
     >
       <RotateCw className="size-5" aria-hidden />
       Thử lại

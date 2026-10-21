@@ -21,7 +21,7 @@ export function JoinButton({ code }: { code: string }) {
           router.replace(`/groups/${res.data.groupId}`);
         })
       }
-      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[10px] bg-primary px-6 text-base font-medium text-primary-foreground sm:w-auto"
+      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-btn bg-primary px-6 text-base font-medium text-primary-foreground sm:w-auto"
     >
       {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
       Vào nhóm

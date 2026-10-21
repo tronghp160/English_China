@@ -47,7 +47,8 @@ export const prefsSchema = z.object({
   hide_images: z.boolean().optional(),
   hide_pinyin_front: z.boolean().optional(),
   tone_colors: z.boolean().optional(),
-  ai_auto_suggest: z.boolean().optional(),
+  /** Was "ai_auto_suggest" (default off); renamed when it became on by default. */
+  ai_autofill: z.boolean().optional(),
 });
 export type Prefs = z.infer<typeof prefsSchema>;
 
@@ -59,7 +60,7 @@ export const DEFAULT_PREFS: Required<Prefs> = {
   hide_images: false,
   hide_pinyin_front: false,
   tone_colors: true,
-  ai_auto_suggest: false,
+  ai_autofill: true,
 };
 
 export function readPrefs(raw: unknown): Required<Prefs> {

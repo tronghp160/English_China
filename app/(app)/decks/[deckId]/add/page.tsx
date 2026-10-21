@@ -4,7 +4,7 @@ import { BackLink } from "@/components/app-shell/back-link";
 import { WordForm } from "@/components/word/word-form";
 import { requireUser } from "@/lib/auth";
 import { getDeck } from "@/lib/data/decks";
-import { serverEnv } from "@/lib/env";
+import { aiProvider } from "@/lib/env";
 import { LANGUAGES } from "@/lib/lang/registry";
 import { emptyWord } from "@/lib/word-schema";
 
@@ -20,9 +20,9 @@ export default async function AddWordPage({ params, searchParams }: PageProps<"/
   const { deck } = view;
 
   return (
-    <div className="max-w-2xl">
+    <div className="mx-auto max-w-2xl">
       <BackLink href={`/decks/${deckId}`} label={deck.name} />
-      <h1 className="mb-6 text-xl font-bold text-ink">
+      <h1 className="mb-6 text-xl text-ink">
         Thêm từ {LANGUAGES[deck.language].label.toLowerCase()}
       </h1>
       <WordForm
@@ -32,7 +32,7 @@ export default async function AddWordPage({ params, searchParams }: PageProps<"/
         language={deck.language}
         userId={user.id}
         initial={typeof prefill === "string" ? { ...emptyWord(), term: prefill.slice(0, 80) } : undefined}
-        aiEnabled={Boolean(serverEnv().ANTHROPIC_API_KEY)}
+        aiEnabled={aiProvider() !== null}
       />
     </div>
   );

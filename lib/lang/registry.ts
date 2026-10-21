@@ -2,7 +2,7 @@ import { normalizeTerm } from "./normalize";
 import { pinyinSearchKey } from "./zh";
 import type { LangCode } from "./types";
 
-export type PracticeMode = "quiz" | "typing" | "listening" | "cloze" | "writing" | "tones";
+export type PracticeMode = "flashcard" | "quiz" | "typing" | "listening" | "cloze" | "writing" | "tones";
 
 export type LanguageDef = {
   code: LangCode;
@@ -38,7 +38,7 @@ export const LANGUAGES: Record<LangCode, LanguageDef> = {
     termPlaceholder: "resilient",
     levelLabel: "CEFR",
     levels: ["A1", "A2", "B1", "B2", "C1", "C2"],
-    practiceModes: ["quiz", "typing", "listening", "cloze"],
+    practiceModes: ["flashcard", "quiz", "typing", "listening", "cloze"],
     termFontClass: "font-sans",
     normalize: (t) => normalizeTerm(t, "en"),
     readingKey: () => null,
@@ -53,7 +53,7 @@ export const LANGUAGES: Record<LangCode, LanguageDef> = {
     termPlaceholder: "坚强",
     levelLabel: "HSK",
     levels: ["1", "2", "3", "4", "5", "6", "7", "8", "9"],
-    practiceModes: ["quiz", "typing", "listening", "cloze", "writing", "tones"],
+    practiceModes: ["flashcard", "quiz", "typing", "listening", "cloze", "writing", "tones"],
     termFontClass: "font-hanzi",
     normalize: (t) => normalizeTerm(t, "zh"),
     readingKey: (r) => (r ? pinyinSearchKey(r) || null : null),

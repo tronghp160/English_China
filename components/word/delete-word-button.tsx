@@ -22,20 +22,20 @@ export function DeleteWordButton({ wordId, term }: { wordId: string; term: strin
   const [pending, start] = useTransition();
   return (
     <AlertDialog>
-      <AlertDialogTrigger className="inline-flex min-h-11 items-center gap-1.5 rounded-[10px] px-3 text-sm font-medium text-danger hover:bg-wash-red">
+      <AlertDialogTrigger className="inline-flex min-h-11 items-center gap-1.5 rounded-btn px-3 text-sm font-medium text-danger hover:bg-wash-red">
         <Trash2 className="size-4" aria-hidden />
         Xóa từ
       </AlertDialogTrigger>
-      <AlertDialogContent className="rounded-[20px]">
+      <AlertDialogContent className="rounded-sheet">
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa “{term}”?</AlertDialogTitle>
           <AlertDialogDescription>Lịch sử ôn của từ này cũng bị xóa. Không hoàn tác được.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="min-h-11 rounded-[10px]">Giữ lại</AlertDialogCancel>
+          <AlertDialogCancel className="min-h-11 rounded-btn">Giữ lại</AlertDialogCancel>
           <AlertDialogAction
             disabled={pending}
-            className="min-h-11 rounded-[10px] bg-danger text-paper hover:bg-danger/90"
+            className="min-h-11 rounded-btn bg-danger text-paper hover:bg-danger/90"
             onClick={() =>
               start(async () => {
                 const res = await deleteWord(wordId);

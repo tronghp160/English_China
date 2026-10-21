@@ -50,7 +50,7 @@ export function WritingPad({
         showOutline: false,
         strokeColor: cssVar("--ink", "#1E2A4A"),
         outlineColor: cssVar("--rule", "#DCE3F0"),
-        highlightColor: cssVar("--ink-blue", "#2F5BD3"),
+        highlightColor: cssVar("--ink-blue", "#5848E8"),
         drawingColor: cssVar("--ink", "#1E2A4A"),
         drawingWidth: 6,
         onLoadCharDataError: () => !cancelled && setFailed(true),
@@ -88,7 +88,7 @@ export function WritingPad({
         <button
           type="button"
           onClick={() => onDone(false)}
-          className="min-h-12 rounded-[10px] border border-rule bg-surface px-4 text-ink"
+          className="min-h-12 rounded-btn border border-rule bg-surface px-4 text-ink"
         >
           Bỏ qua
         </button>
@@ -116,7 +116,7 @@ export function WritingPad({
         ))}
       </div>
       <div
-        className="relative touch-none overflow-hidden rounded-[12px] border border-rule bg-surface"
+        className="relative touch-none overflow-hidden rounded-card border border-rule bg-surface"
         style={{ width: size, height: size }}
       >
         <svg
@@ -177,7 +177,7 @@ export function WritingPad({
               writer.current?.showOutline();
             }}
             disabled={usedHint}
-            className="inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-rule bg-surface px-4 text-sm text-ink disabled:opacity-50"
+            className="inline-flex min-h-11 items-center gap-2 rounded-btn border border-rule bg-surface px-4 text-sm text-ink disabled:opacity-50"
           >
             <Eye className="size-4" aria-hidden />
             Hiện chữ mờ
@@ -185,7 +185,7 @@ export function WritingPad({
           <button
             type="button"
             onClick={() => onDone(false)}
-            className="inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-rule bg-surface px-4 text-sm text-ink"
+            className="inline-flex min-h-11 items-center gap-2 rounded-btn border border-rule bg-surface px-4 text-sm text-ink"
           >
             <SkipForward className="size-4" aria-hidden />
             Bỏ qua

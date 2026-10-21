@@ -16,8 +16,8 @@ function withUtm(url: string) {
   return `${url}${url.includes("?") ? "&" : "?"}${UTM}`;
 }
 
-export async function searchUnsplash(query: string, accessKey: string): Promise<ImageResult[]> {
-  const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=8&content_filter=high`;
+export async function searchUnsplash(query: string, accessKey: string, page = 1, perPage = 16): Promise<ImageResult[]> {
+  const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=${perPage}&page=${page}&content_filter=high`;
   const res = await fetch(url, {
     headers: { Authorization: `Client-ID ${accessKey}`, "Accept-Version": "v1" },
     next: { revalidate: WEEK, tags: ["unsplash"] },

@@ -37,7 +37,7 @@ export function MemberList({
   const [pending, start] = useTransition();
 
   return (
-    <ul className="ruled-list overflow-hidden rounded-[12px] border border-rule bg-surface">
+    <ul className="ruled-list overflow-hidden rounded-card border border-rule bg-surface">
       {members.map((m) => {
         const p = m.profile!;
         return (
@@ -53,13 +53,13 @@ export function MemberList({
             {canRemove && m.role !== "owner" && (
               <AlertDialog>
                 <AlertDialogTrigger
-                  className="grid size-11 shrink-0 place-items-center rounded-[10px] text-ink-soft hover:bg-wash-red hover:text-danger"
+                  className="grid size-11 shrink-0 place-items-center rounded-btn text-ink-soft hover:bg-wash-red hover:text-danger"
                   aria-label={`Xóa ${p.display_name} khỏi nhóm`}
                   disabled={pending}
                 >
                   <UserMinus className="size-5" aria-hidden />
                 </AlertDialogTrigger>
-                <AlertDialogContent className="rounded-[20px]">
+                <AlertDialogContent className="rounded-sheet">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Xóa {p.display_name} khỏi nhóm?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -67,9 +67,9 @@ export function MemberList({
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel className="min-h-11 rounded-[10px]">Thôi</AlertDialogCancel>
+                    <AlertDialogCancel className="min-h-11 rounded-btn">Thôi</AlertDialogCancel>
                     <AlertDialogAction
-                      className="min-h-11 rounded-[10px] bg-danger text-paper hover:bg-danger/90"
+                      className="min-h-11 rounded-btn bg-danger text-paper hover:bg-danger/90"
                       onClick={() =>
                         start(async () => {
                           const res = await removeMember(groupId, m.user_id);

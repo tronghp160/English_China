@@ -24,6 +24,8 @@ export const Sense = z.object({
   meaning_vi: z.string(),
   meaning_en: z.string(),
   examples: z.array(Example),
+  /** English photo search words for this sense (so "bank" of a river gets river photos). */
+  image_query: z.string(),
 });
 
 export const EnrichResultEN = z.object({
@@ -87,7 +89,7 @@ export type EnrichChecks = {
 };
 
 const LIMITS = {
-  senses: 3,
+  senses: 6,
   examples: 3,
   synonyms: 6,
   antonyms: 4,
@@ -122,18 +124,19 @@ function uniq(list: string[]) {
 }
 
 /** Trim arrays to plan limits, drop empty strings, normalize emoji. */
-export function capEnrichResult<T extends EnrichEN | EnrichZH>(r: T): T {
+export function capEnrichResult<T extends EnrichEN | EnrichZH>(r: T, opts: { senses?: number } = {}): T {
   const out = { ...r } as Record<string, unknown>;
   out.did_you_mean = nullIfEmpty(r.did_you_mean);
   out.memory_tip_vi = nullIfEmpty(r.memory_tip_vi);
   out.emoji = cleanEmoji(r.emoji);
-  out.senses = r.senses.slice(0, LIMITS.senses).map((s) => ({
+  out.senses = r.senses.slice(0, opts.senses ?? LIMITS.senses).map((s) => ({
     ...s,
     pos: [...new Set(s.pos)],
     examples: s.examples
       .filter((e) => e.text.trim())
       .slice(0, LIMITS.examples)
       .map((e) => ({ ...e, reading: nullIfEmpty(e.reading) })),
+    image_query: (s.image_query ?? "").trim(),
   }));
   out.synonyms = uniq(r.synonyms).slice(0, LIMITS.synonyms);
   out.antonyms = uniq(r.antonyms).slice(0, LIMITS.antonyms);

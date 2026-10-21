@@ -1,8 +1,9 @@
 import "server-only";
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText, NoObjectGeneratedError, Output } from "ai";
 import { z } from "zod";
-import { requireAnthropicKey, serverEnv } from "@/lib/env";
+import { aiProvider, serverEnv, type AiProvider } from "@/lib/env";
 import { normalizeTerm } from "@/lib/lang/normalize";
 import type { LangCode } from "@/lib/lang/types";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -39,16 +40,27 @@ function quotaDay() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
 }
 
-function model() {
-  const anthropic = createAnthropic({ apiKey: requireAnthropicKey() });
-  return anthropic(serverEnv().AI_MODEL);
+function requireProvider(): AiProvider {
+  const p = aiProvider();
+  if (!p) throw new AiError("not_configured", "Tính năng Gợi ý AI chưa được bật (thiếu ANTHROPIC_API_KEY hoặc GOOGLE_GENERATIVE_AI_API_KEY).");
+  return p;
+}
+
+function model(p: AiProvider) {
+  return p.provider === "google"
+    ? createGoogleGenerativeAI({ apiKey: p.apiKey })(p.model)
+    : createAnthropic({ apiKey: p.apiKey })(p.model);
 }
 
 // Haiku 5.5 rejects non-default sampling values, so the plan's temperature 0.2–0.3
 // is replaced by low effort (short thinking keeps the ≤ 5 s target).
-const PROVIDER_OPTIONS = { anthropic: { effort: "low" as const, structuredOutputMode: "outputFormat" as const } };
+// Gemini: low thinking keeps answers quick on the free tier.
+const PROVIDER_OPTIONS = {
+  anthropic: { effort: "low" as const, structuredOutputMode: "outputFormat" as const },
+  google: { thinkingConfig: { thinkingLevel: "low" as const } },
+};
 
-function finalize(lang: LangCode, raw: EnrichEN | EnrichZH): EnrichResult {
+export function finalize(lang: LangCode, raw: EnrichEN | EnrichZH): EnrichResult {
   if (lang === "zh") {
     const capped = capEnrichResult(raw as EnrichZH);
     const { result, checks } = verifyChinese(capped);
@@ -109,7 +121,7 @@ async function writeCache(lang: LangCode, normalized: string, result: EnrichResu
         language: lang,
         normalized,
         payload: result as unknown as Json,
-        model: serverEnv().AI_MODEL,
+        model: aiProvider()?.model ?? "unknown",
         prompt_version: PROMPT_VERSION,
       },
       { onConflict: "language,normalized,prompt_version", ignoreDuplicates: true },
@@ -117,21 +129,22 @@ async function writeCache(lang: LangCode, normalized: string, result: EnrichResu
 }
 
 async function callModel<T>(schema: z.ZodType<T>, system: string, prompt: string, maxOutputTokens: number): Promise<T> {
+  const p = requireProvider();
   let lastError: unknown;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const res = await generateText({
-        model: model(),
+        model: model(p),
         system,
         prompt,
         output: Output.object({ schema }),
         maxOutputTokens,
         maxRetries: 1,
-        timeout: 20_000,
+        timeout: 25_000,
         providerOptions: PROVIDER_OPTIONS,
       });
       console.info(
-        `[ai] ${serverEnv().AI_MODEL} input=${res.usage.inputTokens ?? "?"} output=${res.usage.outputTokens ?? "?"} attempt=${attempt + 1}`,
+        `[ai] ${p.provider}/${p.model} input=${res.usage.inputTokens ?? "?"} output=${res.usage.outputTokens ?? "?"} attempt=${attempt + 1}`,
       );
       return res.output;
     } catch (e) {
@@ -162,14 +175,14 @@ export async function enrichTerm(opts: {
     const hit = await readCache(opts.language, normalized);
     if (hit) return { result: hit, cached: true };
   }
-  requireAnthropicKeyOrThrow();
+  requireProvider();
   await chargeQuota(opts.userId);
 
   const raw = await callModel(
     schemaFor(opts.language) as z.ZodType<EnrichEN | EnrichZH>,
     systemPrompt(opts.language),
     userPrompt(opts.language, term, opts.context),
-    4000,
+    6000,
   );
   const result = finalize(opts.language, raw);
   if (useCache) await writeCache(opts.language, normalized, result);
@@ -196,7 +209,7 @@ export async function enrichBatch(userId: string, language: LangCode, items: Bat
   misses.sort((a, b) => a - b);
 
   if (misses.length) {
-    requireAnthropicKeyOrThrow();
+    requireProvider();
     await chargeQuota(userId, misses.length);
     const schema = z.object({ entries: z.array(schemaFor(language) as z.ZodType<EnrichEN | EnrichZH>) });
     try {
@@ -226,6 +239,7 @@ export async function enrichBatch(userId: string, language: LangCode, items: Bat
   return keyed.map((_, i) => outcomes.get(i)!);
 }
 
+/** Photo import (OCR) still needs Claude vision. */
 export function requireAnthropicKeyOrThrow() {
   if (!serverEnv().ANTHROPIC_API_KEY) {
     throw new AiError("not_configured", "Tính năng Gợi ý chưa được bật (thiếu ANTHROPIC_API_KEY).");

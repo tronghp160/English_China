@@ -86,7 +86,7 @@ export function VoiceSettings({ prefs }: { prefs: Required<Prefs> }) {
                 onValueChange={(v) => save({ [key]: v === AUTO ? null : v })}
                 disabled={!list.length}
               >
-                <SelectTrigger id={`voice-${lang}`} className="h-11 flex-1 rounded-[10px]">
+                <SelectTrigger id={`voice-${lang}`} className="h-11 flex-1 rounded-btn">
                   <SelectValue placeholder="Tự chọn" />
                 </SelectTrigger>
                 <SelectContent>
@@ -101,7 +101,7 @@ export function VoiceSettings({ prefs }: { prefs: Required<Prefs> }) {
               <Button
                 type="button"
                 variant="outline"
-                className="size-11 rounded-[10px]"
+                className="size-11 rounded-btn"
                 aria-label={`Nghe thử giọng ${lang === "en" ? "tiếng Anh" : "tiếng Trung"}`}
                 disabled={!list.length}
                 onClick={() =>
@@ -123,7 +123,7 @@ export function VoiceSettings({ prefs }: { prefs: Required<Prefs> }) {
 
       <fieldset>
         <legend className="mb-2 text-sm font-medium">Tốc độ đọc</legend>
-        <div role="radiogroup" className="inline-flex rounded-[10px] border border-rule bg-surface p-1">
+        <div role="radiogroup" className="inline-flex rounded-btn border border-rule bg-surface p-1">
           {RATES.map((r) => (
             <button
               key={r.value}

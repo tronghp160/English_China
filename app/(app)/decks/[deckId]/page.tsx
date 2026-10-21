@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, FileUp, PenLine, Play, Plus, Settings } from "lucide-react";
+import { Download, FileUp, Layers, PenLine, Play, Plus, Settings } from "lucide-react";
 import { AddWordFab } from "@/components/app-shell/fab";
 import { BackLink } from "@/components/app-shell/back-link";
 import { DeckWords } from "@/components/deck/deck-words";
 import { ShareDeckDialog } from "@/components/deck/share-deck-dialog";
 import { CloneDeckButton, SubscribeButton } from "@/components/deck/subscribe-button";
-import { LangFlag } from "@/components/lang-flag";
+import { DeckCover } from "@/components/deck/deck-cover";
+import { deckTone } from "@/lib/deck-colors";
+import { LANGUAGES } from "@/lib/lang/registry";
+import { cn } from "@/lib/utils";
 import { getDeck, getMyDecks } from "@/lib/data/decks";
 import { createClient } from "@/lib/supabase/server";
 import { publicEnv } from "@/lib/env";
@@ -21,9 +24,9 @@ function ActionLink({ href, icon: Icon, children }: { href: string; icon: typeof
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[10px] border border-rule bg-surface px-3.5 text-sm font-medium text-ink hover:bg-muted"
+      className="btn-3d inline-flex min-h-11 shrink-0 items-center gap-2 rounded-btn border-2 border-rule bg-surface px-3.5 text-sm font-semibold text-ink [--edge-color:var(--rule)] hover:bg-muted"
     >
-      <Icon className="size-4 text-ink-soft" aria-hidden />
+      <Icon className="size-4 text-ink-blue" aria-hidden />
       {children}
     </Link>
   );
@@ -49,18 +52,19 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
   return (
     <div>
       <BackLink href="/decks" label="Bộ từ" />
-      <header className="flex items-start gap-3">
-        <LangFlag lang={deck.language} label className="mt-2 text-2xl" />
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold break-words text-ink">{deck.name}</h1>
-          <p className="text-sm text-ink-soft">
-            {deck.word_count} từ
+      <header className={cn("relative flex items-start gap-4 overflow-hidden rounded-sheet p-5", deckTone(deckId).wash)}>
+        <span aria-hidden className="pointer-events-none absolute -top-8 -right-8 size-28 rounded-full bg-surface/40" />
+        <DeckCover id={deckId} language={deck.language} className="size-16 -rotate-3 shadow-card" />
+        <div className="relative min-w-0 flex-1">
+          <h1 className="text-xl leading-tight break-words text-ink">{deck.name}</h1>
+          <p className="mt-1 text-sm text-ink-soft">
+            {LANGUAGES[deck.language].label} · {deck.word_count} từ
             {!isOwner && deck.owner && ` · của ${deck.owner.display_name}`}
             {deck.group && ` · nhóm ${deck.group.name}`}
             {dueHere > 0 && (
               <>
                 {" · "}
-                <span className="highlighter font-medium text-ink">{dueHere} cần ôn</span>
+                <span className="rounded-full bg-surface px-2 py-0.5 font-bold text-danger">{dueHere} cần ôn</span>
               </>
             )}
           </p>
@@ -68,17 +72,22 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
         </div>
       </header>
 
-      <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+      <div className="mt-5 flex gap-2 overflow-x-auto pt-0.5 pb-2">
         {studying ? (
           <Link
             href={`/review?deck=${deckId}`}
-            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[10px] bg-primary px-4 text-sm font-medium text-primary-foreground"
+            className="btn-3d inline-flex min-h-11 shrink-0 items-center gap-2 rounded-btn bg-primary px-4 text-sm font-bold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
           >
-            <Play className="size-4" aria-hidden />
+            <Play className="size-4 fill-current" aria-hidden />
             Ôn bộ này
           </Link>
         ) : (
           <SubscribeButton deckId={deckId} subscribed={isSubscribed} />
+        )}
+        {deck.word_count > 0 && (
+          <ActionLink href={`/practice/flashcard?deck=${deckId}&n=200&from=deck`} icon={Layers}>
+            Lật thẻ
+          </ActionLink>
         )}
         {canEdit && <ActionLink href={`/decks/${deckId}/add`} icon={Plus}>Thêm từ</ActionLink>}
         {canEdit && <ActionLink href={`/decks/${deckId}/import`} icon={FileUp}>Nhập hàng loạt</ActionLink>}
@@ -88,9 +97,9 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
         )}
         <a
           href={`/api/decks/${deckId}/export`}
-          className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[10px] border border-rule bg-surface px-3.5 text-sm font-medium text-ink hover:bg-muted"
+          className="btn-3d inline-flex min-h-11 shrink-0 items-center gap-2 rounded-btn border-2 border-rule bg-surface px-3.5 text-sm font-semibold text-ink [--edge-color:var(--rule)] hover:bg-muted"
         >
-          <Download className="size-4 text-ink-soft" aria-hidden />
+          <Download className="size-4 text-ink-blue" aria-hidden />
           Xuất CSV
         </a>
         {!isOwner && <CloneDeckButton deckId={deckId} />}

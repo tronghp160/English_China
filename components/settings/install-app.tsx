@@ -24,7 +24,7 @@ export function InstallApp() {
         <button
           type="button"
           onClick={() => void promptInstall()}
-          className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-primary px-4 text-sm font-medium text-primary-foreground"
+          className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-btn bg-primary px-4 text-sm font-medium text-primary-foreground"
         >
           <Download className="size-4" aria-hidden />
           Cài Sổ Từ lên máy

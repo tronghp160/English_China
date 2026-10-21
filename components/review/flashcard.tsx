@@ -19,7 +19,17 @@ type Props = {
   hideImageFront: boolean;
   hidePinyinFront: boolean;
   toneColors: boolean;
+  /** Tapping the back flips the card over again (free flashcard mode). */
+  flipBack?: boolean;
 };
+
+/** Flip on a tap anywhere on a face, except on its own buttons and links. */
+function tapToFlip(onFlip: () => void) {
+  return (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("a, button, [role=button]")) return;
+    onFlip();
+  };
+}
 
 function Term({
   word,
@@ -88,6 +98,7 @@ export function Flashcard({
   hideImageFront,
   hidePinyinFront,
   toneColors,
+  flipBack = false,
 }: Props) {
   const zh = word.language === "zh";
   const extra = (word.lang_extra ?? {}) as LangExtra;
@@ -115,23 +126,25 @@ export function Flashcard({
         {/* Front */}
         {/* Tapping anywhere flips; keyboard users have Space and the "Lật thẻ" button below. */}
         <div
-          onClick={onFlip}
+          onClick={tapToFlip(onFlip)}
           inert={flipped}
           className={cn(
-            "flip-face notebook-card flex min-h-[22rem] cursor-pointer flex-col items-center justify-center gap-5 px-5 py-8",
+            "flip-face notebook-card flex min-h-[22rem] cursor-pointer flex-col items-center justify-center gap-5 border-2 px-5 py-8 shadow-pop",
             flipped && "pointer-events-none",
           )}
         >
           {front}
-          <span className="mt-2 text-sm text-ink-soft">Chạm để lật</span>
+          <span className="mt-2 rounded-full bg-muted px-3 py-1 text-sm font-medium text-ink-soft">👆 Chạm để lật</span>
         </div>
 
         {/* Back */}
         <div
+          onClick={flipBack ? tapToFlip(onFlip) : undefined}
           inert={!flipped}
           className={cn(
-            "flip-face flip-back notebook-card flex min-h-[22rem] flex-col gap-5 px-5 py-6",
+            "flip-face flip-back notebook-card flex min-h-[22rem] flex-col gap-5 border-2 px-5 py-6 shadow-pop",
             !flipped && "pointer-events-none",
+            flipBack && "cursor-pointer",
           )}
         >
           <div className="flex flex-col items-center gap-4">
@@ -201,14 +214,22 @@ export function Flashcard({
           )}
 
           {word.personal_note && (
-            <p className="rounded-[10px] bg-wash-yellow px-3 py-2 text-sm text-ink">
+            <p className="rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">
               {word.personal_note}
             </p>
           )}
 
+          {flipBack && (
+            <span className="mt-auto self-center rounded-full bg-muted px-3 py-1 text-sm font-medium text-ink-soft">
+              👆 Chạm để lật lại
+            </span>
+          )}
           <Link
             href={`/words/${word.id}`}
-            className="mt-auto self-center rounded-[10px] px-3 py-2 text-sm text-ink-blue hover:underline"
+            className={cn(
+              "self-center rounded-btn px-3 py-2 text-sm text-ink-blue hover:underline",
+              !flipBack && "mt-auto",
+            )}
           >
             Xem chi tiết
           </Link>

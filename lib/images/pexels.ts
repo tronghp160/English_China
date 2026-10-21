@@ -12,8 +12,8 @@ type PexelsPhoto = {
 
 const WEEK = 60 * 60 * 24 * 7;
 
-export async function searchPexels(query: string, apiKey: string): Promise<ImageResult[]> {
-  const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=8&orientation=square`;
+export async function searchPexels(query: string, apiKey: string, page = 1, perPage = 16): Promise<ImageResult[]> {
+  const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${perPage}&page=${page}&orientation=square`;
   const res = await fetch(url, {
     headers: { Authorization: apiKey },
     // Cache identical queries for 7 days: the free API is rate limited per hour.

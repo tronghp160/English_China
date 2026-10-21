@@ -14,8 +14,8 @@ export default async function PracticePage({ searchParams }: PageProps<"/practic
   const langs = [...new Set([...me.settings.study_langs, ...options.map((d) => d.language)])];
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-xl font-bold text-ink">Luyện tập</h1>
+    <div className="mx-auto max-w-2xl">
+      <h1 className="text-xl text-ink">Luyện tập</h1>
       <p className="mt-1 mb-6 text-ink-soft">
         Luyện thêm ngoài giờ ôn. Mặc định không làm thay đổi lịch ôn.
       </p>

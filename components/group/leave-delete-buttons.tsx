@@ -17,8 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { deleteGroup, removeMember } from "@/lib/actions/groups";
 
-const DANGER_BTN = "min-h-11 rounded-[10px] bg-wash-red px-4 text-sm font-medium text-danger";
-const CONFIRM_BTN = "min-h-11 rounded-[10px] bg-danger text-paper hover:bg-danger/90";
+const DANGER_BTN = "min-h-11 rounded-btn bg-wash-red px-4 text-sm font-medium text-danger";
+const CONFIRM_BTN = "min-h-11 rounded-btn bg-danger text-paper hover:bg-danger/90";
 
 export function LeaveGroupButton({ groupId, userId, name }: { groupId: string; userId: string; name: string }) {
   const router = useRouter();
@@ -26,7 +26,7 @@ export function LeaveGroupButton({ groupId, userId, name }: { groupId: string; u
   return (
     <AlertDialog>
       <AlertDialogTrigger className={DANGER_BTN}>Rời nhóm</AlertDialogTrigger>
-      <AlertDialogContent className="rounded-[20px]">
+      <AlertDialogContent className="rounded-sheet">
         <AlertDialogHeader>
           <AlertDialogTitle>Rời nhóm “{name}”?</AlertDialogTitle>
           <AlertDialogDescription>
@@ -35,7 +35,7 @@ export function LeaveGroupButton({ groupId, userId, name }: { groupId: string; u
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="min-h-11 rounded-[10px]">Ở lại</AlertDialogCancel>
+          <AlertDialogCancel className="min-h-11 rounded-btn">Ở lại</AlertDialogCancel>
           <AlertDialogAction
             disabled={pending}
             className={CONFIRM_BTN}
@@ -64,7 +64,7 @@ export function DeleteGroupButton({ groupId, name }: { groupId: string; name: st
   return (
     <AlertDialog onOpenChange={() => setConfirm("")}>
       <AlertDialogTrigger className={DANGER_BTN}>Xóa nhóm</AlertDialogTrigger>
-      <AlertDialogContent className="rounded-[20px]">
+      <AlertDialogContent className="rounded-sheet">
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa nhóm “{name}”?</AlertDialogTitle>
           <AlertDialogDescription>
@@ -76,10 +76,10 @@ export function DeleteGroupButton({ groupId, name }: { groupId: string; name: st
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           aria-label="Tên nhóm"
-          className="h-11 rounded-[10px]"
+          className="h-11 rounded-btn"
         />
         <AlertDialogFooter>
-          <AlertDialogCancel className="min-h-11 rounded-[10px]">Giữ lại</AlertDialogCancel>
+          <AlertDialogCancel className="min-h-11 rounded-btn">Giữ lại</AlertDialogCancel>
           <AlertDialogAction
             disabled={confirm.trim() !== name.trim() || pending}
             className={CONFIRM_BTN}

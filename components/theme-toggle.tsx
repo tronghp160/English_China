@@ -24,7 +24,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     <div
       role="radiogroup"
       aria-label="Giao diện"
-      className={cn("inline-flex rounded-[10px] border border-rule bg-surface p-1", className)}
+      className={cn("inline-flex rounded-btn border border-rule bg-surface p-1", className)}
     >
       {OPTIONS.map(({ value, label, icon: Icon }) => (
         <button

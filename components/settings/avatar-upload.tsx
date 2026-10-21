@@ -65,7 +65,7 @@ export function AvatarUpload({
       />
       <label
         htmlFor="avatar-input"
-        className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-[10px] border border-rule bg-surface px-4 text-sm font-medium text-ink hover:bg-muted"
+        className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-btn border border-rule bg-surface px-4 text-sm font-medium text-ink hover:bg-muted"
       >
         {busy ? (
           <Loader2 className="size-4 animate-spin" aria-hidden />

@@ -204,18 +204,18 @@ export function ImportWizard({
           {!running && (
             <div className="mt-4 flex flex-wrap gap-2">
               {failed.length > 0 && (
-                <Button type="button" onClick={() => void run(failed, aiEnabled)} className="h-11 gap-2 rounded-[10px]">
+                <Button type="button" onClick={() => void run(failed, aiEnabled)} className="h-11 gap-2 rounded-btn">
                   <RotateCcw className="size-4" aria-hidden />
                   Thử lại {failed.length} từ lỗi
                 </Button>
               )}
-              <Button asChild variant="outline" className="h-11 rounded-[10px]">
+              <Button asChild variant="outline" className="h-11 rounded-btn">
                 <Link href={`/decks/${deckId}`}>Về bộ từ</Link>
               </Button>
               <Button
                 type="button"
                 variant="ghost"
-                className="h-11 rounded-[10px]"
+                className="h-11 rounded-btn"
                 onClick={() => {
                   setItems(null);
                   setText("");
@@ -270,7 +270,7 @@ export function ImportWizard({
           placeholder={PLACEHOLDER[language]}
           spellCheck={false}
           className={cn(
-            "w-full rounded-[12px] border border-rule bg-surface px-4 py-3 text-base leading-8 text-ink placeholder:text-ink-soft",
+            "w-full rounded-card border border-rule bg-surface px-4 py-3 text-base leading-8 text-ink placeholder:text-ink-soft",
             language === "zh" && "font-hanzi-sans",
           )}
           style={{
@@ -281,14 +281,14 @@ export function ImportWizard({
         />
         <div className="flex flex-wrap gap-2">
           <input ref={fileRef} type="file" accept=".csv,.txt,.tsv,text/csv,text/plain" className="sr-only" id="import-file" onChange={(e) => readFile(e.target.files?.[0])} />
-          <label htmlFor="import-file" className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-[10px] border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted">
+          <label htmlFor="import-file" className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-btn border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted">
             <FileUp className="size-4" aria-hidden />
             Tải file CSV
           </label>
           {visionEnabled && (
             <>
               <input ref={photoRef} type="file" accept="image/*" capture="environment" className="sr-only" id="import-photo" onChange={(e) => readPhoto(e.target.files?.[0])} />
-              <label htmlFor="import-photo" className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-[10px] border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted">
+              <label htmlFor="import-photo" className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-btn border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted">
                 {ocrBusy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Camera className="size-4" aria-hidden />}
                 {ocrBusy ? "Đang đọc ảnh…" : "Chụp trang vở"}
               </label>
@@ -335,7 +335,7 @@ export function ImportWizard({
 
       <div className="flex flex-wrap gap-2">
         {aiEnabled ? (
-          <Button type="button" disabled={!preview?.ok.length || running} onClick={() => start(true)} className="h-12 gap-2 rounded-[10px] px-5 text-base">
+          <Button type="button" disabled={!preview?.ok.length || running} onClick={() => start(true)} className="h-12 gap-2 rounded-btn px-5 text-base">
             <Sparkles className="size-5" aria-hidden />
             Điền tự động & thêm {preview?.ok.length ? `${preview.ok.length} từ` : ""}
           </Button>
@@ -347,7 +347,7 @@ export function ImportWizard({
           variant="outline"
           disabled={!preview?.ok.some((l) => l.meaning_vi) || running}
           onClick={() => start(false)}
-          className="h-12 rounded-[10px] px-5 text-base"
+          className="h-12 rounded-btn px-5 text-base"
         >
           Thêm luôn, không dùng AI
         </Button>

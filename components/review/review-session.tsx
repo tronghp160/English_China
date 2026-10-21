@@ -15,11 +15,11 @@ import { SessionSummary, type SessionResult } from "./session-summary";
 
 export type ReviewItem = QueueItem & { word: StudyWord; direction: Direction };
 
-const RATING_STYLE: Record<RatingValue, string> = {
-  1: "bg-wash-red text-danger",
-  2: "bg-wash-yellow text-ink",
-  3: "bg-wash-jade text-jade-text",
-  4: "bg-wash-blue text-ink-blue",
+const RATING_STYLE: Record<RatingValue, { cls: string; emoji: string }> = {
+  1: { cls: "bg-wash-red text-danger border-margin-red/40 [--edge-color:var(--margin-red)]", emoji: "😵" },
+  2: { cls: "bg-wash-yellow text-sun-text border-sun/50 [--edge-color:var(--sun)]", emoji: "🤔" },
+  3: { cls: "bg-wash-jade text-jade-text border-jade/40 [--edge-color:var(--jade)]", emoji: "🙂" },
+  4: { cls: "bg-wash-blue text-ink-blue border-ink-blue/30 [--edge-color:var(--ink-blue)]", emoji: "🤩" },
 };
 
 function isTyping(target: EventTarget | null) {
@@ -159,11 +159,13 @@ export function ReviewSession({
           hidePinyinFront={prefs.hide_pinyin_front}
           toneColors={prefs.tone_colors}
         />
-        {current.isNew && <p className="mt-3 text-center text-sm text-ink-soft">Từ mới</p>}
+        {current.isNew && (
+          <p className="mt-3 self-center rounded-full bg-wash-yellow px-3 py-1 text-sm font-bold text-sun-text">✨ Từ mới</p>
+        )}
       </div>
 
       {/* Thumb zone */}
-      <div className="sticky bottom-0 -mx-4 bg-paper/95 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] backdrop-blur">
+      <div className="sticky bottom-0 -mx-4 bg-paper/95 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur">
         {flipped && preview ? (
           <div className="grid grid-cols-4 gap-2" role="group" aria-label="Bạn nhớ từ này thế nào?">
             {RATINGS.map((r) => (
@@ -172,10 +174,13 @@ export function ReviewSession({
                 type="button"
                 onClick={() => rate(r.value)}
                 className={cn(
-                  "flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-[10px] px-1 font-medium",
-                  RATING_STYLE[r.value],
+                  "btn-3d flex min-h-[4.5rem] animate-pop-in flex-col items-center justify-center gap-0.5 rounded-btn border-2 px-1 font-bold",
+                  RATING_STYLE[r.value].cls,
                 )}
               >
+                <span aria-hidden className="text-lg leading-none">
+                  {RATING_STYLE[r.value].emoji}
+                </span>
                 <span className="text-base">{r.label}</span>
                 <span className="text-xs font-normal opacity-80">
                   {formatInterval(preview[r.value].getTime() - now.getTime())}
@@ -190,7 +195,7 @@ export function ReviewSession({
           <button
             type="button"
             onClick={flip}
-            className="flex min-h-14 w-full items-center justify-center gap-2 rounded-[10px] bg-primary text-base font-medium text-primary-foreground"
+            className="btn-3d flex min-h-14 w-full items-center justify-center gap-2 rounded-btn bg-primary text-lg font-extrabold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
           >
             Lật thẻ
             <kbd className="hidden rounded border border-primary-foreground/30 px-1.5 text-xs font-normal lg:inline">

@@ -11,6 +11,10 @@ const supabaseHost = (() => {
 const nextConfig: NextConfig = {
   // Cache Components is intentionally disabled: nearly every route reads the
   // Supabase session cookie, so classic dynamic rendering is simpler here.
+  // The Chinese–Vietnamese dictionary is read with fs at runtime, so tracing cannot see it.
+  outputFileTracingIncludes: {
+    "/api/dict": ["./data/cvdict.u8.gz"],
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.pexels.com" },

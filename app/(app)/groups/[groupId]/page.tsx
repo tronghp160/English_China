@@ -28,7 +28,7 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
       <BackLink href="/groups" label="Nhóm" />
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold break-words text-ink">{group.name}</h1>
+          <h1 className="text-xl break-words text-ink">{group.name}</h1>
           <p className="text-sm text-ink-soft">
             {members.length} thành viên · {decks.length} bộ từ
           </p>
@@ -37,7 +37,7 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
         {isOwner && (
           <Link
             href={`/groups/${groupId}/settings`}
-            className="grid size-11 shrink-0 place-items-center rounded-[10px] border border-rule bg-surface text-ink-soft hover:bg-muted"
+            className="grid size-11 shrink-0 place-items-center rounded-btn border border-rule bg-surface text-ink-soft hover:bg-muted"
             aria-label="Cài đặt nhóm"
           >
             <Settings className="size-5" aria-hidden />
@@ -49,19 +49,19 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
         <div className="flex min-w-0 flex-col gap-5">
           <section aria-labelledby="decks-title">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <h2 id="decks-title" className="font-bold text-ink">
+              <h2 id="decks-title" className="text-ink">
                 Bộ từ của nhóm
               </h2>
               <Link
                 href={`/decks/new?group=${groupId}`}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-[10px] px-2 text-sm font-medium text-ink-blue"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-btn px-2 text-sm font-medium text-ink-blue"
               >
                 <Plus className="size-4" aria-hidden />
                 Thêm bộ từ
               </Link>
             </div>
             {decks.length ? (
-              <ul className="ruled-list overflow-hidden rounded-[12px] border border-rule bg-surface">
+              <ul className="ruled-list overflow-hidden rounded-card border border-rule bg-surface">
                 {decks.map((d) => {
                   return (
                     <li key={d.id}>
@@ -107,7 +107,7 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
             isOwner={isOwner}
           />
           <section aria-labelledby="members-title">
-            <h2 id="members-title" className="mb-2 font-bold text-ink">
+            <h2 id="members-title" className="mb-2 text-ink">
               Thành viên
             </h2>
             <MemberList groupId={groupId} members={members} canRemove={isOwner} />

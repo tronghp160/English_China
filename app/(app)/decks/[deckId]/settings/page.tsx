@@ -17,9 +17,9 @@ export default async function DeckSettingsPage({ params }: PageProps<"/decks/[de
   const groups = await getMyGroups();
 
   return (
-    <div className="max-w-xl">
+    <div className="mx-auto max-w-xl">
       <BackLink href={`/decks/${deckId}`} label={deck.name} />
-      <h1 className="mb-6 text-xl font-bold text-ink">Cài đặt bộ từ</h1>
+      <h1 className="mb-6 text-xl text-ink">Cài đặt bộ từ</h1>
       <DeckForm
         mode="edit"
         deckId={deckId}
@@ -35,7 +35,7 @@ export default async function DeckSettingsPage({ params }: PageProps<"/decks/[de
         }}
       />
       <section className="mt-10 border-t border-rule pt-6">
-        <h2 className="font-bold text-ink">Xóa bộ từ</h2>
+        <h2 className="text-ink">Xóa bộ từ</h2>
         <p className="mt-1 mb-4 text-sm text-ink-soft">
           Xóa {deck.word_count} từ và tiến độ ôn của mọi người đang học bộ này. Không hoàn tác được.
         </p>

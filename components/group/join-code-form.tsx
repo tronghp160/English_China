@@ -38,9 +38,9 @@ export function JoinCodeForm() {
           maxLength={12}
           aria-invalid={Boolean(error) || undefined}
           aria-describedby={error ? "invite-code-error" : undefined}
-          className="h-11 min-w-0 flex-1 rounded-[10px] font-mono text-base tracking-widest uppercase placeholder:font-sans placeholder:tracking-normal placeholder:normal-case"
+          className="h-11 min-w-0 flex-1 rounded-btn font-mono text-base tracking-widest uppercase placeholder:font-sans placeholder:tracking-normal placeholder:normal-case"
         />
-        <Button type="submit" variant="outline" className="h-11 rounded-[10px] px-4">
+        <Button type="submit" variant="outline" className="h-11 rounded-btn px-4">
           Vào nhóm
         </Button>
       </div>

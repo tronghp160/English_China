@@ -12,8 +12,8 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
 
   return (
     <AuthCard
-      title="Tạo tài khoản Sổ Từ"
-      subtitle="Miễn phí. Ghi và ôn từ vựng tiếng Anh, tiếng Trung cùng bạn bè."
+      title="Tạo tài khoản miễn phí ✨"
+      subtitle="Chỉ mất 30 giây. Ghi và ôn từ vựng tiếng Anh, tiếng Trung cùng bạn bè."
       footer={
         <>
           Đã có tài khoản? <FooterLink href={loginHref}>Đăng nhập</FooterLink>

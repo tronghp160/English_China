@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { BackLink } from "@/components/app-shell/back-link";
 import { ImportWizard } from "@/components/import/import-wizard";
 import { getDeck } from "@/lib/data/decks";
-import { serverEnv } from "@/lib/env";
+import { serverEnv, aiProvider } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Nhập hàng loạt" };
@@ -25,15 +25,15 @@ export default async function ImportPage({ params }: PageProps<"/decks/[deckId]/
   const env = serverEnv();
 
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto max-w-3xl">
       <BackLink href={`/decks/${deckId}`} label={view.deck.name} />
-      <h1 className="text-xl font-bold text-ink">Nhập hàng loạt</h1>
+      <h1 className="text-xl text-ink">Nhập hàng loạt</h1>
       <p className="mt-1 mb-6 text-sm text-ink-soft">Dán danh sách từ trong vở, mỗi dòng một từ. Tối đa 100 từ mỗi lần.</p>
       <ImportWizard
         deckId={deckId}
         language={view.deck.language}
         existing={existing}
-        aiEnabled={Boolean(env.ANTHROPIC_API_KEY)}
+        aiEnabled={aiProvider() !== null}
         visionEnabled={Boolean(env.ANTHROPIC_API_KEY)}
       />
     </div>

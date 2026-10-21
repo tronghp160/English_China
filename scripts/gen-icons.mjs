@@ -1,12 +1,11 @@
-// Renders the app icon (notebook page: ruled lines, red margin, blue "S") to PNG/ICO.
-// Usage: node scripts/gen-icons.mjs   (needs network for the Be Vietnam Pro webfont)
+// Renders the app icon (violet tile, white "S" over a yellow highlighter stroke) to PNG/ICO.
+// Usage: node scripts/gen-icons.mjs   (needs network for the Nunito webfont)
 import fs from "node:fs";
 import { chromium } from "@playwright/test";
 
-const PAPER = "#F7F9FC";
-const RULE = "#DCE3EE";
-const MARGIN = "#E0484E";
-const BLUE = "#2F5BD3";
+const VIOLET_FROM = "#6A4CF5";
+const VIOLET_TO = "#4B3EE0";
+const HIGHLIGHT = "#FFD43B";
 
 /** @param {number} size @param {{ maskable?: boolean, rounded?: boolean }} o */
 function svg(size, { maskable = false, rounded = true } = {}) {
@@ -15,17 +14,19 @@ function svg(size, { maskable = false, rounded = true } = {}) {
   const pad = (size * (1 - k)) / 2;
   const s = (v) => pad + v * size * k;
   const radius = rounded && !maskable ? size * 0.22 : 0;
-  const lines = [0.3, 0.5, 0.7, 0.9]
-    .map((y) => `<line x1="0" x2="${size}" y1="${s(y)}" y2="${s(y)}" stroke="${RULE}" stroke-width="${size * 0.012}"/>`)
-    .join("");
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <defs><clipPath id="c"><rect width="${size}" height="${size}" rx="${radius}"/></clipPath></defs>
+  <defs>
+    <clipPath id="c"><rect width="${size}" height="${size}" rx="${radius}"/></clipPath>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="${VIOLET_FROM}"/><stop offset="1" stop-color="${VIOLET_TO}"/>
+    </linearGradient>
+  </defs>
   <g clip-path="url(#c)">
-    <rect width="${size}" height="${size}" fill="${PAPER}"/>
-    ${size >= 64 ? lines : ""}
-    <rect x="${s(0.24)}" y="0" width="${Math.max(2, size * 0.035)}" height="${size}" fill="${MARGIN}"/>
-    <text x="${s(0.6)}" y="${s(0.74)}" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700"
-      font-size="${size * k * 0.66}" fill="${BLUE}">S</text>
+    <rect width="${size}" height="${size}" fill="url(#g)"/>
+    <rect x="${s(0.22)}" y="${s(0.58)}" width="${size * k * 0.56}" height="${size * k * 0.15}" rx="${size * k * 0.05}"
+      fill="${HIGHLIGHT}" transform="rotate(-5 ${size / 2} ${size / 2})"/>
+    <text x="${s(0.5)}" y="${s(0.74)}" text-anchor="middle" font-family="Nunito" font-weight="900"
+      font-size="${size * k * 0.7}" fill="#ffffff">S</text>
   </g>
 </svg>`;
 }
@@ -45,7 +46,7 @@ const page = await browser.newPage();
 for (const t of targets) {
   await page.setViewportSize({ width: t.size, height: t.size });
   await page.setContent(
-    `<html><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700&display=block">
+    `<html><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@900&display=block">
     <style>html,body{margin:0;background:transparent}</style></head><body>${svg(t.size, t)}</body></html>`,
     { waitUntil: "networkidle" },
   );

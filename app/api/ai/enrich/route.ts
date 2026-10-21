@@ -3,7 +3,7 @@ import { z } from "zod";
 import { AiError, enrichTerm, remainingQuota } from "@/lib/ai/enrich";
 import { getUser } from "@/lib/auth";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const bodySchema = z.object({
   language: z.enum(["en", "zh"]),

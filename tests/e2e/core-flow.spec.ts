@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { admin, deleteUserByEmail, ENRICH_RESILIENT, magicLinkPath, testEmail, userIdByEmail, watchErrors } from "./helpers";
+import { admin, deleteUserByEmail, ENRICH_RESILIENT, testEmail, userIdByEmail, watchErrors } from "./helpers";
 
 // PLAN §14 Phase 6: sign in → add a word with AI → review it. One account, three steps in order.
 test.describe.configure({ mode: "serial" });
@@ -18,32 +18,28 @@ test.afterAll(async () => {
   await deleteUserByEmail(email);
 });
 
-test("đăng nhập bằng link email và hoàn tất màn hình chào", async () => {
-  // Don't send a real email (Supabase's built-in mailer allows only a few per hour).
-  await page.route("**/auth/v1/otp**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
-  await page.goto("/login");
-  await page.getByRole("button", { name: /Đăng nhập không cần mật khẩu/ }).click();
+test("đăng ký bằng email + mật khẩu (không cần xác nhận email) và hoàn tất màn hình chào", async () => {
+  await page.goto("/signup");
+  await page.getByLabel("Tên của bạn").fill("Người Thử");
   await page.getByLabel("Email").fill(email);
-  await page.getByRole("button", { name: "Gửi link đăng nhập" }).click();
-  await expect(page.getByText(`Đã gửi link đăng nhập tới ${email}.`)).toBeVisible();
-  await page.unroute("**/auth/v1/otp**");
-
-  // Open the link the email would contain.
-  await page.goto(await magicLinkPath(email));
+  await page.getByLabel("Mật khẩu", { exact: true }).fill("Matkhau123");
+  await page.getByRole("button", { name: "Tạo tài khoản" }).click();
   await expect(page).toHaveURL(/\/welcome/);
-  await page.getByLabel("Tên hiển thị").fill("Người Thử");
+  await expect(page.getByLabel("Tên hiển thị")).toHaveValue("Người Thử");
   await page.getByLabel("Tên người dùng").fill(`e2e_${Date.now().toString(36)}`);
   await page.getByRole("button", { name: "Tiếp tục" }).click();
   await page.getByRole("radio", { name: /Tiếng Anh/ }).click();
-  await page.getByRole("button", { name: "Bắt đầu học" }).click();
+  await page.getByRole("switch", { name: "Thêm bộ từ mẫu" }).click(); // start from an empty notebook
+  await page.getByRole("button", { name: /Bắt đầu học/ }).click();
   await expect(page).toHaveURL(/\/today/);
-  await expect(page.getByText("Chào Người Thử")).toBeVisible();
+  await expect(page.getByText(/Chào buổi .+, Thử!/)).toBeVisible();
 });
 
 test("thêm từ bằng AI", async () => {
-  // Third-party APIs are mocked unless E2E_REAL_AI=1 (needs ANTHROPIC_API_KEY and PEXELS_API_KEY).
+  // Third-party APIs are mocked unless E2E_REAL_AI=1 (needs ANTHROPIC_API_KEY and PEXELS_API_KEY; the free dictionary is live then too).
   if (process.env.E2E_REAL_AI !== "1") {
     await page.route("**/api/ai/enrich", (route) => route.fulfill({ json: ENRICH_RESILIENT }));
+    await page.route("**/api/dict", (route) => route.fulfill({ json: { result: null } }));
     await page.route("**/api/images/search**", (route) => route.fulfill({ json: { results: [] } }));
   }
   await page.goto("/decks");

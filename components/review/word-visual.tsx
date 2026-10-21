@@ -21,7 +21,7 @@ export function WordVisual({
         width={size}
         height={size}
         sizes={`${size}px`}
-        className={cn("shrink-0 rounded-[12px] object-cover", className)}
+        className={cn("shrink-0 rounded-card object-cover", className)}
         style={{ width: size, height: size }}
       />
     );
@@ -32,7 +32,7 @@ export function WordVisual({
     <span
       aria-hidden
       className={cn(
-        "grid shrink-0 place-items-center rounded-[12px]",
+        "grid shrink-0 place-items-center rounded-card",
         pos ? POS[pos].wash : "bg-muted",
         className,
       )}

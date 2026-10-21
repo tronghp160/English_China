@@ -75,7 +75,7 @@ export function DeckForm({
           value={v.name}
           onChange={(e) => set("name", e.target.value)}
           placeholder="Ví dụ: IELTS Speaking"
-          className="h-12 rounded-[10px] text-base"
+          className="h-12 rounded-btn text-base"
           aria-invalid={Boolean(errors.name) || undefined}
           autoFocus={mode === "create"}
         />
@@ -89,7 +89,7 @@ export function DeckForm({
           value={v.description ?? ""}
           onChange={(e) => set("description", e.target.value)}
           rows={2}
-          className="rounded-[10px] text-base"
+          className="rounded-btn text-base"
         />
       </div>
 
@@ -105,7 +105,7 @@ export function DeckForm({
                 aria-checked={v.language === code}
                 onClick={() => set("language", code)}
                 className={cn(
-                  "flex min-h-12 items-center justify-center gap-2 rounded-[10px] border text-base",
+                  "flex min-h-12 items-center justify-center gap-2 rounded-btn border text-base",
                   v.language === code ? "border-ink-blue bg-wash-blue font-medium" : "border-rule",
                 )}
               >
@@ -130,7 +130,7 @@ export function DeckForm({
                 disabled={disabled}
                 onClick={() => set("visibility", value)}
                 className={cn(
-                  "flex min-h-14 items-center gap-3 rounded-[10px] border px-4 text-left disabled:opacity-50",
+                  "flex min-h-14 items-center gap-3 rounded-btn border px-4 text-left disabled:opacity-50",
                   v.visibility === value ? "border-ink-blue bg-wash-blue" : "border-rule",
                 )}
               >
@@ -148,14 +148,14 @@ export function DeckForm({
       </fieldset>
 
       {v.visibility === "group" && groups.length > 0 && (
-        <div className="space-y-3 rounded-[12px] border border-rule p-4">
+        <div className="space-y-3 rounded-card border border-rule p-4">
           <div className="space-y-1.5">
             <Label htmlFor="deck-group">Nhóm</Label>
             <select
               id="deck-group"
               value={v.group_id ?? ""}
               onChange={(e) => set("group_id", e.target.value)}
-              className="h-11 w-full rounded-[10px] border border-rule bg-surface px-3 text-base"
+              className="h-11 w-full rounded-btn border border-rule bg-surface px-3 text-base"
             >
               {groups.map((g) => (
                 <option key={g.id} value={g.id}>
@@ -182,7 +182,7 @@ export function DeckForm({
         onCheckedChange={(c) => set("enable_recall", c)}
       />
 
-      <Button type="submit" disabled={pending} className="h-12 w-full gap-2 rounded-[10px] text-base sm:w-auto sm:px-8">
+      <Button type="submit" disabled={pending} className="h-12 w-full gap-2 rounded-btn text-base sm:w-auto sm:px-8">
         {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
         {mode === "create" ? "Tạo bộ từ" : "Lưu bộ từ"}
       </Button>

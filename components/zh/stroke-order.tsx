@@ -45,7 +45,7 @@ export function StrokeOrder({ char, size = 112, className }: { char: string; siz
   if (failed) {
     return (
       <div
-        className={cn("grid place-items-center rounded-[10px] border border-rule bg-surface font-hanzi text-5xl text-ink", className)}
+        className={cn("grid place-items-center rounded-btn border border-rule bg-surface font-hanzi text-5xl text-ink", className)}
         style={{ width: size, height: size }}
         lang="zh-CN"
       >
@@ -59,7 +59,7 @@ export function StrokeOrder({ char, size = 112, className }: { char: string; siz
       type="button"
       onClick={() => writer.current?.animateCharacter()}
       aria-label={`Xem thứ tự nét chữ ${char}`}
-      className={cn("group relative rounded-[10px] border border-rule bg-surface", className)}
+      className={cn("group relative rounded-btn border border-rule bg-surface", className)}
       style={{ width: size, height: size }}
     >
       {/* Rice-paper guide lines (米字格) */}

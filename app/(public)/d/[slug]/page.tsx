@@ -46,7 +46,7 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
       <header className="flex items-start gap-3">
         <LangFlag lang={deck.language} label className="mt-2 text-2xl" />
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold break-words text-ink">{deck.name}</h1>
+          <h1 className="text-xl break-words text-ink">{deck.name}</h1>
           <p className="text-sm text-ink-soft">
             {deck.word_count} từ · của {deck.owner?.display_name}
             {deck.learner_count > 0 && ` · ${deck.learner_count} người đang học`}
@@ -60,7 +60,7 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
           <div>
             <Link
               href={`/login?next=${encodeURIComponent(path)}`}
-              className="inline-flex min-h-12 w-full items-center justify-center rounded-[10px] bg-primary px-6 text-base font-medium text-primary-foreground sm:w-auto"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-btn bg-primary px-6 text-base font-medium text-primary-foreground sm:w-auto"
             >
               Đăng nhập để học bộ này
             </Link>
@@ -70,7 +70,7 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
           <div className="flex flex-col gap-3">
             <Link
               href={`/decks/${deck.id}`}
-              className="inline-flex min-h-12 w-full items-center justify-center rounded-[10px] bg-primary px-6 text-base font-medium text-primary-foreground sm:w-auto"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-btn bg-primary px-6 text-base font-medium text-primary-foreground sm:w-auto"
             >
               Bạn đang học bộ này · Mở bộ từ
             </Link>
@@ -92,7 +92,7 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
           Danh sách từ
         </h2>
         {words.length ? (
-          <ul className="ruled-list overflow-hidden rounded-[12px] border border-rule bg-surface">
+          <ul className="ruled-list overflow-hidden rounded-card border border-rule bg-surface">
             {words.map((w) => (
               <li key={w.id} className="flex items-baseline gap-3 px-4 py-3">
                 {w.emoji && (
