@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Compass, LogOut, Settings } from "lucide-react";
+import { BarChart3, Compass, LogOut, MessageSquareHeart, Settings } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -83,6 +83,11 @@ export function UserMenu({
         <DropdownMenuItem asChild className="min-h-11">
           <Link href="/settings">
             <Settings aria-hidden /> Cài đặt
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="min-h-11">
+          <Link href="/lien-he">
+            <MessageSquareHeart aria-hidden /> Liên hệ & góp ý
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

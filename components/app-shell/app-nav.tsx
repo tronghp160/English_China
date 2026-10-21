@@ -6,6 +6,7 @@ import {
   CalendarCheck,
   Compass,
   MessageCircleHeart,
+  MessageSquareHeart,
   PenLine,
   Settings,
   Users,
@@ -31,6 +32,7 @@ const SECONDARY: NavItem[] = [
   { href: "/explore", label: "Khám phá", icon: Compass, tone: "text-sky-text bg-wash-sky" },
   { href: "/stats", label: "Thống kê", icon: BarChart3, tone: "text-grape-text bg-wash-grape" },
   { href: "/settings", label: "Cài đặt", icon: Settings, tone: "text-ink-soft bg-muted" },
+  { href: "/lien-he", label: "Liên hệ", icon: MessageSquareHeart, tone: "text-pink-text bg-wash-pink" },
 ];
 
 function isActive(pathname: string, href: string) {
