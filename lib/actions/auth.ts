@@ -3,7 +3,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 import { z } from "zod";
-import { publicEnv } from "@/lib/env";
+import { publicEnv, serverEnv } from "@/lib/env";
+import { hitIpRateLimit } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { displayNameSchema, emailSchema, passwordSchema } from "@/lib/validation";
 import { fail, ok, zodFieldErrors, type ActionResult } from "./result";
@@ -16,26 +17,13 @@ const signUpSchema = z.object({
 
 /*
  * Accounts are created already confirmed (no confirmation email), like most sites.
- * The service-role call is not rate-limited by Supabase, so limit it per IP here.
- * In memory: per server instance, which is enough to slow a script down at this scale.
+ * The service-role call is not rate-limited by Supabase, so limit it per IP here
+ * (in Postgres, so the limit holds across serverless instances).
  */
-const WINDOW_MS = 60 * 60 * 1000;
-const MAX_PER_WINDOW = 8;
-const hits = new Map<string, { count: number; reset: number }>();
-
 async function overLimit(bucket: string) {
   const h = await headers();
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "local";
-  const key = `${bucket}:${ip}`;
-  const now = Date.now();
-  const entry = hits.get(key);
-  if (!entry || entry.reset < now) {
-    if (hits.size > 5000) hits.clear();
-    hits.set(key, { count: 1, reset: now + WINDOW_MS });
-    return false;
-  }
-  entry.count++;
-  return entry.count > MAX_PER_WINDOW;
+  return !(await hitIpRateLimit(ip, bucket, serverEnv().SIGNUP_LIMIT_PER_HOUR, 3600));
 }
 
 /** Creates a confirmed email + password account. The browser signs in right after. */

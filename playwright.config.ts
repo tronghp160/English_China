@@ -37,6 +37,7 @@ export default defineConfig({
         reuseExistingServer: true,
         timeout: 300_000,
         // The "Gợi ý" button only renders when a key is configured; the mock covers the call itself.
-        env: { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || "e2e-mock-key" },
+        // Sign-up limits live in Postgres, so repeated runs from one IP would hit the default.
+        env: { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || "e2e-mock-key", SIGNUP_LIMIT_PER_HOUR: "200" },
       },
 });

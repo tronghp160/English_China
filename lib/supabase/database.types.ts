@@ -285,6 +285,29 @@ export type Database = {
           },
         ];
       };
+      ip_rate_limits: {
+        Row: {
+          bucket: string;
+          hits: number;
+          key_hash: string;
+          window_start: string;
+        };
+        Insert: {
+          bucket: string;
+          hits?: number;
+          key_hash: string;
+          window_start: string;
+        };
+        Update: {
+          bucket?: string;
+          hits?: number;
+          key_hash?: string;
+          window_start?: string;
+        };
+        Relationships: [
+
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -720,6 +743,15 @@ export type Database = {
             member_count: number;
             owner_name: string;
           }[];
+      };
+      hit_ip_rate_limit: {
+        Args: {
+          p_key_hash: string;
+          p_bucket: string;
+          p_window_seconds: number;
+          p_max: number;
+        };
+        Returns: boolean;
       };
       hit_rate_limit: {
         Args: {

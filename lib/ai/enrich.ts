@@ -74,7 +74,8 @@ export async function chargeQuota(userId: string, units = 1) {
   const env = serverEnv();
   const admin = createAdminClient();
   const day = quotaDay();
-  const { data: total } = await admin.rpc("ai_usage_total", { p_day: day });
+  const { data: total, error: totalError } = await admin.rpc("ai_usage_total", { p_day: day });
+  if (totalError) throw new AiError("failed", "Không kiểm tra được hạn mức gợi ý.");
   if ((total ?? 0) + units > env.AI_GLOBAL_DAILY_LIMIT) {
     throw new AiError("quota_global", "Hệ thống đã dùng hết lượt gợi ý hôm nay. Bạn vẫn có thể tự nhập từ.");
   }

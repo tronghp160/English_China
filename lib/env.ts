@@ -22,6 +22,8 @@ const serverSchema = z.object({
   AI_VISION_MODEL: z.string().default("claude-sonnet-5-5"),
   AI_DAILY_LIMIT_PER_USER: z.coerce.number().int().positive().default(100),
   AI_GLOBAL_DAILY_LIMIT: z.coerce.number().int().positive().default(3000),
+  /** Sign-ups (and pending-account confirms) per client IP per hour. */
+  SIGNUP_LIMIT_PER_HOUR: z.coerce.number().int().positive().default(8),
   PEXELS_API_KEY: z.string().optional(),
   UNSPLASH_ACCESS_KEY: z.string().optional(),
 });
