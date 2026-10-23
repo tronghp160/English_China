@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, FileUp, Layers, PenLine, Play, Plus, Settings } from "lucide-react";
+import { Download, FileUp, PenLine, Play, Plus, Settings } from "lucide-react";
 import { AddWordFab } from "@/components/app-shell/fab";
 import { BackLink } from "@/components/app-shell/back-link";
 import { DeckWords } from "@/components/deck/deck-words";
 import { ShareDeckDialog } from "@/components/deck/share-deck-dialog";
 import { CloneDeckButton, SubscribeButton } from "@/components/deck/subscribe-button";
 import { DeckCover } from "@/components/deck/deck-cover";
+import { MODE_LOOK } from "@/components/practice/mode-look";
 import { deckTone } from "@/lib/deck-colors";
-import { LANGUAGES } from "@/lib/lang/registry";
+import { LANGUAGES, type PracticeMode } from "@/lib/lang/registry";
+import { MODE_INFO } from "@/lib/practice/questions";
 import { cn } from "@/lib/utils";
 import { getDeck, getMyDecks } from "@/lib/data/decks";
 import { createClient } from "@/lib/supabase/server";
@@ -19,6 +21,12 @@ export async function generateMetadata({ params }: PageProps<"/decks/[deckId]">)
   const view = await getDeck((await params).deckId);
   return { title: view?.deck.name ?? "Bộ từ" };
 }
+
+// Quick study buttons under the deck header (set size per mode).
+const STUDY_LINKS: { mode: PracticeMode; n: number }[] = [
+  { mode: "flashcard", n: 200 },
+  { mode: "match", n: 6 },
+];
 
 function ActionLink({ href, icon: Icon, children }: { href: string; icon: typeof Plus; children: React.ReactNode }) {
   return (
@@ -84,11 +92,6 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
         ) : (
           <SubscribeButton deckId={deckId} subscribed={isSubscribed} />
         )}
-        {deck.word_count > 0 && (
-          <ActionLink href={`/practice/flashcard?deck=${deckId}&n=200&from=deck`} icon={Layers}>
-            Lật thẻ
-          </ActionLink>
-        )}
         {canEdit && <ActionLink href={`/decks/${deckId}/add`} icon={Plus}>Thêm từ</ActionLink>}
         {canEdit && <ActionLink href={`/decks/${deckId}/import`} icon={FileUp}>Nhập hàng loạt</ActionLink>}
         <ActionLink href={`/practice?deck=${deckId}`} icon={PenLine}>Luyện tập</ActionLink>
@@ -106,6 +109,29 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
         {isOwner && <ActionLink href={`/decks/${deckId}/settings`} icon={Settings}>Cài đặt</ActionLink>}
         {isSubscribed && <SubscribeButton deckId={deckId} subscribed />}
       </div>
+
+      {deck.word_count > 0 && (
+        <nav aria-label="Học bộ này" className="mt-3 mb-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {STUDY_LINKS.filter((s) => LANGUAGES[deck.language].practiceModes.includes(s.mode)).map(
+            ({ mode, n }) => {
+              const look = MODE_LOOK[mode];
+              const Icon = look.icon;
+              return (
+                <Link
+                  key={mode}
+                  href={`/practice/${mode}?deck=${deckId}&n=${n}&from=deck`}
+                  className="notebook-card flex min-h-14 items-center gap-3 px-3 py-2 font-bold text-ink transition-transform hover:-translate-y-0.5"
+                >
+                  <span className={cn("icon-tile size-10", look.tile)}>
+                    <Icon className="size-5" aria-hidden />
+                  </span>
+                  {MODE_INFO[mode].label}
+                </Link>
+              );
+            },
+          )}
+        </nav>
+      )}
 
       <DeckWords
         deckId={deckId}

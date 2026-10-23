@@ -1,0 +1,78 @@
+import { expect, test, type Page } from "@playwright/test";
+import { admin, deleteUserByEmail, signUp, testEmail, userIdByEmail, watchErrors } from "./helpers";
+
+// docs/PLAN-study-games.md: match, test and learn on a deck made through the admin API.
+test.describe.configure({ mode: "serial" });
+
+const email = testEmail();
+let page: Page;
+let errors: string[];
+let userId: string;
+
+const WORDS: [string, string][] = [
+  ["apple", "quả táo"],
+  ["river", "dòng sông"],
+  ["window", "cửa sổ"],
+  ["teacher", "giáo viên"],
+  ["yellow", "màu vàng"],
+  ["mountain", "ngọn núi"],
+  ["kitchen", "nhà bếp"],
+  ["bridge", "cây cầu"],
+  ["pencil", "bút chì"],
+  ["garden", "khu vườn"],
+];
+
+async function createDeck(name: string, words: [string, string][]) {
+  const sb = admin();
+  const { data: deck, error } = await sb
+    .from("decks")
+    .insert({ owner_id: userId, name, language: "en" })
+    .select("id")
+    .single();
+  if (error) throw error;
+  const rows = words.map(([term, meaning_vi], i) => ({
+    deck_id: deck.id,
+    created_by: userId,
+    language: "en" as const,
+    term,
+    normalized: term,
+    meaning_vi,
+    // keep the deck order stable for learn
+    created_at: new Date(Date.UTC(2026, 0, 1, 0, i)).toISOString(),
+  }));
+  const { error: wordsError } = await sb.from("words").insert(rows);
+  if (wordsError) throw wordsError;
+  return deck.id as string;
+}
+
+test.beforeAll(async ({ browser }) => {
+  page = await browser.newPage();
+  errors = watchErrors(page);
+  await signUp(page, email);
+  userId = (await userIdByEmail(email))!;
+});
+
+test.afterAll(async () => {
+  await page.close();
+  await deleteUserByEmail(email);
+});
+
+test("ghép thẻ: ghép đủ 6 cặp và thấy kỷ lục", async () => {
+  const deckId = await createDeck("Ghép thẻ E2E", WORDS.slice(0, 6));
+  await page.goto(`/practice/match?deck=${deckId}&n=6`);
+  await page.getByRole("button", { name: "Bắt đầu" }).click();
+  await expect(page.getByText("Bảng 1/1")).toBeVisible();
+
+  for (const [term, meaning] of WORDS.slice(0, 6)) {
+    await page.getByRole("button", { name: term, exact: true }).click();
+    await page.getByRole("button", { name: meaning, exact: true }).click();
+    await expect(page.getByRole("button", { name: term, exact: true })).toHaveCount(0);
+  }
+  await expect(page.getByRole("heading", { name: "Kỷ lục đầu tiên!" })).toBeVisible();
+  await expect(page.getByText("lần ghép sai")).toBeVisible();
+
+  // Match logs nothing: guessing pairs says little about each word.
+  const { data } = await admin().from("review_logs").select("id").eq("user_id", userId);
+  expect(data ?? []).toHaveLength(0);
+  expect(errors).toEqual([]);
+});

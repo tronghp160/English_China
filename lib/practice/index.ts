@@ -84,7 +84,7 @@ export function checkTyping(
 // ---------------------------------------------------------------------------
 
 // Cheap client-side key (keeps opencc out of the browser bundle).
-const key = (s: string) => s.normalize("NFC").trim().toLowerCase().replace(/\s+/g, " ");
+export const textKey = (s: string) => s.normalize("NFC").trim().toLowerCase().replace(/\s+/g, " ");
 
 /**
  * The target plus up to 3 distractors from the same deck, preferring words
@@ -96,7 +96,7 @@ export function pickDistractors(
   rng: Rng = Math.random,
   count = 3,
 ): StudyWord[] {
-  const seenTerms = new Set([key(target.term)]);
+  const seenTerms = new Set([textKey(target.term)]);
   const seenMeanings = new Set([target.meaning_vi.trim().toLowerCase()]);
   const candidates = shuffle(pool, rng).filter((w) => w.id !== target.id);
   const score = (w: StudyWord) =>
@@ -108,7 +108,7 @@ export function pickDistractors(
   const out: StudyWord[] = [];
   for (const w of candidates) {
     if (out.length >= count) break;
-    const t = key(w.term);
+    const t = textKey(w.term);
     const m = w.meaning_vi.trim().toLowerCase();
     if (seenTerms.has(t) || seenMeanings.has(m)) continue;
     seenTerms.add(t);

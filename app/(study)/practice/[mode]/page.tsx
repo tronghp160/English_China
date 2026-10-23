@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FlashcardDeck } from "@/components/practice/flashcard-deck";
+import { MatchGame } from "@/components/practice/match-game";
 import { PracticeSession } from "@/components/practice/practice-session";
 import { LANGUAGES, type PracticeMode } from "@/lib/lang/registry";
 import type { LangCode } from "@/lib/lang/types";
 import type { StudyWord } from "@/lib/practice";
+import { buildMatchBoards } from "@/lib/practice/match";
 import { buildQuestions, countsFor, MODE_INFO } from "@/lib/practice/questions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,6 +16,21 @@ const SOURCES = ["all", "due", "hard", "recent"] as const;
 
 function isMode(v: string): v is PracticeMode {
   return v in MODE_INFO;
+}
+
+function CannotPractice({ back, why }: { back: string; why: string }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+      <h1 className="text-2xl text-ink">Chưa luyện được</h1>
+      <p className="text-ink-soft">{why}</p>
+      <Link
+        href={back}
+        className="inline-flex min-h-12 items-center rounded-btn bg-primary px-5 font-medium text-primary-foreground"
+      >
+        Chọn cách luyện khác
+      </Link>
+    </div>
+  );
 }
 
 export async function generateMetadata({
@@ -47,7 +64,36 @@ export default async function PracticeModePage({
     language = deck.language;
   }
   if (!LANGUAGES[language].practiceModes.includes(mode)) notFound();
-  if (mode === "learn" || mode === "test" || mode === "match") notFound(); // not built yet
+  if (mode === "learn" || mode === "test") notFound(); // not built yet
+
+  const back = deckId
+    ? sp.from === "deck"
+      ? `/decks/${deckId}`
+      : `/practice?deck=${deckId}`
+    : "/practice";
+  const query = new URLSearchParams(
+    Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === "string"),
+  );
+  const againHref = `/practice/${mode}?${query}`;
+  const deckKey = deckId ?? `lang:${language}`;
+
+  if (mode === "match") {
+    const { data } = await supabase.rpc("practice_words", {
+      p_deck_id: deckId as string,
+      p_language: language,
+      p_source: source,
+      p_limit: n,
+    });
+    const boards = buildMatchBoards((data ?? []).map((t) => t.word as unknown as StudyWord));
+    if (!boards.length)
+      return (
+        <CannotPractice
+          back={back}
+          why={source === "due" ? "Chưa có từ nào đến hạn ôn." : "Cần ít nhất 2 từ để ghép thẻ."}
+        />
+      );
+    return <MatchGame boards={boards} deckKey={deckKey} exitHref={back} againHref={againHref} />;
+  }
 
   // Ask for extra targets: some words cannot be used in every mode (no example, no pinyin…).
   const needsFilter = mode === "cloze" || mode === "tones";
@@ -75,16 +121,6 @@ export default async function PracticeModePage({
     (pool ?? []).map((p) => p.word as unknown as StudyWord),
   ).slice(0, n);
 
-  const back = deckId
-    ? sp.from === "deck"
-      ? `/decks/${deckId}`
-      : `/practice?deck=${deckId}`
-    : "/practice";
-  const query = new URLSearchParams(
-    Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === "string"),
-  );
-  const againHref = `/practice/${mode}?${query}`;
-
   if (!questions.length) {
     const why =
       source === "due"
@@ -94,18 +130,7 @@ export default async function PracticeModePage({
           : mode === "tones"
             ? "Chưa có từ nào có pinyin khớp với số chữ."
             : "Bộ này chưa có từ nào.";
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-        <h1 className="text-2xl text-ink">Chưa luyện được</h1>
-        <p className="text-ink-soft">{why}</p>
-        <Link
-          href={back}
-          className="inline-flex min-h-12 items-center rounded-btn bg-primary px-5 font-medium text-primary-foreground"
-        >
-          Chọn cách luyện khác
-        </Link>
-      </div>
-    );
+    return <CannotPractice back={back} why={why} />;
   }
 
   if (mode === "flashcard") {
