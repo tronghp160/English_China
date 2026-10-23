@@ -7,7 +7,6 @@ import {
   PenLine,
   Play,
   Plus,
-  Trophy,
   type LucideIcon,
 } from "lucide-react";
 import { ContactLinks } from "@/components/contact/contact-links";
@@ -17,7 +16,6 @@ import { SampleDecksButton } from "@/components/deck/sample-decks-button";
 import { LangFlag } from "@/components/lang-flag";
 import { MascotSay } from "@/components/mascot/mascot-say";
 import { Heatmap } from "@/components/stats/heatmap";
-import { ProgressRing } from "@/components/stats/progress-ring";
 import { buttonVariants } from "@/components/ui/button";
 import { getMyDecks } from "@/lib/data/decks";
 import { getStudySummary } from "@/lib/data/study";
@@ -87,7 +85,6 @@ export default async function TodayPage() {
   const tomorrow = s.langs.reduce((n, l) => n + l.dueTomorrow, 0);
   const ownDeck = decks.find((d) => d.relation === "own");
   const addHref = ownDeck ? `/decks/${ownDeck.id}/add` : "/decks/new";
-  const goalPct = Math.min(100, Math.round((s.reviewedToday / s.goal) * 100));
   const split = s.langs.filter((l) => l.due + l.newToday > 0).length > 1;
   const cheer = CHEERS[new Date(s.today).getUTCDate() % CHEERS.length];
   const firstName = s.me.profile.display_name.split(/\s+/).at(-1);
@@ -250,7 +247,6 @@ export default async function TodayPage() {
             </nav>
 
             <aside className="flex flex-col gap-3 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:gap-5">
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-1 lg:gap-5">
                 <section className="relative overflow-hidden rounded-card bg-linear-to-br from-wash-yellow to-wash-red p-4">
                   <h2 className="text-sm text-sun-text">Chuỗi ngày</h2>
                   <p className="mt-1 flex items-center gap-1.5">
@@ -275,41 +271,6 @@ export default async function TodayPage() {
                         : "Còn 1 ngày nghỉ miễn phí tuần này."}
                   </p>
                 </section>
-
-                <section className="rounded-card border border-rule bg-surface p-4 shadow-card">
-                  <h2 className="text-sm text-ink-blue">Mục tiêu ngày</h2>
-                  <div
-                    role="meter"
-                    aria-label="Tiến độ mục tiêu ngày"
-                    aria-valuemin={0}
-                    aria-valuemax={s.goal}
-                    aria-valuenow={Math.min(s.reviewedToday, s.goal)}
-                    className="mt-2 flex items-center gap-3"
-                  >
-                    <ProgressRing
-                      value={goalPct}
-                      size={64}
-                      stroke={8}
-                      barClassName={goalPct >= 100 ? "text-jade" : "text-ink-blue"}
-                    >
-                      {goalPct >= 100 ? (
-                        <Trophy className="size-6 text-sun" aria-hidden />
-                      ) : (
-                        <span className="text-sm font-bold text-ink tabular-nums">{goalPct}%</span>
-                      )}
-                    </ProgressRing>
-                    <div className="min-w-0">
-                      <p className="font-heading text-2xl leading-none font-black text-ink tabular-nums">
-                        {s.reviewedToday}
-                        <span className="text-base font-extrabold text-ink-soft">/{s.goal}</span>
-                      </p>
-                      <p className="mt-1 inline-flex rounded-full bg-wash-yellow px-2 py-0.5 text-xs font-bold whitespace-nowrap text-sun-text tabular-nums">
-                        +{s.xpToday} XP
-                      </p>
-                    </div>
-                  </div>
-                </section>
-              </div>
 
               {decks.length > 0 && (
                 <section className="hidden rounded-card border border-rule bg-surface p-4 shadow-card lg:block">
