@@ -564,6 +564,9 @@ Chọn deck + số câu (10/20/30) + nguồn từ (tất cả / đến hạn / h
 | `cloze` | Câu ví dụ bị che từ, chọn/gõ từ còn thiếu | en, zh |
 | `writing` | Luyện viết chữ Hán bằng `hanzi-writer` quiz mode: viết từng nét trên khung, sai nét thì gợi ý | zh |
 | `tones` | Nghe từ → chọn đúng tổ hợp thanh điệu (ví dụ "1-2", "3-4") | zh |
+| `learn` | Học theo vòng 7 từ: trắc nghiệm → gõ từ, sai thì hỏi lại cuối vòng, tới khi thuộc hết. Tiến độ lưu trên máy (xem docs/PLAN-study-games.md) | en, zh |
+| `test` | Bài kiểm tra trộn trắc nghiệm / đúng-sai / gõ từ / điền từ, chấm điểm khi nộp, làm lại câu sai | en, zh |
+| `match` | Ghép 6 cặp từ–nghĩa mỗi bảng, tính giờ (+1 giây mỗi lần sai), kỷ lục theo bộ từ. Không ghi `review_logs` | en, zh |
 
 Kết quả luyện tập ghi `review_logs` với `mode` tương ứng (rating suy ra: đúng = 3, sai = 1) và cộng XP.
 

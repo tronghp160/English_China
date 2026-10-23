@@ -197,6 +197,7 @@ export default async function PracticeModePage({
         types={types}
         ask={ask}
         learnBase={learnBase}
+        matchHref={`/practice/match?${scope}&n=6`}
       />
     );
   }

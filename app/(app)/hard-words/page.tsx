@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Layers, ListChecks, MessageCircleHeart } from "lucide-react";
+import { GraduationCap, Layers, ListChecks, MessageCircleHeart } from "lucide-react";
 import { BackLink } from "@/components/app-shell/back-link";
 import { LangFlag } from "@/components/lang-flag";
 import { PinyinText } from "@/components/zh/pinyin-text";
@@ -63,8 +63,15 @@ export default async function HardWordsPage({ searchParams }: PageProps<"/hard-w
         <>
           <div className="mb-5 flex flex-wrap gap-2">
             <Link
-              href={practice("quiz")}
+              href={practice("learn")}
               className="btn-3d inline-flex min-h-12 items-center gap-2 rounded-btn bg-primary px-4 font-bold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
+            >
+              <GraduationCap className="size-5" aria-hidden />
+              Học các từ này
+            </Link>
+            <Link
+              href={practice("quiz")}
+              className="inline-flex min-h-12 items-center gap-2 rounded-btn border border-rule bg-surface px-4 font-semibold text-ink hover:bg-muted"
             >
               <ListChecks className="size-5" aria-hidden />
               Luyện trắc nghiệm

@@ -75,6 +75,8 @@ const COUNT_UNIT: Partial<Record<PracticeMode, { legend: string; unit: string }>
   learn: { legend: "Số từ", unit: "từ" },
 };
 
+const STUDY_GAMES: PracticeMode[] = ["learn", "test", "match"];
+
 const ASKS: { value: TestAsk; label: string }[] = [
   { value: "both", label: "Trộn" },
   { value: "term", label: "Từ" },
@@ -148,13 +150,13 @@ export function PracticeSetup({
     ? (scope.slice(5) as LangCode)
     : (decks.find((d) => d.id === scope)?.language ?? langs[0]);
   const modes = LANGUAGES[language].practiceModes;
-  const [mode, setMode] = useState<PracticeMode>("quiz");
+  const [mode, setMode] = useState<PracticeMode>("learn");
   const [count, setCount] = useState(10);
   const [source, setSource] = useState<(typeof SOURCES)[number]["value"]>("all");
   const [countsToSrs, setCountsToSrs] = useState(false);
   const [testTypes, setTestTypes] = useState<TestType[]>(DEFAULT_TEST_TYPES);
   const [ask, setAsk] = useState<TestAsk>("both");
-  const activeMode = modes.includes(mode) ? mode : "quiz";
+  const activeMode = modes.includes(mode) ? mode : "learn";
   const counts = countsFor(activeMode);
   const activeCount = counts.includes(count) ? count : counts[0];
 
@@ -171,45 +173,56 @@ export function PracticeSetup({
     router.push(`/practice/${activeMode}?${q}`);
   }
 
+  // Study games get wide cards on phones (icon beside the text); skills stay a 2-column grid.
+  function modeCard(m: PracticeMode, wide: boolean) {
+    const look = MODE_LOOK[m];
+    const Icon = look.icon;
+    const selected = activeMode === m;
+    return (
+      <label
+        key={m}
+        className={cn(
+          "relative flex cursor-pointer gap-2 rounded-card border-2 bg-surface p-3.5 shadow-card transition-transform has-focus-visible:outline-2 has-focus-visible:outline-ink-blue",
+          wide ? "min-h-20 items-center gap-3 pr-10 sm:min-h-32 sm:flex-col sm:items-start sm:gap-2 sm:pr-3.5" : "min-h-32 flex-col",
+          selected
+            ? cn(look.ring, "-translate-y-0.5")
+            : "border-transparent hover:-translate-y-0.5",
+        )}
+      >
+        <input
+          type="radio"
+          name="mode"
+          className="sr-only"
+          checked={activeMode === m}
+          onChange={() => setMode(m)}
+        />
+        <span className={cn("icon-tile size-11", look.tile)}>
+          <Icon className="size-6" aria-hidden />
+        </span>
+        {selected && (
+          <span className="absolute top-3 right-3 grid size-6 animate-pop-in place-items-center rounded-full bg-ink-blue text-primary-foreground">
+            <Check className="size-4" strokeWidth={3} aria-hidden />
+          </span>
+        )}
+        <span className="flex flex-col gap-1">
+          <span className="font-bold text-ink">{MODE_INFO[m].label}</span>
+          <span className="text-sm leading-snug text-ink-soft">{MODE_INFO[m].hint}</span>
+        </span>
+      </label>
+    );
+  }
+
   return (
     <form onSubmit={start} className="flex flex-col gap-6">
       <fieldset>
         <legend className="mb-2 font-heading text-base font-extrabold text-ink">Chế độ</legend>
+        <p className="mb-2 text-sm font-semibold text-ink-soft">Học kiểu Quizlet</p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {modes.filter((m) => STUDY_GAMES.includes(m)).map((m) => modeCard(m, true))}
+        </div>
+        <p className="mt-5 mb-2 text-sm font-semibold text-ink-soft">Luyện từng kỹ năng</p>
         <div className="grid grid-cols-2 gap-3">
-          {modes.map((m) => {
-            const look = MODE_LOOK[m];
-            const Icon = look.icon;
-            const selected = activeMode === m;
-            return (
-              <label
-                key={m}
-                className={cn(
-                  "relative flex min-h-32 cursor-pointer flex-col gap-2 rounded-card border-2 bg-surface p-3.5 shadow-card transition-transform has-focus-visible:outline-2 has-focus-visible:outline-ink-blue",
-                  selected
-                    ? cn(look.ring, "-translate-y-0.5")
-                    : "border-transparent hover:-translate-y-0.5",
-                )}
-              >
-                <input
-                  type="radio"
-                  name="mode"
-                  className="sr-only"
-                  checked={activeMode === m}
-                  onChange={() => setMode(m)}
-                />
-                <span className={cn("icon-tile size-11", look.tile)}>
-                  <Icon className="size-6" aria-hidden />
-                </span>
-                {selected && (
-                  <span className="absolute top-3 right-3 grid size-6 animate-pop-in place-items-center rounded-full bg-ink-blue text-primary-foreground">
-                    <Check className="size-4" strokeWidth={3} aria-hidden />
-                  </span>
-                )}
-                <span className="font-bold text-ink">{MODE_INFO[m].label}</span>
-                <span className="text-sm leading-snug text-ink-soft">{MODE_INFO[m].hint}</span>
-              </label>
-            );
-          })}
+          {modes.filter((m) => !STUDY_GAMES.includes(m)).map((m) => modeCard(m, false))}
         </div>
       </fieldset>
 
@@ -262,19 +275,22 @@ export function PracticeSetup({
         options={[...SOURCES]}
       />
 
-      <label className="flex min-h-12 items-center justify-between gap-4 rounded-card border border-rule bg-surface px-4 py-3 shadow-card">
-        <span>
-          <span className="block font-medium text-ink">Tính vào ôn tập</span>
-          <span className="block text-sm text-ink-soft">
-            Kết quả luyện tập sẽ thay đổi lịch ôn của từ.
+      {/* Match logs no reviews, so it has nothing to count. */}
+      {activeMode !== "match" && (
+        <label className="flex min-h-12 items-center justify-between gap-4 rounded-card border border-rule bg-surface px-4 py-3 shadow-card">
+          <span>
+            <span className="block font-medium text-ink">Tính vào ôn tập</span>
+            <span className="block text-sm text-ink-soft">
+              Kết quả luyện tập sẽ thay đổi lịch ôn của từ.
+            </span>
           </span>
-        </span>
-        <Switch
-          checked={countsToSrs}
-          onCheckedChange={setCountsToSrs}
-          aria-label="Tính vào ôn tập"
-        />
-      </label>
+          <Switch
+            checked={countsToSrs}
+            onCheckedChange={setCountsToSrs}
+            aria-label="Tính vào ôn tập"
+          />
+        </label>
+      )}
 
       <button
         type="submit"

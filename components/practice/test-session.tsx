@@ -238,6 +238,7 @@ function Results({
   againHref,
   exitHref,
   learnHref,
+  matchHref,
 }: {
   grade: TestGrade;
   durationMs: number;
@@ -245,6 +246,7 @@ function Results({
   againHref: string;
   exitHref: string;
   learnHref?: (wordIds: string[]) => string;
+  matchHref?: string;
 }) {
   const sync = useOutboxStatus();
   const [onlyWrong, setOnlyWrong] = useState(false);
@@ -315,6 +317,15 @@ function Results({
           Xong
         </Link>
       </div>
+
+      {matchHref && (
+        <p className="mt-4 text-center text-sm text-ink-soft">
+          Đổi gió một chút?{" "}
+          <Link href={matchHref} className="font-semibold text-ink-blue underline-offset-4 hover:underline">
+            Chơi Ghép thẻ ⏱️
+          </Link>
+        </p>
+      )}
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between gap-3">
@@ -398,6 +409,7 @@ export function TestSession({
   types,
   ask,
   learnBase,
+  matchHref,
 }: {
   questions: Question[];
   countsToSrs: boolean;
@@ -407,6 +419,7 @@ export function TestSession({
   ask: TestAsk;
   /** Learn URL without the word list; "Học các từ sai" appends `&words=`. */
   learnBase?: string;
+  matchHref?: string;
 }) {
   const [questions, setQuestions] = useState(initial);
   const [answers, setAnswers] = useState<TestAnswers>({});
@@ -461,6 +474,7 @@ export function TestSession({
         againHref={againHref}
         exitHref={exitHref}
         learnHref={learnBase ? (ids) => `${learnBase}&words=${ids.join(",")}` : undefined}
+        matchHref={matchHref}
       />
     );
   }
