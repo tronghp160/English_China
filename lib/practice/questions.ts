@@ -25,6 +25,15 @@ export type Question =
   | { id: string; kind: "flashcard"; word: StudyWord }
   | { id: string; kind: "typing"; word: StudyWord }
   | {
+      /** Test mode: is `shown` the meaning of the term (or the term of the meaning)? */
+      id: string;
+      kind: "truefalse";
+      prompt: "term" | "meaning";
+      word: StudyWord;
+      shown: string;
+      isTrue: boolean;
+    }
+  | {
       id: string;
       kind: "cloze";
       word: StudyWord;
@@ -128,6 +137,8 @@ export function reviewModeOf(q: Question): ReviewMode {
   switch (q.kind) {
     case "choice":
       return q.prompt === "audio" ? "listening" : "quiz";
+    case "truefalse":
+      return "quiz";
     default:
       return q.kind;
   }

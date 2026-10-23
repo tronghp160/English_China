@@ -3,12 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FlashcardDeck } from "@/components/practice/flashcard-deck";
 import { MatchGame } from "@/components/practice/match-game";
+import { TestSession } from "@/components/practice/test-session";
 import { PracticeSession } from "@/components/practice/practice-session";
 import { LANGUAGES, type PracticeMode } from "@/lib/lang/registry";
 import type { LangCode } from "@/lib/lang/types";
 import type { StudyWord } from "@/lib/practice";
 import { buildMatchBoards } from "@/lib/practice/match";
 import { buildQuestions, countsFor, MODE_INFO } from "@/lib/practice/questions";
+import { buildTest, parseTestAsk, parseTestTypes } from "@/lib/practice/test";
 import { createClient } from "@/lib/supabase/server";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -64,7 +66,7 @@ export default async function PracticeModePage({
     language = deck.language;
   }
   if (!LANGUAGES[language].practiceModes.includes(mode)) notFound();
-  if (mode === "learn" || mode === "test") notFound(); // not built yet
+  if (mode === "learn") notFound(); // not built yet
 
   const back = deckId
     ? sp.from === "deck"
@@ -93,6 +95,44 @@ export default async function PracticeModePage({
         />
       );
     return <MatchGame boards={boards} deckKey={deckKey} exitHref={back} againHref={againHref} />;
+  }
+
+  const emptyWhy = source === "due" ? "Chưa có từ nào đến hạn ôn." : "Bộ này chưa có từ nào.";
+
+  if (mode === "test") {
+    const types = parseTestTypes(sp.types);
+    const ask = parseTestAsk(sp.ask);
+    const [{ data: targets }, { data: pool }] = await Promise.all([
+      supabase.rpc("practice_words", {
+        p_deck_id: deckId as string,
+        p_language: language,
+        p_source: source,
+        // extra words so cloze finds enough with a usable example
+        p_limit: types.includes("cloze") ? n * 2 : n,
+      }),
+      supabase.rpc("practice_words", {
+        p_deck_id: deckId as string,
+        p_language: language,
+        p_source: "all",
+        p_limit: 200,
+      }),
+    ]);
+    const questions = buildTest(
+      (targets ?? []).map((t) => t.word as unknown as StudyWord),
+      (pool ?? []).map((p) => p.word as unknown as StudyWord),
+      { types, ask, count: n },
+    );
+    if (!questions.length) return <CannotPractice back={back} why={emptyWhy} />;
+    return (
+      <TestSession
+        questions={questions}
+        countsToSrs={srs}
+        exitHref={back}
+        againHref={againHref}
+        types={types}
+        ask={ask}
+      />
+    );
   }
 
   // Ask for extra targets: some words cannot be used in every mode (no example, no pinyin…).
@@ -124,12 +164,12 @@ export default async function PracticeModePage({
   if (!questions.length) {
     const why =
       source === "due"
-        ? "Chưa có từ nào đến hạn ôn."
+        ? emptyWhy
         : mode === "cloze"
           ? "Chưa có từ nào có câu ví dụ chứa chính từ đó."
           : mode === "tones"
             ? "Chưa có từ nào có pinyin khớp với số chữ."
-            : "Bộ này chưa có từ nào.";
+            : emptyWhy;
     return <CannotPractice back={back} why={why} />;
   }
 

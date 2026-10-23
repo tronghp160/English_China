@@ -7,6 +7,13 @@ import { Switch } from "@/components/ui/switch";
 import { LANGUAGES, type PracticeMode } from "@/lib/lang/registry";
 import type { LangCode } from "@/lib/lang/types";
 import { countsFor, MODE_INFO } from "@/lib/practice/questions";
+import {
+  DEFAULT_TEST_TYPES,
+  TEST_TYPE_LABEL,
+  TEST_TYPES,
+  type TestAsk,
+  type TestType,
+} from "@/lib/practice/test";
 import { MODE_LOOK } from "./mode-look";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +68,68 @@ function Chips<T extends string | number>({
   );
 }
 
+// How the set size reads per mode (questions by default).
+const COUNT_UNIT: Partial<Record<PracticeMode, { legend: string; unit: string }>> = {
+  flashcard: { legend: "Số thẻ", unit: "thẻ" },
+  match: { legend: "Số cặp", unit: "cặp" },
+  learn: { legend: "Số từ", unit: "từ" },
+};
+
+const ASKS: { value: TestAsk; label: string }[] = [
+  { value: "both", label: "Trộn" },
+  { value: "term", label: "Từ" },
+  { value: "meaning", label: "Nghĩa" },
+];
+
+/** Multi-select chips (at least one stays on). */
+function CheckChips<T extends string>({
+  legend,
+  value,
+  onChange,
+  options,
+}: {
+  legend: string;
+  value: T[];
+  onChange: (v: T[]) => void;
+  options: { value: T; label: string }[];
+}) {
+  return (
+    <fieldset>
+      <legend className="mb-2 font-heading text-base font-extrabold text-ink">{legend}</legend>
+      <div className="flex flex-wrap gap-2">
+        {options.map((o) => {
+          const on = value.includes(o.value);
+          const last = on && value.length === 1;
+          return (
+            <label
+              key={o.value}
+              className={cn(
+                "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border-2 px-4 text-sm font-semibold transition-colors has-focus-visible:outline-2 has-focus-visible:outline-ink-blue",
+                on
+                  ? "border-ink-blue bg-ink-blue text-primary-foreground"
+                  : "border-rule bg-surface text-ink-soft hover:text-ink",
+                last && "cursor-default",
+              )}
+            >
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={on}
+                disabled={last}
+                onChange={() =>
+                  onChange(on ? value.filter((v) => v !== o.value) : [...value, o.value])
+                }
+              />
+              {on && <Check className="size-4" strokeWidth={3} aria-hidden />}
+              {o.label}
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
 export function PracticeSetup({
   decks,
   studyLangs,
@@ -83,6 +152,8 @@ export function PracticeSetup({
   const [count, setCount] = useState(10);
   const [source, setSource] = useState<(typeof SOURCES)[number]["value"]>("all");
   const [countsToSrs, setCountsToSrs] = useState(false);
+  const [testTypes, setTestTypes] = useState<TestType[]>(DEFAULT_TEST_TYPES);
+  const [ask, setAsk] = useState<TestAsk>("both");
   const activeMode = modes.includes(mode) ? mode : "quiz";
   const counts = countsFor(activeMode);
   const activeCount = counts.includes(count) ? count : counts[0];
@@ -93,6 +164,10 @@ export function PracticeSetup({
     if (scope.startsWith("lang:")) q.set("lang", language);
     else q.set("deck", scope);
     if (countsToSrs) q.set("srs", "1");
+    if (activeMode === "test") {
+      q.set("types", TEST_TYPES.filter((t) => testTypes.includes(t)).join(","));
+      q.set("ask", ask);
+    }
     router.push(`/practice/${activeMode}?${q}`);
   }
 
@@ -160,14 +235,25 @@ export function PracticeSetup({
 
       <Chips
         name="count"
-        legend={activeMode === "flashcard" ? "Số thẻ" : "Số câu"}
+        legend={COUNT_UNIT[activeMode]?.legend ?? "Số câu"}
         value={activeCount}
         onChange={setCount}
         options={counts.map((n) => ({
           value: n,
-          label: n === 200 ? "Cả bộ" : activeMode === "flashcard" ? `${n} thẻ` : `${n} câu`,
+          label: n === 200 ? "Cả bộ" : `${n} ${COUNT_UNIT[activeMode]?.unit ?? "câu"}`,
         }))}
       />
+      {activeMode === "test" && (
+        <>
+          <CheckChips
+            legend="Dạng câu"
+            value={testTypes}
+            onChange={setTestTypes}
+            options={TEST_TYPES.map((t) => ({ value: t, label: TEST_TYPE_LABEL[t] }))}
+          />
+          <Chips name="ask" legend="Hỏi bằng" value={ask} onChange={setAsk} options={ASKS} />
+        </>
+      )}
       <Chips
         name="source"
         legend="Nguồn từ"

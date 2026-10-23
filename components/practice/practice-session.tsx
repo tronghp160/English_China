@@ -94,7 +94,7 @@ export function PracticeSession({
 
   const pick = useCallback(
     (id: string) => {
-      if (!q || q.kind === "typing" || q.kind === "writing" || q.kind === "flashcard") return;
+      if (!q || !("answerId" in q)) return;
       finish({ correct: id === q.answerId, picked: id });
     },
     [finish, q],

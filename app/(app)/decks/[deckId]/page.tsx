@@ -25,6 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/decks/[deckId]">)
 // Quick study buttons under the deck header (set size per mode).
 const STUDY_LINKS: { mode: PracticeMode; n: number }[] = [
   { mode: "flashcard", n: 200 },
+  { mode: "test", n: 20 },
   { mode: "match", n: 6 },
 ];
 
