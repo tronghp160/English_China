@@ -5,6 +5,7 @@ import { UserMenu } from "@/components/app-shell/user-menu";
 import { Logo } from "@/components/brand/logo";
 import { MeProvider } from "@/components/app-shell/me-provider";
 import { QuickSearch } from "@/components/app-shell/quick-search";
+import { ThemeSwitch } from "@/components/app-shell/theme-switch";
 import { requireMe } from "@/lib/auth";
 import { cjkFontVariables } from "@/lib/fonts";
 import { readPrefs } from "@/lib/validation";
@@ -32,6 +33,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             </Link>
             <div className="flex items-center gap-2">
               <QuickSearch />
+              <ThemeSwitch />
               <UserMenu
                 displayName={me.profile.display_name}
                 username={me.profile.username}
