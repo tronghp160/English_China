@@ -65,7 +65,7 @@ export const DEFAULT_PREFS: Required<Prefs> = {
   tone_colors: true,
   ai_autofill: true,
   mascot: true,
-  mascot_name: "Bơ",
+  mascot_name: "Bin",
 };
 
 export function readPrefs(raw: unknown): Required<Prefs> {

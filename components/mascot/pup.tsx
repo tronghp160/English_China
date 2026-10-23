@@ -57,7 +57,7 @@ function Mouth({ mood }: { mood: PupMood }) {
 }
 
 /**
- * The puppy mascot ("Bơ" by default): a pure SVG, decorative only (the speech
+ * The puppy mascot ("Bin" by default): a pure SVG, decorative only (the speech
  * bubble carries the meaning). Colors are the --pup-* tokens in globals.css.
  */
 export function Pup({

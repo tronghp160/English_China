@@ -46,7 +46,7 @@ export function seedOf(text: string): number {
 
 export function say(
   key: LineKey,
-  { seed = 0, name = "Bơ", n }: { seed?: number; name?: string; n?: number } = {},
+  { seed = 0, name = "Bin", n }: { seed?: number; name?: string; n?: number } = {},
 ): string {
   const options = LINES[key];
   const line = options[seed % options.length];

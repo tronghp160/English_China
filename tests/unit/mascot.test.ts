@@ -32,7 +32,7 @@ describe("mascot prefs", () => {
   it("is on with the default name", () => {
     const p = readPrefs({});
     expect(p.mascot).toBe(true);
-    expect(p.mascot_name).toBe("Bơ");
+    expect(p.mascot_name).toBe("Bin");
   });
 
   it("keeps a stored name and switch", () => {
