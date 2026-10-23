@@ -2,9 +2,12 @@
 
 import { MessageCircleHeart } from "lucide-react";
 import Link from "next/link";
+import { useMe } from "@/components/app-shell/me-provider";
+import { MascotSay } from "@/components/mascot/mascot-say";
 import { startChat } from "@/lib/actions/chat";
 import { formatDuration } from "@/lib/format";
 import type { LangCode } from "@/lib/lang/types";
+import { summaryMood } from "@/lib/mascot/lines";
 import { cn } from "@/lib/utils";
 import { Confetti } from "./confetti";
 import { useOutboxStatus } from "./session-bar";
@@ -57,6 +60,7 @@ export function SessionSummary({
   missedTitle?: string;
 }) {
   const sync = useOutboxStatus();
+  const { prefs } = useMe();
   const total = results.length;
   const remembered = results.filter((r) => r.rating > 1).length;
   const pct = total ? Math.round((remembered / total) * 100) : 0;
@@ -76,7 +80,7 @@ export function SessionSummary({
   return (
     <div className="relative flex flex-1 flex-col py-6">
       {total > 0 && <Confetti />}
-      {total > 0 && (
+      {total > 0 && !prefs.mascot && (
         <span aria-hidden className="animate-float self-center text-7xl">
           {mood.emoji}
         </span>
@@ -88,7 +92,17 @@ export function SessionSummary({
           "Chưa có thẻ nào"
         )}
       </h1>
-      {total > 0 && <p className="mt-2 text-center font-semibold text-ink">{mood.text}</p>}
+      {total > 0 &&
+        (prefs.mascot ? (
+          <MascotSay
+            {...summaryMood(pct)}
+            name={prefs.mascot_name}
+            size={96}
+            className="mt-4 self-center"
+          />
+        ) : (
+          <p className="mt-2 text-center font-semibold text-ink">{mood.text}</p>
+        ))}
       {tomorrowDue !== undefined && (
         <p className={cn("mt-1 text-ink-soft", total > 0 && "text-center")}>
           {tomorrowDue > 0

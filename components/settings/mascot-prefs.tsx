@@ -1,0 +1,65 @@
+"use client";
+
+import { useOptimistic, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { Pup } from "@/components/mascot/pup";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { updatePrefs } from "@/lib/actions/profile";
+import type { Prefs } from "@/lib/validation";
+import { SwitchRow } from "./study-prefs";
+
+/** Puppy mascot on/off and its name. */
+export function MascotPrefs({ prefs }: { prefs: Required<Prefs> }) {
+  const [optimistic, setOptimistic] = useOptimistic(prefs);
+  const [name, setName] = useState(prefs.mascot_name);
+  const [, startTransition] = useTransition();
+
+  function save(patch: Prefs) {
+    startTransition(async () => {
+      setOptimistic({ ...optimistic, ...patch });
+      const res = await updatePrefs(patch);
+      if (!res.ok) toast.error(res.error);
+    });
+  }
+
+  function saveName() {
+    const v = name.trim();
+    if (!v || v.length > 20) {
+      setName(optimistic.mascot_name);
+      toast.error("Tên bạn cún cần 1–20 ký tự.");
+      return;
+    }
+    if (v !== optimistic.mascot_name) save({ mascot_name: v });
+  }
+
+  return (
+    <div className="flex items-start gap-4">
+      <Pup mood={optimistic.mascot ? "wave" : "sleepy"} size={84} className="mt-1" />
+      <div className="ruled-list min-w-0 flex-1">
+        <SwitchRow
+          id="pref-mascot"
+          label="Hiện bạn cún"
+          hint="Cổ vũ ở trang Hôm nay, khi ôn tập và lúc xong phiên."
+          checked={optimistic.mascot}
+          onCheckedChange={(v) => save({ mascot: v })}
+        />
+        <div className="flex flex-col gap-1.5 py-3">
+          <Label htmlFor="pref-mascot-name">Tên bạn cún</Label>
+          <Input
+            id="pref-mascot-name"
+            className="h-11 rounded-btn"
+            maxLength={20}
+            value={name}
+            disabled={!optimistic.mascot}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={saveName}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

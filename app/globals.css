@@ -81,6 +81,13 @@
   --pink-text: #b5214f;
   --wash-pink: #ffe8f1;
 
+  /* Puppy mascot (components/mascot/pup.tsx) */
+  --pup-fur: #fff4e2;
+  --pup-muzzle: #ffe3bd;
+  --pup-ear: #c9844a;
+  --pup-ink: #3b2a20;
+  --pup-blush: #ff8fab;
+
   --tone-1: #c8302f;
   --tone-2: #a65f00;
   --tone-3: #1f7f3c;
@@ -155,6 +162,11 @@
   --pink: #ff85b3;
   --pink-text: #ff85b3;
   --wash-pink: #3f1d33;
+
+  --pup-fur: #f3e2c8;
+  --pup-muzzle: #e9cfa8;
+  --pup-ear: #b97a45;
+  --pup-blush: #f07a9a;
 
   --tone-1: #f07070;
   --tone-2: #f0a030;
@@ -273,6 +285,8 @@
   --animate-wiggle: wiggle 1.6s ease-in-out infinite;
   --animate-float: float 3.2s ease-in-out infinite;
   --animate-shake: shake 400ms ease-in-out both;
+  --animate-hop: hop 900ms cubic-bezier(0.3, 0.7, 0.4, 1) 2;
+  --animate-bob: bob 2.8s ease-in-out infinite;
 }
 
 @layer base {
@@ -479,6 +493,60 @@
   }
 }
 
+/* Puppy mascot (components/mascot/pup.tsx) */
+@keyframes hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  15% {
+    transform: translateY(2px) scale(1.04, 0.94);
+  }
+  45% {
+    transform: translateY(-14px) scale(0.97, 1.04);
+  }
+  70% {
+    transform: translateY(0) scale(1.03, 0.97);
+  }
+}
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-3px) rotate(-2deg);
+  }
+}
+.pup-tail {
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+  animation: pup-wag 700ms ease-in-out infinite;
+}
+@keyframes pup-wag {
+  0%,
+  100% {
+    transform: rotate(-10deg);
+  }
+  50% {
+    transform: rotate(16deg);
+  }
+}
+.pup-paw {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: pup-wave 1.2s ease-in-out infinite;
+}
+@keyframes pup-wave {
+  0%,
+  100% {
+    transform: rotate(-12deg);
+  }
+  50% {
+    transform: rotate(18deg);
+  }
+}
+
 /* Activity heatmap: one hue (ink blue), light -> dark, mixed with the surface per theme */
 .heat-0 {
   background: var(--muted);
@@ -519,7 +587,11 @@
   .flip-card {
     transition: none;
   }
-  .highlighter-animate {
+  .highlighter-animate,
+  .pup-tail,
+  .pup-paw,
+  .animate-hop,
+  .animate-bob {
     animation: none;
   }
   *,

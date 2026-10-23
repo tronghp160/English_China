@@ -49,6 +49,9 @@ export const prefsSchema = z.object({
   tone_colors: z.boolean().optional(),
   /** Was "ai_auto_suggest" (default off); renamed when it became on by default. */
   ai_autofill: z.boolean().optional(),
+  /** Puppy mascot on Today, in sessions and on end screens. */
+  mascot: z.boolean().optional(),
+  mascot_name: z.string().trim().min(1).max(20).optional(),
 });
 export type Prefs = z.infer<typeof prefsSchema>;
 
@@ -61,6 +64,8 @@ export const DEFAULT_PREFS: Required<Prefs> = {
   hide_pinyin_front: false,
   tone_colors: true,
   ai_autofill: true,
+  mascot: true,
+  mascot_name: "Bơ",
 };
 
 export function readPrefs(raw: unknown): Required<Prefs> {

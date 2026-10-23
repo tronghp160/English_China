@@ -4,6 +4,7 @@ import { Check, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
+import { EndPup } from "@/components/mascot/end-pup";
 import { Confetti } from "@/components/review/confetti";
 import { WordVisual } from "@/components/review/word-visual";
 import { checkTyping, type StudyWord, type TypingResult } from "@/lib/practice";
@@ -336,9 +337,7 @@ export function LearnSession({
     return (
       <div className="relative flex flex-1 flex-col py-6">
         <Confetti />
-        <span aria-hidden className="animate-float self-center text-7xl">
-          🎓
-        </span>
+        <EndPup mood="cheer" emoji="🎓" />
         <h1 className="mt-3 text-center text-2xl text-ink">
           <span className="highlighter highlighter-animate">Bạn đã thuộc hết {state.words.length} từ!</span>
         </h1>

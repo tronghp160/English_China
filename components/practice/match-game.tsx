@@ -4,6 +4,7 @@ import { Shuffle, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
+import { EndPup } from "@/components/mascot/end-pup";
 import { Confetti } from "@/components/review/confetti";
 import { formatMs, isPair, MATCH_PENALTY_MS, type MatchTile } from "@/lib/practice/match";
 import { getMatchRecord, saveMatchTime, type MatchRecord } from "@/lib/practice/match-records";
@@ -192,9 +193,7 @@ export function MatchGame({
     return (
       <div className="relative flex flex-1 flex-col py-6 text-center">
         {result.isBest && <Confetti />}
-        <span aria-hidden className="animate-float self-center text-7xl">
-          {result.isBest ? "🏆" : "⏱️"}
-        </span>
+        <EndPup mood={result.isBest ? "cheer" : "happy"} emoji={result.isBest ? "🏆" : "⏱️"} />
         <h1 className="mt-3 text-2xl text-ink">
           <span className="highlighter highlighter-animate">{title}</span>
         </h1>

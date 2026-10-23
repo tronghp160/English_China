@@ -4,6 +4,7 @@ import { ArrowLeftRight, ChevronLeft, ChevronRight, RotateCcw, Shuffle } from "l
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
+import { EndPup } from "@/components/mascot/end-pup";
 import { Confetti } from "@/components/review/confetti";
 import { Flashcard, type Direction } from "@/components/review/flashcard";
 import { SessionBar, useOutboxStatus } from "@/components/review/session-bar";
@@ -155,9 +156,10 @@ export function FlashcardDeck({
     return (
       <div className="relative flex flex-1 flex-col py-6">
         {known > 0 && <Confetti />}
-        <span aria-hidden className="animate-float self-center text-7xl">
-          {left.length === 0 ? "🏆" : known >= left.length ? "😎" : "💪"}
-        </span>
+        <EndPup
+          mood={left.length === 0 || known >= left.length ? "cheer" : "happy"}
+          emoji={left.length === 0 ? "🏆" : known >= left.length ? "😎" : "💪"}
+        />
         <h1 className="mt-3 text-center text-2xl text-ink">
           <span className="highlighter highlighter-animate">Hết thẻ rồi!</span>
         </h1>

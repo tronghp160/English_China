@@ -3,6 +3,8 @@
 import { Check, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useMe } from "@/components/app-shell/me-provider";
+import { Pup } from "@/components/mascot/pup";
 import { Confetti } from "@/components/review/confetti";
 import { SessionBar, useOutboxStatus } from "@/components/review/session-bar";
 import { ProgressRing } from "@/components/stats/progress-ring";
@@ -253,24 +255,34 @@ function Results({
   const wrong = grade.items.filter((i) => i.result === "wrong");
   const mood = verdict(grade.percent);
   const shown = onlyWrong ? wrong : grade.items;
+  const { prefs } = useMe();
 
   return (
     <div className="relative flex flex-1 flex-col py-6">
       {grade.percent >= 90 && <Confetti />}
       <div className="flex flex-col items-center gap-2 text-center">
-        <ProgressRing
-          value={grade.percent}
-          size={140}
-          stroke={14}
-          trackClassName="text-muted"
-          barClassName={grade.percent >= 70 ? "text-jade" : "text-sun"}
-        >
-          <span className="font-heading text-4xl font-black text-ink tabular-nums">
-            {grade.percent}%
-          </span>
-        </ProgressRing>
+        <div className="flex items-end">
+          <ProgressRing
+            value={grade.percent}
+            size={140}
+            stroke={14}
+            trackClassName="text-muted"
+            barClassName={grade.percent >= 70 ? "text-jade" : "text-sun"}
+          >
+            <span className="font-heading text-4xl font-black text-ink tabular-nums">
+              {grade.percent}%
+            </span>
+          </ProgressRing>
+          {prefs.mascot && (
+            <Pup
+              mood={grade.percent >= 70 ? "cheer" : grade.percent >= 40 ? "happy" : "sad"}
+              size={84}
+              className="-ml-4"
+            />
+          )}
+        </div>
         <h1 className="mt-2 text-2xl text-ink">
-          {mood.text} <span aria-hidden>{mood.emoji}</span>
+          {mood.text} {!prefs.mascot && <span aria-hidden>{mood.emoji}</span>}
         </h1>
         <p className="font-semibold text-ink">
           Đúng {grade.correct}/{grade.total}

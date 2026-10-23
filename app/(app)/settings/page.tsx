@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SettingsForm } from "@/components/settings/settings-form";
 import { VoiceSettings } from "@/components/settings/voice-settings";
 import { StudyPrefs } from "@/components/settings/study-prefs";
+import { MascotPrefs } from "@/components/settings/mascot-prefs";
 import { AvatarUpload } from "@/components/settings/avatar-upload";
 import { DeleteAccount, ExportData } from "@/components/settings/account-data";
 import { ContactLinks } from "@/components/contact/contact-links";
@@ -63,6 +64,9 @@ export default async function SettingsPage() {
       </Section>
       <Section title="Ôn tập">
         <StudyPrefs prefs={prefs} />
+      </Section>
+      <Section title="Linh vật">
+        <MascotPrefs prefs={prefs} />
       </Section>
       <Section title="Thông báo">
         <ReminderSettings publicKey={vapidPublicKey()} />

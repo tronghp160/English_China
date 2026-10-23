@@ -15,13 +15,16 @@ import { CONTACT } from "@/lib/contact";
 import { DeckCover } from "@/components/deck/deck-cover";
 import { SampleDecksButton } from "@/components/deck/sample-decks-button";
 import { LangFlag } from "@/components/lang-flag";
+import { MascotSay } from "@/components/mascot/mascot-say";
 import { Heatmap } from "@/components/stats/heatmap";
 import { ProgressRing } from "@/components/stats/progress-ring";
 import { buttonVariants } from "@/components/ui/button";
 import { getMyDecks } from "@/lib/data/decks";
 import { getStudySummary } from "@/lib/data/study";
 import { LANGUAGES } from "@/lib/lang/registry";
+import { say, type LineKey, type PupMood } from "@/lib/mascot/lines";
 import { cn } from "@/lib/utils";
+import { readPrefs } from "@/lib/validation";
 
 export const metadata: Metadata = { title: "Hôm nay" };
 
@@ -88,6 +91,15 @@ export default async function TodayPage() {
   const split = s.langs.filter((l) => l.due + l.newToday > 0).length > 1;
   const cheer = CHEERS[new Date(s.today).getUTCDate() % CHEERS.length];
   const firstName = s.me.profile.display_name.split(/\s+/).at(-1);
+  const prefs = readPrefs(s.me.settings.prefs);
+  const [mood, line]: [PupMood, LineKey] =
+    s.totalCards === 0
+      ? ["wave", "empty"]
+      : s.streak.current > 0 && !s.streak.activeToday
+        ? ["sleepy", "streakAtRisk"]
+        : due + fresh === 0
+          ? ["cheer", "allDone"]
+          : ["happy", "due"];
 
   return (
     <div className="flex flex-col gap-5">
@@ -95,7 +107,20 @@ export default async function TodayPage() {
         <p className="font-heading text-xl leading-tight font-black text-ink">
           {greeting(s.me.settings.timezone)}, {firstName}! <span aria-hidden>👋</span>
         </p>
-        <p className="mt-0.5 text-ink-soft">{cheer}</p>
+        {prefs.mascot ? (
+          <MascotSay
+            mood={mood}
+            name={prefs.mascot_name}
+            text={say(line, {
+              seed: new Date(s.today).getUTCDate(),
+              name: prefs.mascot_name,
+              n: line === "streakAtRisk" ? s.streak.current : due + fresh,
+            })}
+            className="mt-2"
+          />
+        ) : (
+          <p className="mt-0.5 text-ink-soft">{cheer}</p>
+        )}
       </header>
 
       {/* Phones: one column. Laptops: main column + a right column (streak, goal, decks). */}

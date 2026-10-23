@@ -147,7 +147,19 @@ export function ReviewSession({
 
   return (
     <div className="flex flex-1 flex-col">
-      <SessionBar done={done} total={total} exitHref={exitHref} />
+      <SessionBar
+        done={done}
+        total={total}
+        exitHref={exitHref}
+        pup={
+          prefs.mascot
+            ? {
+                mood: !results.length ? "happy" : results.at(-1)!.rating === 1 ? "sad" : "cheer",
+                key: results.length,
+              }
+            : undefined
+        }
+      />
       <div className="flex flex-1 flex-col justify-center py-4">
         <Flashcard
           key={`${current.key}:${done}`}

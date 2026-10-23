@@ -3,6 +3,8 @@
 import { CloudOff, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Pup } from "@/components/mascot/pup";
+import type { PupMood } from "@/lib/mascot/lines";
 import { subscribeOutbox, type OutboxStatus } from "@/lib/srs/outbox";
 
 export function useOutboxStatus() {
@@ -16,10 +18,13 @@ export function SessionBar({
   done,
   total,
   exitHref,
+  pup,
 }: {
   done: number;
   total: number;
   exitHref: string;
+  /** Tiny mascot reacting to the last answer; `key` changes per answer to replay the hop. */
+  pup?: { mood: PupMood; key: number };
 }) {
   const sync = useOutboxStatus();
   const pct = total ? Math.round((done / total) * 100) : 0;
@@ -51,6 +56,7 @@ export function SessionBar({
         <span className="min-w-12 text-right text-sm font-bold text-ink-soft tabular-nums">
           {done}/{total}
         </span>
+        {pup && <Pup key={pup.key} mood={pup.mood} size={40} className="-my-1" />}
         {sync.pending > 0 && (
           <span
             className="grid size-8 place-items-center text-ink-soft"
