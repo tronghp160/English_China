@@ -40,7 +40,7 @@ export function ReviewsChart({ data }: { data: DayPoint[] }) {
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
-          margin={{ top: 8, right: 4, bottom: 0, left: -20 }}
+          margin={{ top: 8, right: 4, bottom: 0, left: 0 }}
           barCategoryGap={2}
         >
           <CartesianGrid vertical={false} stroke="var(--rule)" strokeDasharray="3 3" />
@@ -58,7 +58,7 @@ export function ReviewsChart({ data }: { data: DayPoint[] }) {
             tick={{ fill: "var(--ink-soft)", fontSize: 11 }}
             tickLine={false}
             axisLine={false}
-            width={44}
+            width={32}
           />
           <Tooltip
             content={(props) => <Tip {...(props as TooltipContentProps<number, string>)} />}
