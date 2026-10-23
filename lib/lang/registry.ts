@@ -2,7 +2,12 @@ import { normalizeTerm } from "./normalize";
 import { pinyinSearchKey } from "./zh";
 import type { LangCode } from "./types";
 
-export type PracticeMode = "flashcard" | "quiz" | "typing" | "listening" | "cloze" | "writing" | "tones";
+/** Modes stored in review_logs (Postgres enum review_mode); keep in sync with database.types.ts. */
+export const REVIEW_MODES = ["flashcard", "quiz", "typing", "listening", "cloze", "writing", "tones"] as const;
+export type ReviewMode = (typeof REVIEW_MODES)[number];
+
+/** Modes in the practice picker. The study games (learn, test, match) log their answers as review modes. */
+export type PracticeMode = ReviewMode | "learn" | "test" | "match";
 
 export type LanguageDef = {
   code: LangCode;

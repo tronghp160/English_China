@@ -3,12 +3,15 @@
 import {
   Brush,
   Check,
+  ClipboardCheck,
+  GraduationCap,
   Headphones,
   Keyboard,
   Layers,
   ListChecks,
   Music,
   Puzzle,
+  Shuffle,
   type LucideIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -16,13 +19,16 @@ import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { LANGUAGES, type PracticeMode } from "@/lib/lang/registry";
 import type { LangCode } from "@/lib/lang/types";
-import { MODE_INFO } from "@/lib/practice/questions";
+import { countsFor, MODE_INFO } from "@/lib/practice/questions";
 import { cn } from "@/lib/utils";
 
 type DeckOption = { id: string; name: string; language: LangCode; wordCount: number };
 
 // Icon + candy color per mode (tile text/wash, and the border when selected).
 const MODE_LOOK: Record<PracticeMode, { icon: LucideIcon; tile: string; ring: string }> = {
+  learn: { icon: GraduationCap, tile: "bg-wash-jade text-jade-text", ring: "border-jade" },
+  test: { icon: ClipboardCheck, tile: "bg-wash-blue text-ink-blue", ring: "border-ink-blue" },
+  match: { icon: Shuffle, tile: "bg-wash-yellow text-sun-text", ring: "border-sun" },
   flashcard: { icon: Layers, tile: "bg-wash-red text-danger", ring: "border-margin-red" },
   quiz: { icon: ListChecks, tile: "bg-wash-grape text-grape-text", ring: "border-grape" },
   typing: { icon: Keyboard, tile: "bg-wash-sky text-sky-text", ring: "border-sky" },
@@ -104,8 +110,7 @@ export function PracticeSetup({
   const [source, setSource] = useState<(typeof SOURCES)[number]["value"]>("all");
   const [countsToSrs, setCountsToSrs] = useState(false);
   const activeMode = modes.includes(mode) ? mode : "quiz";
-  // Flashcards go fast, so they offer bigger sets (200 = the whole deck in practice).
-  const counts = activeMode === "flashcard" ? [20, 50, 200] : [10, 20, 30];
+  const counts = countsFor(activeMode);
   const activeCount = counts.includes(count) ? count : counts[0];
 
   function start(e: React.FormEvent) {

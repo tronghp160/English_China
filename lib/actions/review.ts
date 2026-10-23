@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { getUser } from "@/lib/auth";
+import { REVIEW_MODES } from "@/lib/lang/registry";
 import { emptyDbCard, schedule, type DbCard, type RatingValue } from "@/lib/srs/fsrs";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -10,7 +11,7 @@ const reviewSchema = z.object({
   clientId: z.string().uuid(),
   wordId: z.string().uuid(),
   direction: z.enum(["recognize", "recall"]),
-  mode: z.enum(["flashcard", "quiz", "typing", "listening", "cloze", "writing", "tones"]),
+  mode: z.enum(REVIEW_MODES),
   rating: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
   wasCorrect: z.boolean().nullable(),
   durationMs: z.number().int().min(0).max(3_600_000),

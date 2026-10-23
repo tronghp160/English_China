@@ -6,7 +6,7 @@ import { PracticeSession } from "@/components/practice/practice-session";
 import { LANGUAGES, type PracticeMode } from "@/lib/lang/registry";
 import type { LangCode } from "@/lib/lang/types";
 import type { StudyWord } from "@/lib/practice";
-import { buildQuestions, MODE_INFO } from "@/lib/practice/questions";
+import { buildQuestions, countsFor, MODE_INFO } from "@/lib/practice/questions";
 import { createClient } from "@/lib/supabase/server";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -30,7 +30,7 @@ export default async function PracticeModePage({
   const [{ mode }, sp] = await Promise.all([params, searchParams]);
   if (!isMode(mode)) notFound();
   const deckId = typeof sp.deck === "string" && UUID.test(sp.deck) ? sp.deck : null;
-  const counts = mode === "flashcard" ? [20, 50, 200] : [10, 20, 30];
+  const counts = countsFor(mode);
   const n = counts.includes(Number(sp.n)) ? Number(sp.n) : counts[0];
   const source = SOURCES.find((s) => s === sp.source) ?? "all";
   const srs = sp.srs === "1";
@@ -47,6 +47,7 @@ export default async function PracticeModePage({
     language = deck.language;
   }
   if (!LANGUAGES[language].practiceModes.includes(mode)) notFound();
+  if (mode === "learn" || mode === "test" || mode === "match") notFound(); // not built yet
 
   // Ask for extra targets: some words cannot be used in every mode (no example, no pinyin…).
   const needsFilter = mode === "cloze" || mode === "tones";
@@ -119,7 +120,6 @@ export default async function PracticeModePage({
 
   return (
     <PracticeSession
-      mode={mode}
       questions={questions}
       countsToSrs={srs}
       exitHref={back}

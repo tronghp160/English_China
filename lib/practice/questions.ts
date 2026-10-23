@@ -1,4 +1,4 @@
-import type { PracticeMode } from "@/lib/lang/registry";
+import type { PracticeMode, ReviewMode } from "@/lib/lang/registry";
 import {
   choiceOptions,
   makeCloze,
@@ -56,7 +56,7 @@ export function fitsMode(word: StudyWord, mode: PracticeMode): boolean {
  * out of client rendering). `pool` provides distractors from the same deck.
  */
 export function buildQuestions(
-  mode: PracticeMode,
+  mode: ReviewMode,
   targets: StudyWord[],
   pool: StudyWord[],
   rng: Rng = Math.random,
@@ -123,7 +123,34 @@ export function buildQuestions(
     });
 }
 
+/** The review_logs mode an answered question is stored under. */
+export function reviewModeOf(q: Question): ReviewMode {
+  switch (q.kind) {
+    case "choice":
+      return q.prompt === "audio" ? "listening" : "quiz";
+    default:
+      return q.kind;
+  }
+}
+
+/** Set sizes offered per mode (match counts pairs, 6 per board). */
+export function countsFor(mode: PracticeMode): number[] {
+  switch (mode) {
+    case "flashcard":
+      return [20, 50, 200]; // 200 = the whole deck in practice
+    case "match":
+      return [6, 12, 18];
+    case "learn":
+      return [10, 20, 50];
+    default:
+      return [10, 20, 30];
+  }
+}
+
 export const MODE_INFO: Record<PracticeMode, { label: string; hint: string }> = {
+  learn: { label: "Học", hint: "Học theo vòng tới khi thuộc hết bộ từ." },
+  test: { label: "Kiểm tra", hint: "Làm bài trộn nhiều dạng câu, chấm điểm cuối bài." },
+  match: { label: "Ghép thẻ", hint: "Ghép từ với nghĩa nhanh nhất có thể." },
   flashcard: { label: "Lật thẻ", hint: "Lật qua lật lại, tự đánh dấu thuộc hay chưa." },
   quiz: { label: "Trắc nghiệm", hint: "Chọn nghĩa đúng của từ, hoặc từ đúng với nghĩa." },
   typing: { label: "Gõ từ", hint: "Nhìn nghĩa, gõ lại từ." },

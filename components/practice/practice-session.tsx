@@ -9,9 +9,8 @@ import { WordVisual } from "@/components/review/word-visual";
 import { PosBadge } from "@/components/word/pos-badge";
 import { PronounceButton } from "@/components/word/pronounce-button";
 import { PinyinText } from "@/components/zh/pinyin-text";
-import type { PracticeMode } from "@/lib/lang/registry";
 import { checkTyping, TONE_GLYPH, type StudyWord, type TypingResult } from "@/lib/practice";
-import type { Option, Question } from "@/lib/practice/questions";
+import { reviewModeOf, type Option, type Question } from "@/lib/practice/questions";
 import { enqueueReview } from "@/lib/srs/outbox";
 import { speak } from "@/lib/tts";
 import { cn } from "@/lib/utils";
@@ -154,13 +153,11 @@ function toneLabel(pattern: string) {
 }
 
 export function PracticeSession({
-  mode,
   questions,
   countsToSrs,
   exitHref,
   againHref,
 }: {
-  mode: PracticeMode;
   questions: Question[];
   countsToSrs: boolean;
   exitHref: string;
@@ -192,7 +189,7 @@ export function PracticeSession({
         clientId: crypto.randomUUID(),
         wordId: q.word.id,
         direction: "recognize",
-        mode,
+        mode: reviewModeOf(q),
         rating: o.correct ? 3 : 1,
         wasCorrect: o.correct,
         durationMs: Math.min(Date.now() - shownAt.current, 3_600_000),
@@ -213,7 +210,7 @@ export function PracticeSession({
         say(q.word);
       requestAnimationFrame(() => continueRef.current?.focus());
     },
-    [countsToSrs, mode, outcome, prefs.auto_speak, q, say],
+    [countsToSrs, outcome, prefs.auto_speak, q, say],
   );
 
   const next = useCallback(() => {
