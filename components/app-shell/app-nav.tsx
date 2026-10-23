@@ -17,7 +17,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMe } from "@/components/app-shell/me-provider";
 import { Logo } from "@/components/brand/logo";
-import { Pup } from "@/components/mascot/pup";
+import { PettablePup } from "@/components/mascot/pettable-pup";
 import { cn } from "@/lib/utils";
 
 // Each section has its own candy color: `tone` = icon color + wash for its pill/tile,
@@ -145,7 +145,7 @@ export function SideNav() {
         <div className="relative rounded-card border border-rule bg-surface p-3 pt-2 shadow-card">
           {prefs.mascot ? (
             <div className="flex items-end gap-1">
-              <Pup mood="happy" size={56} className="-ml-1 animate-bob" />
+              <PettablePup mood="happy" name={prefs.mascot_name} size={56} className="-ml-1" />
               <p className="mb-2 text-sm leading-snug text-ink">
                 <span className="block text-xs font-bold text-ink-soft">{prefs.mascot_name}</span>
                 Học một chút mỗi ngày nha 🐾

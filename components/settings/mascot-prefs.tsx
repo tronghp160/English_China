@@ -6,6 +6,7 @@ import { Pup } from "@/components/mascot/pup";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updatePrefs } from "@/lib/actions/profile";
+import { PUP_MOODS } from "@/lib/mascot/lines";
 import type { Prefs } from "@/lib/validation";
 import { SwitchRow } from "./study-prefs";
 
@@ -13,6 +14,7 @@ import { SwitchRow } from "./study-prefs";
 export function MascotPrefs({ prefs }: { prefs: Required<Prefs> }) {
   const [optimistic, setOptimistic] = useOptimistic(prefs);
   const [name, setName] = useState(prefs.mascot_name);
+  const [moodIndex, setMoodIndex] = useState(1);
   const [, startTransition] = useTransition();
 
   function save(patch: Prefs) {
@@ -35,7 +37,18 @@ export function MascotPrefs({ prefs }: { prefs: Required<Prefs> }) {
 
   return (
     <div className="flex items-start gap-4">
-      <Pup mood={optimistic.mascot ? "wave" : "sleepy"} size={84} className="mt-1" />
+      <div className="flex shrink-0 flex-col items-center gap-1">
+        <button
+          type="button"
+          aria-label="Xem biểu cảm tiếp theo"
+          title="Bấm để xem biểu cảm khác"
+          onClick={() => setMoodIndex((i) => (i + 1) % PUP_MOODS.length)}
+          className="mt-1 cursor-pointer rounded-full transition-transform hover:scale-105 active:scale-95"
+        >
+          <Pup key={moodIndex} mood={optimistic.mascot ? PUP_MOODS[moodIndex] : "sleepy"} size={84} />
+        </button>
+        <span className="text-xs text-ink-soft">Bấm để đổi</span>
+      </div>
       <div className="ruled-list min-w-0 flex-1">
         <SwitchRow
           id="pref-mascot"

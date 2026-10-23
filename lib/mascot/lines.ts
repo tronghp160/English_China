@@ -1,7 +1,42 @@
 /** What the puppy mascot says, by situation. `{name}` and `{n}` are filled by `say`. */
-export type PupMood = "happy" | "cheer" | "sad" | "sleepy" | "think" | "wave";
+export type PupMood =
+  | "happy"
+  | "cheer"
+  | "sad"
+  | "sleepy"
+  | "think"
+  | "wave"
+  | "love"
+  | "surprised"
+  | "wink"
+  | "cool";
+
+/** Every mood, in the order the Settings preview cycles through them. */
+export const PUP_MOODS: PupMood[] = [
+  "happy",
+  "wave",
+  "cheer",
+  "love",
+  "wink",
+  "cool",
+  "surprised",
+  "think",
+  "sleepy",
+  "sad",
+];
 
 export const LINES = {
+  dueMany: [
+    "Ôi, {n} từ lận! Mình chia nhỏ ra làm từ từ nha 😮",
+    "Wow {n} từ! Làm 10 từ trước rồi nghỉ xíu cũng được nè.",
+  ],
+  pet: [
+    "Hihi, nhột quá! 🐾",
+    "Gâu! Thương bạn nhiều 💜",
+    "Xoa đầu nữa đi mà~",
+    "{name} vui lắm luôn!",
+    "Gâu gâu! Học tiếp nha!",
+  ],
   empty: [
     "Gâu! Mình là {name}. Thêm vài từ đầu tiên rồi mình học cùng nhau nha!",
     "Sổ còn trống trơn nè. Thêm bộ từ mẫu để thử liền nhé! 🐾",
@@ -53,9 +88,17 @@ export function say(
   return line.replaceAll("{name}", name).replaceAll("{n}", String(n ?? ""));
 }
 
+/** How the puppy reacts to an answer; varied by `seed` so it doesn't repeat itself. */
+export function answerMood(verdict: "correct" | "close" | "wrong", seed = 0): PupMood {
+  if (verdict === "wrong") return "sad";
+  if (verdict === "close") return "surprised";
+  const happy: PupMood[] = ["cheer", "love", "wink", "cheer"];
+  return happy[seed % happy.length];
+}
+
 /** End-of-session mood and line by accuracy (same thresholds as the old emoji cheer). */
 export function summaryMood(pct: number): { mood: PupMood; text: string } {
-  if (pct >= 90) return { mood: "cheer", text: "Xuất sắc! Trí nhớ siêu đỉnh luôn 🏆" };
+  if (pct >= 90) return { mood: "cool", text: "Xuất sắc! Trí nhớ siêu đỉnh luôn 🏆" };
   if (pct >= 70) return { mood: "cheer", text: "Tuyệt vời! Cứ thế phát huy nhé 🎉" };
   if (pct >= 40) return { mood: "happy", text: "Khá lắm! Ôn thêm chút là thuộc ngay 💪" };
   return { mood: "sad", text: "Khởi đầu nào cũng khó. Mai ôn lại sẽ nhớ hơn, mình ở đây nè 🌱" };

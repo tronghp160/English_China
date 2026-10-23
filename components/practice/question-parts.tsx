@@ -7,7 +7,7 @@ import { Pup } from "@/components/mascot/pup";
 import { PosBadge } from "@/components/word/pos-badge";
 import { PronounceButton } from "@/components/word/pronounce-button";
 import { PinyinText } from "@/components/zh/pinyin-text";
-import { say, seedOf } from "@/lib/mascot/lines";
+import { answerMood, say, seedOf } from "@/lib/mascot/lines";
 import { TONE_GLYPH, type StudyWord } from "@/lib/practice";
 import type { Option } from "@/lib/practice/questions";
 import { speak } from "@/lib/tts";
@@ -207,7 +207,7 @@ export function FeedbackPanel({
       <div className="flex items-start gap-3">
         {prefs.mascot && (
           <Pup
-            mood={verdict === "wrong" ? "sad" : verdict === "close" ? "happy" : "cheer"}
+            mood={answerMood(verdict, seedOf(word.id))}
             size={60}
             className="-mt-1 -mb-2"
           />

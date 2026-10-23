@@ -154,7 +154,10 @@ export function ReviewSession({
         pup={
           prefs.mascot
             ? {
-                mood: !results.length ? "happy" : results.at(-1)!.rating === 1 ? "sad" : "cheer",
+                // Again → sad, Hard → think, Good → wink, Easy → cheer.
+                mood: !results.length
+                  ? "happy"
+                  : (["sad", "think", "wink", "cheer"] as const)[results.at(-1)!.rating - 1],
                 key: results.length,
               }
             : undefined

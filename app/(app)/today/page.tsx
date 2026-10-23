@@ -96,7 +96,9 @@ export default async function TodayPage() {
         ? ["sleepy", "streakAtRisk"]
         : due + fresh === 0
           ? ["cheer", "allDone"]
-          : ["happy", "due"];
+          : due + fresh >= 50
+            ? ["surprised", "dueMany"]
+            : ["happy", "due"];
 
   return (
     <div className="flex flex-col gap-5">
