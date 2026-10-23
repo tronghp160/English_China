@@ -12,6 +12,7 @@ import { reviewModeOf, type Question } from "@/lib/practice/questions";
 import { enqueueReview } from "@/lib/srs/outbox";
 import { cn } from "@/lib/utils";
 import {
+  FeedbackPanel,
   isTyping,
   MeaningLine,
   Options,
@@ -327,48 +328,13 @@ export function PracticeSession({
       <div className="flex flex-1 flex-col justify-center py-2">{body}</div>
 
       {outcome && (
-        <div
-          role="status"
-          className={cn(
-            "sticky bottom-0 -mx-4 mt-4 flex animate-pop-in flex-col gap-3 rounded-t-sheet border-t-2 px-4 pt-4 pb-[max(env(safe-area-inset-bottom),0.75rem)]",
-            outcome.correct ? "border-jade/50 bg-wash-jade" : "border-margin-red/50 bg-wash-red",
-          )}
-        >
-          <div className="flex items-start gap-3">
-            <div className="min-w-0 flex-1">
-              <p
-                className={cn("font-heading text-xl font-black", outcome.correct ? "text-jade-text" : "text-danger")}
-              >
-                {outcome.close ? "Gần đúng! 👌" : outcome.correct ? "Đúng rồi! 🎉" : "Chưa đúng 😅"}
-              </p>
-              <p className="mt-0.5 text-ink">
-                <span
-                  lang={zh ? "zh-CN" : "en"}
-                  className={cn("font-semibold", zh && "font-hanzi text-lg")}
-                >
-                  {q.word.term}
-                </span>
-                {q.word.reading && <span className="text-ink-soft"> · {q.word.reading}</span>}
-                <span className="text-ink-soft"> — {q.word.meaning_vi}</span>
-              </p>
-            </div>
-            <PronounceButton text={q.word.term} lang={q.word.language} />
-          </div>
-          <button
-            ref={continueRef}
-            type="button"
-            onClick={next}
-            className={cn(
-              "btn-3d min-h-14 rounded-btn text-lg font-extrabold text-white dark:text-paper",
-              outcome.correct
-                ? "bg-jade-text [--edge-color:color-mix(in_oklab,var(--jade-text),black_30%)]"
-                : "bg-danger [--edge-color:color-mix(in_oklab,var(--danger),black_30%)]",
-            )}
-          >
-            {index + 1 >= questions.length ? "Xem kết quả" : "Tiếp tục"}
-            <kbd className="ml-2 hidden text-xs font-normal opacity-70 lg:inline">Enter</kbd>
-          </button>
-        </div>
+        <FeedbackPanel
+          outcome={outcome}
+          word={q.word}
+          onNext={next}
+          nextLabel={index + 1 >= questions.length ? "Xem kết quả" : "Tiếp tục"}
+          buttonRef={continueRef}
+        />
       )}
     </div>
   );

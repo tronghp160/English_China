@@ -121,3 +121,61 @@ test("kiểm tra: sai 2 câu được 80% và làm lại 2 câu sai", async () =
   await page.getByRole("button", { name: "Làm tiếp" }).click();
   expect(errors).toEqual([]);
 });
+
+test("học: thuộc hết 3 từ, từ sai được hỏi lại, tải lại thì học tiếp", async () => {
+  const three = WORDS.slice(0, 3);
+  const deckId = await createDeck("Học E2E", three);
+  await page.goto(`/practice/learn?deck=${deckId}&n=10`);
+  const options = page.getByRole("group", { name: "Các đáp án" });
+  const input = page.getByLabel("Gõ từ tiếng Anh");
+  const roundEnd = page.getByRole("heading", { name: /Hết vòng/ });
+  const done = page.getByRole("heading", { name: /Bạn đã thuộc hết 3 từ/ });
+  const asked: string[] = [];
+  let missed: string | null = null;
+  let reloaded = false;
+
+  for (let step = 0; step < 30; step++) {
+    await expect(options.or(input).or(roundEnd).or(done)).toBeVisible();
+    if (await done.isVisible()) break;
+    if (await roundEnd.isVisible()) {
+      await page.getByRole("button", { name: /^Tiếp tục/ }).click();
+      continue;
+    }
+    const text = (await page.locator("main").textContent()) ?? "";
+    if (await options.isVisible()) {
+      const askedTerm = text.includes("Nghĩa của từ này là gì?");
+      const [term, meaning] = askedTerm
+        ? three.find(([t]) => text.includes(t))!
+        : three.find(([, m]) => text.includes(m))!;
+      asked.push(term);
+      const correct = askedTerm ? meaning : term;
+      const buttons = options.getByRole("button");
+      if (!missed) {
+        missed = term;
+        await buttons.filter({ hasNotText: correct }).first().click();
+      } else {
+        await buttons.filter({ hasText: correct }).click();
+      }
+    } else {
+      const [term] = three.find(([, m]) => text.includes(m))!;
+      await input.fill(term);
+      await input.press("Enter");
+      if (!reloaded) {
+        // progress is saved after every answer: a reload offers to continue
+        reloaded = true;
+        await expect(page.getByText("Đúng rồi!")).toBeVisible();
+        await page.reload();
+        await expect(page.getByRole("heading", { name: "Tiếp tục học?" })).toBeVisible();
+        await page.getByRole("button", { name: "Học tiếp" }).click();
+        continue;
+      }
+    }
+    await page.getByRole("button", { name: /^Tiếp tục/ }).click();
+  }
+
+  await expect(done).toBeVisible();
+  expect(reloaded).toBe(true);
+  // the missed word came back in the same round
+  expect(asked.filter((t) => t === missed)).toHaveLength(2);
+  expect(errors).toEqual([]);
+});

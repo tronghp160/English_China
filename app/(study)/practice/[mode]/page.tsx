@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FlashcardDeck } from "@/components/practice/flashcard-deck";
+import { LearnSession } from "@/components/practice/learn-session";
 import { MatchGame } from "@/components/practice/match-game";
 import { TestSession } from "@/components/practice/test-session";
 import { PracticeSession } from "@/components/practice/practice-session";
@@ -66,7 +67,6 @@ export default async function PracticeModePage({
     language = deck.language;
   }
   if (!LANGUAGES[language].practiceModes.includes(mode)) notFound();
-  if (mode === "learn") notFound(); // not built yet
 
   const back = deckId
     ? sp.from === "deck"
@@ -78,6 +78,63 @@ export default async function PracticeModePage({
   );
   const againHref = `/practice/${mode}?${query}`;
   const deckKey = deckId ?? `lang:${language}`;
+  // Links between the study games keep the deck (or language) and the way back.
+  const scope = new URLSearchParams(deckId ? { deck: deckId } : { lang: language });
+  if (sp.from === "deck") scope.set("from", "deck");
+  const learnBase = `/practice/learn?${scope}`;
+  const testHref = `/practice/test?${scope}&n=20`;
+
+  if (mode === "learn") {
+    const wordIds =
+      typeof sp.words === "string"
+        ? [...new Set(sp.words.split(",").filter((id) => UUID.test(id)))].slice(0, 50)
+        : [];
+    const { data: poolRows } = await supabase.rpc("practice_words", {
+      p_deck_id: deckId as string,
+      p_language: language,
+      p_source: "all",
+      p_limit: 300,
+    });
+    const pool = (poolRows ?? []).map((p) => p.word as unknown as StudyWord);
+    let words: StudyWord[];
+    if (wordIds.length) {
+      // "Học các từ sai" from a test: just these words, progress not saved.
+      let q = supabase.from("words").select("*").in("id", wordIds).eq("language", language);
+      if (deckId) q = q.eq("deck_id", deckId);
+      const { data } = await q;
+      words = (data ?? []) as unknown as StudyWord[];
+    } else if (source === "all") {
+      // The whole deck in its own order, so saved progress lines up on the next visit.
+      words = [...pool]
+        .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
+        .slice(0, n);
+    } else {
+      const { data } = await supabase.rpc("practice_words", {
+        p_deck_id: deckId as string,
+        p_language: language,
+        p_source: source,
+        p_limit: n,
+      });
+      words = (data ?? []).map((t) => t.word as unknown as StudyWord);
+    }
+    if (!words.length)
+      return (
+        <CannotPractice
+          back={back}
+          why={source === "due" ? "Chưa có từ nào đến hạn ôn." : "Bộ này chưa có từ nào."}
+        />
+      );
+    return (
+      <LearnSession
+        words={words}
+        pool={pool}
+        progressKey={wordIds.length ? null : `${deckKey}:${source}`}
+        countsToSrs={srs}
+        exitHref={back}
+        testHref={testHref}
+      />
+    );
+  }
 
   if (mode === "match") {
     const { data } = await supabase.rpc("practice_words", {
@@ -94,7 +151,15 @@ export default async function PracticeModePage({
           why={source === "due" ? "Chưa có từ nào đến hạn ôn." : "Cần ít nhất 2 từ để ghép thẻ."}
         />
       );
-    return <MatchGame boards={boards} deckKey={deckKey} exitHref={back} againHref={againHref} />;
+    return (
+      <MatchGame
+        boards={boards}
+        deckKey={deckKey}
+        exitHref={back}
+        againHref={againHref}
+        learnHref={`${learnBase}&n=20`}
+      />
+    );
   }
 
   const emptyWhy = source === "due" ? "Chưa có từ nào đến hạn ôn." : "Bộ này chưa có từ nào.";
@@ -131,6 +196,7 @@ export default async function PracticeModePage({
         againHref={againHref}
         types={types}
         ask={ask}
+        learnBase={learnBase}
       />
     );
   }
