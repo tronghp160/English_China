@@ -12,6 +12,7 @@ import { SubscribeButton } from "@/components/deck/subscribe-button";
 import { Button } from "@/components/ui/button";
 import { LANGUAGES, type PracticeMode } from "@/lib/lang/registry";
 import { getDeck, getMyDecks } from "@/lib/data/decks";
+import { deckColor, deckColorClasses } from "@/lib/deck-colors";
 import { createClient } from "@/lib/supabase/server";
 import { publicEnv } from "@/lib/env";
 
@@ -44,16 +45,17 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
     .map((d) => ({ id: d.id, name: d.name }));
   const dueHere = myDecks.find((d) => d.id === deckId)?.due_count ?? 0;
   const studying = myDecks.some((d) => d.id === deckId);
+  const color = deckColorClasses(deckColor(deckId));
   const studyItems = STUDY_LINKS.filter((s) => LANGUAGES[deck.language].practiceModes.includes(s.mode));
 
   return (
     <div>
       <BackLink href="/decks" label="Bộ từ" />
-      <header className="flex items-start gap-4 md:gap-6">
-        <DeckArt id={deckId} language={deck.language} name={deck.name} size="md" className="md:hidden" />
-        <DeckArt id={deckId} language={deck.language} name={deck.name} size="lg" className="hidden md:inline-flex" />
+      <header className={`flex items-start gap-4 rounded-xl p-5 md:gap-6 md:p-6 ${color.soft}`}>
+        <DeckArt id={deckId} language={deck.language} name={deck.name} size="md" className="bg-white/70 md:hidden dark:bg-surface" />
+        <DeckArt id={deckId} language={deck.language} name={deck.name} size="lg" className="hidden bg-white/70 md:inline-flex dark:bg-surface" />
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl break-words sm:text-2xl">{deck.name}</h1>
+          <h1 className="text-[1.5rem] break-words sm:text-[1.875rem]">{deck.name}</h1>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-fg-muted">
             <span>{LANGUAGES[deck.language].label}</span>
             <span>{deck.word_count} từ</span>
@@ -64,7 +66,7 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
           {deck.description && <p className="mt-3 max-w-[62ch] text-[0.9375rem] text-fg">{deck.description}</p>}
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {studying ? (
-              <Button asChild>
+              <Button asChild variant="pressable">
                 <Link href={`/review?deck=${deckId}`}>
                   <Play className="fill-current" aria-hidden />
                   Ôn bộ này
@@ -75,7 +77,7 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
               <SubscribeButton deckId={deckId} subscribed={isSubscribed} />
             )}
             {canEdit && (
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="bg-surface">
                 <Link href={`/decks/${deckId}/add`}>
                   <Plus aria-hidden />
                   Thêm từ
@@ -96,7 +98,7 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
 
       {deck.word_count > 0 && (
         <section className="mt-8" aria-labelledby="deck-study">
-          <h2 id="deck-study" className="mb-2 text-base">
+          <h2 id="deck-study" className="mb-3 text-lg">
             Học bộ này
           </h2>
           <StudyStrip deckId={deckId} items={studyItems} wordCount={deck.word_count} />

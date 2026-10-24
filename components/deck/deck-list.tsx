@@ -19,7 +19,16 @@ const RELATION_TITLE: Record<string, string> = {
   group: "Bộ từ của nhóm",
 };
 
-export function DeckList({ decks, langFilter }: { decks: DeckRow[]; langFilter: "en" | "zh" | null }) {
+export function DeckList({
+  decks,
+  langFilter,
+  samples = {},
+}: {
+  decks: DeckRow[];
+  langFilter: "en" | "zh" | null;
+  /** First word of each deck, by deck id */
+  samples?: Record<string, string>;
+}) {
   const shown = langFilter ? decks.filter((d) => d.language === langFilter) : decks;
   const groups = (["own", "subscribed", "group"] as const)
     .map((rel) => ({ rel, items: shown.filter((d) => d.relation === rel) }))
@@ -61,14 +70,14 @@ export function DeckList({ decks, langFilter }: { decks: DeckRow[]; langFilter: 
 
       {groups.map(({ rel, items }) => (
         <section key={rel} className="mt-8" aria-labelledby={`decks-${rel}`}>
-          <h2 id={`decks-${rel}`} className="mb-3 flex items-baseline gap-2 text-lg">
+          <h2 id={`decks-${rel}`} className="mb-3 flex items-baseline gap-2 text-xl">
             {RELATION_TITLE[rel]}
             <span className="text-sm font-normal text-fg-muted tabular-nums">{items.length}</span>
           </h2>
-          <ul className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {items.map((d) => (
               <li key={d.id} className="min-w-0">
-                <DeckCard d={d} />
+                <DeckCard d={d} sample={samples[d.id]} />
               </li>
             ))}
           </ul>

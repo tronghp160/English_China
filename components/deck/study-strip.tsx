@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useOptionalMe } from "@/components/app-shell/me-provider";
 import { MODE_LOOK } from "@/components/practice/mode-look";
+import { IconTile } from "@/components/ui/icon-tile";
 import type { PracticeMode } from "@/lib/lang/registry";
 import { MODE_INFO } from "@/lib/practice/questions";
 import { initLearn } from "@/lib/practice/learn";
@@ -14,7 +15,7 @@ import { getMatchRecord } from "@/lib/practice/match-records";
 type Item = { mode: PracticeMode; n: number };
 
 /**
- * "Học bộ này": the four quick ways in as one strip of cells under a shared outline.
+ * "Học bộ này": the four quick ways in as colored tiles, one hue per mode.
  * The line under each name is only what is really known on this device (unfinished Learn progress,
  * the Match record, the card count); nothing is made up while it loads.
  */
@@ -57,21 +58,21 @@ export function StudyStrip({ deckId, items, wordCount }: { deckId: string; items
   };
 
   return (
-    <nav aria-label="Học bộ này" className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-4">
+    <nav aria-label="Học bộ này" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {items.map(({ mode, n }) => {
-        const Icon = MODE_LOOK[mode].icon;
+        const { icon, tone } = MODE_LOOK[mode];
         const line = hint(mode, n);
         return (
           <Link
             key={mode}
             href={`/practice/${mode}?deck=${deckId}&n=${n}&from=deck`}
-            className="flex min-h-16 flex-col justify-center gap-0.5 bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
+            className="flex min-h-16 items-center gap-3 rounded-lg border border-border/60 bg-surface p-3 shadow-sm transition-[transform,box-shadow] duration-[var(--dur-base)] hover:-translate-y-0.5 hover:shadow-md dark:border-border"
           >
-            <span className="flex items-center gap-2 font-semibold text-fg">
-              <Icon className="size-[1.125rem]" strokeWidth={1.75} aria-hidden />
-              {MODE_INFO[mode].label}
+            <IconTile icon={icon} tone={tone} size={40} solid />
+            <span className="flex min-w-0 flex-col">
+              <span className="font-bold text-fg">{MODE_INFO[mode].label}</span>
+              <span className="min-h-4 text-xs leading-4 text-fg-muted">{line}</span>
             </span>
-            <span className="min-h-4 text-xs leading-4 text-fg-muted">{line}</span>
           </Link>
         );
       })}

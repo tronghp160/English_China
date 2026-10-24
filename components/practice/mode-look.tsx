@@ -8,24 +8,25 @@ import {
   ListChecks,
   Music,
   Puzzle,
-  Shuffle,
+  TextCursorInput,
   type LucideIcon,
 } from "lucide-react";
 import type { PracticeMode } from "@/lib/lang/registry";
+import type { Tone } from "@/lib/tone";
 import { cn } from "@/lib/utils";
 
-/** One quiet icon per mode (lucide), no per-mode colors. */
-export const MODE_LOOK: Record<PracticeMode, { icon: LucideIcon }> = {
-  learn: { icon: GraduationCap },
-  test: { icon: ClipboardCheck },
-  match: { icon: Shuffle },
-  flashcard: { icon: Layers },
-  quiz: { icon: ListChecks },
-  typing: { icon: Keyboard },
-  listening: { icon: Headphones },
-  cloze: { icon: Puzzle },
-  writing: { icon: Brush },
-  tones: { icon: Music },
+/** One icon and one hue per mode (REDESIGN_V2 §3.3): the single source of mode colors. */
+export const MODE_LOOK: Record<PracticeMode, { icon: LucideIcon; tone: Tone }> = {
+  learn: { icon: GraduationCap, tone: "blue" },
+  test: { icon: ClipboardCheck, tone: "grape" },
+  match: { icon: Puzzle, tone: "orange" },
+  flashcard: { icon: Layers, tone: "teal" },
+  quiz: { icon: ListChecks, tone: "mint" },
+  typing: { icon: Keyboard, tone: "pink" },
+  listening: { icon: Headphones, tone: "sun" },
+  cloze: { icon: TextCursorInput, tone: "coral" },
+  writing: { icon: Brush, tone: "blue" },
+  tones: { icon: Music, tone: "teal" },
 };
 
 /** 48×32 one-color sketches of how each mode works, drawn in the current text color. */

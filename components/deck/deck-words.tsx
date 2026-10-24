@@ -300,7 +300,7 @@ export function DeckWords({
           />
         )
       ) : view === "list" ? (
-        <div className="mt-3">
+        <div className="mt-3 overflow-hidden rounded-lg border border-border/60 bg-surface pt-3 shadow-sm dark:border-border">
           <div aria-hidden className={cn("hidden items-center gap-3 border-b border-border px-4 pb-2 text-xs font-medium text-fg-muted md:grid", ROW_COLS[selecting ? 1 : 0])}>
             {selecting && <span />}
             <span>Từ</span>
@@ -322,7 +322,7 @@ export function DeckWords({
             />
           ))}
           </ul>
-          <StatusLegend className="mt-3 px-4" />
+          <StatusLegend className="border-t border-border px-4 py-3" />
         </div>
       ) : (
         <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
