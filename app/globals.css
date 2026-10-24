@@ -135,6 +135,8 @@
 
   /* Puppy mascot "Bin" (components/mascot/pup.tsx) */
   --pup-ink: #2b2d3a;
+  /* Eyes, nose, mouth and toes sit on the fur: always dark, while the outline may be light on a dark page */
+  --pup-feature: var(--pup-ink);
   --pup-fur: #ffffff;
   --pup-ear: #c98b5a;
   --pup-muzzle: #f6e7d6;
@@ -255,6 +257,7 @@
   --rate-easy-press: #07583d;
 
   --pup-ink: #e9ebf2;
+  --pup-feature: #2b2d3a;
   --pup-fur: #f3efe8;
   --pup-ear: #b97a4c;
   --pup-muzzle: #e9d8c3;
@@ -595,6 +598,770 @@
     opacity: 0;
     transform: translateY(-16px);
   }
+}
+
+/*
+ * Bin 2.0 (REDESIGN_V3 §4). The drawing in components/mascot/pup.tsx is split into groups; each gets its pivot
+ * here (`transform-box: view-box` makes the px values user units of the 120×120 box). Order matters: idle
+ * moves first, then actions, so an action wins when both touch the same part. Everything is cut or ends in the
+ * rest pose under prefers-reduced-motion (the global rule below) and by [data-sim-reduced] in /dev-ui/bin.
+ */
+.bin-root,
+.bin-shadow,
+.bin-body,
+.bin-head,
+.bin-ear-l,
+.bin-ear-r,
+.bin-tail,
+.bin-paw-l,
+.bin-paw-r,
+.bin-mouth,
+.bin-open,
+.bin-nose,
+.bin-pupils,
+.bin-bone,
+.bin-ball,
+.bin-bark,
+.bin-spark,
+.bin-crumb,
+.bin-z,
+.bin-scarf-tail {
+  transform-box: view-box;
+}
+.bin-blush {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 200ms var(--ease-out);
+}
+.bin-root {
+  transform-origin: 60px 114px;
+}
+.bin-shadow {
+  transform-origin: 60px 114px;
+  opacity: 0.12;
+}
+.bin-body {
+  transform-origin: 60px 113px;
+}
+.bin-head {
+  transform-origin: 60px 80px;
+  /* Looking at something turns the head a little (the variables come from useBinLook or the look prop) */
+  transform: rotate(calc(var(--look-x, 0) * 4deg));
+  transition: transform 200ms var(--ease-out);
+}
+.bin-pupils {
+  transform: translate(calc(var(--look-x, 0) * 2.5px), calc(var(--look-y, 0) * 2.5px));
+  transition: transform 140ms var(--ease-out);
+}
+.bin-ear-l {
+  transform-origin: 34px 32px;
+}
+.bin-ear-r {
+  transform-origin: 86px 32px;
+}
+.bin-tail {
+  transform-origin: 82px 100px;
+}
+.bin-paw-l,
+.bin-paw-r {
+  opacity: 0;
+  transition:
+    transform 260ms var(--ease-out),
+    opacity 140ms linear;
+}
+.bin-paw-l {
+  transform-origin: 46px 86px;
+}
+.bin-paw-r {
+  transform-origin: 74px 86px;
+}
+.bin-mouth {
+  transform-origin: 60px 66px;
+}
+.bin-open {
+  transform-origin: 60px 66px;
+  opacity: 0;
+}
+.bin-nose {
+  transform-origin: 60px 60px;
+}
+.bin-scarf-tail {
+  transform-origin: 68px 86px;
+}
+.bin-bone,
+.bin-ball,
+.bin-bark,
+.bin-spark,
+.bin-crumb {
+  opacity: 0;
+}
+.bin-z {
+  transform-origin: center;
+}
+
+/* ---- Idle: always on while `animated` ---- */
+.bin[data-animated] .bin-body {
+  animation: bin-breathe 3.2s ease-in-out infinite;
+}
+.bin[data-animated][data-mood="sleepy"] .bin-body {
+  animation-duration: 5s;
+}
+@keyframes bin-breathe {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.025);
+  }
+}
+.bin[data-animated] .bin-scarf-tail {
+  animation: bin-flutter 2.6s ease-in-out infinite;
+}
+@keyframes bin-flutter {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+.bin[data-animated] .bin-z {
+  animation: bin-z 3s ease-in-out infinite;
+}
+.bin[data-animated] .bin-z-late {
+  animation-delay: 1.4s;
+}
+@keyframes bin-z {
+  0% {
+    opacity: 0;
+    transform: translate(0, 4px);
+  }
+  30%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(4px, -10px);
+  }
+}
+
+/* ---- Idle: small things now and then (data-idle is set by useBinIdle) ---- */
+.bin[data-idle="ear-twitch"] .bin-ear-r {
+  animation: bin-ear-twitch 400ms ease-in-out;
+}
+@keyframes bin-ear-twitch {
+  0%,
+  50%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-14deg);
+  }
+  75% {
+    transform: rotate(-9deg);
+  }
+}
+.bin[data-idle="head-tilt"] .bin-head {
+  animation: bin-head-tilt 900ms ease-in-out;
+}
+@keyframes bin-head-tilt {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25%,
+  70% {
+    transform: rotate(9deg);
+  }
+}
+.bin[data-idle="sniff"] .bin-nose,
+.bin[data-action="sniff"] .bin-nose {
+  animation: bin-sniff 600ms ease-in-out;
+}
+@keyframes bin-sniff {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  20%,
+  60% {
+    transform: translateY(-1.4px);
+  }
+  40%,
+  80% {
+    transform: translateY(0.5px);
+  }
+}
+.bin[data-idle="yawn"] .bin-mouth-plain,
+.bin[data-action="yawn"] .bin-mouth-plain {
+  opacity: 0;
+}
+.bin[data-idle="yawn"] .bin-open,
+.bin[data-action="yawn"] .bin-open {
+  animation: bin-yawn-mouth 1200ms ease-in-out;
+}
+.bin[data-idle="yawn"] .bin-head,
+.bin[data-action="yawn"] .bin-head {
+  animation: bin-yawn-head 1200ms ease-in-out;
+}
+@keyframes bin-yawn-mouth {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  25%,
+  70% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+@keyframes bin-yawn-head {
+  0%,
+  100% {
+    transform: rotate(0) translateY(0);
+  }
+  30%,
+  70% {
+    transform: rotate(-4deg) translateY(-1.5px);
+  }
+}
+
+/* ---- Actions (data-action, REDESIGN_V3 §4.3) ---- */
+.bin[data-action="jump"] .bin-root {
+  animation: bin-jump 600ms ease-out;
+}
+.bin[data-action="jump"] .bin-shadow {
+  animation: bin-jump-shadow 600ms ease-out;
+}
+@keyframes bin-jump {
+  0% {
+    transform: scale(1, 1);
+  }
+  15% {
+    transform: scale(1.05, 0.88);
+  }
+  45% {
+    transform: translateY(-18px) scale(0.97, 1.04);
+  }
+  75% {
+    transform: translateY(0) scale(1.05, 0.9);
+  }
+  90% {
+    transform: scale(0.99, 1.02);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes bin-jump-shadow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.12;
+  }
+  45% {
+    transform: scale(0.65);
+    opacity: 0.06;
+  }
+}
+
+.bin[data-action="spin"] .bin-root {
+  transform-origin: 60px 72px;
+  animation: bin-spin 700ms ease-in-out;
+}
+@keyframes bin-spin {
+  0% {
+    transform: translateY(0) rotate(0);
+  }
+  40% {
+    transform: translateY(-9px) rotate(180deg);
+  }
+  100% {
+    transform: translateY(0) rotate(360deg);
+  }
+}
+
+.bin[data-action="dance"] .bin-root {
+  animation: bin-dance 350ms ease-in-out 4;
+}
+.bin[data-action="dance"] .bin-head {
+  animation: bin-dance-head 350ms ease-in-out 4;
+}
+.bin[data-action="dance"] .bin-paw-l {
+  opacity: 1;
+  animation: bin-dance-paw-l 350ms ease-in-out 4;
+}
+.bin[data-action="dance"] .bin-paw-r {
+  opacity: 1;
+  animation: bin-dance-paw-r 350ms ease-in-out 4;
+}
+.bin[data-action="dance"] .bin-tail path {
+  animation-duration: 180ms;
+}
+@keyframes bin-dance {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-9deg) translateY(-2px);
+  }
+  75% {
+    transform: rotate(9deg) translateY(-2px);
+  }
+}
+@keyframes bin-dance-head {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(8deg);
+  }
+  75% {
+    transform: rotate(-8deg);
+  }
+}
+@keyframes bin-dance-paw-l {
+  0%,
+  100% {
+    transform: rotate(-52deg);
+  }
+  50% {
+    transform: rotate(-26deg);
+  }
+}
+@keyframes bin-dance-paw-r {
+  0%,
+  100% {
+    transform: rotate(26deg);
+  }
+  50% {
+    transform: rotate(52deg);
+  }
+}
+
+.bin[data-action="nod"] .bin-head {
+  animation: bin-nod 500ms ease-in-out;
+}
+@keyframes bin-nod {
+  0%,
+  50%,
+  100% {
+    transform: translateY(0);
+  }
+  25%,
+  75% {
+    transform: translateY(3px) rotate(1.5deg);
+  }
+}
+
+.bin[data-action="shakeHead"] .bin-head {
+  animation: bin-shake-head 520ms ease-in-out;
+}
+@keyframes bin-shake-head {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  17% {
+    transform: rotate(-9deg);
+  }
+  50% {
+    transform: rotate(9deg);
+  }
+  83% {
+    transform: rotate(-6deg);
+  }
+}
+
+.bin[data-action="droop"] .bin-head {
+  animation: bin-droop-head 800ms ease-out forwards;
+}
+.bin[data-action="droop"] .bin-ear-l {
+  animation: bin-droop-ear-l 800ms ease-out forwards;
+}
+.bin[data-action="droop"] .bin-ear-r {
+  animation: bin-droop-ear-r 800ms ease-out forwards;
+}
+@keyframes bin-droop-head {
+  to {
+    transform: translateY(4px) rotate(-2deg);
+  }
+}
+@keyframes bin-droop-ear-l {
+  to {
+    transform: rotate(14deg);
+  }
+}
+@keyframes bin-droop-ear-r {
+  to {
+    transform: rotate(-14deg);
+  }
+}
+
+.bin[data-action="wave"] .bin-paw-r,
+.bin[data-animated][data-mood="wave"] .bin-paw-r {
+  opacity: 1;
+  transform: rotate(50deg);
+}
+.bin[data-action="wave"] .bin-paw-r {
+  animation: bin-wave 900ms ease-in-out;
+}
+.bin[data-animated][data-mood="wave"]:not([data-action]) .bin-paw-r {
+  animation: bin-wave 900ms ease-in-out 3;
+}
+.bin[data-mood="wave"] .bin-paw-r {
+  opacity: 1;
+  transform: rotate(50deg);
+}
+@keyframes bin-wave {
+  0%,
+  50%,
+  100% {
+    transform: rotate(42deg);
+  }
+  25%,
+  75% {
+    transform: rotate(68deg);
+  }
+}
+
+.bin[data-action="coverEyes"] .bin-paw-l,
+.bin[data-action="coverEyes"] .bin-paw-r,
+.bin[data-action="peek"] .bin-paw-l {
+  opacity: 1;
+  transform: none;
+  animation: bin-paw-up 300ms ease-out both;
+}
+.bin[data-action="peek"] .bin-paw-r {
+  opacity: 1;
+  transform: rotate(35deg) scale(0.6);
+}
+.bin[data-action="coverEyes"] .bin-blush,
+.bin[data-action="peek"] .bin-blush {
+  transform: scale(1.4);
+}
+@keyframes bin-paw-up {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+}
+
+.bin[data-action="eat"] .bin-head {
+  animation: bin-eat-head 1300ms ease-in-out;
+}
+.bin[data-action="eat"] .bin-mouth-plain {
+  opacity: 0;
+}
+.bin[data-action="eat"] .bin-open {
+  animation: bin-chew 433ms ease-in-out 3;
+}
+.bin[data-action="eat"] .bin-bone {
+  animation: bin-bone-eat 1300ms ease-in both;
+}
+.bin[data-action="eat"] .bin-crumb {
+  animation: bin-crumb 700ms ease-in 450ms both;
+}
+.bin[data-action="eat"] .bin-crumb-2 {
+  animation-delay: 600ms;
+}
+.bin[data-action="eat"] .bin-crumb-3 {
+  animation-delay: 750ms;
+}
+@keyframes bin-eat-head {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  20%,
+  85% {
+    transform: translateY(7px) rotate(2deg);
+  }
+}
+@keyframes bin-chew {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(0.9, 0.4);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1, 1);
+  }
+}
+@keyframes bin-bone-eat {
+  0% {
+    opacity: 0;
+    transform: translate(10px, -14px);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(0, 4px);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(0, 4px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, 4px) scale(0.2);
+  }
+}
+@keyframes bin-crumb {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+.bin[data-action="catch"] .bin-root {
+  animation: bin-catch 900ms ease-out;
+}
+.bin[data-action="catch"] .bin-mouth-plain {
+  opacity: 0;
+}
+.bin[data-action="catch"] .bin-open {
+  opacity: 1;
+}
+.bin[data-action="catch"] .bin-ball {
+  animation: bin-ball 900ms ease-in both;
+}
+@keyframes bin-catch {
+  0% {
+    transform: none;
+  }
+  15% {
+    transform: scale(1.04, 0.9);
+  }
+  45% {
+    transform: translateY(-14px) scale(0.97, 1.04);
+  }
+  80% {
+    transform: none;
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes bin-ball {
+  0% {
+    opacity: 1;
+    transform: translate(34px, -50px) scale(0.8);
+  }
+  45% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  55%,
+  100% {
+    opacity: 0;
+    transform: translate(0, 4px) scale(0.5);
+  }
+}
+
+.bin[data-action="rollOver"] .bin-root {
+  transform-origin: 60px 100px;
+  animation: bin-roll 1400ms ease-in-out;
+}
+.bin[data-action="rollOver"] .bin-paw-l,
+.bin[data-action="rollOver"] .bin-paw-r {
+  opacity: 1;
+  animation: bin-kick 200ms 260ms ease-in-out 6 alternate both;
+}
+@keyframes bin-roll {
+  0% {
+    transform: rotate(0);
+  }
+  18%,
+  78% {
+    transform: translateX(-6px) rotate(-90deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+@keyframes bin-kick {
+  from {
+    transform: rotate(-34deg);
+  }
+  to {
+    transform: rotate(34deg);
+  }
+}
+
+.bin[data-action="sit"] .bin-root {
+  animation: bin-sit 600ms ease-in-out;
+}
+.bin[data-action="sit"] .bin-tail {
+  animation: bin-tail-sweep 600ms ease-in-out;
+}
+@keyframes bin-sit {
+  0%,
+  100% {
+    transform: none;
+  }
+  30%,
+  70% {
+    transform: translateY(3px) scale(1.02, 0.94);
+  }
+}
+@keyframes bin-tail-sweep {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  35% {
+    transform: rotate(-16deg);
+  }
+  70% {
+    transform: rotate(8deg);
+  }
+}
+
+.bin[data-action="highFive"] .bin-paw-r {
+  opacity: 1;
+  transform: rotate(18deg) translateY(-12px);
+  animation: bin-high-five 800ms ease-in-out;
+}
+.bin[data-action="highFive"] .bin-spark {
+  animation: bin-spark 800ms ease-out;
+}
+@keyframes bin-high-five {
+  0% {
+    transform: rotate(50deg) translateY(8px);
+    opacity: 0;
+  }
+  30% {
+    transform: rotate(14deg) translateY(-14px);
+    opacity: 1;
+  }
+  55% {
+    transform: rotate(22deg) translateY(-16px) scale(1.12);
+  }
+  100% {
+    transform: rotate(18deg) translateY(-12px);
+  }
+}
+@keyframes bin-spark {
+  0%,
+  45% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.3);
+  }
+}
+
+.bin[data-action="surprised"] .bin-root {
+  animation: bin-hop 450ms ease-out;
+}
+.bin[data-action="surprised"] .bin-ear-l {
+  animation: bin-ear-up-l 450ms ease-out;
+}
+.bin[data-action="surprised"] .bin-ear-r {
+  animation: bin-ear-up-r 450ms ease-out;
+}
+@keyframes bin-hop {
+  0%,
+  100% {
+    transform: none;
+  }
+  35% {
+    transform: translateY(-7px);
+  }
+}
+@keyframes bin-ear-up-l {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  30%,
+  70% {
+    transform: rotate(-14deg);
+  }
+}
+@keyframes bin-ear-up-r {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  30%,
+  70% {
+    transform: rotate(14deg);
+  }
+}
+
+.bin[data-action="bark"] .bin-mouth-plain {
+  opacity: 0;
+}
+.bin[data-action="bark"] .bin-open {
+  animation: bin-bark-mouth 250ms ease-in-out 2;
+}
+.bin[data-action="bark"] .bin-head {
+  animation: bin-bark-head 500ms ease-out;
+}
+.bin[data-action="bark"] .bin-bark {
+  animation: bin-bark-bubble 500ms ease-out both;
+}
+@keyframes bin-bark-mouth {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(0.8, 0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1, 0.9);
+  }
+}
+@keyframes bin-bark-head {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30%,
+  60% {
+    transform: translateY(-2px) rotate(-2deg);
+  }
+}
+@keyframes bin-bark-bubble {
+  0% {
+    opacity: 0;
+    transform: translate(-6px, 6px) scale(0.6);
+  }
+  30%,
+  80% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(2px, -3px) scale(1);
+  }
+}
+
+/* Stand-in for prefers-reduced-motion in the dev lab */
+[data-sim-reduced] .bin,
+[data-sim-reduced] .bin * {
+  animation: none !important;
+  transition: none !important;
 }
 
 /* Activity heatmap: five steps from the empty cell to full primary */

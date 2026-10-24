@@ -25,6 +25,55 @@ export const PUP_MOODS: PupMood[] = [
   "sad",
 ];
 
+/**
+ * One-off things Bin can do (REDESIGN_V3 §4.3). `ms` is how long the motion takes, `mood` the face worn while
+ * it runs, and `hold` marks the poses that stay until another action replaces them.
+ */
+export type BinAction =
+  | "jump"
+  | "spin"
+  | "dance"
+  | "nod"
+  | "shakeHead"
+  | "droop"
+  | "wave"
+  | "coverEyes"
+  | "peek"
+  | "eat"
+  | "catch"
+  | "rollOver"
+  | "sit"
+  | "highFive"
+  | "surprised"
+  | "bark"
+  | "sniff"
+  | "yawn";
+
+export type BinActionSpec = { ms: number; mood: PupMood; hold?: boolean };
+
+export const BIN_ACTIONS: Record<BinAction, BinActionSpec> = {
+  jump: { ms: 600, mood: "cheer" },
+  spin: { ms: 700, mood: "cheer" },
+  dance: { ms: 1400, mood: "cheer" },
+  nod: { ms: 500, mood: "happy" },
+  shakeHead: { ms: 520, mood: "think" },
+  droop: { ms: 800, mood: "sad", hold: true },
+  wave: { ms: 900, mood: "wave" },
+  coverEyes: { ms: 300, mood: "happy", hold: true },
+  peek: { ms: 300, mood: "happy", hold: true },
+  eat: { ms: 1300, mood: "love" },
+  catch: { ms: 900, mood: "cheer" },
+  rollOver: { ms: 1400, mood: "love" },
+  sit: { ms: 600, mood: "happy" },
+  highFive: { ms: 800, mood: "cheer" },
+  surprised: { ms: 450, mood: "surprised" },
+  bark: { ms: 500, mood: "happy" },
+  sniff: { ms: 600, mood: "think" },
+  yawn: { ms: 1200, mood: "sleepy" },
+};
+
+export const BIN_ACTION_NAMES = Object.keys(BIN_ACTIONS) as BinAction[];
+
 export const LINES = {
   dueMany: [
     "{n} từ hơi nhiều. Làm 20 từ trước rồi tính tiếp.",
