@@ -48,7 +48,8 @@ async function createDeck(name: string, words: [string, string][]) {
 }
 
 test.beforeAll(async ({ browser }) => {
-  page = await browser.newPage();
+  // reduced motion: the test page scrolls itself to the next question after an answer, and smooth scrolling would race the clicks
+  page = await browser.newPage({ reducedMotion: "reduce" });
   errors = watchErrors(page);
   await signUp(page, email);
   userId = (await userIdByEmail(email))!;

@@ -1,12 +1,15 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { Check, ChevronsDown, X } from "lucide-react";
+import { useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
 import { Pup } from "@/components/mascot/pup";
-import { Celebration } from "@/components/review/celebration";
-import { SessionBar, useOutboxStatus } from "@/components/review/session-bar";
+import { Confetti } from "@/components/fx/confetti";
+import { useBinAction } from "@/components/mascot/use-bin";
+import { useOutboxStatus } from "@/components/review/session-bar";
+import { ProgressRing } from "@/components/stats/progress-ring";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +22,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollFade } from "@/components/ui/scroll-fade";
+import { TONE_CLASSES, type Tone } from "@/lib/tone";
+import type { BinAction } from "@/lib/mascot/lines";
 import { PronounceButton } from "@/components/word/pronounce-button";
 import { formatDuration } from "@/lib/format";
 import { reviewModeOf, type Question } from "@/lib/practice/questions";
@@ -32,12 +38,16 @@ import {
   type TestGrade,
   type TestType,
 } from "@/lib/practice/test";
+import { playSfx } from "@/lib/sfx";
 import { enqueueReview } from "@/lib/srs/outbox";
 import { cn } from "@/lib/utils";
 import { MeaningLine, Options, TermLine } from "./question-parts";
 
 // Event handlers only; a module helper keeps the React compiler purity rule quiet.
 const clock = () => Date.now();
+
+/** Each kind of question has its own color for the big number on its card. */
+const KIND_TONE: Partial<Record<Question["kind"], Tone>> = { choice: "mint", truefalse: "teal", typing: "pink", cloze: "coral" };
 
 const KIND_LABEL: Partial<Record<Question["kind"], string>> = {
   choice: "Trắc nghiệm",
@@ -97,11 +107,14 @@ function QuestionCard({
   index,
   answer,
   onAnswer,
+  onSkip,
 }: {
   q: Question;
   index: number;
   answer: string | undefined;
   onAnswer: (v: string) => void;
+  /** Moves on to the next question without answering (typing questions only) */
+  onSkip?: () => void;
 }) {
   const zh = q.word.language === "zh";
   const label = KIND_LABEL[q.kind];
@@ -168,11 +181,13 @@ function QuestionCard({
             value={answer ?? ""}
             onChange={(e) => onAnswer(e.target.value)}
             lang={zh ? "zh-CN" : "en"}
-            className={cn(
-              "h-14 rounded-none border-0 border-b-2 border-primary bg-transparent px-1 text-xl hover:border-primary focus-visible:ring-0",
-              zh ? "font-hanzi" : "font-display",
-            )}
+            className={cn("h-14 border-2 border-border-strong bg-surface px-4 text-xl focus-visible:border-primary", zh ? "font-hanzi" : "font-display")}
           />
+          {onSkip && (
+            <button type="button" onClick={onSkip} className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-fg-muted underline-offset-4 hover:text-fg hover:underline">
+              Bỏ qua
+            </button>
+          )}
         </>
       );
       break;
@@ -206,11 +221,24 @@ function QuestionCard({
     }
   }
 
+  const tone = KIND_TONE[q.kind] ?? "blue";
+  const answered = Boolean(answer?.trim());
   return (
-    <section id={`q-${index}`} aria-labelledby={titleId} className="scroll-mt-20 py-5 pr-4 pl-4">
-      <h2 id={titleId} className="flex items-baseline gap-2 text-base">
+    <section
+      id={`q-${index}`}
+      aria-labelledby={titleId}
+      className={cn(
+        "scroll-mt-36 rounded-xl bg-surface p-5 shadow-sm transition-transform duration-300 dark:border dark:border-border",
+        answered && "scale-[0.985]",
+      )}
+    >
+      <h2 id={titleId} className="flex items-center gap-3 text-base">
+        <span aria-hidden className={cn("grid size-10 shrink-0 place-items-center rounded-full font-display text-xl font-extrabold text-white tabular-nums", TONE_CLASSES[tone].solid)}>
+          {index + 1}
+        </span>
         <span className="font-display text-lg font-semibold tabular-nums">Câu {index + 1}:</span>
         {label && <span className="text-sm font-normal text-fg-muted">{label}</span>}
+        {answered && <Check className="ml-auto size-5 shrink-0 animate-pop text-success-fg" strokeWidth={3} aria-label="Đã làm" />}
       </h2>
       {body}
     </section>
@@ -223,16 +251,27 @@ function verdict(pct: number) {
   return "Cố thêm chút nữa nhé!";
 }
 
-/** The teacher's pen: a hand-drawn red loop around the percentage, a little crooked. */
-function PenScore({ percent }: { percent: number }) {
-  return (
-    <span className="relative grid size-28 shrink-0 -rotate-6 place-items-center text-danger-fg">
-      <svg viewBox="0 0 112 112" aria-hidden className="absolute inset-0 size-full" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round">
-        <path d="M58 9C84 8 104 28 103 56c-1 28-22 47-50 46C27 101 8 80 10 53 12 27 34 10 62 11c8 0 14 2 20 5" />
-      </svg>
-      <span className="font-display text-2xl font-semibold tabular-nums">{percent}%</span>
-    </span>
-  );
+/** The letter grade: A from 90%, B from 75%, C from 60%, otherwise D (REDESIGN_V3 §8.4). */
+export function gradeLetter(pct: number): { letter: "A" | "B" | "C" | "D"; tone: Tone; action: BinAction } {
+  if (pct >= 90) return { letter: "A", tone: "mint", action: "dance" };
+  if (pct >= 75) return { letter: "B", tone: "blue", action: "jump" };
+  if (pct >= 60) return { letter: "C", tone: "sun", action: "nod" };
+  return { letter: "D", tone: "coral", action: "droop" };
+}
+
+/** Bin reacts to the score: dances for an A, jumps for a B, nods for a C and droops for a D. */
+function ScoreBin({ percent }: { percent: number }) {
+  const g = gradeLetter(percent);
+  const bin = useBinAction(percent >= 70 ? "cheer" : percent >= 40 ? "happy" : "sad");
+  const play = useRef(bin.play);
+  useEffect(() => {
+    play.current = bin.play;
+  }, [bin.play]);
+  useEffect(() => {
+    const t = setTimeout(() => play.current(g.action), 400);
+    return () => clearTimeout(t);
+  }, [g.action]);
+  return <Pup mood={bin.mood} action={bin.action} size={96} />;
 }
 
 function Results({
@@ -256,32 +295,36 @@ function Results({
   const [onlyWrong, setOnlyWrong] = useState(false);
   const wrong = grade.items.filter((i) => i.result === "wrong");
   const mood = verdict(grade.percent);
+  const letter = gradeLetter(grade.percent);
   const shown = onlyWrong ? wrong : grade.items;
   const { prefs } = useMe();
 
   return (
     <div className="flex flex-1 flex-col py-6">
-      <header className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="text-xl">{mood}</h1>
-          <p className="mt-3 font-display text-5xl leading-none font-semibold text-fg tabular-nums">
-            Đúng {grade.correct}/{grade.total}
-          </p>
-          <p className="mt-3 flex flex-wrap gap-x-4 text-sm text-fg-muted">
-            <span>{formatDuration(durationMs)}</span>
-            <span>+{grade.correct} XP</span>
-          </p>
+      <header className="flex flex-col items-center gap-3 text-center">
+        {prefs.mascot && <ScoreBin percent={grade.percent} />}
+        <h1 className="text-xl">{mood}</h1>
+        <div className="flex items-center gap-5">
+          <ProgressRing value={grade.percent} size={168} stroke={16} className="[&>svg]:size-full">
+            <span className="font-display text-4xl font-extrabold tabular-nums">{grade.percent}%</span>
+          </ProgressRing>
+          <span
+            role="img"
+            aria-label={`Xếp loại ${letter.letter}`}
+            className={cn("grid size-16 animate-pop place-items-center rounded-full font-display text-3xl font-extrabold text-white shadow-md", TONE_CLASSES[letter.tone].solid, letter.tone === "sun" && "text-c-sun-on")}
+          >
+            {letter.letter}
+          </span>
         </div>
-        <div className="flex shrink-0 items-end">
-          {prefs.mascot && (
-            <Pup mood={grade.percent >= 70 ? "cheer" : grade.percent >= 40 ? "happy" : "sad"} size={72} className="-mr-3" />
-          )}
-          <PenScore percent={grade.percent} />
-        </div>
+        <p className="font-display text-3xl leading-none font-extrabold text-fg tabular-nums">
+          Đúng {grade.correct}/{grade.total}
+        </p>
+        <p className="flex flex-wrap justify-center gap-x-4 text-sm text-fg-muted">
+          <span>{formatDuration(durationMs)}</span>
+          <span>+{grade.correct} XP</span>
+        </p>
       </header>
-      {grade.percent === 100 && (
-        <Celebration mood="cheer" size={72} className="mt-4" />
-      )}
+      {grade.percent >= 90 && <Confetti preset="small" />}
 
       {sync.pending > 0 && (
         <p role="status" className="mt-4 rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">
@@ -404,8 +447,48 @@ export function TestSession({
   const [grade, setGrade] = useState<TestGrade | null>(null);
   const [durationMs, setDurationMs] = useState(0);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const reduced = useReducedMotion();
+  const [auto, setAuto] = useState(true);
+  const [current, setCurrent] = useState(0);
+  const advance = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(advance.current), []);
   const answered = questions.filter((q) => answers[q.id]?.trim()).length;
   const left = questions.length - answered;
+
+  const goTo = useCallback(
+    (i: number) => document.getElementById(`q-${i}`)?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }),
+    [reduced],
+  );
+
+  // The dot of the question being looked at follows the scroll
+  useEffect(() => {
+    if (grade) return;
+    const els = questions.map((_, i) => document.getElementById(`q-${i}`)).filter((el): el is HTMLElement => Boolean(el));
+    const visible = new Set<number>();
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const i = Number(e.target.id.slice(2));
+          if (e.isIntersecting) visible.add(i);
+          else visible.delete(i);
+        }
+        if (visible.size) setCurrent(Math.min(...visible));
+      },
+      { rootMargin: "-150px 0px -55% 0px" },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [questions, grade]);
+
+  function setAnswer(i: number, id: string, kind: Question["kind"], v: string) {
+    setAnswers((a) => ({ ...a, [id]: v }));
+    // After a tap on an option the page moves on to the next question that is still empty
+    if (auto && kind !== "typing") {
+      clearTimeout(advance.current);
+      const next = questions.findIndex((x, j) => j > i && !answers[x.id]?.trim());
+      if (next >= 0) advance.current = setTimeout(() => goTo(next), 350);
+    }
+  }
 
   function submit() {
     const g = gradeTest(questions, answers);
@@ -427,6 +510,7 @@ export function TestSession({
         updateCard: countsToSrs,
       });
     }
+    playSfx(g.percent >= 70 ? "complete" : "pop");
     setGrade(g);
     setDurationMs(spent);
     window.scrollTo({ top: 0 });
@@ -458,56 +542,68 @@ export function TestSession({
 
   return (
     <div className="flex flex-1 flex-col">
-      <SessionBar done={answered} total={questions.length} exitHref={exitHref} />
-
-      <nav
-        aria-label="Danh sách câu"
-        className="fixed top-20 left-[calc(50%+22rem)] hidden w-40 lg:block"
-      >
-        <p className="mb-2 text-sm font-semibold text-fg-muted">Danh sách câu</p>
-        <div className="grid grid-cols-4 gap-1.5">
-          {questions.map((q, i) => (
-            <a
-              key={q.id}
-              href={`#q-${i}`}
-              aria-label={`Câu ${i + 1}${answers[q.id]?.trim() ? ", đã làm" : ""}`}
-              className={cn(
-                "grid size-9 place-items-center rounded-full text-sm font-medium tabular-nums",
-                answers[q.id]?.trim()
-                  ? "bg-primary text-primary-foreground"
-                  : "border border-input bg-surface text-fg-muted hover:text-fg",
-              )}
-            >
-              {i + 1}
-            </a>
-          ))}
+      <div className="sticky top-0 z-20 -mx-4 bg-canvas/90 px-4 pb-2 shadow-[0_1px_0_0_var(--border)] backdrop-blur-xl">
+        <div className="flex h-14 items-center gap-2">
+          <Link
+            href={exitHref}
+            aria-label="Thoát phiên"
+            className="-ml-2 grid size-11 shrink-0 place-items-center rounded-full text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+          >
+            <X className="size-5" strokeWidth={1.75} aria-hidden />
+          </Link>
+          <p className="min-w-0 flex-1 truncate font-semibold text-fg tabular-nums">
+            Đã làm {answered}/{questions.length}
+          </p>
+          <ProgressRing value={questions.length ? (answered / questions.length) * 100 : 0} size={34} stroke={5} className="[&>svg]:size-full" />
+          <button
+            type="button"
+            aria-pressed={auto}
+            aria-label="Tự chuyển câu"
+            title="Tự chuyển sang câu tiếp theo sau khi chọn"
+            onClick={() => setAuto((v) => !v)}
+            className={cn("grid size-10 shrink-0 place-items-center rounded-full transition-colors", auto ? "bg-primary-soft text-primary-fg" : "text-fg-muted hover:bg-surface-2")}
+          >
+            <ChevronsDown className="size-5" strokeWidth={2} aria-hidden />
+          </button>
+          <Button type="button" size="lg" className="h-11 px-5 lg:h-11" onClick={() => (left > 0 ? setConfirmOpen(true) : submit())}>
+            Nộp bài
+          </Button>
         </div>
-      </nav>
+        <ScrollFade className="gap-1.5 px-1 pt-1 pb-1.5">
+          {questions.map((q, i) => {
+            const done = Boolean(answers[q.id]?.trim());
+            return (
+              <button
+                key={q.id}
+                type="button"
+                aria-label={`Câu ${i + 1}${done ? ", đã làm" : ""}`}
+                aria-current={current === i ? "true" : undefined}
+                onClick={() => goTo(i)}
+                className={cn(
+                  "grid size-10 shrink-0 snap-start place-items-center rounded-full text-sm font-bold tabular-nums transition-colors",
+                  done ? "bg-primary text-on-primary" : "bg-surface-3 text-fg-muted",
+                  current === i && "ring-2 ring-fg ring-offset-2 ring-offset-canvas",
+                )}
+              >
+                {i + 1}
+              </button>
+            );
+          })}
+        </ScrollFade>
+      </div>
 
-      <div className="my-3 overflow-hidden rounded-lg border border-border bg-surface">
-        <div className="">
-          <h1 className="border-b border-border py-3 pr-4 pl-4 font-display text-lg font-semibold">Bài kiểm tra</h1>
-          <div className="divide-y divide-border">
+      <h1 className="mt-4 mb-3 font-display text-xl font-semibold">Bài kiểm tra</h1>
+      <div className="flex flex-col gap-4 pb-8">
         {questions.map((q, i) => (
           <QuestionCard
             key={q.id}
             q={q}
             index={i}
             answer={answers[q.id]}
-            onAnswer={(v) => setAnswers((a) => ({ ...a, [q.id]: v }))}
+            onAnswer={(v) => setAnswer(i, q.id, q.kind, v)}
+            onSkip={q.kind === "typing" && i < questions.length - 1 ? () => goTo(i + 1) : undefined}
           />
         ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="sticky bottom-0 -mx-4 mt-auto flex items-center gap-3 border-t border-border bg-canvas/95 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur-sm">
-        <p className="flex-1 font-medium text-fg tabular-nums">
-          Đã làm {answered}/{questions.length}
-        </p>
-        <Button type="button" size="lg" onClick={() => (left > 0 ? setConfirmOpen(true) : submit())}>
-          Nộp bài
-        </Button>
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
