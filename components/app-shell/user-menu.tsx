@@ -35,10 +35,13 @@ export function initials(name: string) {
 export function UserAvatar({
   name,
   url,
+  seed,
   className,
 }: {
   name: string;
   url: string | null;
+  /** Picks the avatar hue (the user id or username); same seed, same color */
+  seed?: string;
   className?: string;
 }) {
   return (
@@ -47,8 +50,9 @@ export function UserAvatar({
       {/* Initials as CSS content: decorative (the name is always next to it or in the label),
           and not text that would clash with the trigger aria-label (WCAG 2.5.3). */}
       <AvatarFallback
+        seed={seed ?? name}
         data-initials={initials(name)}
-        className="bg-primary-soft text-sm font-semibold text-primary after:content-[attr(data-initials)]"
+        className="after:content-[attr(data-initials)]"
       />
     </Avatar>
   );
@@ -71,12 +75,15 @@ export function UserMenu({
         className="grid size-11 place-items-center rounded-full"
         aria-label="Tài khoản và cài đặt"
       >
-        <UserAvatar name={displayName} url={avatarUrl} className="size-8" />
+        <UserAvatar name={displayName} url={avatarUrl} seed={username} className="size-10" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuLabel className="font-normal">
-          <span className="block font-medium text-fg">{displayName}</span>
-          <span className="block text-sm text-fg-muted">@{username}</span>
+        <DropdownMenuLabel className="flex items-center gap-3 font-normal">
+          <UserAvatar name={displayName} url={avatarUrl} seed={username} className="size-10" />
+          <span className="min-w-0">
+            <span className="block truncate font-bold text-fg">{displayName}</span>
+            <span className="block truncate text-sm text-fg-muted">@{username}</span>
+          </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>

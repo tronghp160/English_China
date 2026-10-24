@@ -9,6 +9,8 @@ export type MeContextValue = {
   username: string;
   studyLangs: ("en" | "zh")[];
   prefs: Required<Prefs>;
+  /** Cards due today across languages (the badge on the sidebar review button) */
+  dueCount: number;
 };
 
 const MeContext = createContext<MeContextValue | null>(null);

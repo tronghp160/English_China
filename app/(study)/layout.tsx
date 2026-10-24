@@ -17,6 +17,7 @@ export default async function StudyLayout({ children }: LayoutProps<"/">) {
         username: me.profile.username,
         studyLangs: me.settings.study_langs,
         prefs: readPrefs(me.settings.prefs),
+        dueCount: 0,
       }}
     >
       <main className={`${cjkFontVariables} mx-auto flex min-h-dvh w-full max-w-2xl flex-1 flex-col px-4 pt-3 pb-4`}>

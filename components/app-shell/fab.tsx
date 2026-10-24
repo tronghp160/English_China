@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Floating "Thêm từ" button on phones (above the tab bar): a round ink-violet button that shows its label
+ * Floating "Thêm từ" button on phones (above the tab bar): a round blue button that shows its label
  * while the page scrolls up and shrinks to the icon while it scrolls down. Desktop has no FAB:
  * the deck page carries its own "Thêm từ" action.
  */
@@ -30,7 +30,7 @@ export function AddWordFab({ href, label = "Thêm từ" }: { href: string; label
       href={href}
       aria-label={label}
       className={cn(
-        "fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 inline-flex h-14 items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground shadow-lg transition-[padding,background-color] duration-[var(--dur-base)] ease-[var(--ease-out)] hover:bg-primary-hover lg:hidden",
+        "fixed right-4 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-30 inline-flex h-14 items-center justify-center gap-2 rounded-full bg-primary text-on-primary shadow-primary transition-[padding,background-color] duration-[var(--dur-base)] ease-[var(--ease-out)] hover:bg-primary-hover lg:hidden",
         compact ? "w-14" : "px-5 font-semibold",
       )}
     >

@@ -3,13 +3,13 @@
 import {
   BarChart3,
   BookOpen,
-  CalendarCheck,
   Compass,
-  MessageCircleHeart,
+  House,
+  MessageCircle,
   MessageSquareHeart,
   PenLine,
   Play,
-  Settings,
+  SlidersHorizontal,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -24,17 +24,17 @@ import { cn } from "@/lib/utils";
 type NavItem = { href: string; label: string; icon: LucideIcon };
 
 const PRIMARY: NavItem[] = [
-  { href: "/today", label: "Hôm nay", icon: CalendarCheck },
+  { href: "/today", label: "Hôm nay", icon: House },
   { href: "/decks", label: "Bộ từ", icon: BookOpen },
   { href: "/practice", label: "Luyện tập", icon: PenLine },
-  { href: "/chat", label: "Gia sư", icon: MessageCircleHeart },
+  { href: "/chat", label: "Gia sư", icon: MessageCircle },
   { href: "/groups", label: "Nhóm", icon: Users },
 ];
 
 const SECONDARY: NavItem[] = [
   { href: "/explore", label: "Khám phá", icon: Compass },
   { href: "/stats", label: "Thống kê", icon: BarChart3 },
-  { href: "/settings", label: "Cài đặt", icon: Settings },
+  { href: "/settings", label: "Cài đặt", icon: SlidersHorizontal },
   { href: "/lien-he", label: "Liên hệ", icon: MessageSquareHeart },
 ];
 
@@ -44,15 +44,15 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** Bottom tab bar on phones: the active tab gets violet icon, bold label and a short ink bar on top. */
+/** Floating pill tab bar on phones (REDESIGN_V2 §6.1): the active tab's icon sits in a pale blue pill. */
 export function BottomNav() {
   const pathname = usePathname();
   return (
     <nav
       aria-label="Điều hướng chính"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-18px_rgb(28_27_38/0.25)] lg:hidden"
+      className="fixed inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] z-40 h-16 rounded-full border border-border/60 bg-surface/85 shadow-lg backdrop-blur-xl lg:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-5 px-1">
+      <ul className="mx-auto grid h-full max-w-md grid-cols-5 items-center px-1.5">
         {PRIMARY.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (
@@ -61,16 +61,18 @@ export function BottomNav() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex min-h-16 flex-col items-center justify-center gap-1 text-xs",
-                  active ? "font-semibold text-fg" : "font-medium text-fg-muted",
+                  "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-full text-[0.6875rem]",
+                  active ? "font-bold text-primary-fg" : "font-medium text-fg-muted",
                 )}
               >
-                {active && <span aria-hidden className="absolute top-0 h-0.5 w-4 rounded-full bg-primary" />}
-                <Icon
-                  className={cn("size-5", active && "text-primary")}
-                  strokeWidth={active ? 2.25 : 1.75}
-                  aria-hidden
-                />
+                <span
+                  className={cn(
+                    "grid h-8 w-14 place-items-center rounded-full transition-colors duration-[var(--dur-base)]",
+                    active && "bg-primary-soft",
+                  )}
+                >
+                  <Icon className="size-5" strokeWidth={active ? 2.3 : 2} aria-hidden />
+                </span>
                 {label}
               </Link>
             </li>
@@ -81,10 +83,10 @@ export function BottomNav() {
   );
 }
 
-/** Left column on desktop (≥ 1024px): sits on the paper itself, set off by a double red margin line. */
+/** Left column on desktop (≥ 1024px, 248px): on the canvas itself, the active row is a white pill. */
 export function SideNav() {
   const pathname = usePathname();
-  const { prefs } = useMe();
+  const { prefs, dueCount } = useMe();
   const item = ({ href, label, icon: Icon }: NavItem) => {
     const active = isActive(pathname, href);
     return (
@@ -93,60 +95,57 @@ export function SideNav() {
           href={href}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "relative flex h-10 items-center gap-3 rounded-md border px-3 text-[0.9375rem] transition-colors duration-[var(--dur-fast)]",
+            "flex h-[2.625rem] items-center gap-3 rounded-md px-3 text-[0.9375rem] transition-colors duration-[var(--dur-fast)]",
             active
-              ? "border-border bg-surface font-semibold text-fg"
-              : "border-transparent font-medium text-fg-muted hover:bg-surface-2 hover:text-fg",
+              ? "bg-surface font-semibold text-fg shadow-sm dark:border dark:border-border"
+              : "font-medium text-fg-muted hover:bg-surface-2 hover:text-fg",
           )}
         >
-          {active && <span aria-hidden className="absolute inset-y-2 -left-px w-0.5 rounded-full bg-primary" />}
-          <Icon className={cn("size-5", active && "text-primary")} strokeWidth={active ? 2.25 : 1.75} aria-hidden />
+          <Icon className={cn("size-5", active && "text-primary")} strokeWidth={active ? 2.25 : 2} aria-hidden />
           {label}
         </Link>
       </li>
     );
   };
   return (
-    <>
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-58 flex-col overflow-y-auto bg-canvas px-4 pt-5 pb-4 lg:flex">
-        <Link href="/today" className="mb-1 self-start rounded-md" aria-label="Sổ Từ — Hôm nay">
-          <Logo />
-        </Link>
-        <p className="mb-5 text-xs text-fg-muted">Sổ từ vựng Anh – Trung</p>
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-62 flex-col overflow-y-auto bg-canvas px-4 pt-6 pb-4 lg:flex">
+      <Link href="/today" className="mb-6 self-start rounded-md px-2" aria-label="Sổ Từ — Hôm nay">
+        <Logo />
+      </Link>
 
-        <nav aria-label="Điều hướng chính" className="flex flex-col gap-5">
-          <div>
-            <p className="mb-1.5 px-3 text-xs font-semibold text-fg-muted">Học</p>
-            <ul className="space-y-0.5">{PRIMARY.map(item)}</ul>
-          </div>
-          <div>
-            <p className="mb-1.5 px-3 text-xs font-semibold text-fg-muted">Khác</p>
-            <ul className="space-y-0.5">{SECONDARY.map(item)}</ul>
-          </div>
-        </nav>
-
-        {/* Bin drawn in the margin, one line, and the way into a review */}
-        <div className="mt-auto pt-6">
-          {prefs.mascot && (
-            <div className="flex items-end gap-1.5">
-              <PettablePup mood="happy" name={prefs.mascot_name} size={44} className="-ml-1" />
-              <p className="mb-1 text-sm leading-snug text-fg">
-                <span className="block text-xs text-fg-muted">{prefs.mascot_name}</span>
-                Học một chút mỗi ngày nhé.
-              </p>
-            </div>
-          )}
-          {!prefs.mascot && <p className="text-sm text-fg-muted">Học một chút mỗi ngày nhé.</p>}
-          <Button asChild variant="outline" size="sm" className="mt-2 w-full">
-            <Link href="/review">
-              <Play className="size-3.5 fill-current" aria-hidden />
-              Ôn ngay
-            </Link>
-          </Button>
+      <nav aria-label="Điều hướng chính" className="flex flex-col gap-5">
+        <div>
+          <p className="mb-1 px-3 text-xs font-semibold text-fg-muted">Học</p>
+          <ul className="space-y-1">{PRIMARY.map(item)}</ul>
         </div>
-      </aside>
-      {/* The notebook's double margin line */}
-      <div aria-hidden className="fixed inset-y-0 left-58 z-30 hidden w-[5px] border-x border-margin lg:block" />
-    </>
+        <div>
+          <p className="mb-1 px-3 text-xs font-semibold text-fg-muted">Khác</p>
+          <ul className="space-y-1">{SECONDARY.map(item)}</ul>
+        </div>
+      </nav>
+
+      {/* Bin with one line, and the way into a review */}
+      <div className="mt-auto flex flex-col gap-3 rounded-lg bg-primary-soft p-4">
+        {prefs.mascot ? (
+          <div className="flex items-end gap-2">
+            <PettablePup mood="happy" name={prefs.mascot_name} size={48} className="shrink-0" />
+            <p className="rounded-[14px_14px_14px_4px] bg-surface px-2.5 py-2 text-[0.8125rem] leading-snug text-fg">
+              Học một chút mỗi ngày nhé!
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-fg">Học một chút mỗi ngày nhé!</p>
+        )}
+        <Button asChild variant="pressable" className="w-full">
+          <Link href="/review">
+            <Play className="size-3.5 fill-current" aria-hidden />
+            Ôn ngay
+            {dueCount > 0 && (
+              <span className="rounded-full bg-c-orange px-2 text-xs leading-5 font-bold text-black tabular-nums">{dueCount}</span>
+            )}
+          </Link>
+        </Button>
+      </div>
+    </aside>
   );
 }

@@ -94,11 +94,11 @@ export function QuickSearch() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Tìm từ, bộ từ (Ctrl+K)"
-        className="inline-flex size-11 items-center justify-center gap-2 rounded-md text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg lg:mr-auto lg:h-11 lg:w-70 lg:justify-start lg:border lg:border-border-strong lg:bg-surface lg:px-3"
+        className="inline-flex size-11 items-center justify-center gap-2 rounded-full bg-surface text-sm text-fg-muted shadow-xs transition-colors hover:text-fg lg:mr-auto lg:h-11 lg:w-80 lg:justify-start lg:border lg:border-border lg:pr-2 lg:pl-4"
       >
         <Search className="size-[1.125rem] shrink-0" strokeWidth={1.75} aria-hidden />
         <span className="hidden lg:inline">Tìm từ trong sổ</span>
-        <kbd className="ml-auto hidden rounded-sm border border-border px-1.5 font-sans text-xs lg:inline">{shortcut}</kbd>
+        <kbd className="ml-auto hidden rounded-xs bg-surface-2 px-2 py-0.5 font-sans text-xs lg:inline">{shortcut}</kbd>
       </button>
       <CommandDialog
         open={open}
@@ -118,7 +118,7 @@ export function QuickSearch() {
               value={query}
               onValueChange={setQuery}
               placeholder="Gõ từ, nghĩa, pinyin hoặc tên bộ từ…"
-              className="h-[3.25rem] w-full bg-transparent text-base text-fg outline-none placeholder:text-fg-subtle"
+              className="h-14 w-full bg-transparent text-lg text-fg outline-none placeholder:text-fg-subtle"
             />
           </div>
           <CommandList className="max-h-[min(60vh,28rem)] p-1">
