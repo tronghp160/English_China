@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { ContactLinks } from "@/components/contact/contact-links";
-import { Paper } from "@/components/word/word-specimen";
 import { CONTACT } from "@/lib/contact";
 
 export const metadata: Metadata = {
@@ -17,12 +16,12 @@ const TOPICS = [
 export default function ContactPage() {
   return (
     <div className="py-4">
-      <Paper innerClassName="pb-3">
-        <h1 className="flex h-16 items-end text-xl leading-none">Liên hệ với {CONTACT.nickname}</h1>
-        <p className="max-w-[48ch] text-[1.0625rem] leading-[var(--line)]">
+      <div className="rounded-xl border border-border/60 bg-surface p-5 shadow-sm sm:p-6">
+        <h1 className="text-[1.6875rem] leading-tight sm:text-[2.125rem]">Liên hệ với {CONTACT.nickname}</h1>
+        <p className="max-w-[48ch] mt-3 text-[1.0625rem] leading-relaxed">
           Chào bạn, mình là {CONTACT.nickname}, người làm Sổ Từ để học tiếng Anh và tiếng Trung. Có gì cần, bạn cứ nhắn qua Facebook hoặc Zalo, mình sẽ trả lời sớm nhất có thể.
         </p>
-      </Paper>
+      </div>
 
       <ContactLinks className="mt-6" />
 

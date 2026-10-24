@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { ShareActions } from "@/components/deck/share-actions";
 import { DeckArt } from "@/components/deck/deck-art";
 import { Button } from "@/components/ui/button";
-import { WordSpecimen } from "@/components/word/word-specimen";
+import { WordHero } from "@/components/word/word-hero";
 import { getMe } from "@/lib/auth";
 import { getSharedDeck, SHARE_PREVIEW_LIMIT } from "@/lib/data/share";
 import { LANGUAGES } from "@/lib/lang/registry";
@@ -96,9 +96,9 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
             <ul className="grid gap-4 sm:grid-cols-2">
               {preview.map((w) => (
                 <li key={w.id} className="min-w-0">
-                  <WordSpecimen lang={deck.language} term={w.term} reading={w.reading} size="sm" className={deck.language === "zh" ? "rounded-lg border border-border/60 bg-surface shadow-sm p-4" : undefined}>
-                    <p className="flex min-h-[var(--line)] items-end pb-1 text-[0.9375rem] text-fg">{w.meaning_vi}</p>
-                  </WordSpecimen>
+                  <WordHero lang={deck.language} term={w.term} reading={w.reading} size="sm">
+                    <p className="text-[0.9375rem] text-fg">{w.meaning_vi}</p>
+                  </WordHero>
                 </li>
               ))}
             </ul>

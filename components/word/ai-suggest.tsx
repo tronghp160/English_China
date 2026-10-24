@@ -288,13 +288,13 @@ export function AiSuggestPanel({
                       title={[s.meaning_en, s.examples[0]?.text].filter(Boolean).join(" — ")}
                       className={cn(
                         "inline-flex min-h-10 max-w-full cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary",
-                        on ? "border-primary bg-primary-soft text-fg" : "border-input bg-surface text-fg-muted hover:text-fg",
+                        on ? "border-primary bg-primary text-on-primary" : "border-border-strong bg-surface text-fg-muted hover:text-fg",
                       )}
                     >
                       <input type="checkbox" checked={on} onChange={() => toggle(i)} className="sr-only" />
-                      {on && <Check className="size-3.5 shrink-0 text-primary" strokeWidth={2.5} aria-hidden />}
+                      {on && <Check className="size-3.5 shrink-0" strokeWidth={2.5} aria-hidden />}
                       <span className="truncate font-medium">{s.meaning_vi}</span>
-                      {pos && <span className="shrink-0 text-xs text-fg-muted">{pos}</span>}
+                      {pos && <span className={cn("shrink-0 text-xs", on ? "opacity-80" : "text-fg-muted")}>{pos}</span>}
                     </label>
                   );
                 })}

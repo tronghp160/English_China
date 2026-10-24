@@ -237,7 +237,7 @@ export function ImagePicker({
                   }}
                   className={cn(
                     "inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-full border px-3 text-sm transition-colors",
-                    active ? "border-primary bg-primary-soft font-medium text-fg" : "border-input bg-surface text-fg-muted hover:text-fg",
+                    active ? "border-primary bg-primary font-medium text-on-primary" : "border-border-strong bg-surface text-fg-muted hover:text-fg",
                   )}
                 >
                   <span className="truncate">{s.label}</span>

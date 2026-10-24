@@ -11,7 +11,7 @@ import { ImageCredit } from "@/components/word/image-picker";
 import { PosBadge } from "@/components/word/pos-badge";
 import { PronounceButton } from "@/components/word/pronounce-button";
 import { SuspendToggle } from "@/components/word/suspend-toggle";
-import { WordSpecimen } from "@/components/word/word-specimen";
+import { WordHero } from "@/components/word/word-hero";
 import { PinyinText } from "@/components/zh/pinyin-text";
 import { StrokeOrder } from "@/components/zh/stroke-order";
 import { startChat } from "@/lib/actions/chat";
@@ -34,14 +34,14 @@ export async function generateMetadata({ params }: PageProps<"/words/[wordId]">)
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border-t border-border py-5">
-      <h2 className="mb-3 text-base">{title}</h2>
+    <section className="rounded-lg border border-border/60 bg-surface p-5 shadow-sm dark:border-border">
+      <h2 className="mb-3 text-lg">{title}</h2>
       {children}
     </section>
   );
 }
 
-/** The studied word inside an example sentence gets the font-bold text-primary-fg, the one place it carries meaning. */
+/** The studied word inside an example sentence is bold and blue, the one place it carries meaning. */
 function Highlighted({ text, term }: { text: string; term: string }) {
   const t = term.trim();
   if (!t) return text;
@@ -106,11 +106,11 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
   }
 
   return (
-    <article className="max-w-2xl">
+    <article className="max-w-3xl">
       <BackLink href={`/decks/${word.deck_id}`} label={view.deck.name} />
 
       <header>
-        <WordSpecimen
+        <WordHero
           lang={lang}
           term={word.term}
           reading={word.reading}
@@ -141,14 +141,13 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
               </span>
             ) : null
           }
-          className={isZh ? "rounded-lg border border-border/60 bg-surface shadow-sm p-5 sm:p-6" : undefined}
         >
           {isZh && extra.traditional && extra.traditional !== word.term && (
             <p className="text-sm text-fg-muted">
               Phồn thể <span lang="zh-TW" className="ml-1 font-hanzi text-xl text-fg">{extra.traditional}</span>
             </p>
           )}
-        </WordSpecimen>
+        </WordHero>
         <h1 className="sr-only">{word.term}</h1>
         <ImageCredit source={imageSourceOf(word)} className="mt-2 text-right" />
 
@@ -161,7 +160,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
           {word.topic && <Badge variant="outline">Chủ đề: {word.topic}</Badge>}
         </div>
 
-        <p className="mt-5 text-[1.375rem] leading-snug font-medium text-fg">{word.meaning_vi}</p>
+        <p className="mt-5 text-[1.5rem] leading-snug font-extrabold tracking-[-0.02em] text-fg">{word.meaning_vi}</p>
         {word.meaning_en && <p className="mt-1 text-fg-muted">{word.meaning_en}</p>}
         {isZh && extra.han_viet && (
           <p className="mt-2 text-sm text-fg-muted">
@@ -180,7 +179,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
           </p>
         )}
         {extra.needs_review && (
-          <p className="mt-3 rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">Pinyin có chữ đa âm, nên kiểm tra lại.</p>
+          <p className="mt-3 rounded-md bg-streak-soft px-3 py-2 text-sm text-streak-fg">Pinyin có chữ đa âm, nên kiểm tra lại.</p>
         )}
 
         <div className="mt-5 flex flex-wrap gap-2">
@@ -209,7 +208,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
                 name="prompt"
                 value={`Giải thích kỹ hơn giúp mình từ "${word.term}" (${word.meaning_vi}): cách dùng, từ hay nhầm, và cho mình đặt thử một câu.`}
               />
-              <Button type="submit" variant="secondary">
+              <Button type="submit" variant="soft" tone="grape">
                 <MessageCircleHeart aria-hidden />
                 Hỏi gia sư
               </Button>
@@ -218,7 +217,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
         </div>
       </header>
 
-      <div className="mt-2">
+      <div className="mt-4 flex flex-col gap-4">
         {examples.length > 0 && (
           <Section title="Câu ví dụ">
             <ul className="space-y-4">
@@ -336,7 +335,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
 
         {word.personal_note && (
           <Section title="Ghi chú riêng">
-            <p className="rounded-md bg-streak-soft px-4 py-3 whitespace-pre-line text-fg">{word.personal_note}</p>
+            <p className="rounded-md bg-streak-soft px-4 py-3 whitespace-pre-line text-streak-fg">{word.personal_note}</p>
           </Section>
         )}
 

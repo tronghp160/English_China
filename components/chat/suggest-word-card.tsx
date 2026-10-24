@@ -1,7 +1,7 @@
 import { BookPlus, Plus } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
-import { WordSpecimen } from "@/components/word/word-specimen";
+import { WordHero } from "@/components/word/word-hero";
 import type { LangCode } from "@/lib/lang/types";
 import { cn } from "@/lib/utils";
 
@@ -30,9 +30,9 @@ export function SuggestWordCard({ word, language }: { word: SuggestedWord; langu
   const [first, ...others] = word.decks.slice(0, 6);
   return (
     <div className="my-3">
-      <WordSpecimen lang={language} term={word.term} reading={word.reading} size="sm" className={language === "zh" ? "rounded-lg border border-border/60 bg-surface shadow-sm p-3" : undefined}>
-        <p className="flex min-h-[var(--line)] items-end pb-1 text-sm text-fg">{word.meaning_vi}</p>
-      </WordSpecimen>
+      <WordHero lang={language} term={word.term} reading={word.reading} size="sm">
+        <p className="text-sm text-fg">{word.meaning_vi}</p>
+      </WordHero>
       <div className="mt-2">
         {first ? (
           <>

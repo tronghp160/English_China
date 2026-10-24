@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { WordSpecimen } from "@/components/word/word-specimen";
+import { WordHero } from "@/components/word/word-hero";
 import { cn } from "@/lib/utils";
 
 /**
@@ -21,7 +21,7 @@ export function HeroSpecimen() {
         >
           <span className="flip-card grid w-full [&>*]:[grid-area:1/1]" data-flipped={flipped}>
             <span className="flip-face block" aria-hidden={flipped}>
-              <WordSpecimen
+              <WordHero
                 lang="en"
                 term="resilient"
                 reading="/rɪˈzɪliənt/"
@@ -30,7 +30,7 @@ export function HeroSpecimen() {
                 showReading
               >
                 <span className="flex h-[var(--line)] items-end pt-1 text-sm text-fg-muted">Chạm để lật</span>
-              </WordSpecimen>
+              </WordHero>
             </span>
             <span className={cn("flip-face flip-back rounded-lg border border-border/60 bg-surface shadow-sm shadow-lg  block rounded-xl py-6 pr-5 pl-4")} aria-hidden={!flipped}>
               <span className="block text-[1.5rem] leading-snug font-medium text-fg">
@@ -49,7 +49,7 @@ export function HeroSpecimen() {
       </div>
 
       <div className="mt-5 ml-auto w-[min(100%,15rem)]">
-        <WordSpecimen lang="zh" term="坚强" reading="jiānqiáng" size="md" className="rounded-lg border border-border/60 bg-surface shadow-sm p-4" />
+        <WordHero lang="zh" term="坚强" reading="jiānqiáng" size="md" />
       </div>
     </div>
   );

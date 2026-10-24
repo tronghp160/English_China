@@ -22,7 +22,7 @@ import { emptyWord, wordInputSchema, type WordData, type WordInput } from "@/lib
 import { CollocationsEditor, ExamplesEditor, FamilyEditor, TagInput } from "./list-editors";
 import { ImagePicker } from "./image-picker";
 import { PronounceButton } from "./pronounce-button";
-import { WordSpecimen } from "./word-specimen";
+import { WordHero } from "./word-hero";
 import type { ImageSuggestion } from "@/lib/ai/to-word";
 import { AiSuggestButton, AiSuggestPanel, useAiSuggest, type AiFillResult } from "./ai-suggest";
 
@@ -361,14 +361,13 @@ export function WordForm({
       </div>
 
       {term.trim() && (
-        <WordSpecimen
+        <WordHero
           lang={language}
           term={term.trim()}
           reading={reading?.trim() || null}
           size="sm"
           toneColors
           actions={<PronounceButton text={term} lang={language} />}
-          className={language === "zh" ? "rounded-lg border border-border/60 bg-surface shadow-sm p-4" : undefined}
         />
       )}
 

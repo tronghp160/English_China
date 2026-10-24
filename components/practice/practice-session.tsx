@@ -8,7 +8,6 @@ import { WordVisual } from "@/components/review/word-visual";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PronounceButton } from "@/components/word/pronounce-button";
-import { Paper } from "@/components/word/word-specimen";
 import { answerMood } from "@/lib/mascot/lines";
 import { PinyinText } from "@/components/zh/pinyin-text";
 import { checkTyping, type TypingResult } from "@/lib/practice";
@@ -180,7 +179,7 @@ export function PracticeSession({
     case "cloze":
       body = (
         <>
-          <Paper className="my-4" innerClassName="py-[var(--line)]">
+          <div className="my-4 rounded-xl bg-surface-2 p-5">
             <p lang={zh ? "zh-CN" : "en"} className={cn("text-xl leading-[var(--line)] text-fg", zh && "font-hanzi text-2xl")}>
               {q.cloze.before}
               <span
@@ -194,7 +193,7 @@ export function PracticeSession({
               {q.cloze.after}
             </p>
             {q.cloze.vi && <p className="mt-[var(--line)] text-fg-muted">{q.cloze.vi}</p>}
-          </Paper>
+          </div>
           <Options
             options={q.options}
             answerId={q.answerId}

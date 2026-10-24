@@ -7,7 +7,7 @@ import { Pup } from "@/components/mascot/pup";
 import { Button } from "@/components/ui/button";
 import { PosBadge } from "@/components/word/pos-badge";
 import { PronounceButton } from "@/components/word/pronounce-button";
-import { Paper, WordSpecimen } from "@/components/word/word-specimen";
+import { WordHero } from "@/components/word/word-hero";
 import { answerMood, say, seedOf } from "@/lib/mascot/lines";
 import { TONE_GLYPH, type StudyWord } from "@/lib/practice";
 import type { Option } from "@/lib/practice/questions";
@@ -35,7 +35,7 @@ export function useSpeak() {
   );
 }
 
-/** The word as a medium specimen: on ruled paper (English) or in 田字格 cells (Chinese). */
+/** The word as a medium specimen: in bold type with the pinyin under each character. */
 export function TermLine({ word, showReading = true, bare = false }: { word: StudyWord; showReading?: boolean; bare?: boolean }) {
   const { prefs } = useMe();
   // Inside a page that is already ruled paper (the test sheet) an English word is just set in type.
@@ -49,7 +49,7 @@ export function TermLine({ word, showReading = true, bare = false }: { word: Stu
       </div>
     );
   return (
-    <WordSpecimen
+    <WordHero
       lang={word.language}
       term={word.term}
       reading={word.reading}
@@ -57,12 +57,13 @@ export function TermLine({ word, showReading = true, bare = false }: { word: Stu
       toneColors={prefs.tone_colors}
       showReading={showReading}
       align="center"
+      framed={false}
       className="w-full max-w-md"
     />
   );
 }
 
-/** The Vietnamese meaning written on a ruled page, with the part-of-speech tags under it. */
+/** The Vietnamese meaning on a soft card, with the part-of-speech tags under it. */
 export function MeaningLine({ word, bare = false }: { word: StudyWord; bare?: boolean }) {
   if (bare)
     return (
@@ -76,7 +77,7 @@ export function MeaningLine({ word, bare = false }: { word: StudyWord; bare?: bo
       </div>
     );
   return (
-    <Paper className="w-full max-w-md" innerClassName="pt-0">
+    <div className="w-full max-w-md rounded-xl bg-surface-2 p-5">
       <p className="flex min-h-[calc(var(--line)*2)] items-end text-[1.5rem] leading-[var(--line)] font-medium text-fg">
         <span className="relative top-[0.3em]">{word.meaning_vi}</span>
       </p>
@@ -85,7 +86,7 @@ export function MeaningLine({ word, bare = false }: { word: StudyWord; bare?: bo
           <PosBadge key={p} pos={p} />
         ))}
       </div>
-    </Paper>
+    </div>
   );
 }
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { PosBadge } from "@/components/word/pos-badge";
 import { PronounceButton } from "@/components/word/pronounce-button";
-import { Paper, WordSpecimen } from "@/components/word/word-specimen";
+import { WordHero } from "@/components/word/word-hero";
 import { PinyinText } from "@/components/zh/pinyin-text";
 import type { StudyWord } from "@/lib/practice";
 import { cn } from "@/lib/utils";
@@ -49,7 +49,7 @@ function TermFace({ word, toneColors, showReading, hideImage }: { word: StudyWor
   const sound = <PronounceButton text={word.term} lang={word.language} size="lg" />;
   if (!zh) {
     return (
-      <WordSpecimen
+      <WordHero
         lang="en"
         term={word.term}
         reading={showReading ? word.reading : null}
@@ -59,13 +59,13 @@ function TermFace({ word, toneColors, showReading, hideImage }: { word: StudyWor
         innerClassName="flex min-h-[22rem] flex-col"
       >
         <FlipHint className="mt-auto flex h-[var(--line)] items-end" />
-      </WordSpecimen>
+      </WordHero>
     );
   }
   return (
     <div className="flex min-h-[22rem] flex-col items-center justify-center gap-6 px-5 py-8">
       {visual}
-      <WordSpecimen lang="zh" term={word.term} reading={word.reading} toneColors={toneColors} showReading={showReading} align="center" actions={sound} />
+      <WordHero lang="zh" term={word.term} reading={word.reading} toneColors={toneColors} showReading={showReading} align="center" actions={sound} />
       <FlipHint />
     </div>
   );
@@ -75,7 +75,7 @@ function TermFace({ word, toneColors, showReading, hideImage }: { word: StudyWor
 function MeaningFace({ word, hideImage }: { word: StudyWord; hideImage: boolean }) {
   const zh = word.language === "zh";
   return (
-    <Paper framed={false} innerClassName="flex min-h-[22rem] flex-col">
+    <div className="relative flex min-h-[22rem] flex-col">
       {!hideImage && (
         <div className="absolute top-4 right-4">
           <WordVisual word={word} size={72} />
@@ -91,7 +91,7 @@ function MeaningFace({ word, hideImage }: { word: StudyWord; hideImage: boolean 
       </div>
       <p className="flex h-[var(--line)] items-end text-sm text-fg-muted">{zh ? "Chữ Hán là gì?" : "Từ tiếng Anh là gì?"}</p>
       <FlipHint className="mt-auto flex h-[var(--line)] items-end" />
-    </Paper>
+    </div>
   );
 }
 
