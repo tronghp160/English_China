@@ -27,12 +27,12 @@ function tileText(t: MatchTile) {
 
 function TopBar({ exitHref, children }: { exitHref: string; children?: React.ReactNode }) {
   return (
-    <div className="sticky top-0 z-10 -mx-4 bg-paper/95 px-4 pb-2 backdrop-blur-sm">
+    <div className="sticky top-0 z-10 -mx-4 bg-canvas/95 px-4 pb-2 backdrop-blur-sm">
       <div className="flex h-14 items-center gap-3">
         <Link
           href={exitHref}
           aria-label="Thoát"
-          className="-ml-2 grid size-11 shrink-0 place-items-center rounded-btn text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
+          className="-ml-2 grid size-11 shrink-0 place-items-center rounded-md text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
         >
           <X className="size-5" strokeWidth={1.75} aria-hidden />
         </Link>
@@ -160,10 +160,10 @@ export function MatchGame({
         <TopBar exitHref={exitHref} />
         <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
           <h1 className="text-xl">Ghép thẻ</h1>
-          <p className="max-w-sm text-ink-soft">
+          <p className="max-w-sm text-fg-muted">
             Ghép {pairs} từ với nghĩa của chúng nhanh nhất có thể. Mỗi lần ghép sai bị cộng 1 giây.
           </p>
-          {record && <p className="text-ink">Kỷ lục của bạn: <span className="font-display font-semibold tabular-nums">{formatMs(record.ms)}</span></p>}
+          {record && <p className="text-fg">Kỷ lục của bạn: <span className="font-display font-semibold tabular-nums">{formatMs(record.ms)}</span></p>}
           <Button type="button" size="lg" onClick={start} autoFocus className="mt-2 w-full max-w-xs">
             Bắt đầu
           </Button>
@@ -188,21 +188,21 @@ export function MatchGame({
           {result.isBest && <SealStamp text="Kỷ lục" size={84} />}
         </div>
         <h1 className="mt-6 text-center text-xl">{title}</h1>
-        <p className="mt-2 text-center font-display text-5xl font-semibold text-ink tabular-nums">{formatMs(result.ms)}</p>
-        <dl className="mt-6 border-t border-rule">
-          <div className="flex items-baseline justify-between gap-4 border-b border-rule py-3">
-            <dt className="text-ink-soft">Thời gian</dt>
+        <p className="mt-2 text-center font-display text-5xl font-semibold text-fg tabular-nums">{formatMs(result.ms)}</p>
+        <dl className="mt-6 border-t border-border">
+          <div className="flex items-baseline justify-between gap-4 border-b border-border py-3">
+            <dt className="text-fg-muted">Thời gian</dt>
             <dd className="font-display text-xl font-semibold tabular-nums">{formatMs(result.ms)}</dd>
           </div>
-          <div className="flex items-baseline justify-between gap-4 border-b border-rule py-3">
-            <dt className="text-ink-soft">Kỷ lục trước</dt>
+          <div className="flex items-baseline justify-between gap-4 border-b border-border py-3">
+            <dt className="text-fg-muted">Kỷ lục trước</dt>
             <dd className="font-display text-xl font-semibold tabular-nums">{result.previous ? formatMs(result.previous.ms) : "—"}</dd>
           </div>
-          <div className="flex items-baseline justify-between gap-4 border-b border-rule py-3">
-            <dt className="text-ink-soft">Số lần ghép sai</dt>
+          <div className="flex items-baseline justify-between gap-4 border-b border-border py-3">
+            <dt className="text-fg-muted">Số lần ghép sai</dt>
             <dd className="font-display text-xl font-semibold tabular-nums">
               {result.misses}
-              {result.misses > 0 && <span className="ml-1.5 font-sans text-sm font-normal text-ink-soft">(+{result.misses} giây)</span>}
+              {result.misses > 0 && <span className="ml-1.5 font-sans text-sm font-normal text-fg-muted">(+{result.misses} giây)</span>}
             </dd>
           </div>
         </dl>
@@ -227,16 +227,16 @@ export function MatchGame({
   return (
     <div className="flex flex-1 flex-col">
       <TopBar exitHref={exitHref}>
-        <span role="timer" aria-label="Thời gian" className="inline-flex items-center gap-1.5 text-lg font-semibold text-ink tabular-nums">
-          <Clock className="size-4 text-ink-soft" strokeWidth={1.75} aria-hidden />
+        <span role="timer" aria-label="Thời gian" className="inline-flex items-center gap-1.5 text-lg font-semibold text-fg tabular-nums">
+          <Clock className="size-4 text-fg-muted" strokeWidth={1.75} aria-hidden />
           {formatMs(elapsed)}
         </span>
         {penaltyFlash > 0 && wrong.length > 0 && (
-          <span key={penaltyFlash} className="animate-in fade-in-0 slide-in-from-bottom-2 text-sm font-semibold text-seal-text duration-200">
+          <span key={penaltyFlash} className="animate-in fade-in-0 slide-in-from-bottom-2 text-sm font-semibold text-danger-fg duration-200">
             +1 giây
           </span>
         )}
-        <span className="ml-auto text-sm font-medium text-ink-soft tabular-nums">
+        <span className="ml-auto text-sm font-medium text-fg-muted tabular-nums">
           Bảng {boardIndex + 1}/{boards.length}
         </span>
       </TopBar>
@@ -261,9 +261,9 @@ export function MatchGame({
               onClick={() => pick(t)}
               lang={t.side === "term" ? (t.lang === "zh" ? "zh-CN" : "en") : "vi"}
               className={cn(
-                "flex min-h-20 items-center justify-center rounded-md border border-rule-strong bg-surface p-2 text-center font-medium break-words hyphens-auto text-ink transition-colors duration-[var(--dur-fast)] sm:min-h-24",
-                isSelected ? "border-ink-violet bg-tint-violet ring-1 ring-ink-violet" : "hover:border-ink-soft/60",
-                isWrong && "animate-shake border-seal bg-tint-seal",
+                "flex min-h-20 items-center justify-center rounded-md border border-border-strong bg-surface p-2 text-center font-medium break-words hyphens-auto text-fg transition-colors duration-[var(--dur-fast)] sm:min-h-24",
+                isSelected ? "border-primary bg-primary-soft ring-1 ring-primary" : "hover:border-fg-muted/60",
+                isWrong && "animate-shake border-danger bg-danger-soft",
                 gone && "tile-gone",
                 tileText(t),
               )}

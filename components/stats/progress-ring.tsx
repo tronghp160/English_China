@@ -9,7 +9,7 @@ export function ProgressRing({
   size = 72,
   stroke = 6,
   className,
-  trackClassName = "text-surface-sunk",
+  trackClassName = "text-surface-2",
   barClassName,
   children,
 }: {
@@ -43,7 +43,7 @@ export function ProgressRing({
           strokeDasharray={100}
           strokeDashoffset={100 - pct}
           style={{ "--ink-from": 100 } as React.CSSProperties}
-          className={cn("animate-ink-draw", barClassName ?? (pct >= 100 ? "text-leaf" : "text-ink-violet"))}
+          className={cn("animate-ink-draw", barClassName ?? (pct >= 100 ? "text-success" : "text-primary"))}
         />
       </svg>
       <span className="absolute inset-0 grid place-items-center">{children}</span>

@@ -30,9 +30,9 @@ export default function ContactPage() {
         <h2 id="contact-topics" className="mb-3 text-lg">
           Bạn có thể nhắn về
         </h2>
-        <ul className="ruled-list border-y border-rule">
+        <ul className="divide-y divide-border border-y border-border">
           {TOPICS.map((t) => (
-            <li key={t} className="px-1 py-3 text-ink">
+            <li key={t} className="px-1 py-3 text-fg">
               {t}
             </li>
           ))}

@@ -77,10 +77,10 @@ export function InvitePanel({
       <h2 id="invite-title" className="text-lg">
         Mời bạn bè
       </h2>
-      <p className="mt-2 font-display text-[1.75rem] leading-none font-semibold tracking-[0.12em] text-ink" aria-label={`Mã mời ${current.split("").join(" ")}`}>
+      <p className="mt-2 font-display text-[1.75rem] leading-none font-semibold tracking-[0.12em] text-fg" aria-label={`Mã mời ${current.split("").join(" ")}`}>
         {current}
       </p>
-      <Input readOnly value={url} aria-label="Link mời" onFocus={(e) => e.currentTarget.select()} className="mt-3 bg-surface-sunk text-sm text-ink-soft" />
+      <Input readOnly value={url} aria-label="Link mời" onFocus={(e) => e.currentTarget.select()} className="mt-3 bg-surface-2 text-sm text-fg-muted" />
       <div className="mt-3 flex flex-wrap gap-2">
         <Button type="button" variant="outline" onClick={copy}>
           {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
@@ -104,10 +104,10 @@ export function InvitePanel({
               <DialogTitle>Quét để vào nhóm</DialogTitle>
               <DialogDescription>{groupName}</DialogDescription>
             </DialogHeader>
-            <div className="qr-paper mx-auto rounded-card p-4">
+            <div className="bg-white text-black mx-auto rounded-lg p-4">
               <QRCodeSVG value={url} size={232} fgColor="currentColor" bgColor="transparent" level="M" role="img" aria-label={`Mã QR của link ${url}`} />
             </div>
-            <p className="text-center font-display text-lg font-semibold tracking-[0.12em] text-ink">{current}</p>
+            <p className="text-center font-display text-lg font-semibold tracking-[0.12em] text-fg">{current}</p>
           </DialogContent>
         </Dialog>
         {isOwner && (

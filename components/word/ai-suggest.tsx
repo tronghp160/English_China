@@ -241,14 +241,14 @@ export function AiSuggestPanel({
   return (
     <div className="space-y-2.5" aria-live="polite">
       {state.status === "loading" && (
-        <p role="status" className="flex items-center gap-2 px-1 text-sm text-ink-soft">
+        <p role="status" className="flex items-center gap-2 px-1 text-sm text-fg-muted">
           <Loader2 className="size-4 animate-spin" aria-hidden />
           Đang tìm phiên âm, nghĩa và ví dụ…
         </p>
       )}
 
       {state.status === "error" && (
-        <p role="alert" className="rounded-btn border-l-[3px] border-seal bg-tint-seal px-3 py-2 text-sm text-seal-text">
+        <p role="alert" className="rounded-md border-l-[3px] border-danger bg-danger-soft px-3 py-2 text-sm text-danger-fg">
           {state.message}
         </p>
       )}
@@ -256,7 +256,7 @@ export function AiSuggestPanel({
       {state.status === "done" && (
         <>
           {state.result.did_you_mean && (
-            <div className="flex flex-wrap items-center gap-2 rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">
+            <div className="flex flex-wrap items-center gap-2 rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">
               <span>
                 Có phải bạn muốn gõ <em className="font-medium not-italic">{state.result.did_you_mean}</em>?
               </span>
@@ -266,7 +266,7 @@ export function AiSuggestPanel({
                   onUseSpelling(state.result.did_you_mean!);
                   void ai.suggest(state.result.did_you_mean!);
                 }}
-                className="min-h-9 rounded-btn bg-surface px-3 font-medium text-ink-violet"
+                className="min-h-9 rounded-md bg-surface px-3 font-medium text-primary"
               >
                 Áp dụng
               </button>
@@ -275,7 +275,7 @@ export function AiSuggestPanel({
 
           {state.result.senses.length > 1 && (state.result.is_valid_word || !state.result.did_you_mean) && (
             <fieldset>
-              <legend className="mb-1.5 px-1 text-sm text-ink-soft">
+              <legend className="mb-1.5 px-1 text-sm text-fg-muted">
                 {state.result.senses.length} nghĩa, chạm để chọn nghĩa muốn lưu
               </legend>
               <div className="flex flex-wrap gap-2">
@@ -287,14 +287,14 @@ export function AiSuggestPanel({
                       key={i}
                       title={[s.meaning_en, s.examples[0]?.text].filter(Boolean).join(" — ")}
                       className={cn(
-                        "inline-flex min-h-10 max-w-full cursor-pointer items-center gap-1.5 rounded-chip border px-3 text-sm transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink-violet",
-                        on ? "border-ink-violet bg-tint-violet text-ink" : "border-input bg-surface text-ink-soft hover:text-ink",
+                        "inline-flex min-h-10 max-w-full cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary",
+                        on ? "border-primary bg-primary-soft text-fg" : "border-input bg-surface text-fg-muted hover:text-fg",
                       )}
                     >
                       <input type="checkbox" checked={on} onChange={() => toggle(i)} className="sr-only" />
-                      {on && <Check className="size-3.5 shrink-0 text-ink-violet" strokeWidth={2.5} aria-hidden />}
+                      {on && <Check className="size-3.5 shrink-0 text-primary" strokeWidth={2.5} aria-hidden />}
                       <span className="truncate font-medium">{s.meaning_vi}</span>
-                      {pos && <span className="shrink-0 text-xs text-ink-soft">{pos}</span>}
+                      {pos && <span className="shrink-0 text-xs text-fg-muted">{pos}</span>}
                     </label>
                   );
                 })}
@@ -302,7 +302,7 @@ export function AiSuggestPanel({
                   <button
                     type="button"
                     onClick={chooseAll}
-                    className="min-h-10 rounded-chip px-2 text-sm font-medium text-ink-violet hover:underline"
+                    className="min-h-10 rounded-full px-2 text-sm font-medium text-primary hover:underline"
                   >
                     Chọn tất cả
                   </button>
@@ -312,11 +312,11 @@ export function AiSuggestPanel({
           )}
 
           {state.result.checks.pinyin_needs_review && (
-            <p className="rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">Từ có chữ đa âm, hãy kiểm tra lại pinyin.</p>
+            <p className="rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">Từ có chữ đa âm, hãy kiểm tra lại pinyin.</p>
           )}
-          {state.aiNote && <p className="rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">{state.aiNote}</p>}
+          {state.aiNote && <p className="rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">{state.aiNote}</p>}
 
-          <p className="flex items-start gap-1.5 px-1 text-sm text-ink-soft">
+          <p className="flex items-start gap-1.5 px-1 text-sm text-fg-muted">
             {state.aiPending && <Loader2 className="mt-0.5 size-3.5 shrink-0 animate-spin" aria-hidden />}
             <span>
               {state.aiPending ? "AI đang bổ sung thêm. " : ""}
@@ -349,13 +349,13 @@ export function AiSuggestPanel({
             maxLength={300}
             aria-label="Câu bạn gặp từ này"
             placeholder="Câu bạn gặp từ này, ví dụ: The company proved resilient during the crisis."
-            className="w-full rounded-btn border border-input bg-surface px-3 py-2 text-base outline-none focus-visible:border-ink-violet focus-visible:ring-3 focus-visible:ring-tint-violet"
+            className="w-full rounded-md border border-input bg-surface px-3 py-2 text-base outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary-soft"
           />
         ) : (
           <button
             type="button"
             onClick={() => setShowContext(true)}
-            className="inline-flex min-h-10 items-center gap-1.5 px-1 text-sm text-ink-soft hover:text-ink"
+            className="inline-flex min-h-10 items-center gap-1.5 px-1 text-sm text-fg-muted hover:text-fg"
           >
             <MessageSquareText className="size-4" aria-hidden />
             Thêm câu bạn gặp từ này để chọn đúng nghĩa

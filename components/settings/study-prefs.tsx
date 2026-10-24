@@ -44,8 +44,8 @@ export function SwitchRow({
   return (
     <div className="flex min-h-14 items-center justify-between gap-4 py-2">
       <label htmlFor={id} className="cursor-pointer">
-        <span className="block text-[0.9375rem] text-ink">{label}</span>
-        {hint && <span className="block text-sm text-ink-soft">{hint}</span>}
+        <span className="block text-[0.9375rem] text-fg">{label}</span>
+        {hint && <span className="block text-sm text-fg-muted">{hint}</span>}
       </label>
       <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
     </div>
@@ -65,7 +65,7 @@ export function StudyPrefs({ prefs }: { prefs: Required<Prefs> }) {
   }
 
   return (
-    <div className="ruled-list">
+    <div className="divide-y divide-border">
       {ROWS.map((r) => (
         <SwitchRow
           key={r.key}

@@ -50,7 +50,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Điều hướng chính"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-rule bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-18px_rgb(28_27_38/0.25)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-18px_rgb(28_27_38/0.25)] lg:hidden"
     >
       <ul className="mx-auto grid max-w-md grid-cols-5 px-1">
         {PRIMARY.map(({ href, label, icon: Icon }) => {
@@ -62,12 +62,12 @@ export function BottomNav() {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "relative flex min-h-16 flex-col items-center justify-center gap-1 text-xs",
-                  active ? "font-semibold text-ink" : "font-medium text-ink-soft",
+                  active ? "font-semibold text-fg" : "font-medium text-fg-muted",
                 )}
               >
-                {active && <span aria-hidden className="absolute top-0 h-0.5 w-4 rounded-full bg-ink-violet" />}
+                {active && <span aria-hidden className="absolute top-0 h-0.5 w-4 rounded-full bg-primary" />}
                 <Icon
-                  className={cn("size-5", active && "text-ink-violet")}
+                  className={cn("size-5", active && "text-primary")}
                   strokeWidth={active ? 2.25 : 1.75}
                   aria-hidden
                 />
@@ -93,14 +93,14 @@ export function SideNav() {
           href={href}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "relative flex h-10 items-center gap-3 rounded-btn border px-3 text-[0.9375rem] transition-colors duration-[var(--dur-fast)]",
+            "relative flex h-10 items-center gap-3 rounded-md border px-3 text-[0.9375rem] transition-colors duration-[var(--dur-fast)]",
             active
-              ? "border-rule bg-surface font-semibold text-ink"
-              : "border-transparent font-medium text-ink-soft hover:bg-surface-sunk hover:text-ink",
+              ? "border-border bg-surface font-semibold text-fg"
+              : "border-transparent font-medium text-fg-muted hover:bg-surface-2 hover:text-fg",
           )}
         >
-          {active && <span aria-hidden className="absolute inset-y-2 -left-px w-0.5 rounded-full bg-ink-violet" />}
-          <Icon className={cn("size-5", active && "text-ink-violet")} strokeWidth={active ? 2.25 : 1.75} aria-hidden />
+          {active && <span aria-hidden className="absolute inset-y-2 -left-px w-0.5 rounded-full bg-primary" />}
+          <Icon className={cn("size-5", active && "text-primary")} strokeWidth={active ? 2.25 : 1.75} aria-hidden />
           {label}
         </Link>
       </li>
@@ -108,19 +108,19 @@ export function SideNav() {
   };
   return (
     <>
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-58 flex-col overflow-y-auto bg-paper px-4 pt-5 pb-4 lg:flex">
-        <Link href="/today" className="mb-1 self-start rounded-btn" aria-label="Sổ Từ — Hôm nay">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-58 flex-col overflow-y-auto bg-canvas px-4 pt-5 pb-4 lg:flex">
+        <Link href="/today" className="mb-1 self-start rounded-md" aria-label="Sổ Từ — Hôm nay">
           <Logo />
         </Link>
-        <p className="mb-5 text-xs text-ink-soft">Sổ từ vựng Anh – Trung</p>
+        <p className="mb-5 text-xs text-fg-muted">Sổ từ vựng Anh – Trung</p>
 
         <nav aria-label="Điều hướng chính" className="flex flex-col gap-5">
           <div>
-            <p className="mb-1.5 px-3 text-xs font-semibold text-ink-soft">Học</p>
+            <p className="mb-1.5 px-3 text-xs font-semibold text-fg-muted">Học</p>
             <ul className="space-y-0.5">{PRIMARY.map(item)}</ul>
           </div>
           <div>
-            <p className="mb-1.5 px-3 text-xs font-semibold text-ink-soft">Khác</p>
+            <p className="mb-1.5 px-3 text-xs font-semibold text-fg-muted">Khác</p>
             <ul className="space-y-0.5">{SECONDARY.map(item)}</ul>
           </div>
         </nav>
@@ -130,13 +130,13 @@ export function SideNav() {
           {prefs.mascot && (
             <div className="flex items-end gap-1.5">
               <PettablePup mood="happy" name={prefs.mascot_name} size={44} className="-ml-1" />
-              <p className="mb-1 text-sm leading-snug text-ink">
-                <span className="block text-xs text-ink-soft">{prefs.mascot_name}</span>
+              <p className="mb-1 text-sm leading-snug text-fg">
+                <span className="block text-xs text-fg-muted">{prefs.mascot_name}</span>
                 Học một chút mỗi ngày nhé.
               </p>
             </div>
           )}
-          {!prefs.mascot && <p className="text-sm text-ink-soft">Học một chút mỗi ngày nhé.</p>}
+          {!prefs.mascot && <p className="text-sm text-fg-muted">Học một chút mỗi ngày nhé.</p>}
           <Button asChild variant="outline" size="sm" className="mt-2 w-full">
             <Link href="/review">
               <Play className="size-3.5 fill-current" aria-hidden />

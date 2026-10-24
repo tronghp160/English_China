@@ -57,7 +57,7 @@ export function LoginForm({ next }: { next: string }) {
         labelAction={
           <Link
             href={`/forgot-password${email ? `?email=${encodeURIComponent(email.trim())}` : ""}`}
-            className="inline-flex min-h-11 items-center text-sm font-semibold text-ink-violet underline-offset-4 hover:underline"
+            className="inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
           >
             Quên mật khẩu?
           </Link>

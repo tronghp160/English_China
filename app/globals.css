@@ -18,10 +18,9 @@
 }
 
 /*
- * Chinese webfonts (Noto Serif SC / Sans SC, ~35 KB of @font-face CSS each) are
- * only loaded by layouts that show words (lib/fonts.ts). Elsewhere --font-hanzi
- * falls back to this 2-glyph subset (坚强, Noto Serif SC 700, OFL) used by the
- * landing page, then to system fonts.
+ * Chinese webfont (Noto Sans SC, ~35 KB of @font-face CSS) is only loaded by
+ * layouts that show words (lib/fonts.ts). Elsewhere --font-hanzi falls back to the
+ * 2-glyph subset (坚强) used by the landing page, then to system fonts.
  */
 /*
  * IPA: Noto Sans (OFL) subset to ASCII + the IPA symbols English dictionaries
@@ -44,213 +43,353 @@
 }
 
 /*
- * Design system "Vở mực tím" (docs: REDESIGN_PLAN §3–§5): a school notebook.
- * Flat violet ink, red seal, leaf green, turmeric; ruled paper, a red margin line,
- * 田字格 cells for Chinese. Color carries meaning (violet = action + English,
- * seal = Chinese + due + errors, leaf = correct, turmeric = streak), never decoration.
- * Every text/background pair passes WCAG AA; check new pairs with scripts/contrast.mjs.
+ * Design system "Sáng Màu" (docs/redesign-v2/REDESIGN_V2.md §3): bright, rounded, colored.
+ * Primary = ballpoint blue. Color groups and distinguishes: each deck, mode and figure gets a hue
+ * from the c-* palette (solid / soft / fg). Semantic aliases (en, zh, success, danger, due, streak, xp)
+ * are what components use. Every text/background pair passes WCAG AA; check new pairs with scripts/contrast.mjs.
  */
 :root,
 .light {
-  --paper: #f5f6fa;
+  /* Neutrals */
+  --canvas: #f4f5f9;
   --surface: #ffffff;
-  --surface-sunk: #eeeff5;
-  --ink: #1c1b26;
-  --ink-soft: #5b5a6e;
-  --ink-faint: #8e8da0; /* placeholder / disabled only, never text people must read */
-  --rule: #dcddeb;
-  --rule-strong: #c5c6da;
-  --ruling: #d9d6f2; /* lines of the ruled notebook page */
-  --margin: #e8a3a0; /* the red margin line; structure only, never text */
+  --surface-2: #eef0f6;
+  --surface-3: #e4e7f0;
+  --border: #e3e6ef;
+  --border-strong: #cdd2df;
+  --fg: #12131a;
+  --fg-muted: #565b6e;
+  --fg-subtle: #646b7e; /* placeholder / disabled; AA on white so it never fails when it carries text */
 
-  --ink-violet: #3b2e8c; /* primary: actions, links, English */
-  --ink-violet-hover: #2f2473;
-  --tint-violet: #eceaf7;
-  --seal: #b8362b; /* Chinese, "due", errors, the stamp */
-  --seal-text: #b8362b;
-  --tint-seal: #fbecea;
-  --on-seal: #ffffff;
-  --leaf: #1f6e50; /* correct, learned */
-  --leaf-text: #1f6e50;
-  --tint-leaf: #e6f2ec;
-  --turmeric: #c98a12; /* streak, warning: fills and icons */
-  --turmeric-text: #8a5a00;
-  --tint-turmeric: #fbf1dc;
-  --highlighter: #f5d547; /* only as a stroke behind text */
+  /* Primary (blue ballpoint) */
+  --primary: #3557f5;
+  --primary-hover: #2a47d6;
+  --primary-press: #1f36a8;
+  --primary-soft: #e6ecff;
+  --primary-fg: #2443c7;
+  --on-primary: #ffffff;
 
-  /* Notebook cover cloth (deck covers; text sits on a white label) */
-  --cover-indigo: #2e3a6b;
-  --cover-moss: #47613f;
-  --cover-plum: #6a2d49;
-  --cover-brick: #8e3a2b;
-  --cover-ochre: #9a6a0e;
-  --cover-slate: #475161;
+  /* Palette: solid / soft / fg */
+  --c-blue: #3d63ff;
+  --c-blue-soft: #e6ecff;
+  --c-blue-fg: #2443c7;
+  --c-coral: #ff5c4d;
+  --c-coral-soft: #ffe7e3;
+  --c-coral-fg: #c7311f;
+  --c-mint: #0ea371;
+  --c-mint-soft: #ddf6ec;
+  --c-mint-fg: #08724f;
+  --c-sun: #ffc23d;
+  --c-sun-soft: #fff2cc;
+  --c-sun-fg: #855400;
+  --c-grape: #8e5cff;
+  --c-grape-soft: #efe7ff;
+  --c-grape-fg: #5b2fcc;
+  --c-pink: #ff5fa8;
+  --c-pink-soft: #ffe5f1;
+  --c-pink-fg: #b3246a;
+  --c-orange: #ff8a2b;
+  --c-orange-soft: #ffebd9;
+  --c-orange-fg: #a84a00;
+  --c-teal: #14b8c4;
+  --c-teal-soft: #daf5f7;
+  --c-teal-fg: #0b6f78;
+  --c-red: #d6343a;
+  --c-red-soft: #ffe5e5;
+  --c-red-fg: #b4232a;
 
-  /* Puppy mascot "Bin": a margin doodle in violet ink (components/mascot/pup.tsx) */
-  --pup-ink: var(--ink-violet);
-  --pup-fur: var(--surface);
-  --pup-ear: color-mix(in oklab, var(--ink-violet) 18%, transparent);
-  --pup-muzzle: transparent;
-  --pup-blush: color-mix(in oklab, var(--seal) 45%, transparent);
+  /* Semantic aliases */
+  --en: var(--c-blue);
+  --en-soft: var(--c-blue-soft);
+  --en-fg: var(--c-blue-fg);
+  --zh: var(--c-coral);
+  --zh-soft: var(--c-coral-soft);
+  --zh-fg: var(--c-coral-fg);
+  --success: var(--c-mint);
+  --success-soft: var(--c-mint-soft);
+  --success-fg: var(--c-mint-fg);
+  --danger: var(--c-red);
+  --danger-soft: var(--c-red-soft);
+  --danger-fg: var(--c-red-fg);
+  --due: var(--c-orange);
+  --due-soft: var(--c-orange-soft);
+  --due-fg: var(--c-orange-fg);
+  --streak: var(--c-sun);
+  --streak-soft: var(--c-sun-soft);
+  --streak-fg: var(--c-sun-fg);
+  --xp: var(--c-grape);
+  --xp-soft: var(--c-grape-soft);
+  --xp-fg: var(--c-grape-fg);
+
+  /* Review rating buttons: white text on each, AA */
+  --rate-again: #d6343a;
+  --rate-again-press: #a81d24;
+  --rate-hard: #b45600;
+  --rate-hard-press: #7c3b00;
+  --rate-good: #3557f5;
+  --rate-good-press: #1f36a8;
+  --rate-easy: #08845a;
+  --rate-easy-press: #055c3e;
+
+  /* Puppy mascot "Bin" (components/mascot/pup.tsx) */
+  --pup-ink: #2b2d3a;
+  --pup-fur: #ffffff;
+  --pup-ear: #c98b5a;
+  --pup-muzzle: #f6e7d6;
+  --pup-blush: color-mix(in oklab, var(--c-pink) 55%, transparent);
+  --pup-collar: var(--primary);
+  --pup-tag: var(--c-sun);
 
   /* Pinyin tone colors, AA on white */
-  --tone-1: #c8302f;
-  --tone-2: #a65f00;
-  --tone-3: #1f7f3c;
-  --tone-4: #2f5bd3;
-  --tone-5: var(--ink-soft);
+  --tone-1: #d92d20;
+  --tone-2: #b45600;
+  --tone-3: #13804f;
+  --tone-4: #2f55d4;
+  --tone-5: var(--fg-muted);
 
-  --shadow-card: 0 1px 0 rgb(28 27 38 / 0.04);
-  --shadow-lift: 0 1px 2px rgb(28 27 38 / 0.06), 0 12px 32px -12px rgb(28 27 38 / 0.18);
+  /* Elevation */
+  --shadow-xs: 0 1px 2px rgb(16 24 40 / 0.05);
+  --shadow-sm: 0 1px 3px rgb(16 24 40 / 0.06), 0 1px 2px rgb(16 24 40 / 0.04);
+  --shadow-md: 0 6px 16px -4px rgb(16 24 40 / 0.08), 0 2px 4px -1px rgb(16 24 40 / 0.04);
+  --shadow-lg: 0 20px 40px -12px rgb(16 24 40 / 0.18), 0 4px 8px -2px rgb(16 24 40 / 0.05);
+  --shadow-primary: 0 8px 24px -8px color-mix(in oklab, var(--primary) 55%, transparent);
+  --shadow-hero: 0 16px 32px -14px color-mix(in oklab, var(--primary) 60%, transparent);
 
+  /* Legacy notebook metrics, only until the screens using them are rewritten (REDESIGN_V2 phases 4-10) */
+  --line: 2rem;
+  --margin-x: 0px;
+
+  /* Motion */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --ease-stamp: cubic-bezier(0.3, 1.4, 0.5, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --dur-fast: 120ms;
   --dur-base: 200ms;
-  --dur-flip: 420ms;
+  --dur-slow: 320ms;
+  --dur-flip: 450ms;
 
   /* shadcn tokens mapped onto the palette */
-  --background: var(--paper);
-  --foreground: var(--ink);
+  --background: var(--canvas);
+  --foreground: var(--fg);
   --card: var(--surface);
-  --card-foreground: var(--ink);
+  --card-foreground: var(--fg);
   --popover: var(--surface);
-  --popover-foreground: var(--ink);
-  --primary: var(--ink-violet);
-  --primary-foreground: #ffffff;
-  --secondary: var(--tint-violet);
-  --secondary-foreground: var(--ink-violet);
-  --muted: var(--surface-sunk);
-  --muted-foreground: var(--ink-soft);
-  --accent: var(--surface-sunk);
-  --accent-foreground: var(--ink);
-  --destructive: var(--seal-text);
-  --border: var(--rule);
-  --input: var(--rule-strong);
-  --ring: var(--ink-violet);
-  --chart-1: var(--ink-violet);
-  --chart-2: var(--leaf);
-  --chart-3: var(--turmeric);
-  --chart-4: var(--seal);
-  --chart-5: var(--ink-soft);
-  --radius: 0.625rem;
-  --sidebar: var(--paper);
-  --sidebar-foreground: var(--ink);
-  --sidebar-primary: var(--ink-violet);
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: var(--surface-sunk);
-  --sidebar-accent-foreground: var(--ink);
-  --sidebar-border: var(--rule);
-  --sidebar-ring: var(--ink-violet);
+  --popover-foreground: var(--fg);
+  --primary-foreground: var(--on-primary);
+  --secondary: var(--primary-soft);
+  --secondary-foreground: var(--primary-fg);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--fg-muted);
+  --accent: var(--surface-2);
+  --accent-foreground: var(--fg);
+  --destructive: var(--danger);
+  --input: var(--border-strong);
+  --ring: var(--primary);
+  --chart-1: var(--c-blue);
+  --chart-2: var(--c-mint);
+  --chart-3: var(--c-sun);
+  --chart-4: var(--c-coral);
+  --chart-5: var(--c-grape);
+  --radius: 0.875rem;
+  --sidebar: var(--canvas);
+  --sidebar-foreground: var(--fg);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--on-primary);
+  --sidebar-accent: var(--surface-2);
+  --sidebar-accent-foreground: var(--fg);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--primary);
 }
 
 .dark {
-  --paper: #16151f;
-  --surface: #1d1d27;
-  --surface-sunk: #24242f;
-  --ink: #ecebf3;
-  --ink-soft: #a3a1b5;
-  --ink-faint: #6e6d82;
-  --rule: #2e2e3b;
-  --rule-strong: #3c3c4c;
-  --ruling: #2b2940;
-  --margin: #5a2e33;
+  --canvas: #0b0d12;
+  --surface: #151821;
+  --surface-2: #1c202b;
+  --surface-3: #252a37;
+  --border: #272c3a;
+  --border-strong: #343a4b;
+  --fg: #f3f5f9;
+  --fg-muted: #a0a7b8;
+  --fg-subtle: #8a91a5;
 
-  --ink-violet: #b4a8ff;
-  --ink-violet-hover: #c9bfff;
-  --tint-violet: #27234a;
-  --seal: #ff8a78;
-  --seal-text: #ff8a78;
-  --tint-seal: #3a1f22;
-  --on-seal: #16151f;
-  --leaf: #6fd1a6;
-  --leaf-text: #6fd1a6;
-  --tint-leaf: #16332a;
-  --turmeric: #e9b54a;
-  --turmeric-text: #e9b54a;
-  --tint-turmeric: #382b14;
-  --highlighter: #8c7420;
+  --primary: #6f8bff;
+  --primary-hover: #8aa1ff;
+  --primary-press: #4b66d9;
+  --primary-soft: #1b2347;
+  --primary-fg: #a9baff;
+  --on-primary: #0b0d12;
 
-  --tone-1: #f07070;
-  --tone-2: #f0a030;
-  --tone-3: #4cc46a;
-  --tone-4: #7c9bf0;
+  --c-blue: #6f8bff;
+  --c-blue-fg: #a9baff;
+  --c-coral: #ff7a6b;
+  --c-coral-fg: #ffb0a6;
+  --c-mint: #3dd6a0;
+  --c-mint-fg: #8cebc6;
+  --c-sun: #ffd05c;
+  --c-sun-fg: #ffe08f;
+  --c-grape: #a98bff;
+  --c-grape-fg: #cdbbff;
+  --c-pink: #ff7db8;
+  --c-pink-fg: #ffb3d6;
+  --c-orange: #ffa25c;
+  --c-orange-fg: #ffc594;
+  --c-teal: #3ccfd9;
+  --c-teal-fg: #8fe6ec;
+  --c-red: #ff6b6f;
+  --c-red-fg: #ffa8aa;
+  /* soft = 18% of the color on the surface */
+  --c-blue-soft: color-mix(in oklab, var(--c-blue) 18%, var(--surface));
+  --c-coral-soft: color-mix(in oklab, var(--c-coral) 18%, var(--surface));
+  --c-mint-soft: color-mix(in oklab, var(--c-mint) 18%, var(--surface));
+  --c-sun-soft: color-mix(in oklab, var(--c-sun) 18%, var(--surface));
+  --c-grape-soft: color-mix(in oklab, var(--c-grape) 18%, var(--surface));
+  --c-pink-soft: color-mix(in oklab, var(--c-pink) 18%, var(--surface));
+  --c-orange-soft: color-mix(in oklab, var(--c-orange) 18%, var(--surface));
+  --c-teal-soft: color-mix(in oklab, var(--c-teal) 18%, var(--surface));
+  --c-red-soft: color-mix(in oklab, var(--c-red) 18%, var(--surface));
 
-  --shadow-card: 0 1px 0 rgb(0 0 0 / 0.3);
-  --shadow-lift: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -12px rgb(0 0 0 / 0.6);
+  --rate-again: #e5484d;
+  --rate-again-press: #a81d24;
+  --rate-hard: #b45309;
+  --rate-hard-press: #7a3705;
+  --rate-good: #4f6df0;
+  --rate-good-press: #3047b8;
+  --rate-easy: #0b8a5f;
+  --rate-easy-press: #07583d;
 
-  --primary-foreground: #16151f;
-  --sidebar-primary-foreground: #16151f;
+  --pup-ink: #e9ebf2;
+  --pup-fur: #f3efe8;
+  --pup-ear: #b97a4c;
+  --pup-muzzle: #e9d8c3;
+
+  --tone-1: #ff7070;
+  --tone-2: #ffab4a;
+  --tone-3: #4cd38a;
+  --tone-4: #82a0ff;
+
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.45);
+  --shadow-md: 0 6px 16px -4px rgb(0 0 0 / 0.55);
+  --shadow-lg: 0 20px 40px -12px rgb(0 0 0 / 0.7);
 }
 
 @theme inline {
-  --color-paper: var(--paper);
+  --color-canvas: var(--canvas);
   --color-surface: var(--surface);
-  --color-surface-sunk: var(--surface-sunk);
-  --color-ink: var(--ink);
-  --color-ink-soft: var(--ink-soft);
-  --color-ink-faint: var(--ink-faint);
-  --color-rule: var(--rule);
-  --color-rule-strong: var(--rule-strong);
-  --color-ruling: var(--ruling);
-  --color-margin: var(--margin);
-  --color-ink-violet: var(--ink-violet);
-  --color-ink-violet-hover: var(--ink-violet-hover);
-  --color-tint-violet: var(--tint-violet);
-  --color-seal: var(--seal);
-  --color-seal-text: var(--seal-text);
-  --color-tint-seal: var(--tint-seal);
-  --color-on-seal: var(--on-seal);
-  --color-leaf: var(--leaf);
-  --color-leaf-text: var(--leaf-text);
-  --color-tint-leaf: var(--tint-leaf);
-  --color-turmeric: var(--turmeric);
-  --color-turmeric-text: var(--turmeric-text);
-  --color-tint-turmeric: var(--tint-turmeric);
-  --color-highlighter: var(--highlighter);
-  --color-cover-indigo: var(--cover-indigo);
-  --color-cover-moss: var(--cover-moss);
-  --color-cover-plum: var(--cover-plum);
-  --color-cover-brick: var(--cover-brick);
-  --color-cover-ochre: var(--cover-ochre);
-  --color-cover-slate: var(--cover-slate);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-press: var(--primary-press);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-fg: var(--primary-fg);
+  --color-on-primary: var(--on-primary);
+
+  --color-c-blue: var(--c-blue);
+  --color-c-blue-soft: var(--c-blue-soft);
+  --color-c-blue-fg: var(--c-blue-fg);
+  --color-c-coral: var(--c-coral);
+  --color-c-coral-soft: var(--c-coral-soft);
+  --color-c-coral-fg: var(--c-coral-fg);
+  --color-c-mint: var(--c-mint);
+  --color-c-mint-soft: var(--c-mint-soft);
+  --color-c-mint-fg: var(--c-mint-fg);
+  --color-c-sun: var(--c-sun);
+  --color-c-sun-soft: var(--c-sun-soft);
+  --color-c-sun-fg: var(--c-sun-fg);
+  --color-c-grape: var(--c-grape);
+  --color-c-grape-soft: var(--c-grape-soft);
+  --color-c-grape-fg: var(--c-grape-fg);
+  --color-c-pink: var(--c-pink);
+  --color-c-pink-soft: var(--c-pink-soft);
+  --color-c-pink-fg: var(--c-pink-fg);
+  --color-c-orange: var(--c-orange);
+  --color-c-orange-soft: var(--c-orange-soft);
+  --color-c-orange-fg: var(--c-orange-fg);
+  --color-c-teal: var(--c-teal);
+  --color-c-teal-soft: var(--c-teal-soft);
+  --color-c-teal-fg: var(--c-teal-fg);
+  --color-c-red: var(--c-red);
+  --color-c-red-soft: var(--c-red-soft);
+  --color-c-red-fg: var(--c-red-fg);
+
+  --color-en: var(--en);
+  --color-en-soft: var(--en-soft);
+  --color-en-fg: var(--en-fg);
+  --color-zh: var(--zh);
+  --color-zh-soft: var(--zh-soft);
+  --color-zh-fg: var(--zh-fg);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-fg: var(--success-fg);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-fg: var(--danger-fg);
+  --color-due: var(--due);
+  --color-due-soft: var(--due-soft);
+  --color-due-fg: var(--due-fg);
+  --color-streak: var(--streak);
+  --color-streak-soft: var(--streak-soft);
+  --color-streak-fg: var(--streak-fg);
+  --color-xp: var(--xp);
+  --color-xp-soft: var(--xp-soft);
+  --color-xp-fg: var(--xp-fg);
+
+  --color-rate-again: var(--rate-again);
+  --color-rate-again-press: var(--rate-again-press);
+  --color-rate-hard: var(--rate-hard);
+  --color-rate-hard-press: var(--rate-hard-press);
+  --color-rate-good: var(--rate-good);
+  --color-rate-good-press: var(--rate-good-press);
+  --color-rate-easy: var(--rate-easy);
+  --color-rate-easy-press: var(--rate-easy-press);
+
   --color-tone-1: var(--tone-1);
   --color-tone-2: var(--tone-2);
   --color-tone-3: var(--tone-3);
   --color-tone-4: var(--tone-4);
   --color-tone-5: var(--tone-5);
 
-  --shadow-card: var(--shadow-card);
-  --shadow-lift: var(--shadow-lift);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-primary: var(--shadow-primary);
+  --shadow-hero: var(--shadow-hero);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: "Flag Emoji", var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Flag Emoji", var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Flag Emoji", var(--font-literata), "Noto Serif SC", "Hero Hanzi", ui-serif, Georgia, serif;
+  --font-display: "Flag Emoji", var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
   --font-ipa: "IPA Sans", "Noto Sans", "Segoe UI", "Lucida Sans Unicode", sans-serif;
-  --font-hanzi: "Noto Serif SC", "Hero Hanzi", "Songti SC", "SimSun", serif;
-  --font-hanzi-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-hanzi: "Noto Sans SC", "Hero Hanzi", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-hanzi-sans: "Noto Sans SC", "Hero Hanzi", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono: ui-monospace, monospace;
 
-  /* Type scale (REDESIGN_PLAN §4.5) */
+  /* Type scale (REDESIGN_V2 §3.1) */
   --text-xs: 0.8125rem;
   --text-xs--line-height: 1.4;
   --text-sm: 0.9375rem;
   --text-sm--line-height: 1.5;
-  --text-base: 1.0625rem;
+  --text-base: 1rem;
   --text-base--line-height: 1.6;
-  --text-lg: 1.25rem;
+  --text-lg: 1.1875rem;
   --text-lg--line-height: 1.4;
-  --text-xl: 1.625rem;
+  --text-xl: 1.5rem;
   --text-xl--line-height: 1.25;
-  --text-2xl: 2.25rem;
+  --text-2xl: 2rem;
   --text-2xl--line-height: 1.15;
-  --text-display: clamp(2.5rem, 6vw, 4.25rem);
+  --text-3xl: 2.75rem;
+  --text-3xl--line-height: 1.05;
+  --text-display: clamp(2.25rem, 5.5vw, 4rem);
   --text-display--line-height: 1.05;
-  --text-word: clamp(2.75rem, 9vw, 4.5rem);
+  --text-word: clamp(2.5rem, 8vw, 3.75rem);
   --text-word--line-height: 1.1;
-  --text-hanzi: clamp(4rem, 14vw, 6rem);
+  --text-hanzi: clamp(3.5rem, 13vw, 5.5rem);
   --text-hanzi--line-height: 1.1;
 
   --color-sidebar-ring: var(--sidebar-ring);
@@ -283,22 +422,19 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  /* Radius hierarchy: chip full, button/input 10px, card 14px, sheet/dialog/flashcard 22px */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.625rem;
-  --radius-xl: 0.875rem;
-  --radius-2xl: 1.375rem;
-  --radius-3xl: 1.5rem;
-  --radius-4xl: 2rem;
-  --radius-chip: 999px;
-  --radius-btn: 0.625rem;
-  --radius-card: 0.875rem;
-  --radius-sheet: 1.375rem;
+  /* Radius: xs 8 (badge, heat cell), sm 10, md 14 (button, input, nav item), lg 20 (card), xl 28 (hero, flashcard, sheet) */
+  --radius-xs: 0.5rem;
+  --radius-sm: 0.625rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+  --radius-4xl: 2.5rem;
 
-  --animate-stamp-in: stamp-in 260ms var(--ease-stamp) both;
-  --animate-ink-draw: ink-draw 600ms var(--ease-out) both;
   --animate-shake: shake 240ms ease-in-out both;
+  --animate-pop: pop 320ms var(--ease-spring) both;
+  --animate-fade-up: fade-up 260ms var(--ease-out) both;
 }
 
 @layer base {
@@ -318,12 +454,15 @@
   h2,
   h3 {
     font-family: var(--font-heading);
-    letter-spacing: -0.015em;
   }
   h1 {
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: -0.025em;
   }
-  h2,
+  h2 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
   h3 {
     font-weight: 600;
   }
@@ -332,113 +471,19 @@
     cursor: pointer;
   }
   :focus-visible {
-    outline: 2px solid var(--ink-violet);
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
   }
 }
 
 @layer components {
-  /* A sheet of paper: white, 1px rule, no shadow. Group content with space and headings, not nested cards. */
-  .sheet {
-    position: relative;
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: var(--radius-card);
-    box-shadow: var(--shadow-card);
-  }
-  /* Only things that float: flashcards, dialogs, popovers, the bottom nav */
-  .sheet-lift {
-    box-shadow: var(--shadow-lift);
-  }
-  /* Ruled notebook page: a line every --line, text baselines sit on them (structure, not decoration) */
-  .ruled-paper {
-    --line: 2rem;
-    background-image: repeating-linear-gradient(
-      to bottom,
-      transparent 0 calc(var(--line) - 1px),
-      var(--ruling) calc(var(--line) - 1px) var(--line)
-    );
-  }
-  /* Red margin line of the notebook, --margin-x from the left edge */
-  .margin-line {
-    --margin-x: 28px;
-    position: relative;
-  }
-  .margin-line::before {
-    content: "";
-    position: absolute;
-    inset-block: 0;
-    left: var(--margin-x);
-    width: 1px;
-    background: var(--margin);
-    pointer-events: none;
-  }
-  @media (max-width: 40rem) {
-    .margin-line {
-      --margin-x: 20px;
-    }
-  }
-
-  /* A word sitting on a ruled line, like handwriting in a notebook */
-  .ruled-word {
-    display: inline-block;
-    padding-bottom: 0.15em;
-    background-image: linear-gradient(var(--rule), var(--rule));
-    background-repeat: no-repeat;
-    background-size: 100% 2px;
-    background-position: 0 100%;
-  }
-
-  /* Ruled list rows (no per-row cards) */
-  .ruled-list > * + * {
-    border-top: 1px solid var(--rule);
-  }
-
-  /* Highlighter marker stroke behind text: the one allowed use of a decorative gradient */
-  .highlighter {
-    background-image: linear-gradient(
-      100deg,
-      transparent 0.2em,
-      color-mix(in oklab, var(--highlighter) 85%, transparent) 0.3em,
-      color-mix(in oklab, var(--highlighter) 75%, transparent) calc(100% - 0.3em),
-      transparent calc(100% - 0.2em)
-    );
-    background-repeat: no-repeat;
-    background-size: 100% 0.55em;
-    background-position: 0 88%;
-    padding: 0 0.1em;
-  }
-  .highlighter-animate {
-    animation: highlighter-sweep 700ms 200ms var(--ease-out) both;
-  }
-
-}
-
-@keyframes highlighter-sweep {
-  from {
-    background-size: 0% 0.55em;
-  }
-  to {
-    background-size: 100% 0.55em;
+  /* Numbers and titles that carry weight: sans 800, tight */
+  .font-display {
+    font-weight: 800;
+    letter-spacing: -0.03em;
   }
 }
-/* The seal lands on the page: slightly big and tilted, then settles at -8deg */
-@keyframes stamp-in {
-  from {
-    opacity: 0;
-    transform: scale(1.35) rotate(-12deg);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) rotate(-8deg);
-  }
-}
-/* Strokes draw once: set stroke-dasharray on the path, the final stroke-dashoffset is the element's own */
-@keyframes ink-draw {
-  from {
-    stroke-dashoffset: var(--ink-from, 100);
-  }
-}
+
 @keyframes shake {
   0%,
   100% {
@@ -450,6 +495,25 @@
   }
   50% {
     transform: translateX(3px);
+  }
+}
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 }
 /*
@@ -519,51 +583,24 @@
   }
 }
 
-/* Activity heatmap: one hue (ink violet), light -> dark, mixed with the surface per theme */
+/* Activity heatmap: five steps from the empty cell to full primary */
 .heat-0 {
-  background: var(--surface-sunk);
+  background: var(--surface-2);
 }
 .heat-1 {
-  background: color-mix(in oklab, var(--ink-violet) 25%, var(--surface));
+  background: color-mix(in oklab, var(--primary) 20%, var(--surface));
 }
 .heat-2 {
-  background: color-mix(in oklab, var(--ink-violet) 48%, var(--surface));
+  background: color-mix(in oklab, var(--primary) 40%, var(--surface));
 }
 .heat-3 {
-  background: color-mix(in oklab, var(--ink-violet) 72%, var(--surface));
+  background: color-mix(in oklab, var(--primary) 65%, var(--surface));
 }
 .heat-4 {
-  background: var(--ink-violet);
+  background: var(--primary);
 }
-
-/* A matched tile in the Match game: a green flash, then an empty dashed slot where it was (the board does not reflow) */
-.tile-gone {
-  pointer-events: none;
-  animation: tile-gone 380ms var(--ease-out) forwards;
-}
-@keyframes tile-gone {
-  0%,
-  45% {
-    background: var(--tint-leaf);
-    border-color: var(--leaf);
-    color: var(--ink);
-  }
-  100% {
-    background: transparent;
-    border-color: var(--rule-strong);
-    border-style: dashed;
-    color: transparent;
-  }
-}
-
-/* Notebook cover: 4px on the spine side, 8px on the open side */
-.cover-radius {
-  border-radius: 0.25rem 0.5rem 0.5rem 0.25rem;
-}
-
-/* Heatmap cells: 3px corners; rest days carry a diagonal strike */
 .heat-cell {
-  border-radius: 3px;
+  border-radius: 4px;
 }
 .heat-rest {
   position: relative;
@@ -576,20 +613,40 @@
   background: linear-gradient(
     to top right,
     transparent calc(50% - 0.75px),
-    var(--rule-strong) calc(50% - 0.75px) calc(50% + 0.75px),
+    var(--border-strong) calc(50% - 0.75px) calc(50% + 0.75px),
     transparent calc(50% + 0.75px)
   );
 }
 
-/* Stats: card knowledge stages in one violet, from pale to full ink */
+/* Stats: card knowledge stages in one blue, from pale to full */
 .stage-1 {
-  background: color-mix(in oklab, var(--ink-violet) 35%, var(--surface));
+  background: color-mix(in oklab, var(--primary) 35%, var(--surface));
 }
 .stage-2 {
-  background: color-mix(in oklab, var(--ink-violet) 65%, var(--surface));
+  background: color-mix(in oklab, var(--primary) 65%, var(--surface));
 }
 .stage-3 {
-  background: var(--ink-violet);
+  background: var(--primary);
+}
+
+/* A matched tile in the Match game: a green flash, then an empty dashed slot where it was (the board does not reflow) */
+.tile-gone {
+  pointer-events: none;
+  animation: tile-gone 380ms var(--ease-out) forwards;
+}
+@keyframes tile-gone {
+  0%,
+  45% {
+    background: var(--success-soft);
+    border-color: var(--success);
+    color: var(--fg);
+  }
+  100% {
+    background: transparent;
+    border-color: var(--border-strong);
+    border-style: dashed;
+    color: transparent;
+  }
 }
 
 /* Flashcard flip */
@@ -615,9 +672,8 @@
   .flip-card {
     transition: none;
   }
-  .highlighter-animate,
-  .animate-stamp-in,
-  .animate-ink-draw,
+  .animate-pop,
+  .animate-fade-up,
   .pup-tail,
   .pup-blink,
   .pup-extra,
@@ -631,12 +687,6 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-/* QR codes stay dark-on-light in both themes so every scanner reads them */
-.qr-paper {
-  background: #ffffff;
-  color: #1e2a4a;
 }
 
 /*

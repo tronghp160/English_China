@@ -73,19 +73,19 @@ function ProgressRows({ state }: { state: LearnState }) {
   const p = progress(state);
   const total = state.words.length || 1;
   const rows = [
-    { label: "Chưa học", value: p.notStarted, bar: "bg-rule-strong" },
-    { label: "Đang học", value: p.learning, bar: "bg-turmeric" },
-    { label: "Đã thuộc", value: p.mastered, bar: "bg-leaf" },
+    { label: "Chưa học", value: p.notStarted, bar: "bg-border-strong" },
+    { label: "Đang học", value: p.learning, bar: "bg-streak" },
+    { label: "Đã thuộc", value: p.mastered, bar: "bg-success" },
   ];
   return (
-    <dl className="border-t border-rule">
+    <dl className="border-t border-border">
       {rows.map((r) => (
-        <div key={r.label} className="grid grid-cols-[6rem_1fr_2.5rem] items-center gap-3 border-b border-rule py-3">
-          <dt className="text-sm font-medium text-ink">{r.label}</dt>
-          <div className="h-1.5 overflow-hidden rounded-full bg-surface-sunk" aria-hidden>
+        <div key={r.label} className="grid grid-cols-[6rem_1fr_2.5rem] items-center gap-3 border-b border-border py-3">
+          <dt className="text-sm font-medium text-fg">{r.label}</dt>
+          <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
             <div className={cn("h-full rounded-full", r.bar)} style={{ width: `${(r.value / total) * 100}%` }} />
           </div>
-          <dd className="text-right font-display text-lg font-semibold text-ink tabular-nums">{r.value}</dd>
+          <dd className="text-right font-display text-lg font-semibold text-fg tabular-nums">{r.value}</dd>
         </div>
       ))}
     </dl>
@@ -245,7 +245,7 @@ export function LearnSession({
           <div className="flex flex-col items-center gap-3 text-center">
             {prefs.mascot ? <Pup mood="think" size={72} /> : <InkFigure name="notebook" size={72} />}
             <h1 className="text-xl">Tiếp tục học?</h1>
-            <p className="text-ink-soft">
+            <p className="text-fg-muted">
               Đã thuộc {p.mastered}/{saved.words.length} từ
             </p>
           </div>
@@ -270,7 +270,7 @@ export function LearnSession({
         <div className="flex flex-1 flex-col gap-6 py-6">
           <h1 className="text-xl">Hết vòng {state.round}</h1>
           <ProgressRows state={state} />
-          <ul className="ruled-list border-y border-rule">
+          <ul className="divide-y divide-border border-y border-border">
             {state.roundWords.map((id) => {
               const w = byId.get(id);
               if (!w) return null;
@@ -280,15 +280,15 @@ export function LearnSession({
                 <li key={id} className="flex min-h-12 items-center gap-3 px-1 py-2">
                   <span
                     lang={zh ? "zh-CN" : "en"}
-                    className={cn("text-lg font-medium text-ink", zh ? "font-hanzi" : "font-display")}
+                    className={cn("text-lg font-medium text-fg", zh ? "font-hanzi" : "font-display")}
                   >
                     {w.term}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-sm text-ink-soft">{w.meaning_vi}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-fg-muted">{w.meaning_vi}</span>
                   {mastered ? (
-                    <Check className="size-5 shrink-0 text-leaf-text" aria-label="Đã thuộc" />
+                    <Check className="size-5 shrink-0 text-success-fg" aria-label="Đã thuộc" />
                   ) : (
-                    <span className="shrink-0 text-xs font-medium text-turmeric-text">Đang học</span>
+                    <span className="shrink-0 text-xs font-medium text-streak-fg">Đang học</span>
                   )}
                 </li>
               );
@@ -320,7 +320,7 @@ export function LearnSession({
           <SealStamp text="Thuộc" size={88} />
         </div>
         <h1 className="mt-6 text-center text-xl">Bạn đã thuộc hết {state.words.length} từ!</h1>
-        <p className="mt-2 text-center text-ink-soft">Xong sau {state.round} vòng. Làm bài kiểm tra để chắc chắn nhé.</p>
+        <p className="mt-2 text-center text-fg-muted">Xong sau {state.round} vòng. Làm bài kiểm tra để chắc chắn nhé.</p>
         <div className="mt-auto flex flex-col gap-2 pt-8 sm:flex-row">
           <Button asChild size="lg" className="flex-1">
             <Link href={testHref}>Làm bài kiểm tra</Link>
@@ -374,13 +374,13 @@ export function LearnSession({
               {q.prompt === "term" ? (
                 <>
                   <TermLine word={q.word} />
-                  <p className="text-sm text-ink-soft">Nghĩa của từ này là gì?</p>
+                  <p className="text-sm text-fg-muted">Nghĩa của từ này là gì?</p>
                 </>
               ) : (
                 <>
                   {!prefs.hide_images && <WordVisual word={q.word} size={96} />}
                   <MeaningLine word={q.word} />
-                  <p className="text-sm text-ink-soft">{zh ? "Chữ Hán nào?" : "Từ nào?"}</p>
+                  <p className="text-sm text-fg-muted">{zh ? "Chữ Hán nào?" : "Từ nào?"}</p>
                 </>
               )}
             </div>
@@ -408,7 +408,7 @@ export function LearnSession({
               }}
               className="flex flex-col gap-2"
             >
-              <label htmlFor="learn-answer" className="text-sm text-ink-soft">
+              <label htmlFor="learn-answer" className="text-sm text-fg-muted">
                 {zh ? "Gõ chữ Hán hoặc pinyin (có dấu, số thanh hay không dấu đều được)" : "Gõ từ tiếng Anh"}
               </label>
               <Input
@@ -426,7 +426,7 @@ export function LearnSession({
                 className={cn(
                   "h-14 px-4 text-xl",
                   zh ? "font-hanzi" : "font-display",
-                  typingResult === "wrong" ? "border-seal bg-tint-seal" : typingResult ? "border-leaf bg-tint-leaf" : "",
+                  typingResult === "wrong" ? "border-danger bg-danger-soft" : typingResult ? "border-success bg-success-soft" : "",
                 )}
               />
               {!outcome && (

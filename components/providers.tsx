@@ -36,9 +36,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
           toastOptions={{
             classNames: {
               // Inverted: ink background, paper text. Errors get a seal bar on the left.
-              toast: "!bg-ink !text-paper !border-0 !rounded-btn !font-sans !text-sm !shadow-lift",
-              description: "!text-paper/70",
-              error: "!border-l-[3px] !border-solid !border-l-seal",
+              toast: "!bg-fg !text-canvas !border-0 !rounded-md !font-sans !text-sm !shadow-lift",
+              description: "!text-canvas/70",
+              error: "!border-l-[3px] !border-solid !border-l-danger",
               icon: "!hidden",
             },
           }}

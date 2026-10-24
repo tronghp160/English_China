@@ -35,7 +35,7 @@ function tapToFlip(onFlip: () => void) {
 /** One quiet line at the foot of a face; touch devices tap, keyboards use Space. */
 function FlipHint({ children = "lật", className }: { children?: string; className?: string }) {
   return (
-    <p className={cn("text-sm text-ink-soft", className)}>
+    <p className={cn("text-sm text-fg-muted", className)}>
       <span className="lg:hidden">Chạm để {children}</span>
       <span className="hidden lg:inline">Nhấn Space để {children}</span>
     </p>
@@ -81,7 +81,7 @@ function MeaningFace({ word, hideImage }: { word: StudyWord; hideImage: boolean 
           <WordVisual word={word} size={72} />
         </div>
       )}
-      <p className="flex min-h-[calc(var(--line)*3)] flex-wrap content-end items-end gap-x-2 pr-20 text-[1.625rem] leading-[var(--line)] font-medium text-ink">
+      <p className="flex min-h-[calc(var(--line)*3)] flex-wrap content-end items-end gap-x-2 pr-20 text-[1.625rem] leading-[var(--line)] font-medium text-fg">
         <span className="relative top-[0.25em]">{word.meaning_vi}</span>
       </p>
       <div className="flex min-h-[var(--line)] flex-wrap items-end gap-1.5 pb-1">
@@ -89,7 +89,7 @@ function MeaningFace({ word, hideImage }: { word: StudyWord; hideImage: boolean 
           <PosBadge key={p} pos={p} />
         ))}
       </div>
-      <p className="flex h-[var(--line)] items-end text-sm text-ink-soft">{zh ? "Chữ Hán là gì?" : "Từ tiếng Anh là gì?"}</p>
+      <p className="flex h-[var(--line)] items-end text-sm text-fg-muted">{zh ? "Chữ Hán là gì?" : "Từ tiếng Anh là gì?"}</p>
       <FlipHint className="mt-auto flex h-[var(--line)] items-end" />
     </Paper>
   );
@@ -97,7 +97,7 @@ function MeaningFace({ word, hideImage }: { word: StudyWord; hideImage: boolean 
 
 /**
  * Two-sided card. Both faces share one grid cell, so the card is as tall as the taller face.
- * Front = the word as a specimen; back = its meaning with one highlighter stroke.
+ * Front = the word as a specimen; back = its meaning with one font-bold text-primary-fg stroke.
  */
 export function Flashcard({
   word,
@@ -121,7 +121,7 @@ export function Flashcard({
           onClick={tapToFlip(onFlip)}
           inert={flipped}
           className={cn(
-            "flip-face sheet sheet-lift cursor-pointer overflow-hidden rounded-sheet",
+            "flip-face rounded-lg border border-border/60 bg-surface shadow-sm shadow-lg cursor-pointer overflow-hidden rounded-xl",
             flipped && "pointer-events-none",
           )}
         >
@@ -137,17 +137,17 @@ export function Flashcard({
           onClick={flipBack ? tapToFlip(onFlip) : undefined}
           inert={!flipped}
           className={cn(
-            "flip-face flip-back sheet sheet-lift margin-line flex min-h-[22rem] flex-col gap-4 rounded-sheet py-5 pr-5 pl-[calc(var(--margin-x)+1rem)]",
+            "flip-face flip-back rounded-lg border border-border/60 bg-surface shadow-sm shadow-lg  flex min-h-[22rem] flex-col gap-4 rounded-xl py-5 pr-5 pl-4",
             !flipped && "pointer-events-none",
             flipBack && "cursor-pointer",
           )}
         >
           {/* The word again with its sound; in the recall direction it is the answer, so it is bigger */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule pb-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border pb-3">
             <span
               lang={zh ? "zh-CN" : "en"}
               className={cn(
-                "leading-tight font-medium text-ink",
+                "leading-tight font-medium text-fg",
                 direction === "recall" ? "text-4xl" : "text-2xl",
                 zh ? "font-hanzi" : "font-display",
               )}
@@ -158,20 +158,20 @@ export function Flashcard({
               (zh ? (
                 <PinyinText pinyin={word.reading} colored={toneColors} className="text-lg font-medium" />
               ) : (
-                <span className="font-ipa text-ink-soft">{word.reading}</span>
+                <span className="font-ipa text-fg-muted">{word.reading}</span>
               ))}
             <PronounceButton text={word.term} lang={word.language} size="sm" />
           </div>
 
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-[1.5rem] leading-snug font-medium text-ink">
-                <span className={cn("highlighter", flipped && "highlighter-animate")}>{word.meaning_vi}</span>
+              <p className="text-[1.5rem] leading-snug font-medium text-fg">
+                <span className={cn("font-bold text-primary-fg", flipped && "")}>{word.meaning_vi}</span>
               </p>
-              {word.meaning_en && <p className="mt-2 text-sm text-ink-soft">{word.meaning_en}</p>}
+              {word.meaning_en && <p className="mt-2 text-sm text-fg-muted">{word.meaning_en}</p>}
               {zh && extra.han_viet && (
-                <p className="mt-1 text-sm text-ink-soft">
-                  Hán Việt: <span className="font-medium text-ink">{extra.han_viet}</span>
+                <p className="mt-1 text-sm text-fg-muted">
+                  Hán Việt: <span className="font-medium text-fg">{extra.han_viet}</span>
                 </p>
               )}
               {word.parts_of_speech.length > 0 && (
@@ -186,15 +186,15 @@ export function Flashcard({
           </div>
 
           {examples.length > 0 && (
-            <ul className="ruled-list border-t border-rule">
+            <ul className="divide-y divide-border border-t border-border">
               {examples.map((ex, i) => (
                 <li key={i} className="flex items-start gap-2 py-2.5">
                   <div className="min-w-0 flex-1">
-                    <p lang={zh ? "zh-CN" : "en"} className={cn("text-ink", zh && "font-hanzi text-lg")}>
+                    <p lang={zh ? "zh-CN" : "en"} className={cn("text-fg", zh && "font-hanzi text-lg")}>
                       {ex.text}
                     </p>
-                    {zh && ex.reading && <PinyinText pinyin={ex.reading} colored={false} className="text-sm text-ink-soft" />}
-                    {ex.vi && <p className="text-sm text-ink-soft">{ex.vi}</p>}
+                    {zh && ex.reading && <PinyinText pinyin={ex.reading} colored={false} className="text-sm text-fg-muted" />}
+                    {ex.vi && <p className="text-sm text-fg-muted">{ex.vi}</p>}
                   </div>
                   <PronounceButton text={ex.text} lang={word.language} size="sm" label="Đọc câu ví dụ" />
                 </li>
@@ -202,11 +202,11 @@ export function Flashcard({
             </ul>
           )}
 
-          {word.personal_note && <p className="rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">{word.personal_note}</p>}
+          {word.personal_note && <p className="rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">{word.personal_note}</p>}
 
           <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
             {flipBack ? <FlipHint>lật lại</FlipHint> : <span />}
-            <Link href={`/words/${word.id}`} className="rounded-btn px-1 py-2 text-sm font-medium text-ink-violet hover:underline">
+            <Link href={`/words/${word.id}`} className="rounded-md px-1 py-2 text-sm font-medium text-primary hover:underline">
               Xem chi tiết
             </Link>
           </div>

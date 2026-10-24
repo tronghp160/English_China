@@ -13,7 +13,7 @@ function Hearts() {
       aria-hidden
       className="pointer-events-none absolute -top-5 left-1/2 w-2/3 -translate-x-1/2 overflow-visible"
       fill="none"
-      stroke="var(--pup-ink)"
+      stroke="var(--pup-fg)"
       strokeWidth={1.6}
       strokeLinecap="round"
       strokeLinejoin="round"

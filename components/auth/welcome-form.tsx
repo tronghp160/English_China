@@ -82,10 +82,10 @@ export function WelcomeForm({
       <div className="flex items-center gap-3">
         <div className="flex flex-1 gap-1.5" aria-hidden>
           {[1, 2].map((n) => (
-            <span key={n} className={cn("h-1.5 flex-1 rounded-full transition-colors", n <= step ? "bg-ink-violet" : "bg-rule")} />
+            <span key={n} className={cn("h-1.5 flex-1 rounded-full transition-colors", n <= step ? "bg-primary" : "bg-border")} />
           ))}
         </div>
-        <p className="text-sm font-medium text-ink-soft">Bước {step}/2</p>
+        <p className="text-sm font-medium text-fg-muted">Bước {step}/2</p>
       </div>
       {step === 1 ? (
         <form onSubmit={goNext} noValidate>
@@ -105,7 +105,7 @@ export function WelcomeForm({
             <div className="space-y-1.5">
               <Label htmlFor="username">Tên người dùng</Label>
               <div className="relative">
-                <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-soft">@</span>
+                <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-fg-muted">@</span>
                 <Input
                   id="username"
                   value={username}
@@ -121,7 +121,7 @@ export function WelcomeForm({
               {errors.username ? (
                 <FieldError id="username-hint">{errors.username}</FieldError>
               ) : (
-                <p id="username-hint" className="text-sm text-ink-soft">
+                <p id="username-hint" className="text-sm text-fg-muted">
                   Bạn bè tìm bạn bằng tên này.
                 </p>
               )}
@@ -145,17 +145,17 @@ export function WelcomeForm({
                   aria-checked={selected}
                   onClick={() => setLangs(opt.value)}
                   className={cn(
-                    "flex min-h-16 items-center gap-4 rounded-btn border px-4 py-2 text-left transition-colors",
-                    selected ? "border-ink-violet bg-tint-violet ring-1 ring-ink-violet" : "border-input bg-surface hover:border-ink-soft/50",
+                    "flex min-h-16 items-center gap-4 rounded-md border px-4 py-2 text-left transition-colors",
+                    selected ? "border-primary bg-primary-soft ring-1 ring-primary" : "border-input bg-surface hover:border-fg-muted/50",
                   )}
                 >
-                  <span aria-hidden className="flex w-20 shrink-0 flex-col text-xl leading-tight text-ink">
+                  <span aria-hidden className="flex w-20 shrink-0 flex-col text-xl leading-tight text-fg">
                     {opt.value.includes("en") && <span className="font-display font-medium">resilient</span>}
                     {opt.value.includes("zh") && <span className="font-hanzi">坚强</span>}
                   </span>
                   <span className="flex-1">
                     <span className="block font-semibold">{opt.label}</span>
-                    <span className="block text-sm text-ink-soft">{opt.hint}</span>
+                    <span className="block text-sm text-fg-muted">{opt.hint}</span>
                   </span>
                 </button>
               );
@@ -163,7 +163,7 @@ export function WelcomeForm({
           </div>
 
           <h2 className="mt-8 text-base">Mỗi ngày học bao nhiêu từ mới?</h2>
-          <div role="radiogroup" aria-label="Số từ mới mỗi ngày" className="mt-3 inline-flex gap-0.5 rounded-chip bg-surface-sunk p-1">
+          <div role="radiogroup" aria-label="Số từ mới mỗi ngày" className="mt-3 inline-flex gap-0.5 rounded-full bg-surface-2 p-1">
             {DAILY_OPTIONS.map((n) => (
               <button
                 key={n}
@@ -172,20 +172,20 @@ export function WelcomeForm({
                 aria-checked={daily === n}
                 onClick={() => setDaily(n)}
                 className={cn(
-                  "h-9 min-w-14 rounded-chip px-3 text-sm font-medium tabular-nums transition-colors",
-                  daily === n ? "bg-surface text-ink shadow-card" : "text-ink-soft hover:text-ink",
+                  "h-9 min-w-14 rounded-full px-3 text-sm font-medium tabular-nums transition-colors",
+                  daily === n ? "bg-surface text-fg shadow-card" : "text-fg-muted hover:text-fg",
                 )}
               >
                 {n}
               </button>
             ))}
           </div>
-          <p className="mt-2 text-sm text-ink-soft">Có thể đổi sau trong Cài đặt.</p>
+          <p className="mt-2 text-sm text-fg-muted">Có thể đổi sau trong Cài đặt.</p>
 
-          <label className="mt-6 flex items-center justify-between gap-4 border-y border-rule py-3">
+          <label className="mt-6 flex items-center justify-between gap-4 border-y border-border py-3">
             <span>
-              <span className="block font-medium text-ink">Thêm bộ từ mẫu</span>
-              <span className="block text-sm text-ink-soft">Có sẵn vài chục từ để ôn thử ngay hôm nay.</span>
+              <span className="block font-medium text-fg">Thêm bộ từ mẫu</span>
+              <span className="block text-sm text-fg-muted">Có sẵn vài chục từ để ôn thử ngay hôm nay.</span>
             </span>
             <Switch checked={withSamples} onCheckedChange={setWithSamples} aria-label="Thêm bộ từ mẫu" />
           </label>

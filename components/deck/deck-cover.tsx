@@ -37,7 +37,7 @@ export function DeckCover({
     <span
       aria-hidden
       className={cn(
-        "cover-radius relative inline-flex shrink-0 overflow-hidden dark:[filter:saturate(0.9)_brightness(0.9)]",
+        "rounded-md relative inline-flex shrink-0 overflow-hidden dark:[filter:saturate(0.9)_brightness(0.9)]",
         BOX[s],
         deckTone(id).cover,
         className,
@@ -48,7 +48,7 @@ export function DeckCover({
         <span className={cn("flex min-w-0 flex-1 flex-col justify-between", s === "lg" ? "p-3" : "p-1.5")}>
           <span
             className={cn(
-              "block rounded-sm border border-rule bg-white text-ink",
+              "block rounded-sm border border-border bg-white text-fg",
               s === "lg" ? "px-2 py-2" : "px-1 py-1",
             )}
           >
@@ -64,8 +64,8 @@ export function DeckCover({
             ) : (
               <span className="block h-2" />
             )}
-            <span className={cn("mt-1 block border-t border-ink/15", s === "lg" && "mt-2")} />
-            <span className={cn("mt-1 block border-t border-ink/15", s === "lg" && "mt-2")} />
+            <span className={cn("mt-1 block border-t border-fg/15", s === "lg" && "mt-2")} />
+            <span className={cn("mt-1 block border-t border-fg/15", s === "lg" && "mt-2")} />
           </span>
           <span className="flex justify-end">
             <LangMark

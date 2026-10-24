@@ -14,8 +14,8 @@ export function LangMark({ lang, label, className }: { lang: LangCode; label?: b
       className={cn(
         "inline-flex h-[22px] min-w-[26px] shrink-0 items-center justify-center rounded-sm border px-1 text-xs leading-none font-semibold",
         zh
-          ? "border-seal/40 bg-tint-seal font-hanzi text-seal-text"
-          : "border-ink-violet/30 bg-tint-violet text-ink-violet",
+          ? "border-danger/40 bg-danger-soft font-hanzi text-danger-fg"
+          : "border-primary/30 bg-primary-soft text-primary",
         className,
       )}
     >

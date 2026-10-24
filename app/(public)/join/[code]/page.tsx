@@ -51,12 +51,12 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
   return (
     <div className="mt-8 max-w-md">
       <GroupAvatar id={group.id} name={group.name} className="size-16 text-3xl" />
-      <p className="mt-4 text-sm text-ink-soft">{group.owner_name} mời bạn vào nhóm</p>
+      <p className="mt-4 text-sm text-fg-muted">{group.owner_name} mời bạn vào nhóm</p>
       <h1 className="mt-1 text-xl break-words sm:text-2xl">{group.name}</h1>
-      {group.description && <p className="mt-2 text-[0.9375rem] text-ink">{group.description}</p>}
-      <p className="mt-2 text-sm text-ink-soft">{group.member_count} thành viên</p>
+      {group.description && <p className="mt-2 text-[0.9375rem] text-fg">{group.description}</p>}
+      <p className="mt-2 text-sm text-fg-muted">{group.member_count} thành viên</p>
 
-      <ul className="mt-5 list-disc space-y-1.5 pl-5 text-[0.9375rem] text-ink-soft marker:text-ink-faint">
+      <ul className="mt-5 list-disc space-y-1.5 pl-5 text-[0.9375rem] text-fg-muted marker:text-fg-subtle">
         <li>Học chung các bộ từ của nhóm, mỗi người một tiến độ riêng.</li>
         <li>So điểm XP trên bảng xếp hạng tuần.</li>
         <li>Bộ từ riêng tư của bạn vẫn chỉ mình bạn thấy.</li>

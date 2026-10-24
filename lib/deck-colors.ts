@@ -3,12 +3,12 @@
  * `tint` is the matching pale background; `wash` is its old name, kept until callers moved over.
  */
 const TONES = [
-  { cover: "bg-cover-indigo", bar: "bg-cover-indigo", tint: "bg-tint-violet", wash: "bg-tint-violet" },
-  { cover: "bg-cover-moss", bar: "bg-cover-moss", tint: "bg-tint-leaf", wash: "bg-tint-leaf" },
-  { cover: "bg-cover-plum", bar: "bg-cover-plum", tint: "bg-tint-seal", wash: "bg-tint-seal" },
-  { cover: "bg-cover-brick", bar: "bg-cover-brick", tint: "bg-tint-seal", wash: "bg-tint-seal" },
-  { cover: "bg-cover-ochre", bar: "bg-cover-ochre", tint: "bg-tint-turmeric", wash: "bg-tint-turmeric" },
-  { cover: "bg-cover-slate", bar: "bg-cover-slate", tint: "bg-surface-sunk", wash: "bg-surface-sunk" },
+  { cover: "bg-cover-indigo", bar: "bg-cover-indigo", tint: "bg-primary-soft", wash: "bg-primary-soft" },
+  { cover: "bg-cover-moss", bar: "bg-cover-moss", tint: "bg-success-soft", wash: "bg-success-soft" },
+  { cover: "bg-cover-plum", bar: "bg-cover-plum", tint: "bg-danger-soft", wash: "bg-danger-soft" },
+  { cover: "bg-cover-brick", bar: "bg-cover-brick", tint: "bg-danger-soft", wash: "bg-danger-soft" },
+  { cover: "bg-cover-ochre", bar: "bg-cover-ochre", tint: "bg-streak-soft", wash: "bg-streak-soft" },
+  { cover: "bg-cover-slate", bar: "bg-cover-slate", tint: "bg-surface-2", wash: "bg-surface-2" },
 ] as const;
 
 export type DeckTone = (typeof TONES)[number];

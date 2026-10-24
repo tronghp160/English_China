@@ -29,7 +29,7 @@ function RowControls({
         aria-label={`Đưa ${noun} ${index + 1} lên`}
         disabled={index === 0}
         onClick={() => onMove(index, index - 1)}
-        className="grid size-9 place-items-center rounded-md text-ink-soft transition-colors hover:bg-surface-sunk disabled:opacity-30"
+        className="grid size-9 place-items-center rounded-md text-fg-muted transition-colors hover:bg-surface-2 disabled:opacity-30"
       >
         <ArrowUp className="size-4" aria-hidden />
       </button>
@@ -38,7 +38,7 @@ function RowControls({
         aria-label={`Đưa ${noun} ${index + 1} xuống`}
         disabled={index === count - 1}
         onClick={() => onMove(index, index + 1)}
-        className="grid size-9 place-items-center rounded-md text-ink-soft transition-colors hover:bg-surface-sunk disabled:opacity-30"
+        className="grid size-9 place-items-center rounded-md text-fg-muted transition-colors hover:bg-surface-2 disabled:opacity-30"
       >
         <ArrowDown className="size-4" aria-hidden />
       </button>
@@ -46,7 +46,7 @@ function RowControls({
         type="button"
         aria-label={`Xóa ${noun} ${index + 1}`}
         onClick={() => onRemove(index)}
-        className="grid size-9 place-items-center rounded-md text-seal-text transition-colors hover:bg-tint-seal"
+        className="grid size-9 place-items-center rounded-md text-danger-fg transition-colors hover:bg-danger-soft"
       >
         <Trash2 className="size-4" aria-hidden />
       </button>
@@ -59,7 +59,7 @@ function AddButton({ onClick, children }: { onClick: () => void; children: React
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex min-h-11 items-center gap-1.5 rounded-btn px-2 text-sm font-medium text-ink-violet transition-colors hover:bg-tint-violet"
+      className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-primary transition-colors hover:bg-primary-soft"
     >
       <Plus className="size-4" aria-hidden />
       {children}
@@ -84,7 +84,7 @@ export function ExamplesEditor({
   return (
     <div className="space-y-3">
       {fields.map((f, i) => (
-        <div key={f.id} className="flex gap-2 rounded-card border border-rule bg-surface p-3">
+        <div key={f.id} className="flex gap-2 rounded-lg border border-border bg-surface p-3">
           <div className="min-w-0 flex-1 space-y-2">
             <Input
               aria-label={`Câu ví dụ ${i + 1}`}
@@ -125,7 +125,7 @@ export function CollocationsEditor({
   return (
     <div className="space-y-3">
       {fields.map((f, i) => (
-        <div key={f.id} className="flex gap-2 rounded-card border border-rule bg-surface p-3">
+        <div key={f.id} className="flex gap-2 rounded-lg border border-border bg-surface p-3">
           <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
             <Input aria-label={`Cụm từ ${i + 1}`} placeholder="Cụm từ" className={inputCls} {...register(`collocations.${i}.text`)} />
             {language === "zh" && (
@@ -156,12 +156,12 @@ export function FamilyEditor({
   return (
     <div className="space-y-3">
       {fields.map((f, i) => (
-        <div key={f.id} className="flex gap-2 rounded-card border border-rule bg-surface p-3">
+        <div key={f.id} className="flex gap-2 rounded-lg border border-border bg-surface p-3">
           <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-3">
             <Input aria-label={`Từ cùng họ ${i + 1}`} placeholder="resilience" className={inputCls} {...register(`word_family.${i}.text`)} />
             <select
               aria-label={`Loại từ ${i + 1}`}
-              className="h-11 rounded-btn border border-input bg-surface px-2 text-base outline-none focus-visible:border-ink-violet focus-visible:ring-3 focus-visible:ring-tint-violet"
+              className="h-11 rounded-md border border-input bg-surface px-2 text-base outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary-soft"
               {...register(`word_family.${i}.pos`)}
             >
               <option value="">Loại từ</option>
@@ -206,15 +206,15 @@ export function TagInput({
     setDraft("");
   }
   return (
-    <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-btn border border-input bg-surface px-2 py-1.5 focus-within:border-ink-violet focus-within:ring-3 focus-within:ring-tint-violet">
+    <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-md border border-input bg-surface px-2 py-1.5 focus-within:border-primary focus-within:ring-3 focus-within:ring-primary-soft">
       {value.map((t) => (
-        <span key={t} className="inline-flex items-center gap-1 rounded-chip bg-tint-violet py-1 pr-1 pl-3 text-sm text-ink">
+        <span key={t} className="inline-flex items-center gap-1 rounded-full bg-primary-soft py-1 pr-1 pl-3 text-sm text-fg">
           {t}
           <button
             type="button"
             aria-label={`Bỏ ${t}`}
             onClick={() => onChange(value.filter((x) => x !== t))}
-            className="grid size-6 place-items-center rounded-full text-ink-soft transition-colors hover:bg-surface"
+            className="grid size-6 place-items-center rounded-full text-fg-muted transition-colors hover:bg-surface"
           >
             ×
           </button>
@@ -237,7 +237,7 @@ export function TagInput({
         }}
         onBlur={() => commit(draft)}
         placeholder={value.length ? "" : placeholder}
-        className="min-w-24 flex-1 bg-transparent px-1 text-base outline-none placeholder:text-ink-faint"
+        className="min-w-24 flex-1 bg-transparent px-1 text-base outline-none placeholder:text-fg-subtle"
       />
     </div>
   );

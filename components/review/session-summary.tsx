@@ -25,9 +25,9 @@ export type SessionResult = {
 /** One line of the score table: label on the left, a serif tabular number on the right. */
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-rule py-3">
-      <dt className="text-ink-soft">{label}</dt>
-      <dd className="font-display text-xl font-semibold text-ink tabular-nums">{value}</dd>
+    <div className="flex items-baseline justify-between gap-4 border-b border-border py-3">
+      <dt className="text-fg-muted">{label}</dt>
+      <dd className="font-display text-xl font-semibold text-fg tabular-nums">{value}</dd>
     </div>
   );
 }
@@ -81,12 +81,12 @@ export function SessionSummary({
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl">{total ? "Xong phiên rồi!" : "Chưa có thẻ nào"}</h1>
           {total > 0 && (
-            <p className="mt-2 text-ink">
-              Bạn nhớ {remembered}/{total} thẻ. <span className="text-ink-soft">{mood.text}</span>
+            <p className="mt-2 text-fg">
+              Bạn nhớ {remembered}/{total} thẻ. <span className="text-fg-muted">{mood.text}</span>
             </p>
           )}
           {tomorrowDue !== undefined && (
-            <p className="mt-1 text-sm text-ink-soft">
+            <p className="mt-1 text-sm text-fg-muted">
               {tomorrowDue > 0 ? `Ngày mai có ${tomorrowDue} từ cần ôn.` : "Ngày mai chưa có từ nào đến hạn."}
             </p>
           )}
@@ -100,7 +100,7 @@ export function SessionSummary({
       </header>
 
       {total > 0 && (
-        <dl className="mt-6 border-t border-rule">
+        <dl className="mt-6 border-t border-border">
           <Row label={total === 1 ? "Số thẻ" : "Số lượt"} value={String(total)} />
           <Row label={correctLabel === "Nhớ" ? "Nhớ đúng" : correctLabel} value={`${pct}%`} />
           <Row label="Thời gian" value={formatDuration(durationMs)} />
@@ -109,7 +109,7 @@ export function SessionSummary({
       )}
 
       {sync.pending > 0 && (
-        <p role="status" className="mt-4 rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">
+        <p role="status" className="mt-4 rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">
           Còn {sync.pending} kết quả chưa gửi được. Chúng được lưu trên máy và sẽ tự gửi khi có mạng, đừng xóa dữ liệu trình duyệt.
         </p>
       )}
@@ -119,15 +119,15 @@ export function SessionSummary({
           <h2 id="summary-missed" className="mb-2 text-base">
             {missedTitle} ({missed.length})
           </h2>
-          <ul className="ruled-list border-y border-rule">
+          <ul className="divide-y divide-border border-y border-border">
             {missed.map((m) => (
               <li key={m.wordId}>
-                <Link href={`/words/${m.wordId}`} className="flex min-h-14 items-center gap-3 px-1 py-2 transition-colors hover:bg-surface-sunk">
-                  <span lang={m.language === "zh" ? "zh-CN" : "en"} className={cn("text-lg font-medium text-ink", m.language === "zh" ? "font-hanzi" : "font-display")}>
+                <Link href={`/words/${m.wordId}`} className="flex min-h-14 items-center gap-3 px-1 py-2 transition-colors hover:bg-surface-2">
+                  <span lang={m.language === "zh" ? "zh-CN" : "en"} className={cn("text-lg font-medium text-fg", m.language === "zh" ? "font-hanzi" : "font-display")}>
                     {m.term}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-sm text-ink-soft">{m.meaning}</span>
-                  <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
+                  <span className="min-w-0 flex-1 truncate text-sm text-fg-muted">{m.meaning}</span>
+                  <ChevronRight className="size-4 shrink-0 text-fg-subtle" aria-hidden />
                 </Link>
               </li>
             ))}

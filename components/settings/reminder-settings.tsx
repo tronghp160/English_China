@@ -42,7 +42,7 @@ export function ReminderSettings({ publicKey }: { publicKey: string | null }) {
   }, [publicKey]);
 
   if (!publicKey) {
-    return <p className="text-sm text-ink-soft">Máy chủ chưa bật thông báo nhắc ôn.</p>;
+    return <p className="text-sm text-fg-muted">Máy chủ chưa bật thông báo nhắc ôn.</p>;
   }
 
   const enable = () =>
@@ -93,10 +93,10 @@ export function ReminderSettings({ publicKey }: { publicKey: string | null }) {
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <label htmlFor="reminder-switch" className="font-medium text-ink">
+          <label htmlFor="reminder-switch" className="font-medium text-fg">
             Nhắc ôn hằng ngày
           </label>
-          <p className="text-sm text-ink-soft">Thông báo lúc 19:00 khi còn từ cần ôn. Chỉ áp dụng cho máy này.</p>
+          <p className="text-sm text-fg-muted">Thông báo lúc 19:00 khi còn từ cần ôn. Chỉ áp dụng cho máy này.</p>
         </div>
         <Switch
           id="reminder-switch"
@@ -110,25 +110,25 @@ export function ReminderSettings({ publicKey }: { publicKey: string | null }) {
           type="button"
           onClick={test}
           disabled={pending}
-          className="inline-flex min-h-11 items-center gap-2 rounded-btn border border-rule bg-surface px-4 text-sm font-medium hover:bg-muted disabled:opacity-60"
+          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-surface px-4 text-sm font-medium hover:bg-muted disabled:opacity-60"
         >
           <BellRing className="size-4" aria-hidden />
           Gửi thử
         </button>
       )}
       {state === "denied" && (
-        <p className="rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">
+        <p className="rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">
           Bạn đã chặn thông báo của Sổ Từ. Mở biểu tượng ổ khóa cạnh địa chỉ trang → Thông báo → Cho phép, rồi tải lại trang.
         </p>
       )}
       {state === "ios-install" && (
-        <p className="rounded-btn bg-tint-violet px-3 py-2 text-sm text-ink">
+        <p className="rounded-md bg-primary-soft px-3 py-2 text-sm text-fg">
           Trên iPhone, hãy cài Sổ Từ lên màn hình chính (mục “Ứng dụng” bên dưới), mở từ biểu tượng đó rồi bật nhắc ôn.
         </p>
       )}
-      {state === "unsupported" && <p className="text-sm text-ink-soft">Trình duyệt này không hỗ trợ thông báo.</p>}
+      {state === "unsupported" && <p className="text-sm text-fg-muted">Trình duyệt này không hỗ trợ thông báo.</p>}
       {state === "no-worker" && (
-        <p className="text-sm text-ink-soft">Thông báo cần bản đã cài đặt của Sổ Từ. Tải lại trang rồi thử lại.</p>
+        <p className="text-sm text-fg-muted">Thông báo cần bản đã cài đặt của Sổ Từ. Tải lại trang rồi thử lại.</p>
       )}
     </div>
   );

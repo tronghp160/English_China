@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { deleteGroup, removeMember } from "@/lib/actions/groups";
 
-const CONFIRM_BTN = "bg-seal text-on-seal hover:bg-seal/90";
+const CONFIRM_BTN = "bg-danger text-white hover:bg-danger/90";
 
 export function LeaveGroupButton({ groupId, userId, name }: { groupId: string; userId: string; name: string }) {
   const router = useRouter();

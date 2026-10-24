@@ -80,8 +80,8 @@ function TrueFalse({
           aria-pressed={value === v}
           onClick={() => onChange(v)}
           className={cn(
-            "flex min-h-14 items-center justify-center gap-2 rounded-btn border text-lg font-semibold text-ink transition-colors",
-            value === v ? "border-ink-violet bg-tint-violet ring-1 ring-ink-violet" : "border-input bg-surface hover:bg-surface-sunk",
+            "flex min-h-14 items-center justify-center gap-2 rounded-md border text-lg font-semibold text-fg transition-colors",
+            value === v ? "border-primary bg-primary-soft ring-1 ring-primary" : "border-input bg-surface hover:bg-surface-2",
           )}
         >
           <Icon className="size-5" strokeWidth={1.75} aria-hidden />
@@ -114,7 +114,7 @@ function QuestionCard({
         <>
           <div className="flex flex-col items-center gap-2 py-3">
             {q.prompt === "term" ? <TermLine word={q.word} bare /> : <MeaningLine word={q.word} bare />}
-            <p className="text-sm text-ink-soft">
+            <p className="text-sm text-fg-muted">
               {q.prompt === "term" ? "Nghĩa của từ này là gì?" : zh ? "Chữ Hán nào?" : "Từ nào?"}
             </p>
           </div>
@@ -135,11 +135,11 @@ function QuestionCard({
         <>
           <div className="flex flex-col items-center gap-2 py-3 text-center">
             {q.prompt === "term" ? <TermLine word={q.word} bare /> : <MeaningLine word={q.word} bare />}
-            <p className="text-sm text-ink-soft">{q.prompt === "term" ? "có nghĩa là" : "là từ"}</p>
+            <p className="text-sm text-fg-muted">{q.prompt === "term" ? "có nghĩa là" : "là từ"}</p>
             <p
               lang={q.prompt === "meaning" && zh ? "zh-CN" : undefined}
               className={cn(
-                "rounded-btn border border-rule bg-surface-sunk px-4 py-2 text-xl font-semibold text-ink",
+                "rounded-md border border-border bg-surface-2 px-4 py-2 text-xl font-semibold text-fg",
                 q.prompt === "meaning" && zh && "font-hanzi text-3xl",
               )}
             >
@@ -156,7 +156,7 @@ function QuestionCard({
           <div className="py-3">
             <MeaningLine word={q.word} bare />
           </div>
-          <label htmlFor={`q-${index}-input`} className="mb-1 block text-sm text-ink-soft">
+          <label htmlFor={`q-${index}-input`} className="mb-1 block text-sm text-fg-muted">
             {zh ? "Gõ chữ Hán hoặc pinyin" : "Gõ từ tiếng Anh"}
           </label>
           <Input
@@ -169,7 +169,7 @@ function QuestionCard({
             onChange={(e) => onAnswer(e.target.value)}
             lang={zh ? "zh-CN" : "en"}
             className={cn(
-              "h-14 rounded-none border-0 border-b-2 border-ink-violet bg-transparent px-1 text-xl hover:border-ink-violet focus-visible:ring-0",
+              "h-14 rounded-none border-0 border-b-2 border-primary bg-transparent px-1 text-xl hover:border-primary focus-visible:ring-0",
               zh ? "font-hanzi" : "font-display",
             )}
           />
@@ -182,15 +182,15 @@ function QuestionCard({
         <>
           <p
             lang={zh ? "zh-CN" : "en"}
-            className={cn("py-3 text-xl leading-relaxed text-ink", zh && "font-hanzi text-2xl")}
+            className={cn("py-3 text-xl leading-relaxed text-fg", zh && "font-hanzi text-2xl")}
           >
             {q.cloze.before}
-            <span className="mx-1 inline-block min-w-16 border-b-2 border-ink-violet text-center font-semibold text-ink-violet">
+            <span className="mx-1 inline-block min-w-16 border-b-2 border-primary text-center font-semibold text-primary">
               {picked ?? " "}
             </span>
             {q.cloze.after}
           </p>
-          {q.cloze.vi && <p className="-mt-1 mb-3 text-ink-soft">{q.cloze.vi}</p>}
+          {q.cloze.vi && <p className="-mt-1 mb-3 text-fg-muted">{q.cloze.vi}</p>}
           <Options
             options={q.options}
             answerId={q.answerId}
@@ -207,10 +207,10 @@ function QuestionCard({
   }
 
   return (
-    <section id={`q-${index}`} aria-labelledby={titleId} className="scroll-mt-20 py-5 pr-4 pl-[calc(var(--margin-x)+1rem)]">
+    <section id={`q-${index}`} aria-labelledby={titleId} className="scroll-mt-20 py-5 pr-4 pl-4">
       <h2 id={titleId} className="flex items-baseline gap-2 text-base">
         <span className="font-display text-lg font-semibold tabular-nums">Câu {index + 1}:</span>
-        {label && <span className="text-sm font-normal text-ink-soft">{label}</span>}
+        {label && <span className="text-sm font-normal text-fg-muted">{label}</span>}
       </h2>
       {body}
     </section>
@@ -226,7 +226,7 @@ function verdict(pct: number) {
 /** The teacher's pen: a hand-drawn red loop around the percentage, a little crooked. */
 function PenScore({ percent }: { percent: number }) {
   return (
-    <span className="relative grid size-28 shrink-0 -rotate-6 place-items-center text-seal-text">
+    <span className="relative grid size-28 shrink-0 -rotate-6 place-items-center text-danger-fg">
       <svg viewBox="0 0 112 112" aria-hidden className="absolute inset-0 size-full" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round">
         <path d="M58 9C84 8 104 28 103 56c-1 28-22 47-50 46C27 101 8 80 10 53 12 27 34 10 62 11c8 0 14 2 20 5" />
       </svg>
@@ -264,10 +264,10 @@ function Results({
       <header className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-xl">{mood}</h1>
-          <p className="mt-3 font-display text-5xl leading-none font-semibold text-ink tabular-nums">
+          <p className="mt-3 font-display text-5xl leading-none font-semibold text-fg tabular-nums">
             Đúng {grade.correct}/{grade.total}
           </p>
-          <p className="mt-3 flex flex-wrap gap-x-4 text-sm text-ink-soft">
+          <p className="mt-3 flex flex-wrap gap-x-4 text-sm text-fg-muted">
             <span>{formatDuration(durationMs)}</span>
             <span>+{grade.correct} XP</span>
           </p>
@@ -286,7 +286,7 @@ function Results({
       )}
 
       {sync.pending > 0 && (
-        <p role="status" className="mt-4 rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">
+        <p role="status" className="mt-4 rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">
           Còn {sync.pending} kết quả chưa gửi được. Chúng được lưu trên máy và sẽ tự gửi khi có mạng.
         </p>
       )}
@@ -311,9 +311,9 @@ function Results({
       </div>
 
       {matchHref && (
-        <p className="mt-4 text-center text-sm text-ink-soft">
+        <p className="mt-4 text-center text-sm text-fg-muted">
           Đổi gió một chút?{" "}
-          <Link href={matchHref} className="font-medium text-ink-violet underline-offset-4 hover:underline">
+          <Link href={matchHref} className="font-medium text-primary underline-offset-4 hover:underline">
             Chơi Ghép thẻ
           </Link>
         </p>
@@ -328,7 +328,7 @@ function Results({
             </Button>
           )}
         </div>
-        <ol className="ruled-list border-y border-rule">
+        <ol className="divide-y divide-border border-y border-border">
           {shown.map((item) => {
             const n = grade.items.indexOf(item) + 1;
             const q = item.question;
@@ -340,28 +340,28 @@ function Results({
                 <details open={!ok} className="group">
                   <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-1 py-2">
                     {ok ? (
-                      <Check className="size-5 shrink-0 text-leaf-text" aria-label="Đúng" />
+                      <Check className="size-5 shrink-0 text-success-fg" aria-label="Đúng" />
                     ) : (
-                      <X className="size-5 shrink-0 text-seal-text" aria-label="Sai" />
+                      <X className="size-5 shrink-0 text-danger-fg" aria-label="Sai" />
                     )}
-                    <span className="shrink-0 font-display text-sm font-semibold text-ink-soft tabular-nums">Câu {n}</span>
+                    <span className="shrink-0 font-display text-sm font-semibold text-fg-muted tabular-nums">Câu {n}</span>
                     {/* mixed scripts (term = meaning?), so no CJK serif face here */}
-                    <span className="min-w-0 flex-1 truncate text-ink">{questionText(q)}</span>
-                    {item.result === "close" && <span className="shrink-0 text-xs font-medium text-turmeric-text">Gần đúng</span>}
+                    <span className="min-w-0 flex-1 truncate text-fg">{questionText(q)}</span>
+                    {item.result === "close" && <span className="shrink-0 text-xs font-medium text-streak-fg">Gần đúng</span>}
                   </summary>
-                  <div className="flex items-start gap-3 border-t border-rule px-1 py-3">
+                  <div className="flex items-start gap-3 border-t border-border px-1 py-3">
                     <div className="min-w-0 flex-1 space-y-1 text-[0.9375rem]">
-                      <p className={ok ? "text-leaf-text" : "text-seal-text"}>
+                      <p className={ok ? "text-success-fg" : "text-danger-fg"}>
                         Bạn chọn:{" "}
-                        <span className={cn("font-semibold", !ok && "line-through decoration-seal decoration-2")}>{given ?? "(bỏ trống)"}</span>
+                        <span className={cn("font-semibold", !ok && "line-through decoration-danger decoration-2")}>{given ?? "(bỏ trống)"}</span>
                       </p>
                       {(!ok || item.result === "close") && (
-                        <p className="text-leaf-text">
+                        <p className="text-success-fg">
                           Đáp án đúng: <span className="font-semibold">{expectedText(q)}</span>
                         </p>
                       )}
-                      <p className="text-ink-soft">
-                        <span lang={zh ? "zh-CN" : "en"} className={cn("font-semibold text-ink", zh && "font-hanzi")}>
+                      <p className="text-fg-muted">
+                        <span lang={zh ? "zh-CN" : "en"} className={cn("font-semibold text-fg", zh && "font-hanzi")}>
                           {q.word.term}
                         </span>
                         {q.word.reading && <span> {q.word.reading}</span>} {q.word.meaning_vi}
@@ -466,7 +466,7 @@ export function TestSession({
         aria-label="Danh sách câu"
         className="fixed top-20 left-[calc(50%+22rem)] hidden w-40 lg:block"
       >
-        <p className="mb-2 text-sm font-semibold text-ink-soft">Danh sách câu</p>
+        <p className="mb-2 text-sm font-semibold text-fg-muted">Danh sách câu</p>
         <div className="grid grid-cols-4 gap-1.5">
           {questions.map((q, i) => (
             <a
@@ -476,8 +476,8 @@ export function TestSession({
               className={cn(
                 "grid size-9 place-items-center rounded-full text-sm font-medium tabular-nums",
                 answers[q.id]?.trim()
-                  ? "bg-ink-violet text-primary-foreground"
-                  : "border border-input bg-surface text-ink-soft hover:text-ink",
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-input bg-surface text-fg-muted hover:text-fg",
               )}
             >
               {i + 1}
@@ -486,10 +486,10 @@ export function TestSession({
         </div>
       </nav>
 
-      <div className="my-3 overflow-hidden rounded-card border border-rule bg-surface">
-        <div className="margin-line">
-          <h1 className="border-b border-rule py-3 pr-4 pl-[calc(var(--margin-x)+1rem)] font-display text-lg font-semibold">Bài kiểm tra</h1>
-          <div className="divide-y divide-rule">
+      <div className="my-3 overflow-hidden rounded-lg border border-border bg-surface">
+        <div className="">
+          <h1 className="border-b border-border py-3 pr-4 pl-4 font-display text-lg font-semibold">Bài kiểm tra</h1>
+          <div className="divide-y divide-border">
         {questions.map((q, i) => (
           <QuestionCard
             key={q.id}
@@ -503,8 +503,8 @@ export function TestSession({
         </div>
       </div>
 
-      <div className="sticky bottom-0 -mx-4 mt-auto flex items-center gap-3 border-t border-rule bg-paper/95 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur-sm">
-        <p className="flex-1 font-medium text-ink tabular-nums">
+      <div className="sticky bottom-0 -mx-4 mt-auto flex items-center gap-3 border-t border-border bg-canvas/95 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur-sm">
+        <p className="flex-1 font-medium text-fg tabular-nums">
           Đã làm {answered}/{questions.length}
         </p>
         <Button type="button" size="lg" onClick={() => (left > 0 ? setConfirmOpen(true) : submit())}>

@@ -25,8 +25,8 @@ export function TopBar({ children }: { children: React.ReactNode }) {
       <div ref={sentinel} aria-hidden className="pointer-events-none absolute top-0 left-0 h-px w-full" />
       <header
         className={cn(
-          "sticky top-0 z-30 border-b bg-paper/92 backdrop-blur-sm transition-colors duration-[var(--dur-base)]",
-          scrolled ? "border-rule" : "border-transparent",
+          "sticky top-0 z-30 border-b bg-canvas/92 backdrop-blur-sm transition-colors duration-[var(--dur-base)]",
+          scrolled ? "border-border" : "border-transparent",
         )}
       >
         {children}

@@ -27,8 +27,8 @@ export default async function ImportPage({ params }: PageProps<"/decks/[deckId]/
   return (
     <div className="mx-auto max-w-3xl">
       <BackLink href={`/decks/${deckId}`} label={view.deck.name} />
-      <h1 className="text-xl text-ink">Nhập hàng loạt</h1>
-      <p className="mt-1 mb-6 text-sm text-ink-soft">Dán danh sách từ trong vở, mỗi dòng một từ. Tối đa 100 từ mỗi lần.</p>
+      <h1 className="text-xl text-fg">Nhập hàng loạt</h1>
+      <p className="mt-1 mb-6 text-sm text-fg-muted">Dán danh sách từ trong vở, mỗi dòng một từ. Tối đa 100 từ mỗi lần.</p>
       <ImportWizard
         deckId={deckId}
         language={view.deck.language}

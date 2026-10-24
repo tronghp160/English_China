@@ -57,7 +57,7 @@ export function GroupForm({
           aria-invalid={Boolean(errors.name) || undefined}
           autoFocus={!groupId}
         />
-        {errors.name && <p className="text-sm text-seal-text">{errors.name}</p>}
+        {errors.name && <p className="text-sm text-danger-fg">{errors.name}</p>}
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="group-desc">Mô tả (không bắt buộc)</Label>
@@ -68,7 +68,7 @@ export function GroupForm({
           maxLength={300}
           rows={2}
         />
-        {errors.description && <p className="text-sm text-seal-text">{errors.description}</p>}
+        {errors.description && <p className="text-sm text-danger-fg">{errors.description}</p>}
       </div>
       <Button type="submit" size="lg" disabled={pending} className="w-full sm:w-auto sm:px-8">
         {groupId ? "Lưu" : "Tạo nhóm"}

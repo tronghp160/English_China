@@ -52,7 +52,7 @@ export function Heatmap({
     <figure className="m-0 flex flex-col gap-2" style={{ maxWidth: weeks * 24 + 32 }}>
       <div className="flex gap-1.5">
         <div
-          className="grid grid-rows-7 gap-[3px] pr-0.5 text-[0.6875rem] leading-none text-ink-soft"
+          className="grid grid-rows-7 gap-[3px] pr-0.5 text-[0.6875rem] leading-none text-fg-muted"
           aria-hidden
         >
           {WEEKDAYS.map((d, i) => (
@@ -78,14 +78,14 @@ export function Heatmap({
                   "heat-cell aspect-square w-full",
                   future ? "bg-transparent" : `heat-${level(counts.get(day) ?? 0)}`,
                   rest.has(day) && "heat-rest",
-                  day === today && "ring-2 ring-ink ring-offset-1 ring-offset-surface",
+                  day === today && "ring-2 ring-fg ring-offset-1 ring-offset-surface",
                 )}
               />
             );
           })}
         </div>
       </div>
-      <figcaption className="flex min-h-5 flex-wrap items-center justify-between gap-2 text-xs text-ink-soft">
+      <figcaption className="flex min-h-5 flex-wrap items-center justify-between gap-2 text-xs text-fg-muted">
         <span aria-live="polite">
           {hover ? describe(hover) : `${activeDays} ngày có ôn trong ${weeks} tuần`}
         </span>

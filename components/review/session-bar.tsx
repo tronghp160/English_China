@@ -42,12 +42,12 @@ export function SessionBar({
   const pct = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
   const pctOf = (n: number) => (total ? Math.min(100, (n / total) * 100) : 0);
   return (
-    <div className="sticky top-0 z-10 -mx-4 bg-paper/95 px-4 pb-2 backdrop-blur-sm">
+    <div className="sticky top-0 z-10 -mx-4 bg-canvas/95 px-4 pb-2 backdrop-blur-sm">
       <div className="flex h-14 items-center gap-2">
         <Link
           href={exitHref}
           aria-label="Thoát phiên"
-          className="-ml-2 grid size-11 shrink-0 place-items-center rounded-btn text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
+          className="-ml-2 grid size-11 shrink-0 place-items-center rounded-md text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
         >
           <X className="size-5" strokeWidth={1.75} aria-hidden />
         </Link>
@@ -58,13 +58,13 @@ export function SessionBar({
             aria-valuemax={total}
             aria-valuenow={done}
             aria-label={ariaLabel}
-            className="relative h-1.5 w-full overflow-hidden rounded-full bg-surface-sunk"
+            className="relative h-1.5 w-full overflow-hidden rounded-full bg-surface-2"
           >
             {segments ? (
               <>
-                <div className="absolute inset-y-0 left-0 bg-leaf transition-[width] duration-500 ease-[var(--ease-out)]" style={{ width: `${pctOf(segments.mastered)}%` }} />
+                <div className="absolute inset-y-0 left-0 bg-success transition-[width] duration-500 ease-[var(--ease-out)]" style={{ width: `${pctOf(segments.mastered)}%` }} />
                 <div
-                  className="absolute inset-y-0 bg-turmeric transition-[left,width] duration-500 ease-[var(--ease-out)]"
+                  className="absolute inset-y-0 bg-streak transition-[left,width] duration-500 ease-[var(--ease-out)]"
                   style={{ left: `${pctOf(segments.mastered)}%`, width: `${pctOf(segments.learning)}%` }}
                 />
               </>
@@ -82,12 +82,12 @@ export function SessionBar({
             </span>
           )}
         </div>
-        <span className="min-w-12 text-right text-sm font-semibold whitespace-nowrap text-ink-soft tabular-nums">
+        <span className="min-w-12 text-right text-sm font-semibold whitespace-nowrap text-fg-muted tabular-nums">
           {label ?? `${done}/${total}`}
         </span>
         {sync.pending > 0 && (
           <span
-            className="grid size-8 place-items-center text-ink-soft"
+            className="grid size-8 place-items-center text-fg-muted"
             title={sync.error ?? "Đang gửi kết quả…"}
             aria-label={sync.error ?? `Đang gửi ${sync.pending} kết quả`}
           >
@@ -96,7 +96,7 @@ export function SessionBar({
         )}
       </div>
       {sync.pending > 0 && sync.error && !sync.syncing && (
-        <p role="status" className="rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">
+        <p role="status" className="rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">
           {sync.error}
         </p>
       )}

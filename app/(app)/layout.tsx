@@ -30,7 +30,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <TopBar>
           <div className="mx-auto flex h-14 max-w-6xl items-center gap-1 px-4 lg:px-10">
             {/* The logo lives in the sidebar on desktop; the search field takes the left edge there */}
-            <Link href="/today" className="mr-auto rounded-btn lg:hidden" aria-label="Sổ Từ — Hôm nay">
+            <Link href="/today" className="mr-auto rounded-md lg:hidden" aria-label="Sổ Từ — Hôm nay">
               <Logo />
             </Link>
             <QuickSearch />

@@ -25,7 +25,7 @@ function Command({
     <CommandPrimitive
       data-slot="command"
       className={cn(
-        "flex size-full flex-col overflow-hidden rounded-card! bg-popover p-1 text-popover-foreground",
+        "flex size-full flex-col overflow-hidden rounded-lg! bg-popover p-1 text-popover-foreground",
         className
       )}
       {...props}
@@ -54,7 +54,7 @@ function CommandDialog({
       </DialogHeader>
       <DialogContent
         className={cn(
-          "top-[15vh] translate-y-0 overflow-hidden rounded-sheet! p-0 sm:max-w-[560px]",
+          "top-[15vh] translate-y-0 overflow-hidden rounded-xl! p-0 sm:max-w-[560px]",
           className
         )}
         showCloseButton={showCloseButton}
@@ -71,7 +71,7 @@ function CommandInput({
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
   return (
     <div data-slot="command-input-wrapper" className="p-1 pb-0">
-      <InputGroup className="h-12! rounded-btn! border-rule bg-surface shadow-none! *:data-[slot=input-group-addon]:pl-3!">
+      <InputGroup className="h-12! rounded-md! border-border bg-surface shadow-none! *:data-[slot=input-group-addon]:pl-3!">
         <CommandPrimitive.Input
           data-slot="command-input"
           className={cn(
@@ -155,7 +155,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "group/command-item relative flex min-h-11 cursor-default items-center gap-2 rounded-btn px-2.5 py-1.5 text-sm outline-hidden select-none in-data-[slot=dialog-content]:rounded-btn! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-surface-sunk data-selected:text-foreground data-selected:shadow-[inset_2px_0_0_var(--ink-violet)] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-selected:*:[svg]:text-foreground",
+        "group/command-item relative flex min-h-11 cursor-default items-center gap-2 rounded-md px-2.5 py-1.5 text-sm outline-hidden select-none in-data-[slot=dialog-content]:rounded-md! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-surface-2 data-selected:text-foreground data-selected:shadow-[inset_2px_0_0_var(--primary)] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-selected:*:[svg]:text-foreground",
         className
       )}
       {...props}

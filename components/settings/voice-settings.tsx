@@ -66,7 +66,7 @@ export function VoiceSettings({ prefs }: { prefs: Required<Prefs> }) {
   }
 
   if (!supported) {
-    return <p className="text-sm text-ink-soft">Trình duyệt này không hỗ trợ đọc phát âm.</p>;
+    return <p className="text-sm text-fg-muted">Trình duyệt này không hỗ trợ đọc phát âm.</p>;
   }
 
   return (
@@ -86,7 +86,7 @@ export function VoiceSettings({ prefs }: { prefs: Required<Prefs> }) {
                 onValueChange={(v) => save({ [key]: v === AUTO ? null : v })}
                 disabled={!list.length}
               >
-                <SelectTrigger id={`voice-${lang}`} className="h-11 flex-1 rounded-btn">
+                <SelectTrigger id={`voice-${lang}`} className="h-11 flex-1 rounded-md">
                   <SelectValue placeholder="Tự chọn" />
                 </SelectTrigger>
                 <SelectContent>
@@ -101,7 +101,7 @@ export function VoiceSettings({ prefs }: { prefs: Required<Prefs> }) {
               <Button
                 type="button"
                 variant="outline"
-                className="size-11 rounded-btn"
+                className="size-11 rounded-md"
                 aria-label={`Nghe thử giọng ${lang === "en" ? "tiếng Anh" : "tiếng Trung"}`}
                 disabled={!list.length}
                 onClick={() =>
@@ -112,7 +112,7 @@ export function VoiceSettings({ prefs }: { prefs: Required<Prefs> }) {
               </Button>
             </div>
             {loaded && !list.length && (
-              <p className="text-sm text-ink-soft">
+              <p className="text-sm text-fg-muted">
                 Máy chưa có giọng {lang === "en" ? "tiếng Anh" : "tiếng Trung"}.{" "}
                 {lang === "zh" && VOICE_HELP[detectPlatform()]}
               </p>
@@ -123,7 +123,7 @@ export function VoiceSettings({ prefs }: { prefs: Required<Prefs> }) {
 
       <fieldset>
         <legend className="mb-2 text-sm font-medium">Tốc độ đọc</legend>
-        <div role="radiogroup" className="inline-flex rounded-btn border border-rule bg-surface p-1">
+        <div role="radiogroup" className="inline-flex rounded-md border border-border bg-surface p-1">
           {RATES.map((r) => (
             <button
               key={r.value}
@@ -132,8 +132,8 @@ export function VoiceSettings({ prefs }: { prefs: Required<Prefs> }) {
               aria-checked={state.tts_rate === r.value}
               onClick={() => save({ tts_rate: r.value })}
               className={cn(
-                "min-h-11 rounded-md px-4 text-sm text-ink-soft",
-                state.tts_rate === r.value && "bg-tint-violet font-medium text-ink",
+                "min-h-11 rounded-md px-4 text-sm text-fg-muted",
+                state.tts_rate === r.value && "bg-primary-soft font-medium text-fg",
               )}
             >
               {r.label}

@@ -52,16 +52,16 @@ export function ContactLinks({ compact = false, className }: { compact?: boolean
             rel="noopener noreferrer"
             aria-label={`${it.label}: ${it.detail} (mở trong tab mới)`}
             className={cn(
-              "flex items-center gap-3 rounded-btn border border-rule-strong bg-surface text-ink transition-colors hover:bg-surface-sunk",
+              "flex items-center gap-3 rounded-md border border-border-strong bg-surface text-fg transition-colors hover:bg-surface-2",
               compact ? "min-h-11 px-3 py-1.5 text-sm" : "min-h-16 px-4 py-3",
             )}
           >
-            <span className="shrink-0 text-ink-soft">{it.icon}</span>
+            <span className="shrink-0 text-fg-muted">{it.icon}</span>
             <span className="min-w-0 flex-1">
               <span className="block font-semibold">{it.label}</span>
-              {!compact && <span className="block truncate text-sm text-ink-soft">{it.detail}</span>}
+              {!compact && <span className="block truncate text-sm text-fg-muted">{it.detail}</span>}
             </span>
-            {!compact && <ExternalLink className="size-4 shrink-0 text-ink-soft" aria-hidden />}
+            {!compact && <ExternalLink className="size-4 shrink-0 text-fg-muted" aria-hidden />}
           </a>
         </li>
       ))}

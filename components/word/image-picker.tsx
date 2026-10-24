@@ -18,7 +18,7 @@ export type ImageValue = { image_url: string | null; image_source: ImageSource |
 export function ImageCredit({ source, className }: { source: ImageSource | null | undefined; className?: string }) {
   if (!source || source.provider === "upload") return null;
   return (
-    <p className={cn("text-xs text-ink-soft", className)}>
+    <p className={cn("text-xs text-fg-muted", className)}>
       Ảnh:{" "}
       {source.author_url ? (
         <a href={source.author_url} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
@@ -157,12 +157,12 @@ export function ImagePicker({
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-3">
-        <div className="relative grid size-24 shrink-0 place-items-center overflow-hidden rounded-card border border-rule bg-surface-sunk">
+        <div className="relative grid size-24 shrink-0 place-items-center overflow-hidden rounded-lg border border-border bg-surface-2">
           {value.image_url ? (
             <Image src={value.image_url} alt="Ảnh đã chọn" fill sizes="96px" className="object-cover" />
           ) : (
             <span className="text-4xl" aria-hidden>
-              {emoji || <ImagePlus className="size-8 text-ink-faint" strokeWidth={1.5} />}
+              {emoji || <ImagePlus className="size-8 text-fg-subtle" strokeWidth={1.5} />}
             </span>
           )}
         </div>
@@ -180,7 +180,7 @@ export function ImagePicker({
             />
             <label
               htmlFor="word-image-upload"
-              className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-btn border border-rule-strong bg-surface px-3 text-sm font-medium transition-colors hover:bg-surface-sunk"
+              className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border border-border-strong bg-surface px-3 text-sm font-medium transition-colors hover:bg-surface-2"
             >
               {uploading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Camera className="size-4" aria-hidden />}
               Tải ảnh của tôi lên
@@ -221,7 +221,7 @@ export function ImagePicker({
 
       {suggestions.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-sm text-ink-soft">Ảnh theo từng nghĩa:</p>
+          <p className="text-sm text-fg-muted">Ảnh theo từng nghĩa:</p>
           <div className="flex flex-wrap gap-2">
             {suggestions.map((s) => {
               const active = searched?.q === s.query.toLowerCase();
@@ -236,8 +236,8 @@ export function ImagePicker({
                     void search(s.query);
                   }}
                   className={cn(
-                    "inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-chip border px-3 text-sm transition-colors",
-                    active ? "border-ink-violet bg-tint-violet font-medium text-ink" : "border-input bg-surface text-ink-soft hover:text-ink",
+                    "inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-full border px-3 text-sm transition-colors",
+                    active ? "border-primary bg-primary-soft font-medium text-fg" : "border-input bg-surface text-fg-muted hover:text-fg",
                   )}
                 >
                   <span className="truncate">{s.label}</span>
@@ -255,9 +255,9 @@ export function ImagePicker({
           ))}
         </div>
       ) : error ? (
-        <p className="text-sm text-seal-text">{error}</p>
+        <p className="text-sm text-danger-fg">{error}</p>
       ) : results && results.length === 0 ? (
-        <p className="text-sm text-ink-soft">Không có ảnh phù hợp. Thử từ khóa cụ thể hơn.</p>
+        <p className="text-sm text-fg-muted">Không có ảnh phù hợp. Thử từ khóa cụ thể hơn.</p>
       ) : results ? (
         <>
         <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4" aria-label="Ảnh gợi ý">
@@ -272,12 +272,12 @@ export function ImagePicker({
                   aria-label={`Chọn ảnh của ${r.author} (${providerLabel(r.provider)})`}
                   className={cn(
                     "relative block aspect-square w-full overflow-hidden rounded-lg border-2",
-                    active ? "border-ink-violet" : "border-transparent",
+                    active ? "border-primary" : "border-transparent",
                   )}
                 >
                   <Image src={r.thumb_url} alt={r.alt ?? ""} fill sizes="25vw" className="object-cover" />
                   {active && (
-                    <span className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-ink-violet text-primary-foreground">
+                    <span className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-primary text-primary-foreground">
                       <Check className="size-3" strokeWidth={3} aria-hidden />
                     </span>
                   )}

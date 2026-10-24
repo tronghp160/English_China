@@ -48,7 +48,7 @@ export function PronounceButton({
             role="button"
             aria-disabled="true"
             aria-label={`${aria} — chưa có giọng đọc`}
-            className={cn("inline-grid shrink-0 place-items-center rounded-full text-ink-soft opacity-50", dims, className)}
+            className={cn("inline-grid shrink-0 place-items-center rounded-full text-fg-muted opacity-50", dims, className)}
           >
             <VolumeX className={icon} aria-hidden />
           </span>
@@ -77,8 +77,8 @@ export function PronounceButton({
         if (!started) setSpeaking(false);
       }}
       className={cn(
-        "inline-grid shrink-0 place-items-center rounded-full text-ink-violet transition-colors hover:bg-tint-violet",
-        speaking && "bg-tint-violet",
+        "inline-grid shrink-0 place-items-center rounded-full text-primary transition-colors hover:bg-primary-soft",
+        speaking && "bg-primary-soft",
         dims,
         className,
       )}

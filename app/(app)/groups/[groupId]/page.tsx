@@ -34,11 +34,11 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
         <GroupAvatar id={groupId} name={group.name} className="size-14 text-2xl" />
         <div className="min-w-0 flex-1">
           <h1 className="text-xl break-words sm:text-2xl">{group.name}</h1>
-          <p className="mt-1 flex flex-wrap gap-x-4 text-sm text-ink-soft">
+          <p className="mt-1 flex flex-wrap gap-x-4 text-sm text-fg-muted">
             <span>{members.length} thành viên</span>
             <span>{decks.length} bộ từ</span>
           </p>
-          {group.description && <p className="mt-2 max-w-[62ch] text-[0.9375rem] text-ink">{group.description}</p>}
+          {group.description && <p className="mt-2 max-w-[62ch] text-[0.9375rem] text-fg">{group.description}</p>}
         </div>
         {isOwner && (
           <Button asChild variant="outline" size="icon" aria-label="Cài đặt nhóm">
@@ -58,30 +58,30 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
               </h2>
               <Link
                 href={`/decks/new?group=${groupId}`}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-btn px-2 text-sm font-medium text-ink-violet hover:underline"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-primary hover:underline"
               >
                 <Plus className="size-4" aria-hidden />
                 Thêm bộ từ
               </Link>
             </div>
             {decks.length ? (
-              <ul className="ruled-list border-y border-rule">
+              <ul className="divide-y divide-border border-y border-border">
                 {decks.map((d) => (
                   <li key={d.id}>
-                    <Link href={`/decks/${d.id}`} className="flex min-h-16 items-center gap-3 px-1 py-3 transition-colors hover:bg-surface-sunk">
+                    <Link href={`/decks/${d.id}`} className="flex min-h-16 items-center gap-3 px-1 py-3 transition-colors hover:bg-surface-2">
                       <DeckCover id={d.id} language={d.language} size="sm" />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2">
-                          <span className="truncate font-medium text-ink">{d.name}</span>
+                          <span className="truncate font-medium text-fg">{d.name}</span>
                           <LangMark lang={d.language} label />
                         </span>
-                        <span className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-ink-soft">
+                        <span className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-fg-muted">
                           <span>{d.word_count} từ</span>
                           <span>{d.owner_id === userId ? "của bạn" : d.owner?.display_name}</span>
                           {d.allow_member_edit && <span>ai cũng thêm từ được</span>}
                         </span>
                       </span>
-                      <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
+                      <ChevronRight className="size-4 shrink-0 text-fg-subtle" aria-hidden />
                     </Link>
                   </li>
                 ))}

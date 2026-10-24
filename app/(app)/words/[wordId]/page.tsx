@@ -34,19 +34,19 @@ export async function generateMetadata({ params }: PageProps<"/words/[wordId]">)
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border-t border-rule py-5">
+    <section className="border-t border-border py-5">
       <h2 className="mb-3 text-base">{title}</h2>
       {children}
     </section>
   );
 }
 
-/** The studied word inside an example sentence gets the highlighter, the one place it carries meaning. */
+/** The studied word inside an example sentence gets the font-bold text-primary-fg, the one place it carries meaning. */
 function Highlighted({ text, term }: { text: string; term: string }) {
   const t = term.trim();
   if (!t) return text;
   const parts = text.split(new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"));
-  return parts.map((p, i) => (p.toLowerCase() === t.toLowerCase() ? <mark key={i} className="highlighter bg-transparent text-inherit">{p}</mark> : p));
+  return parts.map((p, i) => (p.toLowerCase() === t.toLowerCase() ? <mark key={i} className="bg-transparent font-bold text-primary-fg">{p}</mark> : p));
 }
 
 export default async function WordPage({ params }: PageProps<"/words/[wordId]">) {
@@ -86,7 +86,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
     const id = existingMap.get(def.normalize(text));
     if (id) {
       return (
-        <Link href={`/words/${id}`} className="inline-flex min-h-10 items-center rounded-chip bg-tint-violet px-3 text-sm text-ink">
+        <Link href={`/words/${id}`} className="inline-flex min-h-10 items-center rounded-full bg-primary-soft px-3 text-sm text-fg">
           {text}
         </Link>
       );
@@ -94,14 +94,14 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
     return view!.canEdit ? (
       <Link
         href={`/decks/${word!.deck_id}/add?term=${encodeURIComponent(text)}`}
-        className="inline-flex min-h-10 items-center gap-1 rounded-chip border border-dashed border-rule-strong px-3 text-sm text-ink-soft hover:text-ink"
+        className="inline-flex min-h-10 items-center gap-1 rounded-full border border-dashed border-border-strong px-3 text-sm text-fg-muted hover:text-fg"
         title="Thêm từ này"
       >
         <Plus className="size-3.5" aria-hidden />
         {text}
       </Link>
     ) : (
-      <span className="inline-flex min-h-10 items-center rounded-chip border border-rule-strong px-3 text-sm text-ink">{text}</span>
+      <span className="inline-flex min-h-10 items-center rounded-full border border-border-strong px-3 text-sm text-fg">{text}</span>
     );
   }
 
@@ -132,20 +132,20 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
           actions={<PronounceButton text={word.term} lang={lang} size="lg" />}
           aside={
             word.image_url ? (
-              <div className="relative size-24 overflow-hidden rounded-card border border-rule sm:size-32">
+              <div className="relative size-24 overflow-hidden rounded-lg border border-border sm:size-32">
                 <Image src={word.image_url} alt="" fill sizes="128px" className="object-cover" />
               </div>
             ) : word.emoji ? (
-              <span className="grid size-20 place-items-center rounded-card bg-surface-sunk text-5xl" aria-hidden>
+              <span className="grid size-20 place-items-center rounded-lg bg-surface-2 text-5xl" aria-hidden>
                 {word.emoji}
               </span>
             ) : null
           }
-          className={isZh ? "sheet p-5 sm:p-6" : undefined}
+          className={isZh ? "rounded-lg border border-border/60 bg-surface shadow-sm p-5 sm:p-6" : undefined}
         >
           {isZh && extra.traditional && extra.traditional !== word.term && (
-            <p className="text-sm text-ink-soft">
-              Phồn thể <span lang="zh-TW" className="ml-1 font-hanzi text-xl text-ink">{extra.traditional}</span>
+            <p className="text-sm text-fg-muted">
+              Phồn thể <span lang="zh-TW" className="ml-1 font-hanzi text-xl text-fg">{extra.traditional}</span>
             </p>
           )}
         </WordSpecimen>
@@ -161,18 +161,18 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
           {word.topic && <Badge variant="outline">Chủ đề: {word.topic}</Badge>}
         </div>
 
-        <p className="mt-5 text-[1.375rem] leading-snug font-medium text-ink">{word.meaning_vi}</p>
-        {word.meaning_en && <p className="mt-1 text-ink-soft">{word.meaning_en}</p>}
+        <p className="mt-5 text-[1.375rem] leading-snug font-medium text-fg">{word.meaning_vi}</p>
+        {word.meaning_en && <p className="mt-1 text-fg-muted">{word.meaning_en}</p>}
         {isZh && extra.han_viet && (
-          <p className="mt-2 text-sm text-ink-soft">
-            Hán Việt: <span className="font-medium text-ink">{extra.han_viet}</span>
+          <p className="mt-2 text-sm text-fg-muted">
+            Hán Việt: <span className="font-medium text-fg">{extra.han_viet}</span>
           </p>
         )}
         {isZh && extra.measure_words && extra.measure_words.length > 0 && (
-          <p className="mt-1 text-sm text-ink-soft">
+          <p className="mt-1 text-sm text-fg-muted">
             Lượng từ:{" "}
             {extra.measure_words.map((m, i) => (
-              <span key={m.char} className="text-ink">
+              <span key={m.char} className="text-fg">
                 {i > 0 && ", "}
                 <span className="font-hanzi-sans">{m.char}</span> <PinyinText pinyin={m.pinyin} colored={toneColors} />
               </span>
@@ -180,7 +180,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
           </p>
         )}
         {extra.needs_review && (
-          <p className="mt-3 rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">Pinyin có chữ đa âm, nên kiểm tra lại.</p>
+          <p className="mt-3 rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">Pinyin có chữ đa âm, nên kiểm tra lại.</p>
         )}
 
         <div className="mt-5 flex flex-wrap gap-2">
@@ -223,13 +223,13 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
           <Section title="Câu ví dụ">
             <ul className="space-y-4">
               {examples.map((e, i) => (
-                <li key={i} className={cn("flex gap-2 border-l-2 pl-3", isZh ? "border-seal" : "border-ink-violet")}>
+                <li key={i} className={cn("flex gap-2 border-l-2 pl-3", isZh ? "border-zh" : "border-primary")}>
                   <div className="min-w-0 flex-1">
-                    <p lang={isZh ? "zh-CN" : "en"} className={isZh ? "font-hanzi text-lg text-ink" : "text-ink"}>
+                    <p lang={isZh ? "zh-CN" : "en"} className={isZh ? "font-hanzi text-lg text-fg" : "text-fg"}>
                       <Highlighted text={e.text} term={word.term} />
                     </p>
                     {isZh && e.reading && <PinyinText pinyin={e.reading} colored={toneColors} className="block text-sm" />}
-                    {e.vi && <p className="text-sm text-ink-soft">{e.vi}</p>}
+                    {e.vi && <p className="text-sm text-fg-muted">{e.vi}</p>}
                   </div>
                   <PronounceButton text={e.text} lang={lang} size="sm" label={`Đọc câu ví dụ ${i + 1}`} />
                 </li>
@@ -247,14 +247,14 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
                   <li key={`${c}-${i}`} className="flex items-center gap-4">
                     <StrokeOrder char={c} />
                     <div className="min-w-0 text-sm">
-                      <p className="font-hanzi text-2xl text-ink" lang="zh-CN">
+                      <p className="font-hanzi text-2xl text-fg" lang="zh-CN">
                         {c}
                       </p>
                       {info?.pinyin && <PinyinText pinyin={info.pinyin} colored={toneColors} className="text-base font-medium" />}
-                      {info?.meaning_vi && <p className="text-ink">{info.meaning_vi}</p>}
+                      {info?.meaning_vi && <p className="text-fg">{info.meaning_vi}</p>}
                       {info?.radical && (
-                        <p className="text-ink-soft">
-                          Bộ thủ: <span className="font-hanzi-sans text-ink">{info.radical}</span>
+                        <p className="text-fg-muted">
+                          Bộ thủ: <span className="font-hanzi-sans text-fg">{info.radical}</span>
                         </p>
                       )}
                     </div>
@@ -267,15 +267,15 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
 
         {collocations.length > 0 && (
           <Section title="Cụm từ thường gặp">
-            <ul className="ruled-list">
+            <ul className="divide-y divide-border">
               {collocations.map((c, i) => (
                 <li key={i} className="flex items-center gap-2 py-2.5">
                   <div className="min-w-0 flex-1">
-                    <p className={isZh ? "font-hanzi-sans text-ink" : "font-medium text-ink"}>
+                    <p className={isZh ? "font-hanzi-sans text-fg" : "font-medium text-fg"}>
                       {c.text}
                       {isZh && c.reading && <PinyinText pinyin={c.reading} colored={toneColors} className="ml-2 text-sm font-normal" />}
                     </p>
-                    {c.vi && <p className="text-sm text-ink-soft">{c.vi}</p>}
+                    {c.vi && <p className="text-sm text-fg-muted">{c.vi}</p>}
                   </div>
                   <PronounceButton text={c.text} lang={lang} size="sm" label={`Đọc cụm từ ${c.text}`} />
                 </li>
@@ -288,7 +288,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
           <Section title="Đồng nghĩa và trái nghĩa">
             {word.synonyms.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="w-20 text-sm text-ink-soft">Đồng nghĩa</span>
+                <span className="w-20 text-sm text-fg-muted">Đồng nghĩa</span>
                 {word.synonyms.map((s) => (
                   <RelatedChip key={s} text={s} />
                 ))}
@@ -296,7 +296,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
             )}
             {word.antonyms.length > 0 && (
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="w-20 text-sm text-ink-soft">Trái nghĩa</span>
+                <span className="w-20 text-sm text-fg-muted">Trái nghĩa</span>
                 {word.antonyms.map((s) => (
                   <RelatedChip key={s} text={s} />
                 ))}
@@ -308,27 +308,27 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
         {(family.length > 0 || extra.verb_forms || extra.plural) && (
           <Section title="Họ từ và dạng từ">
             {family.length > 0 && (
-              <ul className="ruled-list">
+              <ul className="divide-y divide-border">
                 {family.map((f, i) => (
                   <li key={i} className="flex flex-wrap items-baseline gap-x-2 py-2">
-                    <span className="font-medium text-ink">{f.text}</span>
-                    {f.pos && isPosCode(f.pos) && <span className="text-xs text-ink-soft">{POS[f.pos].label}</span>}
-                    <span className="text-sm text-ink-soft">{f.vi}</span>
+                    <span className="font-medium text-fg">{f.text}</span>
+                    {f.pos && isPosCode(f.pos) && <span className="text-xs text-fg-muted">{POS[f.pos].label}</span>}
+                    <span className="text-sm text-fg-muted">{f.vi}</span>
                   </li>
                 ))}
               </ul>
             )}
             {extra.verb_forms && (
-              <p className="mt-3 text-sm text-ink-soft">
+              <p className="mt-3 text-sm text-fg-muted">
                 Động từ:{" "}
-                <span className="text-ink">
+                <span className="text-fg">
                   {[extra.verb_forms.past, extra.verb_forms.past_participle, extra.verb_forms.ing, extra.verb_forms.third_person].join(", ")}
                 </span>
               </p>
             )}
             {extra.plural && (
-              <p className="mt-1 text-sm text-ink-soft">
-                Số nhiều: <span className="text-ink">{extra.plural}</span>
+              <p className="mt-1 text-sm text-fg-muted">
+                Số nhiều: <span className="text-fg">{extra.plural}</span>
               </p>
             )}
           </Section>
@@ -336,7 +336,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
 
         {word.personal_note && (
           <Section title="Ghi chú riêng">
-            <p className="rounded-btn bg-tint-turmeric px-4 py-3 whitespace-pre-line text-ink">{word.personal_note}</p>
+            <p className="rounded-md bg-streak-soft px-4 py-3 whitespace-pre-line text-fg">{word.personal_note}</p>
           </Section>
         )}
 
@@ -344,21 +344,21 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
           {recognize ? (
             <div className="space-y-1.5 text-sm">
               <StatusDot state={recognize.state} lapses={recognize.lapses} suspended={recognize.suspended} withLabel />
-              <p className="text-ink-soft">
-                Lần ôn gần nhất: <span className="text-ink">{recognize.last_review ? formatShortDate(recognize.last_review) : "chưa ôn"}</span>
+              <p className="text-fg-muted">
+                Lần ôn gần nhất: <span className="text-fg">{recognize.last_review ? formatShortDate(recognize.last_review) : "chưa ôn"}</span>
               </p>
               {recognize.state !== "new" && (
-                <p className="text-ink-soft">
-                  Lần tới: <span className="text-ink">{formatRelativeDue(recognize.due)}</span>
+                <p className="text-fg-muted">
+                  Lần tới: <span className="text-fg">{formatRelativeDue(recognize.due)}</span>
                 </p>
               )}
-              <p className="flex flex-wrap gap-x-4 text-ink-soft">
+              <p className="flex flex-wrap gap-x-4 text-fg-muted">
                 <span>Đã ôn {recognize.reps} lần</span>
                 <span>quên {recognize.lapses} lần</span>
               </p>
             </div>
           ) : (
-            <p className="text-sm text-ink-soft">Bạn chưa học từ này.</p>
+            <p className="text-sm text-fg-muted">Bạn chưa học từ này.</p>
           )}
           <SuspendToggle wordId={wordId} deckId={word.deck_id} suspended={Boolean(recognize?.suspended)} />
         </Section>

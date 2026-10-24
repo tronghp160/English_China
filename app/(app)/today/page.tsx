@@ -42,9 +42,9 @@ function SentenceLine({ n, lead, children }: { n: number; lead?: string; childre
   return (
     <span className="flex h-16 items-end">
       <span className="flex items-baseline gap-2.5 leading-none">
-        {lead && <span className="text-lg leading-none text-ink-soft">{lead}</span>}
-        <span className="font-display text-[3rem] leading-none font-semibold text-ink tabular-nums">{n}</span>
-        <span className="text-lg leading-none text-ink">{children}</span>
+        {lead && <span className="text-lg leading-none text-fg-muted">{lead}</span>}
+        <span className="font-display text-[3rem] leading-none font-semibold text-fg tabular-nums">{n}</span>
+        <span className="text-lg leading-none text-fg">{children}</span>
       </span>
     </span>
   );
@@ -83,14 +83,14 @@ export default async function TodayPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <p className="text-sm font-medium text-ink-soft">{dateLine(s.today)}</p>
+        <p className="text-sm font-medium text-fg-muted">{dateLine(s.today)}</p>
         <h1 className="mt-0.5 text-xl">
           {greeting(s.me.settings.timezone)}, {firstName}!
         </h1>
         {prefs.mascot ? (
           <MascotSay mood={mood} name={prefs.mascot_name} text={text} size={56} className="mt-3" />
         ) : (
-          <p className="mt-1 text-ink-soft">{text}</p>
+          <p className="mt-1 text-fg-muted">{text}</p>
         )}
       </header>
 
@@ -103,7 +103,7 @@ export default async function TodayPage() {
       >
         <div className="min-w-0 lg:col-start-1 lg:row-start-1">
           {s.totalCards === 0 ? (
-            <section className="sheet">
+            <section className="rounded-lg border border-border/60 bg-surface shadow-sm">
               <EmptyState
                 figure={prefs.mascot ? null : "notebook"}
                 title="Sổ của bạn còn trống."
@@ -123,17 +123,17 @@ export default async function TodayPage() {
               </EmptyState>
             </section>
           ) : due + fresh === 0 ? (
-            <section className="sheet margin-line relative overflow-hidden" aria-labelledby="today-done">
-              <div className="ruled-paper pr-5 pl-[calc(var(--margin-x)+1rem)]">
-                <h2 id="today-done" className="flex h-16 items-end pr-28 text-lg leading-none font-medium text-ink">
+            <section className="rounded-lg border border-border/60 bg-surface shadow-sm relative overflow-hidden" aria-labelledby="today-done">
+              <div className=" pr-5 pl-4">
+                <h2 id="today-done" className="flex h-16 items-end pr-28 text-lg leading-none font-medium text-fg">
                   Hôm nay ôn xong rồi.
                 </h2>
-                <p className="flex h-16 items-end pr-28 text-lg leading-none text-ink-soft">
+                <p className="flex h-16 items-end pr-28 text-lg leading-none text-fg-muted">
                   {tomorrow > 0 ? `Ngày mai có ${tomorrow} từ.` : "Ngày mai chưa có từ nào đến hạn."}
                 </p>
               </div>
               <SealStamp text="Xong bài" size={84} className="absolute top-4 right-5" />
-              <div className="border-t border-rule px-5 py-4 pl-[calc(var(--margin-x)+1rem)]">
+              <div className="border-t border-border px-5 py-4 pl-4">
                 <Button asChild variant="outline">
                   <Link href="/practice">
                     <PenLine aria-hidden />
@@ -143,8 +143,8 @@ export default async function TodayPage() {
               </div>
             </section>
           ) : (
-            <section className="sheet margin-line overflow-hidden" aria-labelledby="today-due">
-              <div className="ruled-paper pr-5 pl-[calc(var(--margin-x)+1rem)]">
+            <section className="rounded-lg border border-border/60 bg-surface shadow-sm overflow-hidden" aria-labelledby="today-due">
+              <div className=" pr-5 pl-4">
                 <h2 id="today-due" className="flex flex-col">
                   <SentenceLine n={due}>từ đến hạn ôn</SentenceLine>
                   {fresh > 0 && (
@@ -155,12 +155,12 @@ export default async function TodayPage() {
                 </h2>
               </div>
               {split && (
-                <ul className="ruled-list border-t border-rule pl-[calc(var(--margin-x)+0.5rem)]">
+                <ul className="divide-y divide-border border-t border-border pl-2">
                   {s.langs.map((l) => (
                     <li key={l.language}>
                       <Link
                         href={`/review?lang=${l.language}`}
-                        className="flex min-h-12 items-center gap-3 pr-4 text-sm text-ink hover:bg-surface-sunk"
+                        className="flex min-h-12 items-center gap-3 pr-4 text-sm text-fg hover:bg-surface-2"
                       >
                         <LangMark lang={l.language} label />
                         <span className="tabular-nums">
@@ -171,14 +171,14 @@ export default async function TodayPage() {
                   ))}
                 </ul>
               )}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-rule py-4 pr-5 pl-[calc(var(--margin-x)+1rem)]">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border py-4 pr-5 pl-4">
                 <Button asChild size="lg">
                   <Link href="/review">
                     <Play className="fill-current" aria-hidden />
                     Bắt đầu ôn
                   </Link>
                 </Button>
-                <span className="text-sm text-ink-soft">khoảng {minutes} phút</span>
+                <span className="text-sm text-fg-muted">khoảng {minutes} phút</span>
               </div>
             </section>
           )}
@@ -218,23 +218,23 @@ export default async function TodayPage() {
                     <h2 id="today-decks" className="text-base">
                       Bộ từ
                     </h2>
-                    <Link href="/decks" className="inline-flex min-h-11 items-center text-sm font-medium text-ink-violet hover:underline">
+                    <Link href="/decks" className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline">
                       Tất cả
                     </Link>
                   </div>
-                  <ul className="ruled-list border-y border-rule">
+                  <ul className="divide-y divide-border border-y border-border">
                     {topDecks.map((d) => (
                       <li key={d.id}>
-                        <Link href={`/decks/${d.id}`} className="-mx-2 flex min-h-14 items-center gap-3 rounded-btn px-2 py-2 hover:bg-surface-sunk">
+                        <Link href={`/decks/${d.id}`} className="-mx-2 flex min-h-14 items-center gap-3 rounded-md px-2 py-2 hover:bg-surface-2">
                           <DeckCover id={d.id} language={d.language} size="sm" />
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-semibold text-ink">{d.name}</span>
-                            <span className="block text-xs text-ink-soft">{d.word_count} từ</span>
+                            <span className="block truncate text-sm font-semibold text-fg">{d.name}</span>
+                            <span className="block text-xs text-fg-muted">{d.word_count} từ</span>
                           </span>
                           {d.due_count > 0 ? (
-                            <span className="shrink-0 text-sm font-semibold text-seal-text tabular-nums">{d.due_count} ôn</span>
+                            <span className="shrink-0 text-sm font-semibold text-danger-fg tabular-nums">{d.due_count} ôn</span>
                           ) : (
-                            <Check className="size-4 shrink-0 text-leaf" aria-label="Đã ôn xong" />
+                            <Check className="size-4 shrink-0 text-success" aria-label="Đã ôn xong" />
                           )}
                         </Link>
                       </li>
@@ -250,7 +250,7 @@ export default async function TodayPage() {
                   <h2 id="today-weeks" className="text-base">
                     12 tuần gần đây
                   </h2>
-                  <Link href="/stats" className="inline-flex min-h-11 items-center text-sm font-medium text-ink-violet hover:underline">
+                  <Link href="/stats" className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline">
                     Xem thống kê
                   </Link>
                 </div>
@@ -265,8 +265,8 @@ export default async function TodayPage() {
         )}
       </div>
 
-      <section aria-labelledby="today-contact" className="flex flex-col gap-2 border-t border-rule pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <p id="today-contact" className="text-sm text-ink-soft">
+      <section aria-labelledby="today-contact" className="flex flex-col gap-2 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <p id="today-contact" className="text-sm text-fg-muted">
           Gặp lỗi hay có góp ý? Nhắn {CONTACT.nickname}
         </p>
         <ContactLinks compact />

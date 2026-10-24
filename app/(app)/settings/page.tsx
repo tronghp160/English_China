@@ -34,8 +34,8 @@ const SECTIONS = [
 
 function Section({ id, title, children, danger }: { id: (typeof SECTIONS)[number]["id"]; title: string; children: React.ReactNode; danger?: boolean }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20 border-t border-rule py-8 first:border-t-0 first:pt-0">
-      <div className={danger ? "rounded-card border border-seal/60 p-5" : undefined}>
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20 border-t border-border py-8 first:border-t-0 first:pt-0">
+      <div className={danger ? "rounded-lg border border-danger/60 p-5" : undefined}>
         <h2 id={`${id}-title`} className="mb-4 text-lg">
           {title}
         </h2>
@@ -68,12 +68,12 @@ export default async function SettingsPage() {
             />
           </Section>
           <Section id="mat-khau" title="Mật khẩu">
-            <p className="mb-4 text-sm text-ink-soft">
+            <p className="mb-4 text-sm text-fg-muted">
               Đặt hoặc đổi mật khẩu để đăng nhập bằng email
               {me.user.email && (
                 <>
                   {" "}
-                  <span className="text-ink">{me.user.email}</span>
+                  <span className="text-fg">{me.user.email}</span>
                 </>
               )}
               .
@@ -99,7 +99,7 @@ export default async function SettingsPage() {
             <InstallApp />
           </Section>
           <Section id="lien-he" title="Liên hệ & góp ý">
-            <p className="mb-3 text-sm text-ink-soft">Gặp lỗi hay muốn góp ý? Nhắn trực tiếp cho {CONTACT.nickname}, người làm Sổ Từ.</p>
+            <p className="mb-3 text-sm text-fg-muted">Gặp lỗi hay muốn góp ý? Nhắn trực tiếp cho {CONTACT.nickname}, người làm Sổ Từ.</p>
             <ContactLinks />
           </Section>
           <Section id="du-lieu" title="Dữ liệu của bạn">

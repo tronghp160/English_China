@@ -24,7 +24,7 @@ export function DeleteChatButton({ threadId, title, redirectTo }: { threadId: st
           else router.refresh();
         });
       }}
-      className="grid size-11 shrink-0 place-items-center rounded-btn text-ink-soft transition-colors hover:bg-tint-seal hover:text-seal-text disabled:opacity-50"
+      className="grid size-11 shrink-0 place-items-center rounded-md text-fg-muted transition-colors hover:bg-danger-soft hover:text-danger-fg disabled:opacity-50"
     >
       <Trash2 className="size-5" strokeWidth={1.75} aria-hidden />
     </button>

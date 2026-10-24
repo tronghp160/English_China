@@ -20,7 +20,7 @@ export function JoinCodeForm() {
 
   return (
     <form onSubmit={submit} noValidate>
-      <label htmlFor="invite-code" className="text-sm font-medium text-ink">
+      <label htmlFor="invite-code" className="text-sm font-medium text-fg">
         Có mã mời?
       </label>
       <div className="mt-1.5 flex gap-2">
@@ -45,7 +45,7 @@ export function JoinCodeForm() {
         </Button>
       </div>
       {error && (
-        <p id="invite-code-error" className="mt-1.5 text-sm text-seal-text">
+        <p id="invite-code-error" className="mt-1.5 text-sm text-danger-fg">
           {error}
         </p>
       )}

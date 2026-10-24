@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
  * (+, hearts, tear, z, ?, !) fade in once when the mood changes and then stay still.
  * Pure SVG, decorative (the words next to it carry the meaning); colors are the --pup-* tokens.
  */
-const INK = "var(--pup-ink)";
+const INK = "var(--pup-fg)";
 
 /** Heart outline centered on (x, y); `s` is about half its width. */
 function heart(x: number, y: number, s: number) {
@@ -45,7 +45,7 @@ function Eyes({ mood, animated }: { mood: PupMood; animated: boolean }) {
       );
     case "love":
       return (
-        <g fill="var(--seal)" stroke="var(--seal)" strokeWidth={1.2}>
+        <g fill="var(--danger)" stroke="var(--danger)" strokeWidth={1.2}>
           <path d={heart(47, 50, 6)} />
           <path d={heart(73, 50, 6)} />
         </g>

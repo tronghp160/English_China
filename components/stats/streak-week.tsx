@@ -33,12 +33,12 @@ export function StreakWeek({
   return (
     <section aria-labelledby="streak-title" className={className}>
       <h2 id="streak-title" className="flex items-center gap-1.5 text-base">
-        <Flame className="size-4 text-turmeric" strokeWidth={1.75} aria-hidden />
+        <Flame className="size-4 text-streak" strokeWidth={1.75} aria-hidden />
         Chuỗi ngày
       </h2>
       <p className="mt-2 flex items-baseline gap-1.5">
-        <span className="font-display text-[2rem] leading-none font-semibold text-ink tabular-nums">{streak.current}</span>
-        <span className="text-sm text-ink-soft">ngày</span>
+        <span className="font-display text-[2rem] leading-none font-semibold text-fg tabular-nums">{streak.current}</span>
+        <span className="text-sm text-fg-muted">ngày</span>
       </p>
       <ul aria-label="Tuần này" className="mt-3 grid grid-cols-7 gap-1.5">
         {days.map((d) => (
@@ -46,22 +46,22 @@ export function StreakWeek({
             <span
               className={cn(
                 "relative grid size-8 place-items-center rounded-sm",
-                d.state === "done" && "bg-turmeric",
-                d.state === "empty" && "bg-surface-sunk",
-                d.state === "rest" && "heat-rest bg-surface-sunk",
-                d.state === "future" && "border border-dashed border-rule-strong",
-                d.isToday && "ring-2 ring-ink ring-offset-1 ring-offset-paper",
+                d.state === "done" && "bg-streak",
+                d.state === "empty" && "bg-surface-2",
+                d.state === "rest" && "heat-rest bg-surface-2",
+                d.state === "future" && "border border-dashed border-border-strong",
+                d.isToday && "ring-2 ring-fg ring-offset-1 ring-offset-canvas",
               )}
             >
               <span className="sr-only">{`${d.label}: ${STATE_TEXT[d.state]}`}</span>
             </span>
-            <span aria-hidden className={cn("text-xs", d.isToday ? "font-semibold text-ink" : "text-ink-soft")}>
+            <span aria-hidden className={cn("text-xs", d.isToday ? "font-semibold text-fg" : "text-fg-muted")}>
               {d.label}
             </span>
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-sm text-ink-soft">
+      <p className="mt-3 text-sm text-fg-muted">
         {!streak.activeToday && streak.current > 0
           ? "Ôn 1 thẻ hôm nay để giữ chuỗi."
           : streak.restUsedThisWeek

@@ -30,8 +30,8 @@ export function SuggestWordCard({ word, language }: { word: SuggestedWord; langu
   const [first, ...others] = word.decks.slice(0, 6);
   return (
     <div className="my-3">
-      <WordSpecimen lang={language} term={word.term} reading={word.reading} size="sm" className={language === "zh" ? "sheet p-3" : undefined}>
-        <p className="flex min-h-[var(--line)] items-end pb-1 text-sm text-ink">{word.meaning_vi}</p>
+      <WordSpecimen lang={language} term={word.term} reading={word.reading} size="sm" className={language === "zh" ? "rounded-lg border border-border/60 bg-surface shadow-sm p-3" : undefined}>
+        <p className="flex min-h-[var(--line)] items-end pb-1 text-sm text-fg">{word.meaning_vi}</p>
       </WordSpecimen>
       <div className="mt-2">
         {first ? (
@@ -39,7 +39,7 @@ export function SuggestWordCard({ word, language }: { word: SuggestedWord; langu
             <AddLink deckId={first.id} name={first.name} term={word.term} />
             {others.length > 0 && (
               <details className="mt-1">
-                <summary className="inline-flex min-h-11 cursor-pointer items-center px-1 text-sm font-medium text-ink-soft">Bộ khác</summary>
+                <summary className="inline-flex min-h-11 cursor-pointer items-center px-1 text-sm font-medium text-fg-muted">Bộ khác</summary>
                 <div className="flex flex-col items-start gap-1.5">
                   {others.map((d) => (
                     <AddLink key={d.id} deckId={d.id} name={d.name} term={word.term} />

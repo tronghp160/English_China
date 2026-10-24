@@ -17,7 +17,7 @@ export function MemberEditToggles({ decks }: { decks: Deck[] }) {
   const [, start] = useTransition();
 
   return (
-    <div className="ruled-list">
+    <div className="divide-y divide-border">
       {optimistic.map((d) => (
         <SwitchRow
           key={d.id}

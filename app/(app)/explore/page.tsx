@@ -43,13 +43,13 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
   return (
     <div>
       <h1 className="text-xl">Khám phá</h1>
-      <p className="mt-1 text-ink-soft">Bộ từ công khai do mọi người chia sẻ. Học trực tiếp hoặc sao chép về.</p>
+      <p className="mt-1 text-fg-muted">Bộ từ công khai do mọi người chia sẻ. Học trực tiếp hoặc sao chép về.</p>
 
       <form action="/explore" role="search" className="mt-5 flex max-w-xl gap-2">
         {lang && <input type="hidden" name="lang" value={lang} />}
         {sort !== "popular" && <input type="hidden" name="sort" value={sort} />}
         <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-[1.125rem] -translate-y-1/2 text-ink-soft" strokeWidth={1.75} aria-hidden />
+          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-[1.125rem] -translate-y-1/2 text-fg-muted" strokeWidth={1.75} aria-hidden />
           <Input type="search" name="q" defaultValue={q} placeholder="Tìm theo tên bộ từ" aria-label="Tìm theo tên bộ từ" className="pl-10" />
         </div>
         <Button type="submit" variant="outline">
@@ -75,25 +75,25 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
           {decks.map((d) => (
             <li
               key={d.id}
-              className="group flex min-w-0 flex-col gap-3 rounded-card border border-rule bg-surface p-4 transition-colors duration-[var(--dur-fast)] hover:border-rule-strong sm:flex-row sm:items-center sm:gap-4"
+              className="group flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-surface p-4 transition-colors duration-[var(--dur-fast)] hover:border-border-strong sm:flex-row sm:items-center sm:gap-4"
             >
               <Link href={`/decks/${d.id}`} className="flex min-w-0 flex-1 items-center gap-4">
                 <DeckCover id={d.id} language={d.language} name={d.name} className="transition-transform duration-[var(--dur-fast)] group-hover:-translate-x-0.5" />
                 <span className="min-w-0 flex-1">
-                  <span className="line-clamp-2 leading-snug font-semibold text-ink">{d.name}</span>
-                  {d.description && <span className="mt-0.5 line-clamp-1 block text-sm text-ink">{d.description}</span>}
-                  <span className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-ink-soft">
+                  <span className="line-clamp-2 leading-snug font-semibold text-fg">{d.name}</span>
+                  {d.description && <span className="mt-0.5 line-clamp-1 block text-sm text-fg">{d.description}</span>}
+                  <span className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-fg-muted">
                     <span>{LANGUAGES[d.language].label}</span>
                     <span>{d.word_count} từ</span>
                     <span>{d.isMine ? "của bạn" : d.owner?.display_name}</span>
                   </span>
                 </span>
-                <ChevronRight className="hidden size-4 shrink-0 text-ink-faint sm:block" aria-hidden />
+                <ChevronRight className="hidden size-4 shrink-0 text-fg-subtle sm:block" aria-hidden />
               </Link>
               <div className="flex shrink-0 items-center justify-between gap-3 sm:flex-col sm:items-end sm:gap-2">
-                <span className="text-sm text-ink-soft tabular-nums">{d.learner_count} người học</span>
+                <span className="text-sm text-fg-muted tabular-nums">{d.learner_count} người học</span>
                 {d.isSubscribed ? (
-                  <span className="inline-flex items-center gap-1 text-sm text-leaf-text">
+                  <span className="inline-flex items-center gap-1 text-sm text-success-fg">
                     <Check className="size-4" aria-hidden />
                     Đang theo học
                   </span>
@@ -133,7 +133,7 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
           ) : (
             <span />
           )}
-          <span className="text-sm text-ink-soft tabular-nums">
+          <span className="text-sm text-fg-muted tabular-nums">
             Trang {page}/{pages}
           </span>
           {page < pages ? (

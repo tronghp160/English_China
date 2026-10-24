@@ -35,8 +35,8 @@ export function NewChatForm({
       <input type="hidden" name="language" value={language} />
       {langs.length > 1 && (
         <fieldset>
-          <legend className="mb-1.5 text-sm font-medium text-ink">Học ngôn ngữ</legend>
-          <div className="inline-flex gap-0.5 rounded-chip bg-surface-sunk p-1">
+          <legend className="mb-1.5 text-sm font-medium text-fg">Học ngôn ngữ</legend>
+          <div className="inline-flex gap-0.5 rounded-full bg-surface-2 p-1">
             {langs.map((l) => (
               <button
                 key={l}
@@ -44,8 +44,8 @@ export function NewChatForm({
                 aria-pressed={language === l}
                 onClick={() => setLanguage(l)}
                 className={cn(
-                  "inline-flex h-9 items-center rounded-chip px-3.5 text-sm font-medium transition-colors",
-                  language === l ? "bg-surface text-ink shadow-card" : "text-ink-soft hover:text-ink",
+                  "inline-flex h-9 items-center rounded-full px-3.5 text-sm font-medium transition-colors",
+                  language === l ? "bg-surface text-fg shadow-card" : "text-fg-muted hover:text-fg",
                 )}
               >
                 {LANGUAGES[l].label}
@@ -62,7 +62,7 @@ export function NewChatForm({
             id="chat-deck"
             name="deck_id"
             defaultValue=""
-            className="h-11 w-full rounded-btn border border-input bg-surface px-3 text-base outline-none focus-visible:border-ink-violet focus-visible:ring-3 focus-visible:ring-tint-violet"
+            className="h-11 w-full rounded-md border border-input bg-surface px-3 text-base outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary-soft"
           >
             <option value="">Tất cả bộ từ {LANGUAGES[language].label.toLowerCase()}</option>
             {options.map((d) => (

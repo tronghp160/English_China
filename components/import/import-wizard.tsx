@@ -191,12 +191,12 @@ export function ImportWizard({
     const failed = items.filter((i) => i.state === "failed");
     return (
       <div className="space-y-5">
-        <div className="sheet px-5 py-5">
+        <div className="rounded-lg border border-border/60 bg-surface shadow-sm px-5 py-5">
           <div className="flex items-center justify-between gap-3">
-            <p className="font-medium text-ink">
+            <p className="font-medium text-fg">
               {running ? "Đang điền và thêm từ…" : `Đã thêm ${saved}/${items.length} từ`}
             </p>
-            <span className="text-sm text-ink-soft">
+            <span className="text-sm text-fg-muted">
               {done}/{items.length}
             </span>
           </div>
@@ -204,18 +204,18 @@ export function ImportWizard({
           {!running && (
             <div className="mt-4 flex flex-wrap gap-2">
               {failed.length > 0 && (
-                <Button type="button" onClick={() => void run(failed, aiEnabled)} className="h-11 gap-2 rounded-btn">
+                <Button type="button" onClick={() => void run(failed, aiEnabled)} className="h-11 gap-2 rounded-md">
                   <RotateCcw className="size-4" aria-hidden />
                   Thử lại {failed.length} từ lỗi
                 </Button>
               )}
-              <Button asChild variant="outline" className="h-11 rounded-btn">
+              <Button asChild variant="outline" className="h-11 rounded-md">
                 <Link href={`/decks/${deckId}`}>Về bộ từ</Link>
               </Button>
               <Button
                 type="button"
                 variant="ghost"
-                className="h-11 rounded-btn"
+                className="h-11 rounded-md"
                 onClick={() => {
                   setItems(null);
                   setText("");
@@ -226,28 +226,28 @@ export function ImportWizard({
             </div>
           )}
         </div>
-        <ul className="ruled-list overflow-hidden rounded-xl border border-rule bg-surface">
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
           {items.map((it) => (
             <li key={it.normalized} className="flex min-h-14 items-center gap-3 px-4 py-2">
               <span className="w-6 shrink-0">
                 {it.state === "working" || it.state === "pending" ? (
-                  <Loader2 className={cn("size-5 text-ink-soft", it.state === "working" && "animate-spin")} aria-label="Đang xử lý" />
+                  <Loader2 className={cn("size-5 text-fg-muted", it.state === "working" && "animate-spin")} aria-label="Đang xử lý" />
                 ) : it.state === "saved" ? (
-                  <CheckCircle2 className="size-5 text-leaf" aria-label="Đã thêm" />
+                  <CheckCircle2 className="size-5 text-success" aria-label="Đã thêm" />
                 ) : (
-                  <AlertCircle className={cn("size-5", it.state === "failed" ? "text-seal-text" : "text-ink-soft")} aria-label={it.state === "failed" ? "Lỗi" : "Bỏ qua"} />
+                  <AlertCircle className={cn("size-5", it.state === "failed" ? "text-danger-fg" : "text-fg-muted")} aria-label={it.state === "failed" ? "Lỗi" : "Bỏ qua"} />
                 )}
               </span>
               <span className="min-w-0 flex-1">
                 {it.wordId ? (
-                  <Link href={`/words/${it.wordId}`} className={cn("font-medium text-ink underline-offset-2 hover:underline", language === "zh" && "font-hanzi-sans")}>
+                  <Link href={`/words/${it.wordId}`} className={cn("font-medium text-fg underline-offset-2 hover:underline", language === "zh" && "font-hanzi-sans")}>
                     {it.term}
                   </Link>
                 ) : (
-                  <span className={cn("font-medium text-ink", language === "zh" && "font-hanzi-sans")}>{it.term}</span>
+                  <span className={cn("font-medium text-fg", language === "zh" && "font-hanzi-sans")}>{it.term}</span>
                 )}
-                {it.meaning_vi && <span className="ml-2 text-sm text-ink-soft">{it.meaning_vi}</span>}
-                {it.error && <span className="block text-sm text-seal-text">{it.error}</span>}
+                {it.meaning_vi && <span className="ml-2 text-sm text-fg-muted">{it.meaning_vi}</span>}
+                {it.error && <span className="block text-sm text-danger-fg">{it.error}</span>}
               </span>
             </li>
           ))}
@@ -270,32 +270,32 @@ export function ImportWizard({
           placeholder={PLACEHOLDER[language]}
           spellCheck={false}
           className={cn(
-            "w-full rounded-card border border-rule bg-surface px-4 py-3 text-base leading-8 text-ink placeholder:text-ink-soft",
+            "w-full rounded-lg border border-border bg-surface px-4 py-3 text-base leading-8 text-fg placeholder:text-fg-muted",
             language === "zh" && "font-hanzi-sans",
           )}
           style={{
-            backgroundImage: "linear-gradient(transparent calc(2rem - 1px), var(--rule) calc(2rem - 1px))",
+            backgroundImage: "linear-gradient(transparent calc(2rem - 1px), var(--border) calc(2rem - 1px))",
             backgroundSize: "100% 2rem",
             backgroundPositionY: "0.75rem",
           }}
         />
         <div className="flex flex-wrap gap-2">
           <input ref={fileRef} type="file" accept=".csv,.txt,.tsv,text/csv,text/plain" className="sr-only" id="import-file" onChange={(e) => readFile(e.target.files?.[0])} />
-          <label htmlFor="import-file" className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-btn border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted">
+          <label htmlFor="import-file" className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border border-border bg-surface px-3 text-sm font-medium hover:bg-muted">
             <FileUp className="size-4" aria-hidden />
             Tải file CSV
           </label>
           {visionEnabled && (
             <>
               <input ref={photoRef} type="file" accept="image/*" capture="environment" className="sr-only" id="import-photo" onChange={(e) => readPhoto(e.target.files?.[0])} />
-              <label htmlFor="import-photo" className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-btn border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted">
+              <label htmlFor="import-photo" className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border border-border bg-surface px-3 text-sm font-medium hover:bg-muted">
                 {ocrBusy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Camera className="size-4" aria-hidden />}
                 {ocrBusy ? "Đang đọc ảnh…" : "Chụp trang vở"}
               </label>
             </>
           )}
         </div>
-        <p className="text-sm text-ink-soft">
+        <p className="text-sm text-fg-muted">
           Định dạng: <code>từ</code>, <code>từ - nghĩa</code>, <code>từ: nghĩa</code>
           {language === "zh" && (
             <>
@@ -308,22 +308,22 @@ export function ImportWizard({
 
       {preview && (
         <div className="space-y-3">
-          <p className="flex flex-wrap gap-x-4 text-sm text-ink">
-            <span className="font-medium text-leaf-text">{preview.ok.length} từ hợp lệ</span>
-            {preview.duplicates.length > 0 && <span className="text-ink-soft">{preview.duplicates.length} trùng</span>}
-            {preview.errors.length > 0 && <span className="text-seal-text">{preview.errors.length} lỗi</span>}
+          <p className="flex flex-wrap gap-x-4 text-sm text-fg">
+            <span className="font-medium text-success-fg">{preview.ok.length} từ hợp lệ</span>
+            {preview.duplicates.length > 0 && <span className="text-fg-muted">{preview.duplicates.length} trùng</span>}
+            {preview.errors.length > 0 && <span className="text-danger-fg">{preview.errors.length} lỗi</span>}
           </p>
-          <ul className="ruled-list max-h-80 overflow-y-auto rounded-card border border-rule bg-surface">
+          <ul className="divide-y divide-border max-h-80 overflow-y-auto rounded-lg border border-border bg-surface">
             {preview.lines.map((l) => (
               <li key={`${l.lineNo}-${l.raw}`} className="flex items-baseline gap-3 px-4 py-2 text-sm">
-                <span className="w-6 shrink-0 text-right text-xs text-ink-soft">{l.lineNo}</span>
+                <span className="w-6 shrink-0 text-right text-xs text-fg-muted">{l.lineNo}</span>
                 <span className={cn("min-w-0 flex-1", l.status !== "ok" && "opacity-70")}>
-                  <span className={cn("font-medium text-ink", language === "zh" && "font-hanzi-sans")}>{l.term || l.raw}</span>
-                  {l.reading && <span className="ml-2 text-ink-soft">{l.reading}</span>}
-                  {l.meaning_vi && <span className="ml-2 text-ink">— {l.meaning_vi}</span>}
+                  <span className={cn("font-medium text-fg", language === "zh" && "font-hanzi-sans")}>{l.term || l.raw}</span>
+                  {l.reading && <span className="ml-2 text-fg-muted">{l.reading}</span>}
+                  {l.meaning_vi && <span className="ml-2 text-fg">— {l.meaning_vi}</span>}
                 </span>
                 {l.status !== "ok" && (
-                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-xs", l.status === "duplicate" ? "bg-muted text-ink-soft" : "bg-tint-seal text-seal-text")}>
+                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-xs", l.status === "duplicate" ? "bg-muted text-fg-muted" : "bg-danger-soft text-danger-fg")}>
                     {l.message}
                   </span>
                 )}
@@ -335,19 +335,19 @@ export function ImportWizard({
 
       <div className="flex flex-wrap gap-2">
         {aiEnabled ? (
-          <Button type="button" disabled={!preview?.ok.length || running} onClick={() => start(true)} className="h-12 gap-2 rounded-btn px-5 text-base">
+          <Button type="button" disabled={!preview?.ok.length || running} onClick={() => start(true)} className="h-12 gap-2 rounded-md px-5 text-base">
             <Sparkles className="size-5" aria-hidden />
             Điền tự động & thêm {preview?.ok.length ? `${preview.ok.length} từ` : ""}
           </Button>
         ) : (
-          <p className="w-full text-sm text-ink-soft">Gợi ý AI chưa bật — chỉ thêm được các dòng đã có nghĩa.</p>
+          <p className="w-full text-sm text-fg-muted">Gợi ý AI chưa bật — chỉ thêm được các dòng đã có nghĩa.</p>
         )}
         <Button
           type="button"
           variant="outline"
           disabled={!preview?.ok.some((l) => l.meaning_vi) || running}
           onClick={() => start(false)}
-          className="h-12 rounded-btn px-5 text-base"
+          className="h-12 rounded-md px-5 text-base"
         >
           Thêm luôn, không dùng AI
         </Button>

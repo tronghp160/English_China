@@ -38,15 +38,15 @@ export function MemberList({
   const [pending, start] = useTransition();
 
   return (
-    <ul className="ruled-list border-y border-rule">
+    <ul className="divide-y divide-border border-y border-border">
       {members.map((m) => {
         const p = m.profile!;
         return (
           <li key={m.user_id} className="flex min-h-14 items-center gap-3 px-1 py-2">
             <UserAvatar name={p.display_name} url={p.avatar_url} className="size-9" />
             <span className="min-w-0 flex-1">
-              <span className="block truncate font-medium text-ink">{p.display_name}</span>
-              <span className="flex items-center gap-2 truncate text-sm text-ink-soft">
+              <span className="block truncate font-medium text-fg">{p.display_name}</span>
+              <span className="flex items-center gap-2 truncate text-sm text-fg-muted">
                 <span className="truncate">@{p.username}</span>
                 {m.role === "owner" && <Badge variant="outline">Chủ nhóm</Badge>}
               </span>
@@ -54,7 +54,7 @@ export function MemberList({
             {canRemove && m.role !== "owner" && (
               <AlertDialog>
                 <AlertDialogTrigger
-                  className="grid size-11 shrink-0 place-items-center rounded-btn text-ink-soft transition-colors hover:bg-tint-seal hover:text-seal-text"
+                  className="grid size-11 shrink-0 place-items-center rounded-md text-fg-muted transition-colors hover:bg-danger-soft hover:text-danger-fg"
                   aria-label={`Xóa ${p.display_name} khỏi nhóm`}
                   disabled={pending}
                 >
@@ -70,7 +70,7 @@ export function MemberList({
                   <AlertDialogFooter>
                     <AlertDialogCancel>Thôi</AlertDialogCancel>
                     <AlertDialogAction
-                      className="bg-seal text-on-seal hover:bg-seal/90"
+                      className="bg-danger text-white hover:bg-danger/90"
                       onClick={() =>
                         start(async () => {
                           const res = await removeMember(groupId, m.user_id);

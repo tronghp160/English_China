@@ -76,7 +76,7 @@ export function ShareDeckDialog({
               readOnly
               value={url}
               aria-label="Link chia sẻ"
-              className="min-w-0 flex-1 bg-surface-sunk"
+              className="min-w-0 flex-1 bg-surface-2"
               onFocus={(e) => e.currentTarget.select()}
             />
             <Button type="button" onClick={copy}>
@@ -86,7 +86,7 @@ export function ShareDeckDialog({
           </div>
         )}
         {current && (
-          <Button type="button" variant="link" className="self-start px-0 text-ink-soft" onClick={() => toggle(true)} disabled={pending}>
+          <Button type="button" variant="link" className="self-start px-0 text-fg-muted" onClick={() => toggle(true)} disabled={pending}>
             Tạo link mới (link cũ sẽ không dùng được)
           </Button>
         )}

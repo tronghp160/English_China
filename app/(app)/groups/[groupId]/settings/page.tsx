@@ -22,9 +22,9 @@ export default async function GroupSettingsPage({ params }: PageProps<"/groups/[
       <h1 className="mb-6 text-xl">Cài đặt nhóm</h1>
       <GroupForm groupId={groupId} initial={{ name: group.name, description: group.description }} />
 
-      <section className="mt-10 border-t border-rule pt-6">
+      <section className="mt-10 border-t border-border pt-6">
         <h2 className="text-base">Thành viên được sửa bộ từ</h2>
-        <p className="mt-1 text-sm text-ink-soft">
+        <p className="mt-1 text-sm text-fg-muted">
           Bật để cả nhóm cùng thêm từ vào bộ của bạn. Bộ từ do thành viên khác tạo thì người đó tự quyết.
         </p>
         {ownDecks.length ? (
@@ -32,13 +32,13 @@ export default async function GroupSettingsPage({ params }: PageProps<"/groups/[
             <MemberEditToggles decks={ownDecks} />
           </div>
         ) : (
-          <p className="mt-3 text-sm text-ink-soft">Bạn chưa có bộ từ nào trong nhóm.</p>
+          <p className="mt-3 text-sm text-fg-muted">Bạn chưa có bộ từ nào trong nhóm.</p>
         )}
       </section>
 
-      <section className="mt-10 rounded-card border border-seal/60 p-5">
+      <section className="mt-10 rounded-lg border border-danger/60 p-5">
         <h2 className="text-base">Xóa nhóm</h2>
-        <p className="mt-1 mb-4 text-sm text-ink-soft">
+        <p className="mt-1 mb-4 text-sm text-fg-muted">
           Không hoàn tác được. Bộ từ và tiến độ ôn của mọi người vẫn còn.
         </p>
         <DeleteGroupButton groupId={groupId} name={group.name} />

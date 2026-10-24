@@ -37,7 +37,7 @@ function Field({
       <Label htmlFor={id}>{label}</Label>
       {children}
       {(error || hint) && (
-        <p className={cn("text-sm", error ? "text-seal-text" : "text-ink-soft")}>{error ?? hint}</p>
+        <p className={cn("text-sm", error ? "text-danger-fg" : "text-fg-muted")}>{error ?? hint}</p>
       )}
     </div>
   );
@@ -68,12 +68,12 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
   return (
     <form onSubmit={onSubmit} className="mt-6 space-y-5" noValidate>
       <Field id="display_name" label="Tên hiển thị" error={e.display_name?.message}>
-        <Input id="display_name" className="h-11 rounded-btn" {...register("display_name")} />
+        <Input id="display_name" className="h-11 rounded-md" {...register("display_name")} />
       </Field>
       <Field id="username" label="Tên người dùng" error={e.username?.message}>
         <Input
           id="username"
-          className="h-11 rounded-btn"
+          className="h-11 rounded-md"
           autoCapitalize="none"
           spellCheck={false}
           {...register("username")}
@@ -87,7 +87,7 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
             inputMode="numeric"
             min={0}
             max={200}
-            className="h-11 rounded-btn"
+            className="h-11 rounded-md"
             {...register("daily_new_limit")}
           />
         </Field>
@@ -103,7 +103,7 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
             inputMode="numeric"
             min={1}
             max={1000}
-            className="h-11 rounded-btn"
+            className="h-11 rounded-md"
             {...register("daily_goal")}
           />
         </Field>
@@ -121,8 +121,8 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
                   <label
                     key={l.value}
                     className={cn(
-                      "flex min-h-11 cursor-pointer items-center gap-2 rounded-btn border px-4 text-sm",
-                      checked ? "border-ink-violet bg-tint-violet font-medium" : "border-rule",
+                      "flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-4 text-sm",
+                      checked ? "border-primary bg-primary-soft font-medium" : "border-border",
                     )}
                   >
                     <input
@@ -143,9 +143,9 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
             </div>
           )}
         />
-        {e.study_langs && <p className="mt-1.5 text-sm text-seal-text">{e.study_langs.message}</p>}
+        {e.study_langs && <p className="mt-1.5 text-sm text-danger-fg">{e.study_langs.message}</p>}
       </fieldset>
-      <Button type="submit" disabled={pending} className="h-11 gap-2 rounded-btn px-5">
+      <Button type="submit" disabled={pending} className="h-11 gap-2 rounded-md px-5">
         {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
         Lưu thay đổi
       </Button>

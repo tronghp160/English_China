@@ -34,7 +34,7 @@ export function ForgotPasswordForm({ initialEmail }: { initialEmail: string }) {
       <div className="mt-6">
         <FormAlert tone="success">
           <p className="font-medium">Nếu {sentTo} có tài khoản Sổ Từ, link đặt lại mật khẩu đã được gửi tới đó.</p>
-          <p className="mt-1 text-ink-soft">Mở email trên thiết bị này và bấm vào link. Không thấy thì xem thư mục Spam.</p>
+          <p className="mt-1 text-fg-muted">Mở email trên thiết bị này và bấm vào link. Không thấy thì xem thư mục Spam.</p>
         </FormAlert>
       </div>
     );

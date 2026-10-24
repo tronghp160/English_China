@@ -37,8 +37,8 @@ export function SealStamp({
           <feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" />
         </filter>
       </svg>
-      <span className="absolute inset-0 rounded-sm bg-seal text-on-seal" style={{ filter: `url(#${id})` }}>
-        <span className="absolute inset-[3px] rounded-xs border border-on-seal/70" />
+      <span className="absolute inset-0 rounded-sm bg-danger text-white" style={{ filter: `url(#${id})` }}>
+        <span className="absolute inset-[3px] rounded-xs border border-white/70" />
         <span
           className={cn(
             "absolute inset-0 grid place-content-center text-center leading-tight font-bold",

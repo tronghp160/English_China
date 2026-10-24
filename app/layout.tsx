@@ -1,23 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro, Literata } from "next/font/google";
+import { Be_Vietnam_Pro } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
 const beVietnam = Be_Vietnam_Pro({
   variable: "--font-be-vietnam",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
   subsets: ["latin", "latin-ext", "vietnamese"],
-  display: "swap",
-});
-
-// Reading serif for words (specimens), big numbers and landing/auth titles (font-display).
-// Two static weights (500 for words, 600 for headings and numbers) instead of the variable font with the
-// optical-size axis: about 22 KB per subset instead of 110 KB, which matters for the landing page.
-const literata = Literata({
-  variable: "--font-literata",
-  weight: ["500", "600"],
-  subsets: ["latin", "vietnamese"],
   display: "swap",
 });
 
@@ -33,8 +23,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F5F6FA" },
-    { media: "(prefers-color-scheme: dark)", color: "#16151F" },
+    { media: "(prefers-color-scheme: light)", color: "#F4F5F9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B0D12" },
   ],
 };
 
@@ -48,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="vi"
       suppressHydrationWarning
-      className={`${beVietnam.variable} ${literata.variable} h-full antialiased`}
+      className={`${beVietnam.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

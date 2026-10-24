@@ -17,7 +17,7 @@ export function HeroSpecimen() {
           type="button"
           onClick={() => setFlipped((f) => !f)}
           aria-pressed={flipped}
-          className="block w-full rounded-sheet text-left"
+          className="block w-full rounded-xl text-left"
         >
           <span className="flip-card grid w-full [&>*]:[grid-area:1/1]" data-flipped={flipped}>
             <span className="flip-face block" aria-hidden={flipped}>
@@ -25,23 +25,23 @@ export function HeroSpecimen() {
                 lang="en"
                 term="resilient"
                 reading="/rɪˈzɪliənt/"
-                className="sheet-lift"
+                className="shadow-lg"
                 innerClassName="min-h-[16rem]"
                 showReading
               >
-                <span className="flex h-[var(--line)] items-end pt-1 text-sm text-ink-soft">Chạm để lật</span>
+                <span className="flex h-[var(--line)] items-end pt-1 text-sm text-fg-muted">Chạm để lật</span>
               </WordSpecimen>
             </span>
-            <span className={cn("flip-face flip-back sheet sheet-lift margin-line block rounded-sheet py-6 pr-5 pl-[calc(var(--margin-x)+1rem)]")} aria-hidden={!flipped}>
-              <span className="block text-[1.5rem] leading-snug font-medium text-ink">
-                <span className={cn("highlighter", flipped && "highlighter-animate")}>kiên cường, mau phục hồi</span>
+            <span className={cn("flip-face flip-back rounded-lg border border-border/60 bg-surface shadow-sm shadow-lg  block rounded-xl py-6 pr-5 pl-4")} aria-hidden={!flipped}>
+              <span className="block text-[1.5rem] leading-snug font-medium text-fg">
+                <span className={cn("font-bold text-primary-fg", flipped && "")}>kiên cường, mau phục hồi</span>
               </span>
-              <span className="mt-3 block text-sm text-ink-soft">able to recover quickly from difficulties</span>
-              <span className="mt-5 block border-l-2 border-ink-violet pl-3">
-                <span className="block text-ink">
-                  She&apos;s remarkably <mark className="highlighter bg-transparent text-inherit">resilient</mark>.
+              <span className="mt-3 block text-sm text-fg-muted">able to recover quickly from difficulties</span>
+              <span className="mt-5 block border-l-2 border-primary pl-3">
+                <span className="block text-fg">
+                  She&apos;s remarkably <mark className="bg-transparent font-bold text-primary-fg">resilient</mark>.
                 </span>
-                <span className="block text-sm text-ink-soft">Cô ấy kiên cường đáng kinh ngạc.</span>
+                <span className="block text-sm text-fg-muted">Cô ấy kiên cường đáng kinh ngạc.</span>
               </span>
             </span>
           </span>
@@ -49,7 +49,7 @@ export function HeroSpecimen() {
       </div>
 
       <div className="mt-5 ml-auto w-[min(100%,15rem)]">
-        <WordSpecimen lang="zh" term="坚强" reading="jiānqiáng" size="md" className="sheet p-4" />
+        <WordSpecimen lang="zh" term="坚强" reading="jiānqiáng" size="md" className="rounded-lg border border-border/60 bg-surface shadow-sm p-4" />
       </div>
     </div>
   );

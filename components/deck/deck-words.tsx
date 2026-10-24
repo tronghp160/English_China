@@ -63,13 +63,13 @@ function FilterSelect({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          "h-10 appearance-none rounded-btn border bg-surface pr-8 pl-3 text-sm outline-none focus-visible:border-ink-violet focus-visible:ring-3 focus-visible:ring-tint-violet",
-          value ? "border-ink-violet bg-tint-violet font-medium text-ink" : "border-input text-ink-soft",
+          "h-10 appearance-none rounded-md border bg-surface pr-8 pl-3 text-sm outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary-soft",
+          value ? "border-primary bg-primary-soft font-medium text-fg" : "border-input text-fg-muted",
         )}
       >
         {children}
       </select>
-      <ChevronDown aria-hidden className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-ink-soft" />
+      <ChevronDown aria-hidden className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-fg-muted" />
     </label>
   );
 }
@@ -179,7 +179,7 @@ export function DeckWords({
   return (
     <section className="mt-10" aria-label="Danh sách từ">
       <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-3.5 size-[1.125rem] -translate-y-1/2 text-ink-soft" strokeWidth={1.75} aria-hidden />
+        <Search className="pointer-events-none absolute top-1/2 left-3.5 size-[1.125rem] -translate-y-1/2 text-fg-muted" strokeWidth={1.75} aria-hidden />
         <Input
           type="search"
           value={q}
@@ -232,7 +232,7 @@ export function DeckWords({
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-2">
-        <p className="text-sm text-ink-soft" aria-live="polite">
+        <p className="text-sm text-fg-muted" aria-live="polite">
           {query.isLoading ? "Đang tải…" : anyFilter ? `${rows.length}${query.hasNextPage ? "+" : ""} kết quả` : `${wordCount} từ`}
         </p>
         <div className="flex items-center gap-1">
@@ -251,13 +251,13 @@ export function DeckWords({
               {selecting ? "Xong" : "Chọn"}
             </Button>
           )}
-          <div role="group" aria-label="Kiểu hiển thị" className="flex gap-0.5 rounded-chip bg-surface-sunk p-1">
+          <div role="group" aria-label="Kiểu hiển thị" className="flex gap-0.5 rounded-full bg-surface-2 p-1">
             <button
               type="button"
               aria-label="Dạng danh sách"
               aria-pressed={view === "list"}
               onClick={() => setView("list")}
-              className={cn("grid size-9 place-items-center rounded-chip", view === "list" ? "bg-surface text-ink shadow-card" : "text-ink-soft hover:text-ink")}
+              className={cn("grid size-9 place-items-center rounded-full", view === "list" ? "bg-surface text-fg shadow-card" : "text-fg-muted hover:text-fg")}
             >
               <List className="size-4" aria-hidden />
             </button>
@@ -266,7 +266,7 @@ export function DeckWords({
               aria-label="Dạng lưới có ảnh"
               aria-pressed={view === "grid"}
               onClick={() => setView("grid")}
-              className={cn("grid size-9 place-items-center rounded-chip", view === "grid" ? "bg-surface text-ink shadow-card" : "text-ink-soft hover:text-ink")}
+              className={cn("grid size-9 place-items-center rounded-full", view === "grid" ? "bg-surface text-fg shadow-card" : "text-fg-muted hover:text-fg")}
             >
               <LayoutGrid className="size-4" aria-hidden />
             </button>
@@ -277,7 +277,7 @@ export function DeckWords({
       {query.isLoading ? (
         <div className="mt-3 space-y-2">
           {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="h-16 rounded-card" />
+            <Skeleton key={i} className="h-16 rounded-lg" />
           ))}
         </div>
       ) : rows.length === 0 ? (
@@ -301,7 +301,7 @@ export function DeckWords({
         )
       ) : view === "list" ? (
         <div className="mt-3">
-          <div aria-hidden className={cn("hidden items-center gap-3 border-b border-rule px-4 pb-2 text-xs font-medium text-ink-soft md:grid", ROW_COLS[selecting ? 1 : 0])}>
+          <div aria-hidden className={cn("hidden items-center gap-3 border-b border-border px-4 pb-2 text-xs font-medium text-fg-muted md:grid", ROW_COLS[selecting ? 1 : 0])}>
             {selecting && <span />}
             <span>Từ</span>
             <span>Cách đọc</span>
@@ -309,7 +309,7 @@ export function DeckWords({
             <span>{def.levelLabel}</span>
             <span />
           </div>
-          <ul className="ruled-list">
+          <ul className="divide-y divide-border">
           {rows.map((w) => (
             <WordRowItem
               key={w.id}
@@ -334,7 +334,7 @@ export function DeckWords({
 
       <div ref={sentinel} className="h-8" />
       {query.isFetchingNextPage && (
-        <p className="flex items-center justify-center gap-2 py-3 text-sm text-ink-soft">
+        <p className="flex items-center justify-center gap-2 py-3 text-sm text-fg-muted">
           <Loader2 className="size-4 animate-spin" aria-hidden /> Đang tải thêm…
         </p>
       )}
@@ -343,7 +343,7 @@ export function DeckWords({
         <div
           role="toolbar"
           aria-label="Thao tác với từ đã chọn"
-          className="fixed inset-x-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-card bg-ink p-3 text-paper shadow-lift lg:bottom-6 lg:left-64"
+          className="fixed inset-x-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-lg bg-fg p-3 text-canvas shadow-lift lg:bottom-6 lg:left-64"
         >
           <span className="mr-auto pl-1 text-sm font-medium">Đã chọn {ids.length}</span>
           {moveTargets.length > 0 && (
@@ -355,7 +355,7 @@ export function DeckWords({
                 if (e.target.value) runBulk({ action: "move", wordIds: ids, targetDeckId: e.target.value }, "Đã chuyển");
                 e.target.value = "";
               }}
-              className="h-11 max-w-36 rounded-btn border border-paper/25 bg-ink px-2 text-sm text-paper"
+              className="h-11 max-w-36 rounded-md border border-canvas/25 bg-fg px-2 text-sm text-canvas"
             >
               <option value="">Chuyển bộ…</option>
               {moveTargets.map((d) => (
@@ -373,7 +373,7 @@ export function DeckWords({
               if (e.target.value) runBulk({ action: "topic", wordIds: ids, topic: e.target.value === "__none" ? null : e.target.value }, "Đã đổi chủ đề");
               e.target.value = "";
             }}
-            className="h-11 max-w-36 rounded-btn border border-paper/25 bg-ink px-2 text-sm text-paper"
+            className="h-11 max-w-36 rounded-md border border-canvas/25 bg-fg px-2 text-sm text-canvas"
           >
             <option value="">Chủ đề…</option>
             <option value="__none">Bỏ chủ đề</option>
@@ -387,7 +387,7 @@ export function DeckWords({
             type="button"
             disabled={pending}
             onClick={() => runBulk({ action: "suspend", wordIds: ids, suspended: status !== "suspended" }, status === "suspended" ? "Đã bỏ ẩn" : "Đã tạm ẩn")}
-            className="min-h-11 rounded-btn border border-paper/25 px-3 text-sm hover:bg-paper/10"
+            className="min-h-11 rounded-md border border-canvas/25 px-3 text-sm hover:bg-canvas/10"
           >
             {status === "suspended" ? "Bỏ ẩn" : "Tạm ẩn"}
           </button>
@@ -395,11 +395,11 @@ export function DeckWords({
             type="button"
             disabled={pending}
             onClick={() => setConfirmDelete(true)}
-            className="min-h-11 rounded-btn bg-seal px-3 text-sm font-semibold text-on-seal"
+            className="min-h-11 rounded-md bg-danger px-3 text-sm font-semibold text-white"
           >
             Xóa
           </button>
-          <button type="button" aria-label="Bỏ chọn" onClick={() => setSelected(new Set())} className="grid size-11 place-items-center rounded-btn text-paper/80 hover:bg-paper/10">
+          <button type="button" aria-label="Bỏ chọn" onClick={() => setSelected(new Set())} className="grid size-11 place-items-center rounded-md text-canvas/80 hover:bg-canvas/10">
             <X className="size-5" aria-hidden />
           </button>
         </div>
@@ -414,7 +414,7 @@ export function DeckWords({
           <AlertDialogFooter>
             <AlertDialogCancel>Giữ lại</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-seal text-on-seal hover:bg-seal/90"
+              className="bg-danger text-white hover:bg-danger/90"
               onClick={() => runBulk({ action: "delete", wordIds: ids }, "Đã xóa")}
             >
               Xóa từ
@@ -438,7 +438,7 @@ function SelectBox({ checked }: { checked: boolean }) {
       aria-hidden
       className={cn(
         "grid size-5 shrink-0 place-items-center rounded-sm border",
-        checked ? "border-ink-violet bg-ink-violet text-primary-foreground" : "border-input bg-surface",
+        checked ? "border-primary bg-primary text-primary-foreground" : "border-input bg-surface",
       )}
     >
       {checked && <Check className="size-3.5" strokeWidth={2.5} />}
@@ -465,10 +465,10 @@ function WordRowItem({
     <>
       {selecting && <SelectBox checked={selected} />}
       <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 md:contents">
-        <span className={cn("block truncate text-lg leading-snug font-medium text-ink", language === "zh" ? "font-hanzi" : "font-display", word.suspended && "line-through opacity-60")}>
+        <span className={cn("block truncate text-lg leading-snug font-medium text-fg", language === "zh" ? "font-hanzi" : "font-display", word.suspended && "line-through opacity-60")}>
           {word.term}
         </span>
-        <span className="block truncate text-sm text-ink-soft md:text-base">
+        <span className="block truncate text-sm text-fg-muted md:text-base">
           {word.reading &&
             (language === "zh" ? (
               <PinyinText pinyin={word.reading} colored={toneColors} />
@@ -476,14 +476,14 @@ function WordRowItem({
               <span className="font-ipa">{word.reading}</span>
             ))}
         </span>
-        <span className="block w-full truncate text-sm text-ink-soft md:w-auto md:text-base md:text-ink">{word.meaning_vi}</span>
-        <span className="hidden text-xs text-ink-soft md:block">{levelOf(language, word.lang_extra)}</span>
+        <span className="block w-full truncate text-sm text-fg-muted md:w-auto md:text-base md:text-fg">{word.meaning_vi}</span>
+        <span className="hidden text-xs text-fg-muted md:block">{levelOf(language, word.lang_extra)}</span>
       </span>
       <StatusDot state={word.card_state} lapses={word.lapses} suspended={word.suspended} />
     </>
   );
   const cls = cn(
-    "flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-surface-sunk md:grid md:gap-3",
+    "flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-surface-2 md:grid md:gap-3",
     ROW_COLS[selecting ? 1 : 0],
   );
   return (
@@ -516,12 +516,12 @@ function WordGridItem({
 }) {
   const inner = (
     <>
-      <span className="relative block aspect-square overflow-hidden bg-surface-sunk">
+      <span className="relative block aspect-square overflow-hidden bg-surface-2">
         {word.image_url ? (
           <Image src={word.image_url} alt="" fill sizes="(min-width: 640px) 33vw, 50vw" className="object-cover" />
         ) : (
           <span
-            className={cn("grid h-full place-items-center text-5xl text-ink", language === "zh" ? "font-hanzi" : "font-display")}
+            className={cn("grid h-full place-items-center text-5xl text-fg", language === "zh" ? "font-hanzi" : "font-display")}
             aria-hidden
           >
             {word.emoji || Array.from(word.term)[0]}
@@ -537,12 +537,12 @@ function WordGridItem({
         </span>
       </span>
       <span className="block px-3 py-2.5">
-        <span className={cn("block truncate text-lg font-medium text-ink", language === "zh" ? "font-hanzi" : "font-display")}>{word.term}</span>
-        <span className="block truncate text-sm text-ink-soft">{word.meaning_vi}</span>
+        <span className={cn("block truncate text-lg font-medium text-fg", language === "zh" ? "font-hanzi" : "font-display")}>{word.term}</span>
+        <span className="block truncate text-sm text-fg-muted">{word.meaning_vi}</span>
       </span>
     </>
   );
-  const cls = "block w-full overflow-hidden rounded-card border border-rule bg-surface text-left transition-colors hover:border-rule-strong";
+  const cls = "block w-full overflow-hidden rounded-lg border border-border bg-surface text-left transition-colors hover:border-border-strong";
   return (
     <li>
       {selecting ? (

@@ -39,10 +39,10 @@ export function Paper({
 }) {
   return (
     <div
-      className={cn("ruled-paper margin-line", framed && "overflow-hidden rounded-sheet border border-rule bg-surface", className)}
+      className={cn(" ", framed && "overflow-hidden rounded-xl border border-border bg-surface", className)}
       style={{ "--line": line } as CSSProperties}
     >
-      <div className={cn("pr-4 pl-[calc(var(--margin-x)+1rem)]", innerClassName)}>{children}</div>
+      <div className={cn("pr-4 pl-4", innerClassName)}>{children}</div>
     </div>
   );
 }
@@ -52,13 +52,13 @@ export function HanziCell({ char, side }: { char: string; side: string }) {
   return (
     <span className="relative inline-grid shrink-0 place-items-center" style={{ width: side, height: side }}>
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden className="absolute inset-0 size-full">
-        <rect x="0.75" y="0.75" width="98.5" height="98.5" rx="2" fill="none" stroke="var(--seal)" strokeWidth="1.5" strokeOpacity="0.55" vectorEffect="non-scaling-stroke" />
-        <g stroke="var(--seal)" strokeOpacity="0.25" strokeWidth="1" strokeDasharray="4 4" vectorEffect="non-scaling-stroke">
+        <rect x="0.75" y="0.75" width="98.5" height="98.5" rx="2" fill="none" stroke="var(--danger)" strokeWidth="1.5" strokeOpacity="0.55" vectorEffect="non-scaling-stroke" />
+        <g stroke="var(--danger)" strokeOpacity="0.25" strokeWidth="1" strokeDasharray="4 4" vectorEffect="non-scaling-stroke">
           <path d="M50 1V99M1 50H99" vectorEffect="non-scaling-stroke" />
           <path d="M1 1L99 99M99 1L1 99" vectorEffect="non-scaling-stroke" />
         </g>
       </svg>
-      <span lang="zh-CN" className="relative font-hanzi leading-none font-medium text-ink" style={{ fontSize: `calc(${side} * 0.72)` }}>
+      <span lang="zh-CN" className="relative font-hanzi leading-none font-medium text-fg" style={{ fontSize: `calc(${side} * 0.72)` }}>
         {char}
       </span>
     </span>
@@ -123,7 +123,7 @@ export function WordSpecimen({
                 {isHan ? (
                   <HanziCell char={c} side={ZH[size]} />
                 ) : (
-                  <span lang="zh-CN" className="self-end font-hanzi text-2xl text-ink-soft">
+                  <span lang="zh-CN" className="self-end font-hanzi text-2xl text-fg-muted">
                     {c}
                   </span>
                 )}
@@ -153,7 +153,7 @@ export function WordSpecimen({
       {aside && <div className="absolute top-4 right-4">{aside}</div>}
       <p
         lang="en"
-        className="flex items-end font-display font-medium break-words text-ink"
+        className="flex items-end font-display font-medium break-words text-fg"
         style={{ minHeight: `calc(var(--line) * ${cfg.rows})`, fontSize: fit < 1 ? `calc(${cfg.font} * ${fit.toFixed(3)})` : cfg.font, lineHeight: 1 }}
       >
         {/* In a line-height 1 box the baseline is on the box's bottom edge, which is a rule: descenders cross it like handwriting */}
@@ -161,7 +161,7 @@ export function WordSpecimen({
       </p>
       <div className="flex items-end gap-1" style={{ height: "var(--line)" }}>
         {showReading && (readingNode ?? reading) && (
-          <span className="flex translate-y-[0.1em] flex-wrap items-center gap-x-3 font-ipa text-base leading-none text-ink-soft">{readingNode ?? reading}</span>
+          <span className="flex translate-y-[0.1em] flex-wrap items-center gap-x-3 font-ipa text-base leading-none text-fg-muted">{readingNode ?? reading}</span>
         )}
         {actions && <span className="-mb-2 flex">{actions}</span>}
       </div>

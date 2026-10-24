@@ -10,7 +10,7 @@ export default async function PublicLayout({ children }: LayoutProps<"/">) {
   return (
     <div className={`${cjkFontVariables} mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-16`}>
       <header className="flex h-16 items-center justify-between">
-        <Link href={user ? "/today" : "/"} className="rounded-btn" aria-label="Sổ Từ">
+        <Link href={user ? "/today" : "/"} className="rounded-md" aria-label="Sổ Từ">
           <Logo />
         </Link>
         <Button asChild variant="ghost">

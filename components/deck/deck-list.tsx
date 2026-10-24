@@ -39,7 +39,7 @@ export function DeckCard({ d, trailing }: { d: DeckRow; trailing?: React.ReactNo
   return (
     <Link
       href={`/decks/${d.id}`}
-      className="group flex h-full items-center gap-4 rounded-card border border-rule bg-surface p-4 transition-colors duration-[var(--dur-fast)] hover:border-rule-strong"
+      className="group flex h-full items-center gap-4 rounded-lg border border-border bg-surface p-4 transition-colors duration-[var(--dur-fast)] hover:border-border-strong"
     >
       <DeckCover
         id={d.id}
@@ -49,28 +49,28 @@ export function DeckCard({ d, trailing }: { d: DeckRow; trailing?: React.ReactNo
       />
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
-          <span className="line-clamp-2 leading-snug font-semibold text-ink">{d.name}</span>
-          <span className="shrink-0 text-ink-soft">
+          <span className="line-clamp-2 leading-snug font-semibold text-fg">{d.name}</span>
+          <span className="shrink-0 text-fg-muted">
             <VisibilityIcon deck={d} />
           </span>
         </span>
-        <span className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-ink-soft">
+        <span className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-fg-muted">
           <span>{d.word_count} từ</span>
           {d.relation !== "own" && d.group_name && <span className="truncate">{d.group_name}</span>}
           {d.relation !== "own" && <span className="truncate">{d.owner_name}</span>}
         </span>
         <span className="mt-2 flex items-center gap-2">
-          <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-sunk">
+          <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-2">
             <span className={cn("block h-full rounded-full", deckTone(d.id).bar)} style={{ width: `${pct}%` }} />
           </span>
-          <span className="shrink-0 text-xs whitespace-nowrap text-ink-soft tabular-nums">{pct}% đã học</span>
+          <span className="shrink-0 text-xs whitespace-nowrap text-fg-muted tabular-nums">{pct}% đã học</span>
         </span>
       </span>
       {trailing ??
         (d.due_count > 0 ? (
-          <span className="shrink-0 text-right text-sm font-semibold text-seal-text tabular-nums">{d.due_count} cần ôn</span>
+          <span className="shrink-0 text-right text-sm font-semibold text-danger-fg tabular-nums">{d.due_count} cần ôn</span>
         ) : (
-          <span className="inline-flex shrink-0 items-center gap-1 text-sm text-leaf-text">
+          <span className="inline-flex shrink-0 items-center gap-1 text-sm text-success-fg">
             <Check className="size-4" aria-hidden />
             Đã ôn xong
           </span>
@@ -123,7 +123,7 @@ export function DeckList({ decks, langFilter }: { decks: DeckRow[]; langFilter: 
         <section key={rel} className="mt-8" aria-labelledby={`decks-${rel}`}>
           <h2 id={`decks-${rel}`} className="mb-3 flex items-baseline gap-2 text-lg">
             {RELATION_TITLE[rel]}
-            <span className="text-sm font-normal text-ink-soft tabular-nums">{items.length}</span>
+            <span className="text-sm font-normal text-fg-muted tabular-nums">{items.length}</span>
           </h2>
           <ul className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
             {items.map((d) => (

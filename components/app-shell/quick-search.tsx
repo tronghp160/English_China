@@ -94,11 +94,11 @@ export function QuickSearch() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Tìm từ, bộ từ (Ctrl+K)"
-        className="inline-flex size-11 items-center justify-center gap-2 rounded-btn text-sm text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink lg:mr-auto lg:h-11 lg:w-70 lg:justify-start lg:border lg:border-rule-strong lg:bg-surface lg:px-3"
+        className="inline-flex size-11 items-center justify-center gap-2 rounded-md text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg lg:mr-auto lg:h-11 lg:w-70 lg:justify-start lg:border lg:border-border-strong lg:bg-surface lg:px-3"
       >
         <Search className="size-[1.125rem] shrink-0" strokeWidth={1.75} aria-hidden />
         <span className="hidden lg:inline">Tìm từ trong sổ</span>
-        <kbd className="ml-auto hidden rounded-sm border border-rule px-1.5 font-sans text-xs lg:inline">{shortcut}</kbd>
+        <kbd className="ml-auto hidden rounded-sm border border-border px-1.5 font-sans text-xs lg:inline">{shortcut}</kbd>
       </button>
       <CommandDialog
         open={open}
@@ -112,18 +112,18 @@ export function QuickSearch() {
       >
         {/* Results come from the server, so cmdk's own filtering is off. */}
         <Command shouldFilter={false} className="bg-surface">
-          <div className="flex items-center gap-2 border-b border-rule px-4">
-            <Search className="size-5 shrink-0 text-ink-soft" strokeWidth={1.75} aria-hidden />
+          <div className="flex items-center gap-2 border-b border-border px-4">
+            <Search className="size-5 shrink-0 text-fg-muted" strokeWidth={1.75} aria-hidden />
             <CommandPrimitive.Input
               value={query}
               onValueChange={setQuery}
               placeholder="Gõ từ, nghĩa, pinyin hoặc tên bộ từ…"
-              className="h-[3.25rem] w-full bg-transparent text-base text-ink outline-none placeholder:text-ink-faint"
+              className="h-[3.25rem] w-full bg-transparent text-base text-fg outline-none placeholder:text-fg-subtle"
             />
           </div>
           <CommandList className="max-h-[min(60vh,28rem)] p-1">
             {q && !loading && <CommandEmpty>Không tìm thấy “{q}”.</CommandEmpty>}
-            {loading && <p className="py-6 text-center text-sm text-ink-soft">Đang tìm…</p>}
+            {loading && <p className="py-6 text-center text-sm text-fg-muted">Đang tìm…</p>}
             {data.words.length > 0 && (
               <CommandGroup heading="Từ">
                 {data.words.map((w) => (
@@ -131,12 +131,12 @@ export function QuickSearch() {
                     <LangMark lang={w.language} />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline gap-2">
-                        <span lang={w.language} className={cn("truncate text-base font-medium text-ink", w.language === "zh" ? "font-hanzi" : "font-display")}>
+                        <span lang={w.language} className={cn("truncate text-base font-medium text-fg", w.language === "zh" ? "font-hanzi" : "font-display")}>
                           {w.term}
                         </span>
-                        {w.reading && <span className="truncate text-xs text-ink-soft">{w.reading}</span>}
+                        {w.reading && <span className="truncate text-xs text-fg-muted">{w.reading}</span>}
                       </span>
-                      <span className="flex gap-x-3 text-xs text-ink-soft">
+                      <span className="flex gap-x-3 text-xs text-fg-muted">
                         <span className="truncate">{w.meaning_vi}</span>
                         <span className="shrink-0 truncate">{w.deck}</span>
                       </span>
@@ -149,8 +149,8 @@ export function QuickSearch() {
               <CommandGroup heading="Bộ từ">
                 {data.decks.map((d) => (
                   <CommandItem key={d.id} value={`deck-${d.id}`} onSelect={() => go(`/decks/${d.id}`)} className="min-h-12 gap-3 px-3">
-                    <BookOpen className="size-5 text-ink-soft" strokeWidth={1.75} aria-hidden />
-                    <span className="truncate font-semibold text-ink">{d.name}</span>
+                    <BookOpen className="size-5 text-fg-muted" strokeWidth={1.75} aria-hidden />
+                    <span className="truncate font-semibold text-fg">{d.name}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -159,14 +159,14 @@ export function QuickSearch() {
               <CommandGroup heading="Đi tới">
                 {pages.map((p) => (
                   <CommandItem key={p.href} value={`page-${p.href}`} onSelect={() => go(p.href)} className="min-h-11 gap-3 px-3">
-                    <p.icon className="size-5 text-ink-soft" strokeWidth={1.75} aria-hidden />
-                    <span className="text-ink">{p.label}</span>
+                    <p.icon className="size-5 text-fg-muted" strokeWidth={1.75} aria-hidden />
+                    <span className="text-fg">{p.label}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
             )}
           </CommandList>
-          <p className="flex gap-4 border-t border-rule px-4 py-2.5 text-xs text-ink-soft" aria-hidden>
+          <p className="flex gap-4 border-t border-border px-4 py-2.5 text-xs text-fg-muted" aria-hidden>
             <span>↑↓ chọn</span>
             <span>Enter mở</span>
             <span>Esc đóng</span>

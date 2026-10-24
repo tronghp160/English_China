@@ -36,18 +36,18 @@ export default async function GroupsPage() {
             <li key={g.id} className="min-w-0">
               <Link
                 href={`/groups/${g.id}`}
-                className="group flex items-center gap-4 rounded-card border border-rule bg-surface p-4 transition-colors duration-[var(--dur-fast)] hover:border-rule-strong"
+                className="group flex items-center gap-4 rounded-lg border border-border bg-surface p-4 transition-colors duration-[var(--dur-fast)] hover:border-border-strong"
               >
                 <GroupAvatar id={g.id} name={g.name} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold text-ink">{g.name}</span>
-                  <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-soft">
+                  <span className="block truncate font-semibold text-fg">{g.name}</span>
+                  <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-fg-muted">
                     <span>{g.member_count} thành viên</span>
                     <span>{g.deck_count} bộ từ</span>
                     {g.role === "owner" && <Badge variant="outline">Chủ nhóm</Badge>}
                   </span>
                 </span>
-                <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
+                <ChevronRight className="size-4 shrink-0 text-fg-subtle" aria-hidden />
               </Link>
             </li>
           ))}

@@ -131,7 +131,7 @@ export function PasswordField({
           aria-label={shown ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
           aria-pressed={shown}
           aria-controls={id}
-          className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-btn text-ink-soft hover:text-ink"
+          className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-md text-fg-muted hover:text-fg"
         >
           {shown ? <EyeOff className="size-[1.125rem]" strokeWidth={1.75} aria-hidden /> : <Eye className="size-[1.125rem]" strokeWidth={1.75} aria-hidden />}
         </button>
@@ -140,7 +140,7 @@ export function PasswordField({
         <FieldError id={`${id}-error`}>{error}</FieldError>
       ) : (
         hint && (
-          <p id={`${id}-hint`} className="text-sm text-ink-soft">
+          <p id={`${id}-hint`} className="text-sm text-fg-muted">
             {hint}
           </p>
         )
@@ -152,7 +152,7 @@ export function PasswordField({
 /** Message under a field: seal red with a small alert icon. */
 export function FieldError({ id, children }: { id?: string; children: React.ReactNode }) {
   return (
-    <p id={id} className="flex items-start gap-1.5 text-sm text-seal-text">
+    <p id={id} className="flex items-start gap-1.5 text-sm text-danger-fg">
       <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
       {children}
     </p>
@@ -165,8 +165,8 @@ export function FormAlert({ children, tone = "error" }: { children: React.ReactN
     <div
       role={tone === "error" ? "alert" : "status"}
       className={cn(
-        "rounded-btn border-l-[3px] px-4 py-3 text-sm",
-        tone === "error" ? "border-seal bg-tint-seal text-seal-text" : "border-leaf bg-tint-leaf text-ink",
+        "rounded-md border-l-[3px] px-4 py-3 text-sm",
+        tone === "error" ? "border-danger bg-danger-soft text-danger-fg" : "border-success bg-success-soft text-fg",
       )}
     >
       {children}

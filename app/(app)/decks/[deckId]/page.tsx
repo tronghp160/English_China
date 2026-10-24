@@ -54,14 +54,14 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
         <DeckCover id={deckId} language={deck.language} name={deck.name} size="lg" className="hidden md:inline-flex" />
         <div className="min-w-0 flex-1">
           <h1 className="text-xl break-words sm:text-2xl">{deck.name}</h1>
-          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-soft">
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-fg-muted">
             <span>{LANGUAGES[deck.language].label}</span>
             <span>{deck.word_count} từ</span>
             {!isOwner && deck.owner && <span>của {deck.owner.display_name}</span>}
             {deck.group && <span>nhóm {deck.group.name}</span>}
-            {dueHere > 0 && <span className="font-semibold text-seal-text">{dueHere} cần ôn</span>}
+            {dueHere > 0 && <span className="font-semibold text-danger-fg">{dueHere} cần ôn</span>}
           </p>
-          {deck.description && <p className="mt-3 max-w-[62ch] text-[0.9375rem] text-ink">{deck.description}</p>}
+          {deck.description && <p className="mt-3 max-w-[62ch] text-[0.9375rem] text-fg">{deck.description}</p>}
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {studying ? (
               <Button asChild>

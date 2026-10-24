@@ -40,7 +40,7 @@ export default async function HardWordsPage({ searchParams }: PageProps<"/hard-w
     <div className="max-w-2xl">
       <BackLink href="/practice" label="Luyện tập" />
       <h1 className="text-xl">Từ hay quên</h1>
-      <p className="mt-1 mb-5 max-w-[62ch] text-ink-soft">Những từ bạn đã quên khi ôn hoặc thấy khó nhớ. Luyện riêng vài phút mỗi ngày là nhớ lâu hơn hẳn.</p>
+      <p className="mt-1 mb-5 max-w-[62ch] text-fg-muted">Những từ bạn đã quên khi ôn hoặc thấy khó nhớ. Luyện riêng vài phút mỗi ngày là nhớ lâu hơn hẳn.</p>
 
       {langs.length > 1 && (
         <SegmentedNav
@@ -81,26 +81,26 @@ export default async function HardWordsPage({ searchParams }: PageProps<"/hard-w
             )}
           </div>
 
-          <p className="mb-2 text-sm text-ink-soft">{words.length} từ</p>
-          <ul className="ruled-list border-y border-rule">
+          <p className="mb-2 text-sm text-fg-muted">{words.length} từ</p>
+          <ul className="divide-y divide-border border-y border-border">
             {words.map((w) => (
               <li key={w.id}>
-                <Link href={`/words/${w.id}`} className="flex min-h-16 items-center gap-3 px-1 py-3 transition-colors hover:bg-surface-sunk">
+                <Link href={`/words/${w.id}`} className="flex min-h-16 items-center gap-3 px-1 py-3 transition-colors hover:bg-surface-2">
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-baseline gap-x-3">
-                      <span lang={language} className={cn("truncate text-lg font-medium text-ink", l.termFontClass === "font-hanzi" ? "font-hanzi" : "font-display")}>
+                      <span lang={language} className={cn("truncate text-lg font-medium text-fg", l.termFontClass === "font-hanzi" ? "font-hanzi" : "font-display")}>
                         {w.term}
                       </span>
                       {w.reading &&
                         (language === "zh" ? (
                           <PinyinText pinyin={w.reading} className="text-sm" />
                         ) : (
-                          <span className="truncate font-ipa text-sm text-ink-soft">{w.reading}</span>
+                          <span className="truncate font-ipa text-sm text-fg-muted">{w.reading}</span>
                         ))}
                     </span>
-                    <span className="block truncate text-sm text-ink-soft">{w.meaning_vi}</span>
+                    <span className="block truncate text-sm text-fg-muted">{w.meaning_vi}</span>
                   </span>
-                  <span className={cn("shrink-0 text-sm font-medium tabular-nums", w.lapses >= 3 ? "text-seal-text" : "text-turmeric-text")}>
+                  <span className={cn("shrink-0 text-sm font-medium tabular-nums", w.lapses >= 3 ? "text-danger-fg" : "text-streak-fg")}>
                     {w.lapses > 0 ? `quên ${w.lapses} lần` : "khó nhớ"}
                   </span>
                 </Link>

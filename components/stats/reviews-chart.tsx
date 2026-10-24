@@ -25,7 +25,7 @@ function Tip({ active, payload }: TooltipContentProps<number, string>) {
   if (!active || !p) return null;
   const pct = p.reviews ? Math.round((p.correct / p.reviews) * 100) : 0;
   return (
-    <div className="rounded-btn bg-ink px-3 py-2 text-sm text-paper shadow-lift">
+    <div className="rounded-md bg-fg px-3 py-2 text-sm text-canvas shadow-lift">
       <p className="font-medium">{short(p.day)}</p>
       <p className="opacity-80">
         <span className="tabular-nums">{p.reviews}</span> lượt ôn
@@ -41,21 +41,21 @@ export function ReviewsChart({ data }: { data: DayPoint[] }) {
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }} barCategoryGap={2}>
-          <CartesianGrid vertical={false} stroke="var(--rule)" strokeDasharray="3 3" />
+          <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
           <XAxis
             dataKey="day"
             tickFormatter={short}
-            tick={{ fill: "var(--ink-soft)", fontSize: 12 }}
+            tick={{ fill: "var(--fg-muted)", fontSize: 12 }}
             tickLine={false}
-            axisLine={{ stroke: "var(--rule)" }}
+            axisLine={{ stroke: "var(--border)" }}
             interval="preserveStartEnd"
             minTickGap={24}
           />
-          <YAxis allowDecimals={false} tick={{ fill: "var(--ink-soft)", fontSize: 12 }} tickLine={false} axisLine={false} width={32} />
-          <Tooltip content={(props) => <Tip {...(props as TooltipContentProps<number, string>)} />} cursor={{ fill: "var(--surface-sunk)" }} />
+          <YAxis allowDecimals={false} tick={{ fill: "var(--fg-muted)", fontSize: 12 }} tickLine={false} axisLine={false} width={32} />
+          <Tooltip content={(props) => <Tip {...(props as TooltipContentProps<number, string>)} />} cursor={{ fill: "var(--surface-2)" }} />
           <Bar dataKey="reviews" radius={[3, 3, 0, 0]} maxBarSize={18} isAnimationActive={false}>
             {data.map((d, i) => (
-              <Cell key={d.day} fill="var(--ink-violet)" fillOpacity={i === data.length - 1 ? 1 : 0.62} />
+              <Cell key={d.day} fill="var(--primary)" fillOpacity={i === data.length - 1 ? 1 : 0.62} />
             ))}
           </Bar>
         </BarChart>

@@ -139,21 +139,21 @@ export function ChatView({
             {starters(language).map((s) => (
               <li key={s.label}>
                 <Button type="button" variant="outline" onClick={() => pickStarter(s)} className="h-auto min-h-12 w-full justify-start py-2.5 whitespace-normal">
-                  <s.icon className="text-ink-soft" aria-hidden />
+                  <s.icon className="text-fg-muted" aria-hidden />
                   {s.label}
                 </Button>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-center text-sm text-seal-text">Gia sư chưa được bật (thiếu khóa AI trên máy chủ).</p>
+          <p className="text-center text-sm text-danger-fg">Gia sư chưa được bật (thiếu khóa AI trên máy chủ).</p>
         ))}
 
       <ol className="space-y-5" aria-label="Tin nhắn" aria-live="polite">
         {messages.map((m, mi) =>
           m.role === "user" ? (
             <li key={m.id} className="flex justify-end">
-              <div className="max-w-[85%] rounded-xl rounded-br-sm bg-tint-violet px-4 py-2.5 whitespace-pre-wrap text-ink">
+              <div className="max-w-[85%] rounded-xl rounded-br-sm bg-primary-soft px-4 py-2.5 whitespace-pre-wrap text-fg">
                 {m.parts.map((p, i) => (p.type === "text" ? <span key={i}>{p.text}</span> : null))}
               </div>
             </li>
@@ -162,11 +162,11 @@ export function ChatView({
             <li key={m.id} className="border-l-2 border-margin pl-4">
               <span className="sr-only">Gia sư: </span>
               {messages[mi - 1]?.role !== "assistant" && (
-                <span aria-hidden className="mb-1 block text-xs text-ink-soft">
+                <span aria-hidden className="mb-1 block text-xs text-fg-muted">
                   Gia sư
                 </span>
               )}
-              <div className="min-w-0 text-ink">
+              <div className="min-w-0 text-fg">
                 {/* Text first, word cards last: models often call the tool before writing. */}
                 {[...m.parts].sort((a, b) => Number(a.type === "tool-suggestWord") - Number(b.type === "tool-suggestWord")).map((p, i) => {
                   if (p.type === "text") return <MessageText key={i} text={p.text} />;
@@ -174,7 +174,7 @@ export function ChatView({
                     return <SuggestWordCard key={i} word={p.output} language={language} />;
                   if (p.type in TOOL_BUSY && "state" in p && (p.state === "input-streaming" || p.state === "input-available"))
                     return (
-                      <p key={i} className="flex items-center gap-1.5 py-1 text-sm text-ink-soft">
+                      <p key={i} className="flex items-center gap-1.5 py-1 text-sm text-fg-muted">
                         <BookOpenCheck className="size-4" strokeWidth={1.75} aria-hidden />
                         {TOOL_BUSY[p.type]}
                       </p>
@@ -188,16 +188,16 @@ export function ChatView({
         {status === "submitted" && (
           <li className="border-l-2 border-margin pl-4" aria-label="Gia sư đang trả lời">
             <span className="flex gap-1.5 py-2" aria-hidden>
-              <span className="size-1.5 animate-pulse rounded-full bg-ink-soft [animation-duration:1.4s] [animation-delay:-0.4s]" />
-              <span className="size-1.5 animate-pulse rounded-full bg-ink-soft [animation-duration:1.4s] [animation-delay:-0.2s]" />
-              <span className="size-1.5 animate-pulse rounded-full bg-ink-soft [animation-duration:1.4s]" />
+              <span className="size-1.5 animate-pulse rounded-full bg-fg-muted [animation-duration:1.4s] [animation-delay:-0.4s]" />
+              <span className="size-1.5 animate-pulse rounded-full bg-fg-muted [animation-duration:1.4s] [animation-delay:-0.2s]" />
+              <span className="size-1.5 animate-pulse rounded-full bg-fg-muted [animation-duration:1.4s]" />
             </span>
           </li>
         )}
       </ol>
 
       {error && (
-        <div role="alert" className="mt-4 flex flex-wrap items-center gap-3 rounded-btn border-l-[3px] border-seal bg-tint-seal px-4 py-3 text-sm text-seal-text">
+        <div role="alert" className="mt-4 flex flex-wrap items-center gap-3 rounded-md border-l-[3px] border-danger bg-danger-soft px-4 py-3 text-sm text-danger-fg">
           <span className="flex-1">{errorText(error)}</span>
           <Button type="button" variant="outline" size="sm" onClick={() => void regenerate()}>
             <RotateCcw aria-hidden />
@@ -212,7 +212,7 @@ export function ChatView({
           onSubmit={onSubmit}
           className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-5 lg:bottom-4"
         >
-          <div className="sheet-lift flex items-end gap-2 rounded-sheet border border-rule bg-surface p-2">
+          <div className="shadow-lg flex items-end gap-2 rounded-xl border border-border bg-surface p-2">
             <label htmlFor="chat-input" className="sr-only">
               Tin nhắn cho gia sư
             </label>
@@ -225,7 +225,7 @@ export function ChatView({
               rows={1}
               maxLength={CHAT_MAX_CHARS}
               placeholder="Hỏi gia sư…"
-              className="field-sizing-content max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3 py-2.5 text-base text-ink outline-none placeholder:text-ink-faint"
+              className="field-sizing-content max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3 py-2.5 text-base text-fg outline-none placeholder:text-fg-subtle"
             />
             {busy ? (
               <Button type="button" variant="secondary" size="icon" onClick={() => void stop()} aria-label="Dừng trả lời" className="size-10 shrink-0 rounded-full">
@@ -238,7 +238,7 @@ export function ChatView({
             )}
           </div>
           {input.length > CHAT_MAX_CHARS - 200 && (
-            <p className="mt-1 px-3 text-right text-xs text-ink-soft">
+            <p className="mt-1 px-3 text-right text-xs text-fg-muted">
               {input.length}/{CHAT_MAX_CHARS}
             </p>
           )}

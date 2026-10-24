@@ -27,15 +27,15 @@ export function MascotSay({
     <div className={cn("flex items-end gap-1", className)}>
       <PettablePup mood={mood} name={name} size={size} onPet={setPets} />
       <div className="min-w-0 pb-2">
-        <span className="block text-xs text-ink-soft">{name}</span>
+        <span className="block text-xs text-fg-muted">{name}</span>
         <div className="flex items-start gap-1.5">
-          <svg viewBox="0 0 16 14" width={16} height={14} aria-hidden className="mt-1.5 shrink-0 text-ink-violet/40" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
+          <svg viewBox="0 0 16 14" width={16} height={14} aria-hidden className="mt-1.5 shrink-0 text-primary/40" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
             <path d="M1 12c5 0 7-3 8-6s3-4 6-4" />
           </svg>
           <p
             key={pets}
             aria-live="polite"
-            className="animate-in fade-in-0 text-[0.9375rem] leading-snug font-medium text-ink duration-150"
+            className="animate-in fade-in-0 text-[0.9375rem] leading-snug font-medium text-fg duration-150"
           >
             {pets ? say("pet", { seed: pets - 1, name }) : text}
           </p>

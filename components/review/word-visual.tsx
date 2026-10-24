@@ -20,7 +20,7 @@ export function WordVisual({
         width={size}
         height={size}
         sizes={`${size}px`}
-        className={cn("shrink-0 rounded-card border border-rule object-cover", className)}
+        className={cn("shrink-0 rounded-lg border border-border object-cover", className)}
         style={{ width: size, height: size }}
       />
     );
@@ -30,7 +30,7 @@ export function WordVisual({
     <span
       aria-hidden
       className={cn(
-        "grid shrink-0 place-items-center rounded-card bg-surface-sunk",
+        "grid shrink-0 place-items-center rounded-lg bg-surface-2",
         className,
       )}
       style={{ width: size, height: size, fontSize: size * 0.48 }}

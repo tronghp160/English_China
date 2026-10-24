@@ -15,7 +15,7 @@ export default function OfflinePage() {
       <main className="mt-6 flex flex-col items-start">
         <InkFigure name="notebook" size={72} />
         <h1 className="mt-4 text-xl">Bạn đang offline</h1>
-        <p className="mt-2 text-ink-soft">
+        <p className="mt-2 text-fg-muted">
           Trang này cần mạng để tải. Nếu đang ôn dở, kết quả đã lưu trên máy và sẽ tự gửi khi có mạng lại.
         </p>
         <RetryButton />

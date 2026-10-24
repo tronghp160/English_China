@@ -4,7 +4,7 @@ export type InkFigureName = "notebook" | "grid" | "people" | "chat" | "check";
 
 /**
  * One-color ink drawings for empty states and the mascot-off fallback (REDESIGN_PLAN §5.7):
- * 96px, 1.5px strokes in --ink-soft. Decorative.
+ * 96px, 1.5px strokes in --fg-muted. Decorative.
  */
 export function InkFigure({ name, size = 96, className }: { name: InkFigureName; size?: number; className?: string }) {
   return (
@@ -18,14 +18,14 @@ export function InkFigure({ name, size = 96, className }: { name: InkFigureName;
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
-      className={cn("shrink-0 text-ink-soft", className)}
+      className={cn("shrink-0 text-fg-muted", className)}
     >
       {name === "notebook" && (
         <>
           {/* Open notebook: two pages meeting at the spine, ruled lines, a margin line on the left page */}
           <path d="M9 24c13-5 28-4 39 3 11-7 26-8 39-3v47c-13-4-28-3-39 4-11-7-26-8-39-4z" />
           <path d="M48 27v48" />
-          <path d="M22 32v35" stroke="var(--margin)" />
+          <path d="M22 32v35" stroke="var(--border-strong)" />
           <path d="M28 38c5-1 11-1 15 1M28 47c5-1 11-1 15 1M28 56c5-1 11-1 15 1" />
           <path d="M56 39c5-2 11-2 17-1M56 48c5-2 11-2 17-1M56 57c5-2 11-2 17-1" />
         </>
@@ -36,7 +36,7 @@ export function InkFigure({ name, size = 96, className }: { name: InkFigureName;
           <rect x="18" y="18" width="60" height="60" rx="2" />
           <path d="M48 18v60M18 48h60" strokeDasharray="3 4" />
           <path d="M18 18l60 60M78 18L18 78" strokeDasharray="3 4" opacity=".6" />
-          <path d="M40 34c4 8 12 14 22 16" strokeWidth={2} stroke="var(--seal)" opacity=".7" />
+          <path d="M40 34c4 8 12 14 22 16" strokeWidth={2} stroke="var(--danger)" opacity=".7" />
         </>
       )}
       {name === "people" && (
@@ -60,7 +60,7 @@ export function InkFigure({ name, size = 96, className }: { name: InkFigureName;
           <path d="M24 12h36l14 14v58H24z" />
           <path d="M60 12v14h14" />
           <path d="M34 40h26M34 52h18M34 64h12" />
-          <path d="M52 68l8 8 16-18" stroke="var(--leaf)" strokeWidth={2.25} />
+          <path d="M52 68l8 8 16-18" stroke="var(--success)" strokeWidth={2.25} />
         </>
       )}
     </svg>
@@ -85,8 +85,8 @@ export function EmptyState({
   return (
     <div className={cn("flex flex-col items-center gap-3 px-4 py-10 text-center", className)}>
       {typeof figure === "string" ? <InkFigure name={figure as InkFigureName} /> : figure}
-      <h2 className="text-lg text-ink">{title}</h2>
-      {children && <p className="max-w-[44ch] text-sm text-ink-soft">{children}</p>}
+      <h2 className="text-lg text-fg">{title}</h2>
+      {children && <p className="max-w-[44ch] text-sm text-fg-muted">{children}</p>}
       {actions && <div className="mt-1 flex flex-wrap items-center justify-center gap-2">{actions}</div>}
     </div>
   );

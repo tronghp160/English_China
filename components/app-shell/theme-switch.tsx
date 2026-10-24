@@ -16,7 +16,7 @@ export function ThemeSwitch() {
       onClick={() =>
         applyThemePreference(document.documentElement.classList.contains("dark") ? "light" : "dark")
       }
-      className="inline-flex size-11 items-center justify-center rounded-btn text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
+      className="inline-flex size-11 items-center justify-center rounded-md text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
     >
       <Moon className="animate-in fade-in-0 spin-in-[-30deg] size-[1.125rem] duration-200 dark:hidden" strokeWidth={1.75} aria-hidden />
       <Sun className="animate-in fade-in-0 spin-in-[30deg] hidden size-[1.125rem] duration-200 dark:block" strokeWidth={1.75} aria-hidden />

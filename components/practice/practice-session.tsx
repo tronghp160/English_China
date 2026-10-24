@@ -152,18 +152,18 @@ export function PracticeSession({
             {q.prompt === "audio" ? (
               <>
                 <ReplayButton word={q.word} big />
-                <p className="text-sm text-ink-soft">Bạn nghe thấy từ nào?</p>
+                <p className="text-sm text-fg-muted">Bạn nghe thấy từ nào?</p>
               </>
             ) : q.prompt === "term" ? (
               <>
                 <TermLine word={q.word} />
-                <p className="text-sm text-ink-soft">Nghĩa của từ này là gì?</p>
+                <p className="text-sm text-fg-muted">Nghĩa của từ này là gì?</p>
               </>
             ) : (
               <>
                 {!prefs.hide_images && <WordVisual word={q.word} size={96} />}
                 <MeaningLine word={q.word} />
-                <p className="text-sm text-ink-soft">{zh ? "Chữ Hán nào?" : "Từ nào?"}</p>
+                <p className="text-sm text-fg-muted">{zh ? "Chữ Hán nào?" : "Từ nào?"}</p>
               </>
             )}
           </div>
@@ -181,19 +181,19 @@ export function PracticeSession({
       body = (
         <>
           <Paper className="my-4" innerClassName="py-[var(--line)]">
-            <p lang={zh ? "zh-CN" : "en"} className={cn("text-xl leading-[var(--line)] text-ink", zh && "font-hanzi text-2xl")}>
+            <p lang={zh ? "zh-CN" : "en"} className={cn("text-xl leading-[var(--line)] text-fg", zh && "font-hanzi text-2xl")}>
               {q.cloze.before}
               <span
                 className={cn(
                   "mx-1 inline-block min-w-16 border-b-2 text-center",
-                  outcome ? "border-leaf font-semibold text-leaf-text" : "border-ink-violet",
+                  outcome ? "border-success font-semibold text-success-fg" : "border-primary",
                 )}
               >
                 {outcome ? q.cloze.answer : " "}
               </span>
               {q.cloze.after}
             </p>
-            {q.cloze.vi && <p className="mt-[var(--line)] text-ink-soft">{q.cloze.vi}</p>}
+            {q.cloze.vi && <p className="mt-[var(--line)] text-fg-muted">{q.cloze.vi}</p>}
           </Paper>
           <Options
             options={q.options}
@@ -211,7 +211,7 @@ export function PracticeSession({
           <div className="flex flex-col items-center gap-4 py-4">
             <TermLine word={q.word} showReading={!!outcome} />
             <ReplayButton word={q.word} />
-            <p className="text-sm text-ink-soft">Từ này mang thanh điệu nào?</p>
+            <p className="text-sm text-fg-muted">Từ này mang thanh điệu nào?</p>
           </div>
           <Options
             options={q.options.map((o) => ({
@@ -249,7 +249,7 @@ export function PracticeSession({
             }}
             className="flex flex-col gap-2"
           >
-            <label htmlFor="typing-answer" className="text-sm text-ink-soft">
+            <label htmlFor="typing-answer" className="text-sm text-fg-muted">
               {zh
                 ? "Gõ chữ Hán hoặc pinyin (có dấu, số thanh hay không dấu đều được)"
                 : "Gõ từ tiếng Anh"}
@@ -268,7 +268,7 @@ export function PracticeSession({
               className={cn(
                 "h-14 px-4 text-xl",
                 zh ? "font-hanzi" : "font-display",
-                typingResult === "wrong" ? "border-seal bg-tint-seal" : typingResult ? "border-leaf bg-tint-leaf" : "",
+                typingResult === "wrong" ? "border-danger bg-danger-soft" : typingResult ? "border-success bg-success-soft" : "",
               )}
             />
             {!outcome && (

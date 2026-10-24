@@ -19,21 +19,21 @@ import { Input } from "@/components/ui/input";
 import { deleteAccount } from "@/lib/actions/account";
 
 const LINK_BTN =
-  "inline-flex min-h-11 items-center gap-2 rounded-btn border border-rule bg-surface px-4 text-sm font-medium text-ink hover:bg-muted";
+  "inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-surface px-4 text-sm font-medium text-fg hover:bg-muted";
 
 export function ExportData() {
   return (
     <div>
-      <p className="text-sm text-ink-soft">
+      <p className="text-sm text-fg-muted">
         Tải về toàn bộ bộ từ, tiến độ ôn và thống kê để tự lưu trữ. File CSV mở được bằng Excel hoặc Google Sheets.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <a href="/api/export?format=csv" download className={LINK_BTN}>
-          <Download className="size-4 text-ink-soft" aria-hidden />
+          <Download className="size-4 text-fg-muted" aria-hidden />
           Từ vựng (CSV)
         </a>
         <a href="/api/export?format=json" download className={LINK_BTN}>
-          <Download className="size-4 text-ink-soft" aria-hidden />
+          <Download className="size-4 text-fg-muted" aria-hidden />
           Toàn bộ dữ liệu (JSON)
         </a>
       </div>
@@ -50,7 +50,7 @@ export function DeleteAccount({ username }: { username: string }) {
 
   return (
     <div>
-      <p className="text-sm text-ink-soft">
+      <p className="text-sm text-fg-muted">
         Xóa vĩnh viễn tài khoản cùng mọi bộ từ, ảnh, tiến độ ôn và nhóm bạn làm chủ. Không khôi phục được.
       </p>
       <AlertDialog
@@ -59,10 +59,10 @@ export function DeleteAccount({ username }: { username: string }) {
           setError(null);
         }}
       >
-        <AlertDialogTrigger className="mt-3 min-h-11 rounded-btn bg-tint-seal px-4 text-sm font-medium text-seal-text">
+        <AlertDialogTrigger className="mt-3 min-h-11 rounded-md bg-danger-soft px-4 text-sm font-medium text-danger-fg">
           Xóa tài khoản
         </AlertDialogTrigger>
-        <AlertDialogContent className="rounded-sheet">
+        <AlertDialogContent className="rounded-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa tài khoản vĩnh viễn?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -71,7 +71,7 @@ export function DeleteAccount({ username }: { username: string }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div>
-            <label htmlFor="delete-confirm" className="text-sm text-ink">
+            <label htmlFor="delete-confirm" className="text-sm text-fg">
               Gõ <span className="font-medium">{username}</span> để xác nhận
             </label>
             <Input
@@ -86,21 +86,21 @@ export function DeleteAccount({ username }: { username: string }) {
               spellCheck={false}
               aria-invalid={Boolean(error) || undefined}
               aria-describedby={error ? "delete-confirm-error" : undefined}
-              className="mt-1.5 h-11 rounded-btn text-base"
+              className="mt-1.5 h-11 rounded-md text-base"
             />
             {error && (
-              <p id="delete-confirm-error" className="mt-1.5 text-sm text-seal-text">
+              <p id="delete-confirm-error" className="mt-1.5 text-sm text-danger-fg">
                 {error}
               </p>
             )}
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending} className="min-h-11 rounded-btn">
+            <AlertDialogCancel disabled={pending} className="min-h-11 rounded-md">
               Giữ tài khoản
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={!matches || pending}
-              className="min-h-11 gap-2 rounded-btn bg-seal text-on-seal hover:bg-seal/90"
+              className="min-h-11 gap-2 rounded-md bg-danger text-white hover:bg-danger/90"
               onClick={(e) => {
                 e.preventDefault(); // keep the dialog open until the server answers
                 start(async () => {

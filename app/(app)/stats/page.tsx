@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Thống kê" };
 
 // Ordered by how well a word is known: one violet, from nothing to full ink, so "going right" reads as progress.
 const STAGES = [
-  { key: "new", label: "Chưa học", hint: "chưa ôn lần nào", tone: "border border-rule-strong bg-surface-sunk" },
+  { key: "new", label: "Chưa học", hint: "chưa ôn lần nào", tone: "border border-border-strong bg-surface-2" },
   { key: "learning", label: "Đang tập nhớ", hint: "vừa học hoặc vừa quên", tone: "stage-1" },
   { key: "young", label: "Đã nhớ", hint: "nhớ được vài ngày", tone: "stage-2" },
   { key: "mature", label: "Nhớ chắc", hint: "nhớ được từ 3 tuần trở lên", tone: "stage-3" },
@@ -26,10 +26,10 @@ const STAGES = [
 /** One figure of the row: label above, a big serif number, a note under it. */
 function Figure({ value, label, note }: { value: string; label: string; note: string }) {
   return (
-    <div className="bg-paper p-4 sm:p-5">
-      <p className="text-sm text-ink-soft">{label}</p>
-      <p className="mt-1 font-display text-[2rem] leading-none font-semibold text-ink tabular-nums">{value}</p>
-      <p className="mt-2 text-xs text-ink-soft">{note}</p>
+    <div className="bg-canvas p-4 sm:p-5">
+      <p className="text-sm text-fg-muted">{label}</p>
+      <p className="mt-1 font-display text-[2rem] leading-none font-semibold text-fg tabular-nums">{value}</p>
+      <p className="mt-2 text-xs text-fg-muted">{note}</p>
     </div>
   );
 }
@@ -46,11 +46,11 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-t border-rule pt-8">
+    <section className="border-t border-border pt-8">
       <div className="mb-5 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg">{title}</h2>
-          {subtitle && <p className="mt-0.5 max-w-[62ch] text-sm text-ink-soft">{subtitle}</p>}
+          {subtitle && <p className="mt-0.5 max-w-[62ch] text-sm text-fg-muted">{subtitle}</p>}
         </div>
         {action}
       </div>
@@ -100,11 +100,11 @@ export default async function StatsPage() {
     <div className="flex flex-col gap-8">
       <header>
         <h1 className="text-xl">Thống kê</h1>
-        <p className="mt-0.5 text-ink-soft">Bạn học thế nào trong 30 ngày gần đây</p>
+        <p className="mt-0.5 text-fg-muted">Bạn học thế nào trong 30 ngày gần đây</p>
         {prefs.mascot && <MascotSay mood={mood} name={prefs.mascot_name} text={line} size={48} className="mt-3" />}
       </header>
 
-      <div className="grid grid-cols-2 gap-px overflow-hidden border-y border-rule bg-rule lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px overflow-hidden border-y border-border bg-border lg:grid-cols-4">
         <Figure value={known.toLocaleString("vi-VN")} label="Từ đã nhớ" note={`trên tổng ${totalActive.toLocaleString("vi-VN")} từ`} />
         <Figure value={reviews30.toLocaleString("vi-VN")} label="Lượt ôn" note="trong 30 ngày" />
         <Figure value={retention === null ? "—" : `${retention}%`} label="Nhớ đúng" note="số lần trả lời đúng" />
@@ -139,7 +139,7 @@ export default async function StatsPage() {
             </div>
           </>
         ) : (
-          <p className="py-8 text-center text-ink-soft">Chưa có lượt ôn nào trong 30 ngày qua.</p>
+          <p className="py-8 text-center text-fg-muted">Chưa có lượt ôn nào trong 30 ngày qua.</p>
         )}
       </Section>
 
@@ -147,13 +147,13 @@ export default async function StatsPage() {
         title="Bạn đã thuộc đến đâu"
         subtitle="Mỗi từ đi dần từ trái sang phải khi bạn ôn đúng."
         action={
-          <Link href="/hard-words" className="inline-flex min-h-11 shrink-0 items-center gap-0.5 text-sm font-medium text-ink-violet hover:underline">
+          <Link href="/hard-words" className="inline-flex min-h-11 shrink-0 items-center gap-0.5 text-sm font-medium text-primary hover:underline">
             Từ hay quên
             <ChevronRight className="size-4" aria-hidden />
           </Link>
         }
       >
-        {langs.length === 0 && <p className="text-ink-soft">Chưa có từ nào.</p>}
+        {langs.length === 0 && <p className="text-fg-muted">Chưa có từ nào.</p>}
         <div className="flex flex-col gap-8">
           {langs.map((lang) => {
             const total = STAGES.reduce((n, st) => n + count(st.key, lang), 0);
@@ -165,7 +165,7 @@ export default async function StatsPage() {
                     <LangMark lang={lang} />
                     {LANGUAGES[lang].label}
                   </span>
-                  <span className="text-sm font-normal text-ink-soft tabular-nums">{total} từ</span>
+                  <span className="text-sm font-normal text-fg-muted tabular-nums">{total} từ</span>
                 </p>
                 {total > 0 && (
                   <div
@@ -184,15 +184,15 @@ export default async function StatsPage() {
                     <li key={st.key} className="flex items-start gap-2">
                       <span aria-hidden className={cn("mt-1 size-2.5 shrink-0 rounded-xs", st.tone)} />
                       <span className="min-w-0">
-                        <span className="block text-sm text-ink">
+                        <span className="block text-sm text-fg">
                           {st.label} <span className="font-semibold tabular-nums">{count(st.key, lang)}</span>
                         </span>
-                        <span className="block text-xs text-ink-soft">{st.hint}</span>
+                        <span className="block text-xs text-fg-muted">{st.hint}</span>
                       </span>
                     </li>
                   ))}
                 </ul>
-                {hidden > 0 && <p className="mt-2 text-xs text-ink-soft">Và {hidden} từ đang tạm ẩn.</p>}
+                {hidden > 0 && <p className="mt-2 text-xs text-fg-muted">Và {hidden} từ đang tạm ẩn.</p>}
               </div>
             );
           })}

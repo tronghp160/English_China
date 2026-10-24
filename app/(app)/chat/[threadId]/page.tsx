@@ -38,7 +38,7 @@ export default async function ChatThreadPage({ params, searchParams }: PageProps
         <LangMark lang={thread.language} label className="shrink-0" />
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg">{title}</h1>
-          {thread.deck?.name && <p className="truncate text-sm text-ink-soft">Bộ từ: {thread.deck.name}</p>}
+          {thread.deck?.name && <p className="truncate text-sm text-fg-muted">Bộ từ: {thread.deck.name}</p>}
         </div>
         <DeleteChatButton threadId={thread.id} title={title} redirectTo="/chat" />
       </div>

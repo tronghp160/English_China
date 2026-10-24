@@ -43,13 +43,13 @@ export function MascotPrefs({ prefs }: { prefs: Required<Prefs> }) {
           aria-label="Xem biểu cảm tiếp theo"
           title="Bấm để xem biểu cảm khác"
           onClick={() => setMoodIndex((i) => (i + 1) % PUP_MOODS.length)}
-          className="ruled-paper grid size-28 cursor-pointer place-items-center rounded-card border border-rule bg-surface [--line:1.75rem]"
+          className=" grid size-28 cursor-pointer place-items-center rounded-lg border border-border bg-surface"
         >
           <Pup key={moodIndex} mood={optimistic.mascot ? PUP_MOODS[moodIndex] : "sleepy"} size={84} />
         </button>
-        <span className="text-xs text-ink-soft">Bấm để đổi</span>
+        <span className="text-xs text-fg-muted">Bấm để đổi</span>
       </div>
-      <div className="ruled-list min-w-0 flex-1">
+      <div className="divide-y divide-border min-w-0 flex-1">
         <SwitchRow
           id="pref-mascot"
           label="Hiện bạn cún"

@@ -18,17 +18,17 @@ export default async function PracticePage({ searchParams }: PageProps<"/practic
   return (
     <div className="max-w-3xl">
       <h1 className="text-xl">Luyện tập</h1>
-      <p className="mt-1 mb-8 max-w-[62ch] text-ink-soft">Luyện thêm ngoài giờ ôn. Mặc định không làm thay đổi lịch ôn.</p>
+      <p className="mt-1 mb-8 max-w-[62ch] text-fg-muted">Luyện thêm ngoài giờ ôn. Mặc định không làm thay đổi lịch ôn.</p>
       <PracticeSetup decks={options} studyLangs={langs} initialDeck={deck} />
       <Link
         href="/hard-words"
-        className="mt-10 flex min-h-14 items-center gap-3 border-y border-rule py-3 transition-colors hover:bg-surface-sunk"
+        className="mt-10 flex min-h-14 items-center gap-3 border-y border-border py-3 transition-colors hover:bg-surface-2"
       >
         <span className="min-w-0 flex-1">
-          <span className="block font-semibold text-ink">Từ hay quên</span>
-          <span className="block text-sm text-ink-soft">Xem và luyện riêng những từ bạn hay quên khi ôn</span>
+          <span className="block font-semibold text-fg">Từ hay quên</span>
+          <span className="block text-sm text-fg-muted">Xem và luyện riêng những từ bạn hay quên khi ôn</span>
         </span>
-        <ChevronRight className="size-5 shrink-0 text-ink-faint" aria-hidden />
+        <ChevronRight className="size-5 shrink-0 text-fg-subtle" aria-hidden />
       </Link>
     </div>
   );

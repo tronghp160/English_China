@@ -42,10 +42,10 @@ export function TermLine({ word, showReading = true, bare = false }: { word: Stu
   if (bare && word.language === "en")
     return (
       <div className="flex flex-col items-center gap-1 text-center">
-        <span lang="en" className="font-display text-3xl font-medium text-ink">
+        <span lang="en" className="font-display text-3xl font-medium text-fg">
           {word.term}
         </span>
-        {showReading && word.reading && <span className="font-ipa text-ink-soft">{word.reading}</span>}
+        {showReading && word.reading && <span className="font-ipa text-fg-muted">{word.reading}</span>}
       </div>
     );
   return (
@@ -67,7 +67,7 @@ export function MeaningLine({ word, bare = false }: { word: StudyWord; bare?: bo
   if (bare)
     return (
       <div className="flex flex-col items-center gap-2 text-center">
-        <p className="text-2xl font-medium text-ink">{word.meaning_vi}</p>
+        <p className="text-2xl font-medium text-fg">{word.meaning_vi}</p>
         <div className="flex flex-wrap justify-center gap-1.5">
           {word.parts_of_speech.map((p) => (
             <PosBadge key={p} pos={p} />
@@ -77,7 +77,7 @@ export function MeaningLine({ word, bare = false }: { word: StudyWord; bare?: bo
     );
   return (
     <Paper className="w-full max-w-md" innerClassName="pt-0">
-      <p className="flex min-h-[calc(var(--line)*2)] items-end text-[1.5rem] leading-[var(--line)] font-medium text-ink">
+      <p className="flex min-h-[calc(var(--line)*2)] items-end text-[1.5rem] leading-[var(--line)] font-medium text-fg">
         <span className="relative top-[0.3em]">{word.meaning_vi}</span>
       </p>
       <div className="flex min-h-[var(--line)] flex-wrap items-center gap-1.5 pt-1">
@@ -98,8 +98,8 @@ export function ReplayButton({ word, big }: { word: StudyWord; big?: boolean }) 
       onClick={() => say(word)}
       aria-label="Nghe lại"
       className={cn(
-        "grid place-items-center rounded-full text-ink-violet transition-colors hover:bg-tint-violet",
-        big ? "size-[4.5rem] border-2 border-ink-violet bg-surface" : "size-11 bg-tint-violet",
+        "grid place-items-center rounded-full text-primary transition-colors hover:bg-primary-soft",
+        big ? "size-[4.5rem] border-2 border-primary bg-surface" : "size-11 bg-primary-soft",
       )}
     >
       <Volume2 className={big ? "size-8" : "size-5"} strokeWidth={1.75} aria-hidden />
@@ -143,12 +143,12 @@ export function Options({
             onClick={() => onPick(o.id)}
             lang={lang === "zh" ? "zh-CN" : undefined}
             className={cn(
-              "flex min-h-14 items-center gap-3 rounded-btn border px-4 py-3 text-left font-medium text-ink transition-colors duration-[var(--dur-fast)] disabled:cursor-default",
-              !outcome && !chosen && "border-input bg-surface hover:bg-surface-sunk",
-              chosen && "border-ink-violet bg-tint-violet ring-1 ring-ink-violet",
-              outcome && isAnswer && "border-leaf bg-tint-leaf ring-1 ring-leaf",
-              outcome && picked && !isAnswer && "border-seal bg-tint-seal ring-1 ring-seal",
-              outcome && !isAnswer && !picked && "border-rule bg-surface opacity-60",
+              "flex min-h-14 items-center gap-3 rounded-md border px-4 py-3 text-left font-medium text-fg transition-colors duration-[var(--dur-fast)] disabled:cursor-default",
+              !outcome && !chosen && "border-input bg-surface hover:bg-surface-2",
+              chosen && "border-primary bg-primary-soft ring-1 ring-primary",
+              outcome && isAnswer && "border-success bg-success-soft ring-1 ring-success",
+              outcome && picked && !isAnswer && "border-danger bg-danger-soft ring-1 ring-danger",
+              outcome && !isAnswer && !picked && "border-border bg-surface opacity-60",
               big && "text-2xl",
               lang === "zh" && "font-hanzi text-2xl",
             )}
@@ -158,22 +158,22 @@ export function Options({
                 aria-hidden
                 className={cn(
                   "grid size-7 shrink-0 place-items-center rounded-full border font-sans text-xs font-semibold",
-                  chosen ? "border-ink-violet bg-ink-violet text-primary-foreground" : "border-input text-ink-soft",
+                  chosen ? "border-primary bg-primary text-primary-foreground" : "border-input text-fg-muted",
                 )}
               >
                 {"ABCDEF"[i]}
               </span>
             ) : (
-              <kbd className="hidden size-6 shrink-0 place-items-center rounded-sm border border-input font-sans text-xs font-medium text-ink-soft lg:grid">
+              <kbd className="hidden size-6 shrink-0 place-items-center rounded-sm border border-input font-sans text-xs font-medium text-fg-muted lg:grid">
                 {i + 1}
               </kbd>
             )}
             <span className="min-w-0 flex-1 break-words">{o.label}</span>
             {outcome && isAnswer && (
-              <Check className="size-5 shrink-0 text-leaf-text" aria-label="Đáp án đúng" />
+              <Check className="size-5 shrink-0 text-success-fg" aria-label="Đáp án đúng" />
             )}
             {outcome && picked && !isAnswer && (
-              <X className="size-5 shrink-0 text-seal-text" aria-label="Bạn chọn" />
+              <X className="size-5 shrink-0 text-danger-fg" aria-label="Bạn chọn" />
             )}
           </button>
         );
@@ -190,9 +190,9 @@ export function toneLabel(pattern: string) {
 }
 
 const VERDICT = {
-  correct: { title: "Đúng rồi!", tone: "border-t-leaf bg-tint-leaf", text: "text-leaf-text" },
-  close: { title: "Gần đúng!", tone: "border-t-turmeric bg-tint-turmeric", text: "text-turmeric-text" },
-  wrong: { title: "Chưa đúng", tone: "border-t-seal bg-tint-seal", text: "text-seal-text" },
+  correct: { title: "Đúng rồi!", tone: "border-t-success bg-success-soft", text: "text-success-fg" },
+  close: { title: "Gần đúng!", tone: "border-t-streak bg-streak-soft", text: "text-streak-fg" },
+  wrong: { title: "Chưa đúng", tone: "border-t-danger bg-danger-soft", text: "text-danger-fg" },
 } as const;
 
 /**
@@ -220,7 +220,7 @@ export function FeedbackPanel({
     <div
       role="status"
       className={cn(
-        "sticky bottom-0 -mx-4 mt-4 flex animate-in flex-col gap-3 rounded-t-sheet border-t-[3px] px-4 pt-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] shadow-lift duration-200 fade-in-0 slide-in-from-bottom-6",
+        "sticky bottom-0 -mx-4 mt-4 flex animate-in flex-col gap-3 rounded-t-xl border-t-[3px] px-4 pt-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] shadow-lift duration-200 fade-in-0 slide-in-from-bottom-6",
         v.tone,
       )}
     >
@@ -229,14 +229,14 @@ export function FeedbackPanel({
         <div className="min-w-0 flex-1">
           <p className={cn("text-lg font-semibold", v.text)}>{v.title}</p>
           {prefs.mascot && (
-            <p className="text-sm text-ink-soft">{say(verdict, { seed: seedOf(word.id), name: prefs.mascot_name })}</p>
+            <p className="text-sm text-fg-muted">{say(verdict, { seed: seedOf(word.id), name: prefs.mascot_name })}</p>
           )}
-          <p className="mt-1 text-ink">
+          <p className="mt-1 text-fg">
             <span lang={zh ? "zh-CN" : "en"} className={cn("font-semibold", zh && "font-hanzi text-lg")}>
               {word.term}
             </span>
-            {word.reading && <span className="text-ink-soft"> {word.reading}</span>}
-            <span className="text-ink-soft"> {word.meaning_vi}</span>
+            {word.reading && <span className="text-fg-muted"> {word.reading}</span>}
+            <span className="text-fg-muted"> {word.meaning_vi}</span>
           </p>
         </div>
         <PronounceButton text={word.term} lang={word.language} />

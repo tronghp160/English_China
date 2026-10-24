@@ -23,7 +23,7 @@ const VISIBILITY = [
 
 function FieldError({ children }: { children: React.ReactNode }) {
   return (
-    <p className="flex items-center gap-1.5 text-sm text-seal-text">
+    <p className="flex items-center gap-1.5 text-sm text-danger-fg">
       <AlertCircle className="size-3.5 shrink-0" aria-hidden />
       {children}
     </p>
@@ -31,9 +31,9 @@ function FieldError({ children }: { children: React.ReactNode }) {
 }
 
 /** A choice drawn as a card: 1px outline, the chosen one gets a 2px violet outline and a pale violet fill. */
-const CARD = "rounded-btn border text-left transition-colors disabled:opacity-50";
-const CARD_ON = "border-ink-violet bg-tint-violet ring-1 ring-ink-violet";
-const CARD_OFF = "border-input bg-surface hover:border-ink-soft/50";
+const CARD = "rounded-md border text-left transition-colors disabled:opacity-50";
+const CARD_ON = "border-primary bg-primary-soft ring-1 ring-primary";
+const CARD_OFF = "border-input bg-surface hover:border-fg-muted/50";
 
 export function DeckForm({
   mode,
@@ -123,11 +123,11 @@ export function DeckForm({
                 >
                   <span
                     aria-hidden
-                    className={cn("text-xl leading-none text-ink", code === "zh" ? "font-hanzi" : "font-display font-medium")}
+                    className={cn("text-xl leading-none text-fg", code === "zh" ? "font-hanzi" : "font-display font-medium")}
                   >
                     {code === "zh" ? "坚强" : "resilient"}
                   </span>
-                  <span className="text-sm font-medium text-ink">{LANGUAGES[code].label}</span>
+                  <span className="text-sm font-medium text-fg">{LANGUAGES[code].label}</span>
                 </button>
               ))}
             </div>
@@ -149,10 +149,10 @@ export function DeckForm({
                   onClick={() => set("visibility", value)}
                   className={cn(CARD, "flex min-h-14 items-center gap-3 px-4", v.visibility === value ? CARD_ON : CARD_OFF)}
                 >
-                  <Icon className="size-5 shrink-0 text-ink-soft" strokeWidth={1.75} aria-hidden />
+                  <Icon className="size-5 shrink-0 text-fg-muted" strokeWidth={1.75} aria-hidden />
                   <span>
-                    <span className="block font-medium text-ink">{label}</span>
-                    <span className="block text-sm text-ink-soft">{disabled ? "Bạn chưa tham gia nhóm nào" : hint}</span>
+                    <span className="block font-medium text-fg">{label}</span>
+                    <span className="block text-sm text-fg-muted">{disabled ? "Bạn chưa tham gia nhóm nào" : hint}</span>
                   </span>
                 </button>
               );
@@ -161,14 +161,14 @@ export function DeckForm({
         </fieldset>
 
         {v.visibility === "group" && groups.length > 0 && (
-          <div className="space-y-3 rounded-card border border-rule p-4">
+          <div className="space-y-3 rounded-lg border border-border p-4">
             <div className="space-y-1.5">
               <Label htmlFor="deck-group">Nhóm</Label>
               <select
                 id="deck-group"
                 value={v.group_id ?? ""}
                 onChange={(e) => set("group_id", e.target.value)}
-                className="h-11 w-full rounded-btn border border-input bg-surface px-3 text-base outline-none focus-visible:border-ink-violet focus-visible:ring-3 focus-visible:ring-tint-violet"
+                className="h-11 w-full rounded-md border border-input bg-surface px-3 text-base outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary-soft"
               >
                 {groups.map((g) => (
                   <option key={g.id} value={g.id}>

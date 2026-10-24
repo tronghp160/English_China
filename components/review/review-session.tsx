@@ -19,10 +19,10 @@ export type ReviewItem = QueueItem & { word: StudyWord; direction: Direction };
 
 // The colour of the top edge says what the rating means: seal = forgot, turmeric = hard, violet = good, leaf = easy.
 const RATING_EDGE: Record<RatingValue, string> = {
-  1: "border-t-seal",
-  2: "border-t-turmeric",
-  3: "border-t-ink-violet",
-  4: "border-t-leaf",
+  1: "border-t-danger",
+  2: "border-t-streak",
+  3: "border-t-primary",
+  4: "border-t-success",
 };
 
 function isTyping(target: EventTarget | null) {
@@ -182,7 +182,7 @@ export function ReviewSession({
       </div>
 
       {/* Thumb zone */}
-      <div className="sticky bottom-0 -mx-4 bg-paper/95 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur-sm">
+      <div className="sticky bottom-0 -mx-4 bg-canvas/95 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur-sm">
         {flipped && preview ? (
           <div className="grid grid-cols-4 gap-2" role="group" aria-label="Bạn nhớ từ này thế nào?">
             {RATINGS.map((r) => (
@@ -191,13 +191,13 @@ export function ReviewSession({
                 type="button"
                 onClick={() => rate(r.value)}
                 className={cn(
-                  "flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-btn border border-t-[3px] border-rule-strong bg-surface px-1 text-ink transition-colors duration-[var(--dur-fast)] hover:bg-surface-sunk active:translate-y-px",
+                  "flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-md border border-t-[3px] border-border-strong bg-surface px-1 text-fg transition-colors duration-[var(--dur-fast)] hover:bg-surface-2 active:translate-y-px",
                   RATING_EDGE[r.value],
                 )}
               >
                 <span className="text-base font-semibold">{r.label}</span>
-                <span className="text-xs text-ink-soft">{formatInterval(preview[r.value].getTime() - now.getTime())}</span>
-                <kbd className="hidden font-sans text-[0.6875rem] text-ink-faint lg:block">{r.key}</kbd>
+                <span className="text-xs text-fg-muted">{formatInterval(preview[r.value].getTime() - now.getTime())}</span>
+                <kbd className="hidden font-sans text-[0.6875rem] text-fg-subtle lg:block">{r.key}</kbd>
               </button>
             ))}
           </div>

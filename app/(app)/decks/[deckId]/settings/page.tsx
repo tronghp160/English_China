@@ -34,9 +34,9 @@ export default async function DeckSettingsPage({ params }: PageProps<"/decks/[de
           enable_recall: deck.enable_recall,
         }}
       />
-      <section className="mt-10 max-w-xl rounded-card border border-seal/60 p-5">
+      <section className="mt-10 max-w-xl rounded-lg border border-danger/60 p-5">
         <h2 className="text-base">Xóa bộ từ</h2>
-        <p className="mt-1 mb-4 text-sm text-ink-soft">
+        <p className="mt-1 mb-4 text-sm text-fg-muted">
           Xóa {deck.word_count} từ và tiến độ ôn của mọi người đang học bộ này. Không hoàn tác được.
         </p>
         <DeleteDeckButton deckId={deckId} name={deck.name} />

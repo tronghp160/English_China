@@ -57,7 +57,7 @@ export function StudyStrip({ deckId, items, wordCount }: { deckId: string; items
   };
 
   return (
-    <nav aria-label="Học bộ này" className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-rule bg-rule sm:grid-cols-4">
+    <nav aria-label="Học bộ này" className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-4">
       {items.map(({ mode, n }) => {
         const Icon = MODE_LOOK[mode].icon;
         const line = hint(mode, n);
@@ -65,13 +65,13 @@ export function StudyStrip({ deckId, items, wordCount }: { deckId: string; items
           <Link
             key={mode}
             href={`/practice/${mode}?deck=${deckId}&n=${n}&from=deck`}
-            className="flex min-h-16 flex-col justify-center gap-0.5 bg-surface px-4 py-3 transition-colors hover:bg-surface-sunk"
+            className="flex min-h-16 flex-col justify-center gap-0.5 bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
           >
-            <span className="flex items-center gap-2 font-semibold text-ink">
+            <span className="flex items-center gap-2 font-semibold text-fg">
               <Icon className="size-[1.125rem]" strokeWidth={1.75} aria-hidden />
               {MODE_INFO[mode].label}
             </span>
-            <span className="min-h-4 text-xs leading-4 text-ink-soft">{line}</span>
+            <span className="min-h-4 text-xs leading-4 text-fg-muted">{line}</span>
           </Link>
         );
       })}

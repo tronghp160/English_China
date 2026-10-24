@@ -53,7 +53,7 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
       <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
         <SealStamp text="Xong bài" size={96} animate={false} />
         <h1 className="mt-4 text-xl">Bạn đã ôn xong hôm nay.</h1>
-        <p className="text-ink-soft">
+        <p className="text-fg-muted">
           {tomorrowDue > 0 ? `Ngày mai có ${tomorrowDue} từ cần ôn.` : "Thêm từ mới để có thẻ ôn ngày mai."}
         </p>
         <div className="mt-2 flex flex-wrap justify-center gap-2">

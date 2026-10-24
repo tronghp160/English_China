@@ -80,7 +80,7 @@ function Field({
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
       {error && (
-        <p className="flex items-center gap-1.5 text-sm text-seal-text">
+        <p className="flex items-center gap-1.5 text-sm text-danger-fg">
           <AlertCircle className="size-3.5 shrink-0" aria-hidden />
           {error}
         </p>
@@ -113,11 +113,11 @@ function Section({
         onClick={() => onToggle(id)}
         aria-expanded={open}
         aria-controls={panelId}
-        className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-surface-sunk"
+        className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-surface-2"
       >
-        <ChevronRight className={cn("size-4 shrink-0 text-ink-soft transition-transform duration-200", open && "rotate-90")} aria-hidden />
-        <span className="shrink-0 font-medium text-ink">{title}</span>
-        <span className="ml-auto min-w-0 truncate text-sm text-ink-soft">{summary}</span>
+        <ChevronRight className={cn("size-4 shrink-0 text-fg-muted transition-transform duration-200", open && "rotate-90")} aria-hidden />
+        <span className="shrink-0 font-medium text-fg">{title}</span>
+        <span className="ml-auto min-w-0 truncate text-sm text-fg-muted">{summary}</span>
       </button>
       {open && (
         <div id={panelId} className="space-y-5 px-4 pt-1 pb-5">
@@ -334,7 +334,7 @@ export function WordForm({
           <AiSuggestButton loading={ai.state.status === "loading"} onClick={() => void ai.suggest()} />
         </div>
         {errors.term?.message && (
-          <p className="flex items-center gap-1.5 text-sm text-seal-text">
+          <p className="flex items-center gap-1.5 text-sm text-danger-fg">
             <AlertCircle className="size-3.5 shrink-0" aria-hidden />
             {errors.term.message}
           </p>
@@ -343,8 +343,8 @@ export function WordForm({
         <AiSuggestPanel ai={ai} onUseSpelling={(t) => setValue("term", t, { shouldDirty: true })} />
 
         {term.trim() && duplicates.length > 0 && (
-          <p role="status" className="flex items-start gap-2 rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-turmeric-text" aria-hidden />
+          <p role="status" className="flex items-start gap-2 rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-streak-fg" aria-hidden />
             <span>
               Từ này đã có trong bộ{" "}
               {duplicates.map((d, i) => (
@@ -368,11 +368,11 @@ export function WordForm({
           size="sm"
           toneColors
           actions={<PronounceButton text={term} lang={language} />}
-          className={language === "zh" ? "sheet p-4" : undefined}
+          className={language === "zh" ? "rounded-lg border border-border/60 bg-surface shadow-sm p-4" : undefined}
         />
       )}
 
-      <div className="sheet space-y-4 p-4">
+      <div className="rounded-lg border border-border/60 bg-surface shadow-sm space-y-4 p-4">
         <Field label={def.readingLabel} htmlFor="reading">
           <div className="flex gap-2">
             <Input
@@ -409,9 +409,9 @@ export function WordForm({
 
       <section aria-labelledby="details-heading" className="space-y-2">
         <h2 id="details-heading" className="px-1 text-base">
-          Thêm chi tiết <span className="font-sans text-sm font-normal text-ink-soft">(không bắt buộc)</span>
+          Thêm chi tiết <span className="font-sans text-sm font-normal text-fg-muted">(không bắt buộc)</span>
         </h2>
-        <div className="sheet divide-y divide-rule overflow-hidden">
+        <div className="rounded-lg border border-border/60 bg-surface shadow-sm divide-y divide-border overflow-hidden">
           <Section
             id="examples"
             title="Câu ví dụ"
@@ -477,11 +477,11 @@ export function WordForm({
                           aria-pressed={on}
                           onClick={() => field.onChange(on ? field.value!.filter((x) => x !== p) : [...(field.value ?? []), p])}
                           className={cn(
-                            "inline-flex min-h-10 items-center gap-1.5 rounded-chip border px-3 text-sm transition-colors",
-                            on ? "border-ink-violet bg-tint-violet font-medium text-ink" : "border-input text-ink-soft hover:text-ink",
+                            "inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors",
+                            on ? "border-primary bg-primary-soft font-medium text-fg" : "border-input text-fg-muted hover:text-fg",
                           )}
                         >
-                          {on && <Check className="size-3.5 text-ink-violet" strokeWidth={2.5} aria-hidden />}
+                          {on && <Check className="size-3.5 text-primary" strokeWidth={2.5} aria-hidden />}
                           {POS[p].label}
                         </button>
                       );
@@ -562,7 +562,7 @@ export function WordForm({
                   <Input id="han_viet" {...register("lang_extra.han_viet")} placeholder="kiên cường" />
                 </Field>
                 <Field label="HSK" htmlFor="hsk">
-                  <select id="hsk" {...register("lang_extra.hsk.level")} className="h-11 w-full rounded-btn border border-input bg-surface px-3 text-base outline-none focus-visible:border-ink-violet focus-visible:ring-3 focus-visible:ring-tint-violet">
+                  <select id="hsk" {...register("lang_extra.hsk.level")} className="h-11 w-full rounded-md border border-input bg-surface px-3 text-base outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary-soft">
                     <option value="">Không rõ</option>
                     {def.levels.map((l) => (
                       <option key={l} value={l}>
@@ -597,7 +597,7 @@ export function WordForm({
             ) : (
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field label="CEFR" htmlFor="cefr">
-                  <select id="cefr" {...register("lang_extra.cefr")} className="h-11 w-full rounded-btn border border-input bg-surface px-3 text-base outline-none focus-visible:border-ink-violet focus-visible:ring-3 focus-visible:ring-tint-violet">
+                  <select id="cefr" {...register("lang_extra.cefr")} className="h-11 w-full rounded-md border border-input bg-surface px-3 text-base outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary-soft">
                     <option value="">Không rõ</option>
                     {def.levels.map((l) => (
                       <option key={l} value={l}>
@@ -649,17 +649,17 @@ export function WordForm({
               placeholder="Chỉ mình bạn thấy khi ôn."
               aria-invalid={Boolean(errors.personal_note) || undefined}
             />
-            {errors.personal_note?.message && <p className="text-sm text-seal-text">{errors.personal_note.message}</p>}
+            {errors.personal_note?.message && <p className="text-sm text-danger-fg">{errors.personal_note.message}</p>}
           </Section>
         </div>
       </section>
 
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 border-t border-rule bg-surface px-4 py-3 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
+      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 border-t border-border bg-surface px-4 py-3 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
         <Button type="submit" size="lg" disabled={pending} className="w-full sm:w-auto sm:px-10">
           {pending && <Loader2 className="animate-spin" aria-hidden />}
           Lưu từ
         </Button>
-        {mode === "create" && <span className="ml-3 hidden text-sm text-ink-soft sm:inline">vào bộ {deckName}</span>}
+        {mode === "create" && <span className="ml-3 hidden text-sm text-fg-muted sm:inline">vào bộ {deckName}</span>}
       </div>
     </form>
   );

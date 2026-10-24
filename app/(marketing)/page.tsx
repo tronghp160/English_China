@@ -81,14 +81,14 @@ export default function MarketingPage() {
             <br />
             Ôn đúng lúc sắp quên.
           </h1>
-          <p className="mt-5 max-w-[62ch] text-lg text-ink-soft">
+          <p className="mt-5 max-w-[62ch] text-lg text-fg-muted">
             Sổ từ vựng tiếng Anh và tiếng Trung. Gõ một từ, app điền nghĩa, phiên âm và ví dụ; mỗi ngày bạn chỉ ôn những từ sắp quên.
           </p>
           <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-6">
             <Button asChild size="lg">
               <Link href="/signup">Tạo sổ miễn phí</Link>
             </Button>
-            <Link href="/login" className="inline-flex min-h-11 items-center text-ink-violet underline-offset-4 hover:underline">
+            <Link href="/login" className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline">
               Tôi đã có tài khoản
             </Link>
           </div>
@@ -104,9 +104,9 @@ export default function MarketingPage() {
           {STEPS.map((s, i) => (
             <li key={s.title} className="grid items-center gap-6 md:grid-cols-2 md:gap-12">
               <div className={i % 2 ? "md:order-2" : undefined}>
-                <p className="font-display text-3xl font-semibold text-ink-violet tabular-nums">{i + 1}</p>
+                <p className="font-display text-3xl font-semibold text-primary tabular-nums">{i + 1}</p>
                 <h3 className="mt-1 text-lg">{s.title}</h3>
-                <p className="mt-2 max-w-[48ch] text-ink-soft">{s.body}</p>
+                <p className="mt-2 max-w-[48ch] text-fg-muted">{s.body}</p>
               </div>
               <Image
                 src={s.src}
@@ -114,7 +114,7 @@ export default function MarketingPage() {
                 width={s.w}
                 height={s.h}
                 sizes="(min-width: 768px) 480px, 100vw"
-                className="mx-auto max-h-[34rem] w-auto max-w-full rounded-card border border-rule object-contain object-top"
+                className="mx-auto max-h-[34rem] w-auto max-w-full rounded-lg border border-border object-contain object-top"
               />
             </li>
           ))}
@@ -126,29 +126,29 @@ export default function MarketingPage() {
           <h2 id="friends-title" className="text-xl sm:text-2xl">
             Học cùng bạn bè
           </h2>
-          <p className="mt-3 max-w-[48ch] text-ink-soft">
+          <p className="mt-3 max-w-[48ch] text-fg-muted">
             Chia sẻ bộ từ bằng một đường link. Lập nhóm có mã mời, mỗi người giữ tiến độ riêng và so điểm XP trên bảng xếp hạng tuần.
           </p>
         </div>
         <div>
-          <p className="flex items-baseline justify-between text-sm text-ink-soft">
-            <span className="font-medium text-ink">Tuần này</span>
+          <p className="flex items-baseline justify-between text-sm text-fg-muted">
+            <span className="font-medium text-fg">Tuần này</span>
             <span>Ví dụ</span>
           </p>
-          <ol className="ruled-list mt-2 border-y border-rule" aria-label="Bảng xếp hạng mẫu">
+          <ol className="divide-y divide-border mt-2 border-y border-border" aria-label="Bảng xếp hạng mẫu">
             {BOARD.map((r) => (
-              <li key={r.rank} className={`flex min-h-14 items-center gap-3 px-2 py-2 ${r.me ? "bg-tint-violet" : ""}`}>
-                <span className="w-6 text-center font-display text-xl font-semibold text-ink-soft tabular-nums">{r.rank}</span>
+              <li key={r.rank} className={`flex min-h-14 items-center gap-3 px-2 py-2 ${r.me ? "bg-primary-soft" : ""}`}>
+                <span className="w-6 text-center font-display text-xl font-semibold text-fg-muted tabular-nums">{r.rank}</span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2 font-medium">
                     {r.name}
-                    {r.me && <span className="font-normal text-ink-soft">(bạn)</span>}
+                    {r.me && <span className="font-normal text-fg-muted">(bạn)</span>}
                     {r.rank === 1 && <SealStamp text="Nhất" size={32} animate={false} />}
                   </span>
-                  {r.streak > 0 && <span className="text-xs text-ink-soft">chuỗi {r.streak} ngày</span>}
+                  {r.streak > 0 && <span className="text-xs text-fg-muted">chuỗi {r.streak} ngày</span>}
                 </span>
                 <span className="font-display text-lg font-semibold tabular-nums">
-                  {r.xp} <span className="font-sans text-xs font-normal text-ink-soft">XP</span>
+                  {r.xp} <span className="font-sans text-xs font-normal text-fg-muted">XP</span>
                 </span>
               </li>
             ))}
@@ -160,35 +160,35 @@ export default function MarketingPage() {
         <h2 id="faq-title" className="text-xl sm:text-2xl">
           Câu hỏi thường gặp
         </h2>
-        <div className="mt-6 max-w-2xl divide-y divide-rule border-y border-rule">
+        <div className="mt-6 max-w-2xl divide-y divide-border border-y border-border">
           {FAQ.map((f) => (
             <details key={f.q} className="group py-1">
               <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 font-medium">
                 {f.q}
-                <span aria-hidden className="text-xl text-ink-soft transition-transform group-open:rotate-45">
+                <span aria-hidden className="text-xl text-fg-muted transition-transform group-open:rotate-45">
                   +
                 </span>
               </summary>
-              <p className="pb-4 text-ink-soft">{f.a}</p>
+              <p className="pb-4 text-fg-muted">{f.a}</p>
             </details>
           ))}
         </div>
       </section>
 
-      <section className="sheet ruled-paper margin-line mt-24 overflow-hidden md:mt-32">
-        <div className="py-10 pr-6 pl-[calc(var(--margin-x)+1.5rem)]">
+      <section className="rounded-lg border border-border/60 bg-surface shadow-sm mt-24 overflow-hidden md:mt-32">
+        <div className="py-10 pr-6 pl-6">
           <p className="font-display text-2xl font-semibold sm:text-3xl">Sổ của bạn đang trống.</p>
-          <p className="mt-3 text-ink-soft">Tạo tài khoản mất chưa tới một phút, không cần xác nhận email.</p>
+          <p className="mt-3 text-fg-muted">Tạo tài khoản mất chưa tới một phút, không cần xác nhận email.</p>
           <Button asChild size="lg" className="mt-6">
             <Link href="/signup">Tạo sổ miễn phí</Link>
           </Button>
         </div>
       </section>
 
-      <footer className="mt-16 flex flex-col gap-4 border-t border-rule pt-6 text-sm text-ink-soft sm:flex-row sm:items-center sm:justify-between">
+      <footer className="mt-16 flex flex-col gap-4 border-t border-border pt-6 text-sm text-fg-muted sm:flex-row sm:items-center sm:justify-between">
         <p>
           © {new Date().getFullYear()} Sổ Từ, làm bởi {CONTACT.nickname}.{" "}
-          <Link href="/lien-he" className="text-ink-violet underline underline-offset-4">
+          <Link href="/lien-he" className="text-primary underline underline-offset-4">
             Liên hệ
           </Link>
         </p>

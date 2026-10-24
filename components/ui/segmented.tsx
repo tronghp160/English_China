@@ -27,7 +27,7 @@ export function SegmentedNav({
 }) {
   return (
     <nav aria-label={label} className={cn("max-w-full", scroll && "overflow-x-auto", className)}>
-      <ul className="inline-flex gap-0.5 rounded-chip bg-surface-sunk p-1">
+      <ul className="inline-flex gap-0.5 rounded-full bg-surface-2 p-1">
         {items.map((it, i) => (
           <li key={i}>
             <Link
@@ -35,8 +35,8 @@ export function SegmentedNav({
               aria-current={it.active ? "true" : undefined}
               aria-label={it.name}
               className={cn(
-                "inline-flex h-9 min-w-11 items-center justify-center gap-1.5 rounded-chip px-3.5 text-sm font-medium whitespace-nowrap transition-colors duration-[var(--dur-fast)]",
-                it.active ? "bg-surface text-ink shadow-card" : "text-ink-soft hover:text-ink",
+                "inline-flex h-9 min-w-11 items-center justify-center gap-1.5 rounded-full px-3.5 text-sm font-medium whitespace-nowrap transition-colors duration-[var(--dur-fast)]",
+                it.active ? "bg-surface text-fg shadow-card" : "text-fg-muted hover:text-fg",
               )}
             >
               {it.label}

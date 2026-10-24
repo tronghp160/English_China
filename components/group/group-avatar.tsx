@@ -7,7 +7,7 @@ export function GroupAvatar({ id, name, className }: { id: string; name: string;
   return (
     <span
       aria-hidden
-      className={cn("grid size-12 shrink-0 place-items-center rounded-btn font-display text-xl font-semibold text-white", deckTone(id).cover, className)}
+      className={cn("grid size-12 shrink-0 place-items-center rounded-md font-display text-xl font-semibold text-white", deckTone(id).cover, className)}
     >
       {initial}
     </span>

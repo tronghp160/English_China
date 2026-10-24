@@ -52,13 +52,13 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
         <DeckCover id={deck.id} language={deck.language} name={deck.name} size="lg" />
         <div className="min-w-0 flex-1">
           <h1 className="text-xl break-words sm:text-2xl">{deck.name}</h1>
-          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-soft">
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-fg-muted">
             <span>{def.label}</span>
             <span>{deck.word_count} từ</span>
             <span>của {deck.owner?.display_name}</span>
             {deck.learner_count > 0 && <span>{deck.learner_count} người đang học</span>}
           </p>
-          {deck.description && <p className="mt-3 text-[0.9375rem] text-ink">{deck.description}</p>}
+          {deck.description && <p className="mt-3 text-[0.9375rem] text-fg">{deck.description}</p>}
         </div>
       </header>
 
@@ -68,7 +68,7 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
             <Button asChild size="lg" className="w-full sm:w-auto">
               <Link href={`/login?next=${encodeURIComponent(path)}`}>Đăng nhập để học bộ này</Link>
             </Button>
-            <p className="mt-2 text-sm text-ink-soft">Miễn phí. Chưa có tài khoản thì đăng ký chỉ mất một phút.</p>
+            <p className="mt-2 text-sm text-fg-muted">Miễn phí. Chưa có tài khoản thì đăng ký chỉ mất một phút.</p>
           </div>
         ) : subscribed ? (
           <div className="flex flex-col gap-3">
@@ -80,7 +80,7 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
         ) : (
           <>
             <ShareActions deckRef={{ slug }} />
-            <p className="mt-2 max-w-[62ch] text-sm text-ink-soft">
+            <p className="mt-2 max-w-[62ch] text-sm text-fg-muted">
               “Lưu vào sổ của tôi” tự cập nhật khi {deck.owner?.display_name} thêm từ. “Sao chép” tạo bản riêng, bạn sửa thoải mái.
             </p>
           </>
@@ -96,24 +96,24 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
             <ul className="grid gap-4 sm:grid-cols-2">
               {preview.map((w) => (
                 <li key={w.id} className="min-w-0">
-                  <WordSpecimen lang={deck.language} term={w.term} reading={w.reading} size="sm" className={deck.language === "zh" ? "sheet p-4" : undefined}>
-                    <p className="flex min-h-[var(--line)] items-end pb-1 text-[0.9375rem] text-ink">{w.meaning_vi}</p>
+                  <WordSpecimen lang={deck.language} term={w.term} reading={w.reading} size="sm" className={deck.language === "zh" ? "rounded-lg border border-border/60 bg-surface shadow-sm p-4" : undefined}>
+                    <p className="flex min-h-[var(--line)] items-end pb-1 text-[0.9375rem] text-fg">{w.meaning_vi}</p>
                   </WordSpecimen>
                 </li>
               ))}
             </ul>
             {rest.length > 0 && (
-              <ul className="ruled-list mt-4 border-y border-rule">
+              <ul className="divide-y divide-border mt-4 border-y border-border">
                 {rest.map((w) => (
                   <li key={w.id} className="flex items-baseline gap-3 px-1 py-3">
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-baseline gap-x-2">
-                        <span className={cn("text-lg font-medium text-ink", deck.language === "zh" ? "font-hanzi" : "font-display")} lang={def.ttsLang}>
+                        <span className={cn("text-lg font-medium text-fg", deck.language === "zh" ? "font-hanzi" : "font-display")} lang={def.ttsLang}>
                           {w.term}
                         </span>
-                        {w.reading && <span className="font-ipa text-sm text-ink-soft">{w.reading}</span>}
+                        {w.reading && <span className="font-ipa text-sm text-fg-muted">{w.reading}</span>}
                       </span>
-                      <span className="block text-[0.9375rem] text-ink">{w.meaning_vi}</span>
+                      <span className="block text-[0.9375rem] text-fg">{w.meaning_vi}</span>
                     </span>
                   </li>
                 ))}
@@ -121,10 +121,10 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
             )}
           </>
         ) : (
-          <p className="text-sm text-ink-soft">Bộ từ này chưa có từ nào.</p>
+          <p className="text-sm text-fg-muted">Bộ từ này chưa có từ nào.</p>
         )}
         {deck.word_count > SHARE_PREVIEW_LIMIT && (
-          <p className="mt-3 text-sm text-ink-soft">
+          <p className="mt-3 text-sm text-fg-muted">
             Đang hiện {SHARE_PREVIEW_LIMIT} từ đầu tiên. Lưu hoặc sao chép để xem đủ {deck.word_count} từ.
           </p>
         )}

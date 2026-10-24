@@ -49,10 +49,10 @@ export function WritingPad({
         padding: 10,
         showCharacter: false,
         showOutline: false,
-        strokeColor: cssVar("--ink", "#1E2A4A"),
-        outlineColor: cssVar("--rule-strong", "#C5C6DA"),
-        highlightColor: cssVar("--ink-violet", "#3B2E8C"),
-        drawingColor: cssVar("--ink", "#1E2A4A"),
+        strokeColor: cssVar("--fg", "#1E2A4A"),
+        outlineColor: cssVar("--border-strong", "#C5C6DA"),
+        highlightColor: cssVar("--primary", "#3B2E8C"),
+        drawingColor: cssVar("--fg", "#1E2A4A"),
         drawingWidth: 6,
         onLoadCharDataError: () => !cancelled && setFailed(true),
       });
@@ -83,7 +83,7 @@ export function WritingPad({
   if (failed) {
     return (
       <div className="flex flex-col items-center gap-3 text-center">
-        <p className="text-ink-soft">
+        <p className="text-fg-muted">
           Không tải được dữ liệu nét chữ (cần mạng). Bạn có thể bỏ qua câu này.
         </p>
         <Button type="button" variant="outline" onClick={() => onDone(false)}>
@@ -102,10 +102,10 @@ export function WritingPad({
             lang="zh-CN"
             className={
               i < pos
-                ? "font-hanzi text-2xl text-ink"
+                ? "font-hanzi text-2xl text-fg"
                 : i === pos
-                  ? "font-hanzi text-2xl text-ink-violet"
-                  : "font-hanzi text-2xl text-rule-strong"
+                  ? "font-hanzi text-2xl text-primary"
+                  : "font-hanzi text-2xl text-border-strong"
             }
           >
             {i < pos || disabled ? c : "□"}
@@ -113,12 +113,12 @@ export function WritingPad({
         ))}
       </div>
       <div
-        className="relative touch-none overflow-hidden rounded-sm border-[1.5px] border-seal/55 bg-surface"
+        className="relative touch-none overflow-hidden rounded-sm border-[1.5px] border-border-strong bg-surface"
         style={{ width: size, height: size }}
       >
         <svg
           aria-hidden
-          className="pointer-events-none absolute inset-0 text-seal/30"
+          className="pointer-events-none absolute inset-0 text-border-strong"
           width={size}
           height={size}
         >

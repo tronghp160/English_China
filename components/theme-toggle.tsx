@@ -19,8 +19,8 @@ function subscribe(cb: () => void) {
 /** A tiny notebook page drawn in the colors of one theme (the `.light` / `.dark` classes re-apply that theme's tokens). */
 function Page({ theme, className }: { theme: "light" | "dark"; className?: string }) {
   return (
-    <span className={cn(theme, "block h-full bg-paper p-1.5", className)}>
-      <span className="ruled-paper margin-line block h-full rounded-sm border border-rule bg-surface [--line:0.5rem] [--margin-x:9px]" />
+    <span className={cn(theme, "block h-full bg-canvas p-1.5", className)}>
+      <span className=" block h-full rounded-sm border border-border bg-surface" />
     </span>
   );
 }
@@ -41,11 +41,11 @@ export function ThemeToggle({ className }: { className?: string }) {
             listeners.forEach((l) => l());
           }}
           className={cn(
-            "flex flex-col gap-2 rounded-btn border p-2 text-left text-sm transition-colors",
-            current === value ? "border-ink-violet bg-tint-violet ring-1 ring-ink-violet" : "border-input bg-surface hover:border-ink-soft/50",
+            "flex flex-col gap-2 rounded-md border p-2 text-left text-sm transition-colors",
+            current === value ? "border-primary bg-primary-soft ring-1 ring-primary" : "border-input bg-surface hover:border-fg-muted/50",
           )}
         >
-          <span aria-hidden className="block h-14 overflow-hidden rounded-sm border border-rule">
+          <span aria-hidden className="block h-14 overflow-hidden rounded-sm border border-border">
             {value === "system" ? (
               <span className="grid h-full grid-cols-2">
                 <Page theme="light" />
@@ -55,7 +55,7 @@ export function ThemeToggle({ className }: { className?: string }) {
               <Page theme={value} />
             )}
           </span>
-          <span className={cn("px-0.5", current === value ? "font-medium text-ink" : "text-ink-soft")}>{label}</span>
+          <span className={cn("px-0.5", current === value ? "font-medium text-fg" : "text-fg-muted")}>{label}</span>
         </button>
       ))}
     </div>
