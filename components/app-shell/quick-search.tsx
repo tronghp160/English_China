@@ -16,10 +16,9 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { LangFlag } from "@/components/lang-flag";
+import { LangMark } from "@/components/lang-mark";
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { quickSearch, type QuickSearchResult } from "@/lib/actions/search";
-import { LANGUAGES } from "@/lib/lang/registry";
 import { cn } from "@/lib/utils";
 
 const PAGES: { href: string; label: string; icon: LucideIcon; keywords: string }[] = [
@@ -109,17 +108,17 @@ export function QuickSearch() {
         }}
         title="Tìm nhanh"
         description="Tìm từ trong sổ, bộ từ hoặc mở một trang"
-        className="top-[12%] max-w-[calc(100%-2rem)] rounded-card! sm:max-w-lg"
+        className="max-w-[calc(100%-2rem)] sm:max-w-[560px]"
       >
         {/* Results come from the server, so cmdk's own filtering is off. */}
         <Command shouldFilter={false} className="bg-surface">
           <div className="flex items-center gap-2 border-b border-rule px-4">
-            <Search className="size-5 shrink-0 text-ink-soft" aria-hidden />
+            <Search className="size-5 shrink-0 text-ink-soft" strokeWidth={1.75} aria-hidden />
             <CommandPrimitive.Input
               value={query}
               onValueChange={setQuery}
               placeholder="Gõ từ, nghĩa, pinyin hoặc tên bộ từ…"
-              className="h-14 w-full bg-transparent text-base text-ink outline-none placeholder:text-ink-soft"
+              className="h-[3.25rem] w-full bg-transparent text-base text-ink outline-none placeholder:text-ink-faint"
             />
           </div>
           <CommandList className="max-h-[min(60vh,28rem)] p-1">
@@ -129,16 +128,17 @@ export function QuickSearch() {
               <CommandGroup heading="Từ">
                 {data.words.map((w) => (
                   <CommandItem key={w.id} value={`word-${w.id}`} onSelect={() => go(`/words/${w.id}`)} className="min-h-12 gap-3 px-3">
-                    <LangFlag lang={w.language} />
+                    <LangMark lang={w.language} />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline gap-2">
-                        <span lang={w.language} className={cn("truncate font-bold text-ink", LANGUAGES[w.language].termFontClass)}>
+                        <span lang={w.language} className={cn("truncate text-base font-medium text-ink", w.language === "zh" ? "font-hanzi" : "font-display")}>
                           {w.term}
                         </span>
                         {w.reading && <span className="truncate text-xs text-ink-soft">{w.reading}</span>}
                       </span>
-                      <span className="block truncate text-xs text-ink-soft">
-                        {w.meaning_vi} · {w.deck}
+                      <span className="flex gap-x-3 text-xs text-ink-soft">
+                        <span className="truncate">{w.meaning_vi}</span>
+                        <span className="shrink-0 truncate">{w.deck}</span>
                       </span>
                     </span>
                   </CommandItem>
@@ -149,7 +149,7 @@ export function QuickSearch() {
               <CommandGroup heading="Bộ từ">
                 {data.decks.map((d) => (
                   <CommandItem key={d.id} value={`deck-${d.id}`} onSelect={() => go(`/decks/${d.id}`)} className="min-h-12 gap-3 px-3">
-                    <BookOpen className="size-5 text-sun-text" aria-hidden />
+                    <BookOpen className="size-5 text-ink-soft" strokeWidth={1.75} aria-hidden />
                     <span className="truncate font-semibold text-ink">{d.name}</span>
                   </CommandItem>
                 ))}
@@ -159,13 +159,18 @@ export function QuickSearch() {
               <CommandGroup heading="Đi tới">
                 {pages.map((p) => (
                   <CommandItem key={p.href} value={`page-${p.href}`} onSelect={() => go(p.href)} className="min-h-11 gap-3 px-3">
-                    <p.icon className="size-5 text-ink-soft" aria-hidden />
+                    <p.icon className="size-5 text-ink-soft" strokeWidth={1.75} aria-hidden />
                     <span className="text-ink">{p.label}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
             )}
           </CommandList>
+          <p className="flex gap-4 border-t border-rule px-4 py-2.5 text-xs text-ink-soft" aria-hidden>
+            <span>↑↓ chọn</span>
+            <span>Enter mở</span>
+            <span>Esc đóng</span>
+          </p>
         </Command>
       </CommandDialog>
     </>

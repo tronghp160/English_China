@@ -1,7 +1,7 @@
 "use client";
 
 import type { AuthError } from "@supabase/supabase-js";
-import { Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,15 +76,10 @@ export function EmailField({
         placeholder="ban@gmail.com"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-12 text-base"
         aria-invalid={Boolean(error) || undefined}
         aria-describedby={error ? "email-error" : undefined}
       />
-      {error && (
-        <p id="email-error" className="text-sm text-danger">
-          {error}
-        </p>
-      )}
+      {error && <FieldError id="email-error">{error}</FieldError>}
     </div>
   );
 }
@@ -126,7 +121,7 @@ export function PasswordField({
           spellCheck={false}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-12 pr-12 text-base"
+          className="pr-12"
           aria-invalid={Boolean(error) || undefined}
           aria-describedby={describedBy}
         />
@@ -136,15 +131,13 @@ export function PasswordField({
           aria-label={shown ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
           aria-pressed={shown}
           aria-controls={id}
-          className="absolute inset-y-0 right-0 grid w-12 place-items-center rounded-r-btn text-ink-soft hover:text-ink"
+          className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-btn text-ink-soft hover:text-ink"
         >
-          {shown ? <EyeOff className="size-5" aria-hidden /> : <Eye className="size-5" aria-hidden />}
+          {shown ? <EyeOff className="size-[1.125rem]" strokeWidth={1.75} aria-hidden /> : <Eye className="size-[1.125rem]" strokeWidth={1.75} aria-hidden />}
         </button>
       </div>
       {error ? (
-        <p id={`${id}-error`} className="text-sm text-danger">
-          {error}
-        </p>
+        <FieldError id={`${id}-error`}>{error}</FieldError>
       ) : (
         hint && (
           <p id={`${id}-hint`} className="text-sm text-ink-soft">
@@ -156,13 +149,24 @@ export function PasswordField({
   );
 }
 
+/** Message under a field: seal red with a small alert icon. */
+export function FieldError({ id, children }: { id?: string; children: React.ReactNode }) {
+  return (
+    <p id={id} className="flex items-start gap-1.5 text-sm text-seal-text">
+      <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+      {children}
+    </p>
+  );
+}
+
+/** Form-level message: a tinted box with a 3px bar on the left (seal for errors, leaf for good news). */
 export function FormAlert({ children, tone = "error" }: { children: React.ReactNode; tone?: "error" | "success" }) {
   return (
     <div
       role={tone === "error" ? "alert" : "status"}
       className={cn(
-        "rounded-btn px-4 py-3 text-sm",
-        tone === "error" ? "bg-wash-red text-danger" : "bg-wash-jade text-ink",
+        "rounded-btn border-l-[3px] px-4 py-3 text-sm",
+        tone === "error" ? "border-seal bg-tint-seal text-seal-text" : "border-leaf bg-tint-leaf text-ink",
       )}
     >
       {children}

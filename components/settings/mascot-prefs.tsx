@@ -43,7 +43,7 @@ export function MascotPrefs({ prefs }: { prefs: Required<Prefs> }) {
           aria-label="Xem biểu cảm tiếp theo"
           title="Bấm để xem biểu cảm khác"
           onClick={() => setMoodIndex((i) => (i + 1) % PUP_MOODS.length)}
-          className="mt-1 cursor-pointer rounded-full transition-transform hover:scale-105 active:scale-95"
+          className="ruled-paper grid size-28 cursor-pointer place-items-center rounded-card border border-rule bg-surface [--line:1.75rem]"
         >
           <Pup key={moodIndex} mood={optimistic.mascot ? PUP_MOODS[moodIndex] : "sleepy"} size={84} />
         </button>
@@ -61,7 +61,6 @@ export function MascotPrefs({ prefs }: { prefs: Required<Prefs> }) {
           <Label htmlFor="pref-mascot-name">Tên bạn cún</Label>
           <Input
             id="pref-mascot-name"
-            className="h-11 rounded-btn"
             maxLength={20}
             value={name}
             disabled={!optimistic.mascot}

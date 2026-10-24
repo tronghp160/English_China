@@ -12,7 +12,7 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
 
   return (
     <AuthCard
-      title="Tạo tài khoản miễn phí ✨"
+      title="Tạo sổ từ miễn phí"
       subtitle="Chỉ mất 30 giây. Ghi và ôn từ vựng tiếng Anh, tiếng Trung cùng bạn bè."
       footer={
         <>

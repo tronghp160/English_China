@@ -1,13 +1,13 @@
 "use client";
 
-import { ArrowLeft, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { LangFlag } from "@/components/lang-flag";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FieldError } from "./auth-shared";
 import { Switch } from "@/components/ui/switch";
 import { completeOnboarding } from "@/lib/actions/profile";
 import { addSampleDecks } from "@/lib/actions/sample";
@@ -78,21 +78,18 @@ export function WelcomeForm({
   }
 
   return (
-    <div className="notebook-card mt-8 px-6 py-7 sm:px-8">
+    <div className="mt-8">
       <div className="flex items-center gap-3">
         <div className="flex flex-1 gap-1.5" aria-hidden>
           {[1, 2].map((n) => (
-            <span key={n} className={cn("h-2.5 flex-1 rounded-full transition-colors", n <= step ? "bg-jade" : "bg-muted")} />
+            <span key={n} className={cn("h-1.5 flex-1 rounded-full transition-colors", n <= step ? "bg-ink-violet" : "bg-rule")} />
           ))}
         </div>
-        <p className="text-sm font-semibold text-ink-soft">Bước {step}/2</p>
+        <p className="text-sm font-medium text-ink-soft">Bước {step}/2</p>
       </div>
       {step === 1 ? (
         <form onSubmit={goNext} noValidate>
-          <span aria-hidden className="mt-6 block animate-float text-5xl">
-            👋
-          </span>
-          <h1 className="mt-2 text-xl text-ink">Chào bạn! Bạn tên là gì?</h1>
+          <h1 className="mt-8 text-xl">Bạn tên là gì?</h1>
           <div className="mt-6 space-y-5">
             <div className="space-y-1.5">
               <Label htmlFor="display_name">Tên hiển thị</Label>
@@ -101,17 +98,14 @@ export function WelcomeForm({
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 autoComplete="name"
-                className="h-12 rounded-btn text-base"
                 aria-invalid={Boolean(errors.display_name) || undefined}
               />
-              {errors.display_name && <p className="text-sm text-danger">{errors.display_name}</p>}
+              {errors.display_name && <FieldError>{errors.display_name}</FieldError>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="username">Tên người dùng</Label>
               <div className="relative">
-                <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-soft">
-                  @
-                </span>
+                <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-soft">@</span>
                 <Input
                   id="username"
                   value={username}
@@ -119,29 +113,27 @@ export function WelcomeForm({
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
-                  className="h-12 rounded-btn pl-7 text-base"
+                  className="pl-7"
                   aria-invalid={Boolean(errors.username) || undefined}
                   aria-describedby="username-hint"
                 />
               </div>
-              <p
-                id="username-hint"
-                className={cn("text-sm", errors.username ? "text-danger" : "text-ink-soft")}
-              >
-                {errors.username ?? "Bạn bè tìm bạn bằng tên này."}
-              </p>
+              {errors.username ? (
+                <FieldError id="username-hint">{errors.username}</FieldError>
+              ) : (
+                <p id="username-hint" className="text-sm text-ink-soft">
+                  Bạn bè tìm bạn bằng tên này.
+                </p>
+              )}
             </div>
           </div>
-          <Button type="submit" className="mt-8 h-12 w-full rounded-btn text-base">
+          <Button type="submit" size="lg" className="mt-8 w-full">
             Tiếp tục
           </Button>
         </form>
       ) : (
         <div>
-          <span aria-hidden className="mt-6 block animate-float text-5xl">
-            🌏
-          </span>
-          <h1 className="mt-2 text-xl text-ink">Bạn đang học ngôn ngữ nào?</h1>
+          <h1 className="mt-8 text-xl">Bạn đang học ngôn ngữ nào?</h1>
           <div role="radiogroup" aria-label="Ngôn ngữ đang học" className="mt-5 grid gap-2">
             {LANG_OPTIONS.map((opt) => {
               const selected = opt.value.join() === langs.join();
@@ -153,33 +145,25 @@ export function WelcomeForm({
                   aria-checked={selected}
                   onClick={() => setLangs(opt.value)}
                   className={cn(
-                    "btn-3d flex min-h-16 items-center gap-3 rounded-btn border-2 px-4 py-2 text-left text-base transition-colors",
-                    selected
-                      ? "border-ink-blue bg-wash-blue text-ink [--edge-color:var(--ink-blue)]"
-                      : "border-rule bg-surface text-ink [--edge-color:var(--rule)]",
+                    "flex min-h-16 items-center gap-4 rounded-btn border px-4 py-2 text-left transition-colors",
+                    selected ? "border-ink-violet bg-tint-violet ring-1 ring-ink-violet" : "border-input bg-surface hover:border-ink-soft/50",
                   )}
                 >
-                  <span className="flex gap-1 text-2xl">
-                    {opt.value.map((l) => (
-                      <LangFlag key={l} lang={l} />
-                    ))}
+                  <span aria-hidden className="flex w-20 shrink-0 flex-col text-xl leading-tight text-ink">
+                    {opt.value.includes("en") && <span className="font-display font-medium">resilient</span>}
+                    {opt.value.includes("zh") && <span className="font-hanzi">坚强</span>}
                   </span>
                   <span className="flex-1">
-                    <span className="block font-bold">{opt.label}</span>
+                    <span className="block font-semibold">{opt.label}</span>
                     <span className="block text-sm text-ink-soft">{opt.hint}</span>
                   </span>
-                  {selected && <Check className="size-5 text-ink-blue" aria-hidden />}
                 </button>
               );
             })}
           </div>
 
-          <h2 className="mt-8 text-base text-ink">Mỗi ngày học bao nhiêu từ mới?</h2>
-          <div
-            role="radiogroup"
-            aria-label="Số từ mới mỗi ngày"
-            className="mt-3 grid grid-cols-4 gap-2"
-          >
+          <h2 className="mt-8 text-base">Mỗi ngày học bao nhiêu từ mới?</h2>
+          <div role="radiogroup" aria-label="Số từ mới mỗi ngày" className="mt-3 inline-flex gap-0.5 rounded-chip bg-surface-sunk p-1">
             {DAILY_OPTIONS.map((n) => (
               <button
                 key={n}
@@ -188,10 +172,8 @@ export function WelcomeForm({
                 aria-checked={daily === n}
                 onClick={() => setDaily(n)}
                 className={cn(
-                  "min-h-12 rounded-btn border-2 text-base font-bold transition-colors",
-                  daily === n
-                    ? "border-ink-blue bg-ink-blue text-primary-foreground"
-                    : "border-rule bg-surface text-ink",
+                  "h-9 min-w-14 rounded-chip px-3 text-sm font-medium tabular-nums transition-colors",
+                  daily === n ? "bg-surface text-ink shadow-card" : "text-ink-soft hover:text-ink",
                 )}
               >
                 {n}
@@ -200,32 +182,21 @@ export function WelcomeForm({
           </div>
           <p className="mt-2 text-sm text-ink-soft">Có thể đổi sau trong Cài đặt.</p>
 
-          <label className="mt-6 flex items-center justify-between gap-4 rounded-card bg-wash-yellow px-4 py-3">
+          <label className="mt-6 flex items-center justify-between gap-4 border-y border-rule py-3">
             <span>
-              <span className="block font-bold text-ink">✨ Thêm bộ từ mẫu</span>
+              <span className="block font-medium text-ink">Thêm bộ từ mẫu</span>
               <span className="block text-sm text-ink-soft">Có sẵn vài chục từ để ôn thử ngay hôm nay.</span>
             </span>
             <Switch checked={withSamples} onCheckedChange={setWithSamples} aria-label="Thêm bộ từ mẫu" />
           </label>
 
           <div className="mt-8 flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-12 rounded-btn px-4"
-              onClick={() => setStep(1)}
-              aria-label="Quay lại bước 1"
-            >
-              <ArrowLeft className="size-5" aria-hidden />
+            <Button type="button" variant="outline" size="icon-lg" onClick={() => setStep(1)} aria-label="Quay lại bước 1">
+              <ArrowLeft aria-hidden />
             </Button>
-            <Button
-              type="button"
-              onClick={finish}
-              disabled={pending}
-              className="h-12 flex-1 gap-2 rounded-btn text-base"
-            >
-              {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
-              Bắt đầu học 🚀
+            <Button type="button" size="lg" onClick={finish} disabled={pending} className="flex-1">
+              {pending && <Loader2 className="animate-spin" aria-hidden />}
+              Bắt đầu học
             </Button>
           </div>
         </div>

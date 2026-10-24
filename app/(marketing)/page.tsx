@@ -1,195 +1,197 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BookOpenCheck, Sparkles, Users, Volume2 } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { ContactLinks } from "@/components/contact/contact-links";
+import { HeroSpecimen } from "@/components/marketing/hero-specimen";
+import { SealStamp } from "@/components/review/seal-stamp";
+import { Button } from "@/components/ui/button";
 import { CONTACT } from "@/lib/contact";
-import { PinyinText } from "@/components/zh/pinyin-text";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
-const FEATURES = [
+const STEPS = [
   {
-    icon: Sparkles,
-    tile: "bg-wash-yellow text-sun-text",
-    title: "Gõ một từ, AI điền phần còn lại",
-    body: "Phiên âm, pinyin, nghĩa, câu ví dụ có dịch, cụm từ, Hán Việt và ảnh minh họa.",
+    title: "Ghi từ",
+    body: "Gõ một từ, Sổ Từ gợi ý phiên âm, nghĩa và câu ví dụ. Bạn xem lại, sửa nếu cần, rồi lưu.",
+    src: "/landing/word-form.webp",
+    alt: "Form thêm từ resilient với phiên âm, nghĩa và các nghĩa gợi ý đã được điền",
+    w: 960,
+    h: 1240,
   },
   {
-    icon: BookOpenCheck,
-    tile: "bg-wash-jade text-jade-text",
-    title: "Biết chính xác hôm nay cần ôn gì",
-    body: "Lịch ôn ngắt quãng FSRS nhắc đúng những từ bạn sắp quên.",
+    title: "Ôn mỗi sáng",
+    body: "Mỗi ngày chỉ ôn những từ sắp quên. Lật thẻ, chọn Quên, Khó, Nhớ hay Dễ, lịch ôn tự dời theo bạn.",
+    src: "/landing/review.webp",
+    alt: "Mặt sau thẻ ôn với nghĩa tiếng Việt và bốn nút đánh giá Quên, Khó, Nhớ, Dễ",
+    w: 960,
+    h: 1520,
   },
   {
-    icon: Volume2,
-    tile: "bg-wash-sky text-sky-text",
-    title: "Nghe, gõ, viết chữ Hán, luyện thanh điệu",
-    body: "Nhiều kiểu luyện cho cả tiếng Anh và tiếng Trung.",
-  },
-  {
-    icon: Users,
-    tile: "bg-wash-pink text-pink-text",
-    title: "Học cùng bạn bè",
-    body: "Chia sẻ bộ từ bằng link, lập nhóm có mã mời và đua XP trên bảng xếp hạng tuần.",
+    title: "Luyện theo cách bạn thích",
+    body: "Học theo vòng, làm bài kiểm tra, ghép thẻ, nghe, gõ, và tập viết chữ Hán nét theo nét.",
+    src: "/landing/modes.webp",
+    alt: "Danh sách các chế độ luyện tập: Học, Kiểm tra, Ghép thẻ, Lật thẻ và các kỹ năng riêng",
+    w: 896,
+    h: 1424,
   },
 ];
 
-const STEPS = [
-  { emoji: "✍️", title: "Ghi từ", body: "Gõ từ mới, AI lo phần nghĩa và ví dụ." },
-  { emoji: "🧠", title: "Ôn 10 phút mỗi ngày", body: "Lật thẻ, chọn Nhớ hay Quên — app tự xếp lịch." },
-  { emoji: "🔥", title: "Giữ chuỗi, nhận XP", body: "Thi đua cùng bạn bè, đừng để lửa tắt!" },
+const FAQ = [
+  {
+    q: "Sổ Từ có miễn phí không?",
+    a: "Có. Bạn đăng ký bằng email và dùng đủ mọi chức năng, không cần thẻ thanh toán.",
+  },
+  {
+    q: "Dữ liệu của tôi được lưu ở đâu?",
+    a: "Trên máy chủ gắn với tài khoản của bạn. Trong Cài đặt, bạn tải toàn bộ dữ liệu về (JSON hoặc CSV) hoặc xóa tài khoản bất cứ lúc nào.",
+  },
+  {
+    q: "Có dùng offline được không?",
+    a: "Một phần. Kết quả ôn lúc mất mạng được lưu trên máy và tự gửi lại khi có mạng. Các trang vẫn cần mạng để tải.",
+  },
+  {
+    q: "Cài lên điện thoại thế nào?",
+    a: "Mở Sổ Từ bằng Chrome (Android) hoặc Safari (iPhone), chọn “Thêm vào màn hình chính”. Sổ Từ sẽ mở như một ứng dụng riêng.",
+  },
+];
+
+const BOARD = [
+  { rank: 1, name: "Lan", xp: 320, streak: 14 },
+  { rank: 2, name: "Minh", xp: 290, streak: 0 },
+  { rank: 3, name: "Trọng", xp: 210, streak: 5, me: true },
 ];
 
 export default function MarketingPage() {
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-x-clip px-4 pb-16 sm:px-6">
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-x-clip px-4 pb-12 sm:px-6">
       <header className="flex items-center justify-between gap-2 py-4">
         <Logo />
-        <nav className="flex items-center gap-1">
-          <Button asChild variant="ghost" className="min-h-11 px-3 text-base">
+        <nav className="flex items-center gap-1" aria-label="Tài khoản">
+          <Button asChild variant="ghost">
             <Link href="/login">Đăng nhập</Link>
           </Button>
-          <Button asChild className="hidden min-h-11 px-4 text-base sm:inline-flex">
+          <Button asChild className="hidden sm:inline-flex">
             <Link href="/signup">Đăng ký</Link>
           </Button>
         </nav>
       </header>
 
-      <section className="grid items-center gap-12 pt-6 md:grid-cols-[1.1fr_1fr] md:pt-14">
+      <section className="grid items-center gap-12 pt-8 md:grid-cols-[1.15fr_1fr] md:pt-16">
         <div>
-          <p className="inline-flex items-center gap-2 rounded-full bg-wash-yellow px-3 py-1 text-sm font-bold text-sun-text">
-            <span aria-hidden>🎉</span> Miễn phí · Tiếng Anh & Tiếng Trung
-          </p>
-          <h1 className="mt-4 text-[2.5rem] leading-[1.1] text-ink sm:text-[3.25rem]">
-            Học từ vựng <span className="highlighter highlighter-animate">vui</span> như chơi game
+          <h1 className="font-display text-[clamp(2.25rem,4.4vw,3.25rem)] leading-[1.08] font-semibold tracking-tight">
+            Ghi từ như ghi vở.
+            <br />
+            Ôn đúng lúc sắp quên.
           </h1>
-          <p className="mt-4 max-w-md text-base text-ink-soft">
-            Ghi từ như ghi vở, Sổ Từ lo phần nhớ giúp bạn: mỗi ngày chỉ ôn đúng những từ sắp quên — có chuỗi ngày,
-            XP và bảng xếp hạng cùng bạn bè.
+          <p className="mt-5 max-w-[62ch] text-lg text-ink-soft">
+            Sổ từ vựng tiếng Anh và tiếng Trung. Gõ một từ, app điền nghĩa, phiên âm và ví dụ; mỗi ngày bạn chỉ ôn những từ sắp quên.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link href="/signup" className={cn(buttonVariants(), "h-14 gap-2 px-7 text-lg font-extrabold")}>
-              Bắt đầu miễn phí
-              <ArrowRight className="size-5" aria-hidden />
-            </Link>
-            <Link href="/login" className={cn(buttonVariants({ variant: "outline" }), "h-14 px-7 text-lg")}>
+          <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <Button asChild size="lg">
+              <Link href="/signup">Tạo sổ miễn phí</Link>
+            </Button>
+            <Link href="/login" className="inline-flex min-h-11 items-center text-ink-violet underline-offset-4 hover:underline">
               Tôi đã có tài khoản
             </Link>
           </div>
         </div>
-
-        <div className="relative mx-auto w-full max-w-sm pt-4">
-          <span
-            aria-hidden
-            className="absolute -top-3 -left-4 z-10 rotate-[-8deg] rounded-full bg-surface px-3 py-1.5 font-heading font-black text-sun-text shadow-pop"
-          >
-            <span className="inline-block animate-wiggle">🔥</span> 12 ngày
-          </span>
-          <span
-            aria-hidden
-            className="absolute top-40 -right-3 z-10 rotate-6 animate-float rounded-full bg-highlight px-3 py-1.5 font-heading font-black text-ink shadow-pop"
-          >
-            +30 XP ⭐
-          </span>
-
-          <div className="hero-gradient rotate-1 rounded-sheet p-6 shadow-pop">
-            <p className="text-sm font-semibold text-white/80">Hôm nay cần ôn</p>
-            <p className="mt-1 font-heading text-[3.5rem] leading-none font-black">
-              24<span className="ml-2 text-xl font-extrabold">từ</span>
-            </p>
-            <span className="mt-4 flex min-h-11 items-center justify-center rounded-btn bg-white font-extrabold text-brand shadow-[0_4px_0_0_rgb(0_0_0/0.2)]">
-              ▶ Bắt đầu ôn
-            </span>
-          </div>
-
-          <div className="notebook-card mt-4 -rotate-2 px-6 py-6">
-            <div className="flex items-start justify-between gap-3">
-              <span className="text-4xl" aria-hidden>
-                🌱
-              </span>
-              <span className="rounded-full bg-wash-jade px-2.5 py-0.5 text-xs font-bold text-jade-text">Tính từ</span>
-            </div>
-            <p className="mt-2">
-              <span className="ruled-word font-heading text-[2.5rem] leading-tight font-black text-ink">resilient</span>
-            </p>
-            <p className="mt-2 font-ipa text-ink-soft">/rɪˈzɪliənt/</p>
-            <p className="mt-2 font-semibold text-ink">kiên cường, mau phục hồi</p>
-          </div>
-
-          <div className="notebook-card mt-4 rotate-1 px-6 py-5">
-            <div className="flex items-baseline gap-4">
-              <span lang="zh-CN" className="font-hanzi text-[2.75rem] leading-none font-bold text-ink">
-                坚强
-              </span>
-              <div>
-                <PinyinText pinyin="jiānqiáng" className="text-lg font-medium" />
-                <p className="text-sm text-ink-soft">kiên cường</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <HeroSpecimen />
       </section>
 
-      <section id="tinh-nang" className="mt-20 md:mt-28">
-        <h2 className="text-xl text-ink">Mọi thứ để thuộc từ thật lâu</h2>
-        <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-          {FEATURES.map(({ icon: Icon, tile, title, body }) => (
-            <li key={title} className="notebook-card flex gap-4 p-5">
-              <span className={cn("icon-tile size-12", tile)}>
-                <Icon className="size-6" aria-hidden />
-              </span>
-              <div>
-                <h3 className="text-base text-ink">{title}</h3>
-                <p className="mt-1 text-sm text-ink-soft">{body}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="mt-16">
-        <h2 className="text-xl text-ink">Chỉ 3 bước</h2>
-        <ol className="mt-6 grid gap-4 sm:grid-cols-3">
+      <section className="mt-24 md:mt-32" aria-labelledby="day-title">
+        <h2 id="day-title" className="text-xl sm:text-2xl">
+          Một ngày với Sổ Từ
+        </h2>
+        <ol className="mt-10 space-y-16 md:space-y-20">
           {STEPS.map((s, i) => (
-            <li key={s.title} className="relative rounded-card bg-surface p-5 shadow-card">
-              <span className="absolute top-4 right-4 grid size-8 place-items-center rounded-full bg-ink-blue font-heading font-black text-primary-foreground">
-                {i + 1}
-              </span>
-              <span aria-hidden className="text-4xl">
-                {s.emoji}
-              </span>
-              <h3 className="mt-3 text-base text-ink">{s.title}</h3>
-              <p className="mt-1 text-sm text-ink-soft">{s.body}</p>
+            <li key={s.title} className="grid items-center gap-6 md:grid-cols-2 md:gap-12">
+              <div className={i % 2 ? "md:order-2" : undefined}>
+                <p className="font-display text-3xl font-semibold text-ink-violet tabular-nums">{i + 1}</p>
+                <h3 className="mt-1 text-lg">{s.title}</h3>
+                <p className="mt-2 max-w-[48ch] text-ink-soft">{s.body}</p>
+              </div>
+              <Image
+                src={s.src}
+                alt={s.alt}
+                width={s.w}
+                height={s.h}
+                sizes="(min-width: 768px) 480px, 100vw"
+                className="mx-auto max-h-[34rem] w-auto max-w-full rounded-card border border-rule object-contain object-top"
+              />
             </li>
           ))}
         </ol>
       </section>
 
-      <section className="hero-gradient mt-16 flex flex-col items-center rounded-sheet px-6 py-10 text-center shadow-pop">
-        <span aria-hidden className="animate-float text-5xl">
-          🚀
-        </span>
-        <h2 className="mt-3 text-xl">Sẵn sàng ghi từ đầu tiên?</h2>
-        <p className="mt-1 text-white/85">Tạo tài khoản trong 30 giây, không cần xác nhận email.</p>
-        <Link
-          href="/signup"
-          className="btn-3d mt-6 inline-flex min-h-14 items-center gap-2 rounded-btn bg-white px-7 text-lg font-extrabold text-brand [--edge-color:rgb(0_0_0/0.2)]"
-        >
-          Đăng ký miễn phí
-          <ArrowRight className="size-5" aria-hidden />
-        </Link>
-      </section>
-
-      <footer className="mt-16 flex flex-col gap-4 border-t border-rule pt-8 sm:flex-row sm:items-center sm:justify-between">
+      <section className="mt-24 grid items-center gap-8 md:mt-32 md:grid-cols-2 md:gap-12" aria-labelledby="friends-title">
         <div>
-          <p className="font-heading text-lg font-black text-ink">Liên hệ với {CONTACT.nickname}</p>
-          <p className="text-sm text-ink-soft">
-            Góp ý, báo lỗi hay muốn học cùng?{" "}
-            <Link href="/lien-he" className="font-semibold text-ink-blue underline-offset-2 hover:underline">
-              Xem trang liên hệ
-            </Link>
+          <h2 id="friends-title" className="text-xl sm:text-2xl">
+            Học cùng bạn bè
+          </h2>
+          <p className="mt-3 max-w-[48ch] text-ink-soft">
+            Chia sẻ bộ từ bằng một đường link. Lập nhóm có mã mời, mỗi người giữ tiến độ riêng và so điểm XP trên bảng xếp hạng tuần.
           </p>
         </div>
+        <div>
+          <p className="flex items-baseline justify-between text-sm text-ink-soft">
+            <span className="font-medium text-ink">Tuần này</span>
+            <span>Ví dụ</span>
+          </p>
+          <ol className="ruled-list mt-2 border-y border-rule" aria-label="Bảng xếp hạng mẫu">
+            {BOARD.map((r) => (
+              <li key={r.rank} className={`flex min-h-14 items-center gap-3 px-2 py-2 ${r.me ? "bg-tint-violet" : ""}`}>
+                <span className="w-6 text-center font-display text-xl font-semibold text-ink-soft tabular-nums">{r.rank}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2 font-medium">
+                    {r.name}
+                    {r.me && <span className="font-normal text-ink-soft">(bạn)</span>}
+                    {r.rank === 1 && <SealStamp text="Nhất" size={32} animate={false} />}
+                  </span>
+                  {r.streak > 0 && <span className="text-xs text-ink-soft">chuỗi {r.streak} ngày</span>}
+                </span>
+                <span className="font-display text-lg font-semibold tabular-nums">
+                  {r.xp} <span className="font-sans text-xs font-normal text-ink-soft">XP</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section className="mt-24 md:mt-32" aria-labelledby="faq-title">
+        <h2 id="faq-title" className="text-xl sm:text-2xl">
+          Câu hỏi thường gặp
+        </h2>
+        <div className="mt-6 max-w-2xl divide-y divide-rule border-y border-rule">
+          {FAQ.map((f) => (
+            <details key={f.q} className="group py-1">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 font-medium">
+                {f.q}
+                <span aria-hidden className="text-xl text-ink-soft transition-transform group-open:rotate-45">
+                  +
+                </span>
+              </summary>
+              <p className="pb-4 text-ink-soft">{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section className="sheet ruled-paper margin-line mt-24 overflow-hidden md:mt-32">
+        <div className="py-10 pr-6 pl-[calc(var(--margin-x)+1.5rem)]">
+          <p className="font-display text-2xl font-semibold sm:text-3xl">Sổ của bạn đang trống.</p>
+          <p className="mt-3 text-ink-soft">Tạo tài khoản mất chưa tới một phút, không cần xác nhận email.</p>
+          <Button asChild size="lg" className="mt-6">
+            <Link href="/signup">Tạo sổ miễn phí</Link>
+          </Button>
+        </div>
+      </section>
+
+      <footer className="mt-16 flex flex-col gap-4 border-t border-rule pt-6 text-sm text-ink-soft sm:flex-row sm:items-center sm:justify-between">
+        <p>
+          © {new Date().getFullYear()} Sổ Từ, làm bởi {CONTACT.nickname}.{" "}
+          <Link href="/lien-he" className="text-ink-violet underline-offset-4 hover:underline">
+            Liên hệ
+          </Link>
+        </p>
         <ContactLinks compact />
       </footer>
     </div>

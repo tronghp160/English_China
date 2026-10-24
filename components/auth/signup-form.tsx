@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signUpWithPassword } from "@/lib/actions/auth";
 import { displayNameSchema, emailSchema, passwordSchema } from "@/lib/validation";
-import { authErrorMessage, EmailField, FormAlert, loadSupabase, PASSWORD_HINT, PasswordField } from "./auth-shared";
+import { authErrorMessage, EmailField, FormAlert, loadSupabase, PASSWORD_HINT, PasswordField, FieldError } from "./auth-shared";
 
 type Fields = { display_name?: string; email?: string; password?: string };
 
@@ -61,15 +61,10 @@ export function SignupForm({ next }: { next: string }) {
           placeholder="Ví dụ: Minh Anh"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="h-12 text-base"
           aria-invalid={Boolean(fieldErrors.display_name) || undefined}
           aria-describedby={fieldErrors.display_name ? "display_name-error" : undefined}
         />
-        {fieldErrors.display_name && (
-          <p id="display_name-error" className="text-sm text-danger">
-            {fieldErrors.display_name}
-          </p>
-        )}
+        {fieldErrors.display_name && <FieldError id="display_name-error">{fieldErrors.display_name}</FieldError>}
       </div>
       <EmailField value={email} onChange={setEmail} error={fieldErrors.email} />
       <PasswordField
@@ -80,8 +75,8 @@ export function SignupForm({ next }: { next: string }) {
         hint={PASSWORD_HINT}
       />
       {error && <FormAlert>{error}</FormAlert>}
-      <Button type="submit" className="h-13 w-full gap-2 text-lg font-extrabold" disabled={busy}>
-        {busy && <Loader2 className="size-5 animate-spin" aria-hidden />}
+      <Button type="submit" size="lg" className="w-full" disabled={busy}>
+        {busy && <Loader2 className="animate-spin" aria-hidden />}
         Tạo tài khoản
       </Button>
     </form>

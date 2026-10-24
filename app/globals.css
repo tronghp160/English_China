@@ -52,7 +52,8 @@
  * The old token names (ink-blue, margin-red, wash-*, sun/sky/grape/pink, jade) stay as
  * aliases at the bottom of each block until the last component stops using them.
  */
-:root {
+:root,
+.light {
   --paper: #f5f6fa;
   --surface: #ffffff;
   --surface-sunk: #eeeff5;
@@ -659,6 +660,17 @@
     var(--rule-strong) calc(50% - 0.75px) calc(50% + 0.75px),
     transparent calc(50% + 0.75px)
   );
+}
+
+/* Stats: card knowledge stages in one violet, from pale to full ink */
+.stage-1 {
+  background: color-mix(in oklab, var(--ink-violet) 35%, var(--surface));
+}
+.stage-2 {
+  background: color-mix(in oklab, var(--ink-violet) 65%, var(--surface));
+}
+.stage-3 {
+  background: var(--ink-violet);
 }
 
 /* Flashcard flip */

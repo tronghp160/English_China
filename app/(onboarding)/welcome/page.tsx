@@ -15,7 +15,7 @@ export default async function WelcomePage({ searchParams }: PageProps<"/welcome"
   if (me.settings.onboarded) redirect(next);
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 py-6">
+    <main className="mx-auto flex w-full max-w-[420px] flex-1 flex-col px-4 py-6">
       <Logo />
       <WelcomeForm initialName={me.profile.display_name} initialUsername={me.profile.username} next={next} />
     </main>

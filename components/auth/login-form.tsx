@@ -57,15 +57,15 @@ export function LoginForm({ next }: { next: string }) {
         labelAction={
           <Link
             href={`/forgot-password${email ? `?email=${encodeURIComponent(email.trim())}` : ""}`}
-            className="inline-flex min-h-11 items-center text-sm font-semibold text-ink-blue underline-offset-4 hover:underline"
+            className="inline-flex min-h-11 items-center text-sm font-semibold text-ink-violet underline-offset-4 hover:underline"
           >
             Quên mật khẩu?
           </Link>
         }
       />
       {error && <FormAlert>{error}</FormAlert>}
-      <Button type="submit" className="h-13 w-full gap-2 text-lg font-extrabold" disabled={busy}>
-        {busy && <Loader2 className="size-5 animate-spin" aria-hidden />}
+      <Button type="submit" size="lg" className="w-full" disabled={busy}>
+        {busy && <Loader2 className="animate-spin" aria-hidden />}
         Đăng nhập
       </Button>
     </form>
