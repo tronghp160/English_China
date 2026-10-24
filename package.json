@@ -18,7 +18,8 @@
     "db:seed": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-demo.mjs",
     "admin:grant": "node scripts/admin.mjs grant",
     "admin:revoke": "node scripts/admin.mjs revoke",
-    "admin:list": "node scripts/admin.mjs list"
+    "admin:list": "node scripts/admin.mjs list",
+    "dev:clean": "node -e \"require('fs').rmSync('.next/dev',{recursive:true,force:true,maxRetries:5,retryDelay:300})\" && next dev"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.80",

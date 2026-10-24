@@ -13,7 +13,7 @@ Full product spec and phased plan: [docs/PLAN.md](docs/PLAN.md). Work phase by p
 - Tests: vitest (`tests/unit`), Playwright (`tests/e2e`).
 
 ## Commands
-- `pnpm dev` (port 3000 may be taken on this machine → `pnpm dev --port 3100`)
+- `pnpm dev` (port 3000 may be taken on this machine → `pnpm dev --port 3100`). `pnpm dev:clean` deletes `.next/dev` first: use it when the page looks like an old version (stale CSS, e.g. Bin showing every pose at once)
 - `pnpm lint` (also scans `test-results/`: remove it first, or run `pnpm exec eslint app components lib tests scripts`) · `pnpm typecheck` · `pnpm test` · `pnpm test:e2e` (builds and serves prod on :3200 next to `pnpm dev`; uses the Supabase project in `.env.local`, creates/deletes its own users; AI and image search are mocked in the browser unless `E2E_REAL_AI=1`)
 - `node scripts/gen-icons.mjs` regenerates the PWA icons and favicon
 - `pnpm db:seed` recreates the demo accounts (`demo@example.com`, `minh@example.com`, `lan@example.com`, password `sotu1234`) with sample decks, cards due today, a streak, a group and a public deck. Sample decks live in `lib/sample-data.ts` (also used by the in-app "Thêm bộ từ mẫu" button, `lib/actions/sample.ts`)
