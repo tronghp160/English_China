@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, Compass, PenLine, Play, Plus } from "lucide-react";
+import { Compass, PenLine, Play, Plus } from "lucide-react";
 import { ContactLinks } from "@/components/contact/contact-links";
-import { DeckCover } from "@/components/deck/deck-cover";
+import { DeckCard } from "@/components/deck/deck-card";
 import { SampleDecksButton } from "@/components/deck/sample-decks-button";
 import { LangMark } from "@/components/lang-mark";
 import { MascotSay } from "@/components/mascot/mascot-say";
-import { SealStamp } from "@/components/review/seal-stamp";
+import { Pup } from "@/components/mascot/pup";
+import { CountUp } from "@/components/stats/count-up";
 import { Heatmap } from "@/components/stats/heatmap";
+import { ProgressRing } from "@/components/stats/progress-ring";
 import { StreakWeek } from "@/components/stats/streak-week";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { IconTile } from "@/components/ui/icon-tile";
 import { CONTACT } from "@/lib/contact";
-import { getMyDecks } from "@/lib/data/decks";
+import { getDeckSamples, getMyDecks } from "@/lib/data/decks";
 import { getStudySummary } from "@/lib/data/study";
 import { say, type LineKey, type PupMood } from "@/lib/mascot/lines";
 import { cn } from "@/lib/utils";
@@ -37,27 +41,19 @@ function dateLine(day: string) {
   );
 }
 
-/** One line of the "due" sentence: a big serif number and its words sitting on the same ruled line. */
-function SentenceLine({ n, lead, children }: { n: number; lead?: string; children: React.ReactNode }) {
-  return (
-    <span className="flex h-16 items-end">
-      <span className="flex items-baseline gap-2.5 leading-none">
-        {lead && <span className="text-lg leading-none text-fg-muted">{lead}</span>}
-        <span className="font-display text-[3rem] leading-none font-semibold text-fg tabular-nums">{n}</span>
-        <span className="text-lg leading-none text-fg">{children}</span>
-      </span>
-    </span>
-  );
-}
+const QUICK = [
+  { href: "/practice", label: "Luyện tập", hint: "8 cách luyện", icon: PenLine, tone: "grape" },
+  { href: "/explore", label: "Khám phá", hint: "Bộ từ cộng đồng", icon: Compass, tone: "orange" },
+] as const;
 
 export default async function TodayPage() {
   const [s, decks] = await Promise.all([getStudySummary(), getMyDecks()]);
   const due = s.langs.reduce((n, l) => n + l.due, 0);
   const fresh = s.langs.reduce((n, l) => n + l.newToday, 0);
   const tomorrow = s.langs.reduce((n, l) => n + l.dueTomorrow, 0);
+  const remaining = due + fresh;
   const ownDeck = decks.find((d) => d.relation === "own");
   const addHref = ownDeck ? `/decks/${ownDeck.id}/add` : "/decks/new";
-  const split = s.langs.filter((l) => l.due + l.newToday > 0).length > 1;
   const firstName = s.me.profile.display_name.split(/\s+/).at(-1);
   const prefs = readPrefs(s.me.settings.prefs);
   const [mood, line]: [PupMood, LineKey] =
@@ -65,207 +61,227 @@ export default async function TodayPage() {
       ? ["wave", "empty"]
       : s.streak.current > 0 && !s.streak.activeToday
         ? ["sleepy", "streakAtRisk"]
-        : due + fresh === 0
+        : remaining === 0
           ? ["cheer", "allDone"]
-          : due + fresh >= 50
+          : remaining >= 50
             ? ["surprised", "dueMany"]
             : ["happy", "due"];
   const seed = new Date(s.today).getUTCDate();
   const text = say(line, {
     seed,
     name: prefs.mascot_name,
-    n: line === "streakAtRisk" ? s.streak.current : due + fresh,
+    n: line === "streakAtRisk" ? s.streak.current : remaining,
   });
-  const minutes = Math.max(1, Math.ceil(((due + fresh) * 20) / 60));
+  const minutes = Math.max(1, Math.ceil((remaining * 20) / 60));
   const activeDays = s.days.filter((d) => d.reviews > 0).map((d) => d.day);
-  const topDecks = [...decks].sort((a, b) => Number(b.due_count) - Number(a.due_count)).slice(0, 5);
+  const topDecks = [...decks].sort((a, b) => Number(b.due_count) - Number(a.due_count)).slice(0, 4);
+  const samples = await getDeckSamples(topDecks.map((d) => d.id));
+  const total = s.reviewedToday + remaining;
+  const pct = total ? Math.round((s.reviewedToday / total) * 100) : 0;
+  const langChips = s.langs.filter((l) => l.due + l.newToday > 0);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6 lg:gap-7">
       <header>
         <p className="text-sm font-medium text-fg-muted">{dateLine(s.today)}</p>
-        <h1 className="mt-0.5 text-xl">
+        <h1 className="mt-0.5 text-[1.6875rem] leading-tight sm:text-[2.125rem]">
           {greeting(s.me.settings.timezone)}, {firstName}!
         </h1>
-        {prefs.mascot ? (
-          <MascotSay mood={mood} name={prefs.mascot_name} text={text} size={56} className="mt-3" />
-        ) : (
-          <p className="mt-1 text-fg-muted">{text}</p>
-        )}
       </header>
 
-      {/* Phones: one column (card, shortcuts, streak, weeks). Laptops: main column + a right column (streak, decks). */}
-      <div
-        className={cn(
-          "flex flex-col gap-8",
-          s.totalCards > 0 && "lg:grid lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start lg:gap-x-12",
-        )}
-      >
-        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
-          {s.totalCards === 0 ? (
-            <section className="rounded-lg border border-border/60 bg-surface shadow-sm">
-              <EmptyState
-                figure={prefs.mascot ? null : "notebook"}
-                title="Sổ của bạn còn trống."
-                actions={
-                  <>
-                    <SampleDecksButton variant="default" />
-                    <Button asChild variant="outline">
-                      <Link href={addHref}>
-                        <Plus aria-hidden />
-                        {ownDeck ? "Thêm từ đầu tiên" : "Tạo bộ từ của tôi"}
-                      </Link>
-                    </Button>
-                  </>
-                }
+      {s.totalCards === 0 ? (
+        <EmptyState
+          figure={prefs.mascot ? <Pup mood="wave" size={96} className="self-center" /> : "notebook"}
+          title="Sổ của bạn còn trống."
+          actions={
+            <>
+              <SampleDecksButton variant="default" />
+              <Button asChild variant="outline">
+                <Link href={addHref}>
+                  <Plus aria-hidden />
+                  {ownDeck ? "Thêm từ đầu tiên" : "Tạo bộ từ của tôi"}
+                </Link>
+              </Button>
+            </>
+          }
+        >
+          Thêm vài bộ từ mẫu để thử ngay, hoặc tự tạo bộ từ đầu tiên.
+        </EmptyState>
+      ) : (
+        <>
+          {/* Phones: hero, Bin's line, streak, shortcuts, decks. Laptops: hero + streak side by side. */}
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-stretch">
+            {remaining > 0 ? (
+              <section
+                aria-labelledby="today-due"
+                className="relative flex flex-col gap-4 overflow-hidden rounded-xl bg-primary p-5 text-on-primary shadow-hero sm:flex-row sm:items-center sm:gap-8 sm:p-8"
               >
-                Thêm vài bộ từ mẫu để thử ngay, hoặc tự tạo bộ từ đầu tiên.
-              </EmptyState>
-            </section>
-          ) : due + fresh === 0 ? (
-            <section className="rounded-lg border border-border/60 bg-surface shadow-sm relative overflow-hidden" aria-labelledby="today-done">
-              <div className=" pr-5 pl-4">
-                <h2 id="today-done" className="flex h-16 items-end pr-28 text-lg leading-none font-medium text-fg">
-                  Hôm nay ôn xong rồi.
-                </h2>
-                <p className="flex h-16 items-end pr-28 text-lg leading-none text-fg-muted">
-                  {tomorrow > 0 ? `Ngày mai có ${tomorrow} từ.` : "Ngày mai chưa có từ nào đến hạn."}
-                </p>
-              </div>
-              <SealStamp text="Xong bài" size={84} className="absolute top-4 right-5" />
-              <div className="border-t border-border px-5 py-4 pl-4">
-                <Button asChild variant="outline">
-                  <Link href="/practice">
-                    <PenLine aria-hidden />
-                    Luyện thêm
-                  </Link>
-                </Button>
-              </div>
-            </section>
-          ) : (
-            <section className="rounded-lg border border-border/60 bg-surface shadow-sm overflow-hidden" aria-labelledby="today-due">
-              <div className=" pr-5 pl-4">
-                <h2 id="today-due" className="flex flex-col">
-                  <SentenceLine n={due}>từ đến hạn ôn</SentenceLine>
-                  {fresh > 0 && (
-                    <SentenceLine n={fresh} lead="và">
-                      từ mới
-                    </SentenceLine>
-                  )}
-                </h2>
-              </div>
-              {split && (
-                <ul className="divide-y divide-border border-t border-border pl-2">
-                  {s.langs.map((l) => (
-                    <li key={l.language}>
-                      <Link
-                        href={`/review?lang=${l.language}`}
-                        className="flex min-h-12 items-center gap-3 pr-4 text-sm text-fg hover:bg-surface-2"
-                      >
-                        <LangMark lang={l.language} label />
-                        <span className="tabular-nums">
-                          {l.due} ôn, {l.newToday} mới
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border py-4 pr-5 pl-4">
-                <Button asChild size="lg">
-                  <Link href="/review">
-                    <Play className="fill-current" aria-hidden />
-                    Bắt đầu ôn
-                  </Link>
-                </Button>
-                <span className="text-sm text-fg-muted">khoảng {minutes} phút</span>
-              </div>
-            </section>
-          )}
-        </div>
-
-        {s.totalCards > 0 && (
-          <>
-            <div className="min-w-0 lg:col-start-1 lg:row-start-2">
-              <nav aria-label="Lối tắt" className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
-                <Button asChild variant="outline" className="px-2 sm:px-4">
-                  <Link href={addHref}>
-                    <Plus aria-hidden />
-                    Thêm từ
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="px-2 sm:px-4">
-                  <Link href="/practice">
-                    <PenLine aria-hidden />
-                    Luyện tập
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="px-2 sm:px-4">
-                  <Link href="/explore">
-                    <Compass aria-hidden />
-                    Khám phá
-                  </Link>
-                </Button>
-              </nav>
-            </div>
-
-            <aside className="flex min-w-0 flex-col gap-8 lg:col-start-2 lg:row-span-3 lg:row-start-1">
-              <StreakWeek streak={s.streak} today={s.today} activeDays={activeDays} />
-
-              {decks.length > 0 && (
-                <section aria-labelledby="today-decks" className="hidden lg:block">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <h2 id="today-decks" className="text-base">
-                      Bộ từ
+                <div className="flex items-center gap-4 sm:contents">
+                  <ProgressRing
+                    value={pct}
+                    size={148}
+                    stroke={14}
+                    trackClassName="text-white/25"
+                    barClassName="text-white"
+                    className="size-[6.5rem] shrink-0 sm:size-[9.25rem] [&>svg]:size-full"
+                  >
+                    <span className="flex flex-col items-center leading-none">
+                      <span className="font-display text-[1.625rem] sm:text-[2.125rem]">
+                        {s.reviewedToday}
+                        <span className="text-sm opacity-75 sm:text-lg">/{total}</span>
+                      </span>
+                      <span className="mt-1 hidden text-[0.8125rem] opacity-85 sm:block">đã ôn</span>
+                    </span>
+                  </ProgressRing>
+                  <div className="sm:hidden">
+                    <p className="text-sm font-semibold opacity-85">Ôn tập hôm nay</p>
+                    <h2 className="font-display text-[1.4375rem] leading-[1.15]">
+                      Còn <CountUp value={remaining} /> từ đang chờ bạn
                     </h2>
-                    <Link href="/decks" className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline">
-                      Tất cả
-                    </Link>
                   </div>
-                  <ul className="divide-y divide-border border-y border-border">
-                    {topDecks.map((d) => (
-                      <li key={d.id}>
-                        <Link href={`/decks/${d.id}`} className="-mx-2 flex min-h-14 items-center gap-3 rounded-md px-2 py-2 hover:bg-surface-2">
-                          <DeckCover id={d.id} language={d.language} size="sm" />
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-semibold text-fg">{d.name}</span>
-                            <span className="block text-xs text-fg-muted">{d.word_count} từ</span>
-                          </span>
-                          {d.due_count > 0 ? (
-                            <span className="shrink-0 text-sm font-semibold text-danger-fg tabular-nums">{d.due_count} ôn</span>
-                          ) : (
-                            <Check className="size-4 shrink-0 text-success" aria-label="Đã ôn xong" />
-                          )}
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-4">
+                  <div className="hidden sm:block">
+                    <p className="text-[0.9375rem] font-semibold opacity-85">Ôn tập hôm nay</p>
+                    <h2 id="today-due" className="font-display text-[1.875rem] leading-[1.15]">
+                      Còn <CountUp value={remaining} /> từ đang chờ bạn
+                    </h2>
+                  </div>
+                  <ul className="flex flex-wrap gap-2">
+                    {langChips.map((l) => (
+                      <li key={l.language}>
+                        <Link
+                          href={`/review?lang=${l.language}`}
+                          className="flex min-h-9 items-center gap-2 rounded-full bg-white/16 py-1 pr-3 pl-1 text-[0.8125rem] font-semibold tabular-nums hover:bg-white/24 sm:text-sm"
+                        >
+                          <LangMark lang={l.language} white label />
+                          {l.due} ôn, {l.newToday} mới
                         </Link>
                       </li>
                     ))}
                   </ul>
-                </section>
-              )}
-            </aside>
-
-            <div className="min-w-0 lg:col-start-1 lg:row-start-3">
-              <section aria-labelledby="today-weeks">
-                <div className="mb-3 flex items-baseline justify-between gap-3">
-                  <h2 id="today-weeks" className="text-base">
-                    12 tuần gần đây
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                    <Button asChild variant="white" size="xl" className="shadow-[0_4px_0_0_var(--primary-press)] active:translate-y-[3px] active:shadow-[0_1px_0_0_var(--primary-press)]">
+                      <Link href="/review">
+                        <Play className="fill-current" aria-hidden />
+                        Bắt đầu ôn
+                      </Link>
+                    </Button>
+                    <span className="text-center text-[0.8125rem] opacity-85 sm:text-sm">khoảng {minutes} phút</span>
+                  </div>
+                </div>
+                {prefs.mascot && <Pup mood="cheer" size={96} className="absolute right-5 -bottom-1.5 hidden lg:block" />}
+              </section>
+            ) : (
+              <section
+                aria-labelledby="today-done"
+                className="relative flex flex-col justify-center gap-4 overflow-hidden rounded-xl bg-rate-easy p-6 text-white shadow-md sm:p-8"
+              >
+                <div>
+                  <p className="text-[0.9375rem] font-semibold opacity-90">Ôn tập hôm nay</p>
+                  <h2 id="today-done" className="font-display text-[1.875rem] leading-[1.15]">
+                    Hôm nay ôn xong rồi
                   </h2>
-                  <Link href="/stats" className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline">
-                    Xem thống kê
+                  <p className="mt-1 text-sm opacity-90">
+                    {tomorrow > 0 ? `Ngày mai có ${tomorrow} từ.` : "Ngày mai chưa có từ nào đến hạn."}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button asChild variant="white" size="xl" className="text-success-fg">
+                    <Link href="/practice">
+                      <PenLine aria-hidden />
+                      Luyện thêm
+                    </Link>
+                  </Button>
+                  <Link href={addHref} className="min-h-11 content-center text-sm font-semibold underline-offset-4 hover:underline">
+                    Học từ mới
                   </Link>
                 </div>
-                <Heatmap
-                  days={s.days.map((d) => ({ day: d.day, reviews: d.reviews }))}
-                  today={s.today}
-                  restDays={s.streak.restDays}
-                />
+                {prefs.mascot && <Pup mood="cheer" size={96} className="absolute right-5 -bottom-1.5 hidden sm:block" />}
               </section>
-            </div>
-          </>
-        )}
-      </div>
+            )}
 
-      <section aria-labelledby="today-contact" className="flex flex-col gap-2 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+            {prefs.mascot ? (
+              <MascotSay mood={mood} name={prefs.mascot_name} text={text} size={56} className="lg:hidden" />
+            ) : (
+              <p className="text-fg-muted lg:hidden">{text}</p>
+            )}
+
+            <StreakWeek
+              streak={s.streak}
+              today={s.today}
+              activeDays={activeDays}
+              className="lg:col-start-2 lg:row-start-1 lg:justify-center"
+            />
+          </div>
+
+          <nav aria-label="Lối tắt" className="grid grid-cols-3 gap-3 lg:gap-4">
+            <Card interactive>
+              <Link href={addHref} className="flex flex-col items-center gap-2 rounded-[inherit] p-3.5 text-center text-sm font-semibold sm:flex-row sm:gap-3.5 sm:p-4 sm:text-left sm:text-base">
+                <IconTile icon={Plus} tone="mint" size={44} solid />
+                <span className="flex flex-col font-bold">
+                  Thêm từ
+                  <span className="hidden text-[0.8125rem] font-normal text-fg-muted sm:block">AI gợi ý nghĩa, ví dụ</span>
+                </span>
+              </Link>
+            </Card>
+            {QUICK.map(({ href, label, hint, icon, tone }) => (
+              <Card key={href} interactive>
+                <Link href={href} className="flex flex-col items-center gap-2 rounded-[inherit] p-3.5 text-center text-sm font-semibold sm:flex-row sm:gap-3.5 sm:p-4 sm:text-left sm:text-base">
+                  <IconTile icon={icon} tone={tone} size={44} solid />
+                  <span className="flex flex-col font-bold">
+                    {label}
+                    <span className="hidden text-[0.8125rem] font-normal text-fg-muted sm:block">{hint}</span>
+                  </span>
+                </Link>
+              </Card>
+            ))}
+          </nav>
+
+          {decks.length > 0 && (
+            <section aria-labelledby="today-decks" className="flex flex-col gap-3.5">
+              <div className="flex items-baseline justify-between gap-3">
+                <h2 id="today-decks" className="text-lg sm:text-xl">
+                  Bộ từ đang học
+                </h2>
+                <Link href="/decks" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary-fg hover:underline">
+                  Tất cả
+                </Link>
+              </div>
+              <ul className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 xl:grid-cols-4">
+                {topDecks.map((d) => (
+                  <li key={d.id} className="w-[12.5rem] shrink-0 snap-start md:w-auto">
+                    <DeckCard d={d} sample={samples[d.id]} compact />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <section aria-labelledby="today-weeks">
+            <Card className="p-5">
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <h2 id="today-weeks" className="text-lg">
+                  12 tuần gần đây
+                </h2>
+                <Link href="/stats" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary-fg hover:underline">
+                  Xem thống kê
+                </Link>
+              </div>
+              <Heatmap
+                days={s.days.map((d) => ({ day: d.day, reviews: d.reviews }))}
+                today={s.today}
+                restDays={s.streak.restDays}
+              />
+            </Card>
+          </section>
+        </>
+      )}
+
+      <section
+        aria-labelledby="today-contact"
+        className={cn("flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between")}
+      >
         <p id="today-contact" className="text-sm text-fg-muted">
           Gặp lỗi hay có góp ý? Nhắn {CONTACT.nickname}
         </p>

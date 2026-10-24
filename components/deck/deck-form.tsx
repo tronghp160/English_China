@@ -4,7 +4,7 @@ import { AlertCircle, Globe2, Loader2, Lock, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { DeckCover } from "@/components/deck/deck-cover";
+import { DeckArt } from "@/components/deck/deck-art";
 import { SwitchRow } from "@/components/settings/study-prefs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,7 +85,7 @@ export function DeckForm({
       {/* The cover follows what is typed; on phones it sits above the fields */}
       <div className="md:order-last">
         <div className="md:sticky md:top-20">
-          <DeckCover id={deckId ?? "new-deck"} language={v.language} name={v.name.trim() || "Tên bộ từ"} size="lg" />
+          <DeckArt id={deckId ?? "new-deck"} language={v.language} name={v.name.trim() || "Tên bộ từ"} size="lg" />
         </div>
       </div>
 

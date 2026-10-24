@@ -8,7 +8,7 @@ import { InvitePanel } from "@/components/group/invite-panel";
 import { Leaderboard } from "@/components/group/leaderboard";
 import { LeaveGroupButton } from "@/components/group/leave-delete-buttons";
 import { MemberList } from "@/components/group/member-list";
-import { DeckCover } from "@/components/deck/deck-cover";
+import { DeckArt } from "@/components/deck/deck-art";
 import { GroupAvatar } from "@/components/group/group-avatar";
 import { LangMark } from "@/components/lang-mark";
 import { Button } from "@/components/ui/button";
@@ -69,7 +69,7 @@ export default async function GroupPage({ params }: PageProps<"/groups/[groupId]
                 {decks.map((d) => (
                   <li key={d.id}>
                     <Link href={`/decks/${d.id}`} className="flex min-h-16 items-center gap-3 px-1 py-3 transition-colors hover:bg-surface-2">
-                      <DeckCover id={d.id} language={d.language} size="sm" />
+                      <DeckArt id={d.id} language={d.language} size="sm" />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2">
                           <span className="truncate font-medium text-fg">{d.name}</span>

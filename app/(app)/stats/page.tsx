@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { BookCheck, CalendarCheck, ChevronRight, Repeat2, Target, type LucideIcon } from "lucide-react";
 import { LangMark } from "@/components/lang-mark";
 import { MascotSay } from "@/components/mascot/mascot-say";
 import { Heatmap } from "@/components/stats/heatmap";
+import { Card } from "@/components/ui/card";
+import { IconTile } from "@/components/ui/icon-tile";
+import type { Tone } from "@/lib/tone";
 import { ReviewsChart } from "@/components/stats/reviews-chart";
 import { getStudySummary } from "@/lib/data/study";
 import { LANGUAGES } from "@/lib/lang/registry";
@@ -15,22 +18,27 @@ import { readPrefs } from "@/lib/validation";
 
 export const metadata: Metadata = { title: "Thống kê" };
 
-// Ordered by how well a word is known: one violet, from nothing to full ink, so "going right" reads as progress.
+// Ordered by how well a word is known: grey, sun, blue, mint, so "going right" reads as progress.
 const STAGES = [
-  { key: "new", label: "Chưa học", hint: "chưa ôn lần nào", tone: "border border-border-strong bg-surface-2" },
-  { key: "learning", label: "Đang tập nhớ", hint: "vừa học hoặc vừa quên", tone: "stage-1" },
-  { key: "young", label: "Đã nhớ", hint: "nhớ được vài ngày", tone: "stage-2" },
-  { key: "mature", label: "Nhớ chắc", hint: "nhớ được từ 3 tuần trở lên", tone: "stage-3" },
+  { key: "new", label: "Chưa học", hint: "chưa ôn lần nào", tone: "bg-surface-3" },
+  { key: "learning", label: "Đang tập nhớ", hint: "vừa học hoặc vừa quên", tone: "bg-c-sun" },
+  { key: "young", label: "Đã nhớ", hint: "nhớ được vài ngày", tone: "bg-c-blue" },
+  { key: "mature", label: "Nhớ chắc", hint: "nhớ được từ 3 tuần trở lên", tone: "bg-c-mint" },
 ] as const;
 
-/** One figure of the row: label above, a big serif number, a note under it. */
-function Figure({ value, label, note }: { value: string; label: string; note: string }) {
+const FIGURE_FG: Record<string, string> = { blue: "text-c-blue-fg", grape: "text-c-grape-fg", mint: "text-c-mint-fg", sun: "text-c-sun-fg" };
+
+/** One figure of the row: a pale card with an icon tile, the label, a big number and a note under it. */
+function Figure({ value, label, note, tone, icon }: { value: string; label: string; note: string; tone: Tone; icon: LucideIcon }) {
   return (
-    <div className="bg-canvas p-4 sm:p-5">
-      <p className="text-sm text-fg-muted">{label}</p>
-      <p className="mt-1 font-display text-[2rem] leading-none font-semibold text-fg tabular-nums">{value}</p>
-      <p className="mt-2 text-xs text-fg-muted">{note}</p>
-    </div>
+    <Card variant="soft" tone={tone} className="p-4 sm:p-5">
+      <div className="flex items-center gap-2.5">
+        <IconTile icon={icon} tone={tone} size={32} solid />
+        <p className={cn("text-sm font-semibold", FIGURE_FG[tone])}>{label}</p>
+      </div>
+      <p className={cn("mt-3 font-display text-[2.25rem] leading-none tabular-nums", FIGURE_FG[tone])}>{value}</p>
+      <p className={cn("mt-2 text-xs", FIGURE_FG[tone])}>{note}</p>
+    </Card>
   );
 }
 
@@ -46,7 +54,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-t border-border pt-8">
+    <Card className="p-5 sm:p-6">
       <div className="mb-5 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg">{title}</h2>
@@ -55,7 +63,7 @@ function Section({
         {action}
       </div>
       {children}
-    </section>
+    </Card>
   );
 }
 
@@ -99,16 +107,16 @@ export default async function StatsPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-xl">Thống kê</h1>
+        <h1 className="text-[1.6875rem] sm:text-[2.125rem]">Thống kê</h1>
         <p className="mt-0.5 text-fg-muted">Bạn học thế nào trong 30 ngày gần đây</p>
         {prefs.mascot && <MascotSay mood={mood} name={prefs.mascot_name} text={line} size={48} className="mt-3" />}
       </header>
 
-      <div className="grid grid-cols-2 gap-px overflow-hidden border-y border-border bg-border lg:grid-cols-4">
-        <Figure value={known.toLocaleString("vi-VN")} label="Từ đã nhớ" note={`trên tổng ${totalActive.toLocaleString("vi-VN")} từ`} />
-        <Figure value={reviews30.toLocaleString("vi-VN")} label="Lượt ôn" note="trong 30 ngày" />
-        <Figure value={retention === null ? "—" : `${retention}%`} label="Nhớ đúng" note="số lần trả lời đúng" />
-        <Figure value={`${activeDays30}/30`} label="Ngày có học" note={`chuỗi hiện tại: ${s.streak.current} ngày`} />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        <Figure tone="blue" icon={BookCheck} value={known.toLocaleString("vi-VN")} label="Từ đã nhớ" note={`trên tổng ${totalActive.toLocaleString("vi-VN")} từ`} />
+        <Figure tone="grape" icon={Repeat2} value={reviews30.toLocaleString("vi-VN")} label="Lượt ôn" note="trong 30 ngày" />
+        <Figure tone="mint" icon={Target} value={retention === null ? "—" : `${retention}%`} label="Nhớ đúng" note="số lần trả lời đúng" />
+        <Figure tone="sun" icon={CalendarCheck} value={`${activeDays30}/30`} label="Ngày có học" note={`chuỗi hiện tại: ${s.streak.current} ngày`} />
       </div>
 
       <Section
@@ -147,7 +155,7 @@ export default async function StatsPage() {
         title="Bạn đã thuộc đến đâu"
         subtitle="Mỗi từ đi dần từ trái sang phải khi bạn ôn đúng."
         action={
-          <Link href="/hard-words" className="inline-flex min-h-11 shrink-0 items-center gap-0.5 text-sm font-medium text-primary hover:underline">
+          <Link href="/hard-words" className="inline-flex min-h-11 shrink-0 items-center gap-0.5 text-sm font-semibold text-primary-fg hover:underline">
             Từ hay quên
             <ChevronRight className="size-4" aria-hidden />
           </Link>
@@ -169,7 +177,7 @@ export default async function StatsPage() {
                 </p>
                 {total > 0 && (
                   <div
-                    className="flex h-3 gap-px overflow-hidden rounded-sm bg-surface"
+                    className="flex h-3.5 gap-0.5 overflow-hidden rounded-full bg-surface-3"
                     role="img"
                     aria-label={STAGES.map((st) => `${st.label} ${count(st.key, lang)}`).join(", ")}
                   >
@@ -182,7 +190,7 @@ export default async function StatsPage() {
                 <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
                   {STAGES.map((st) => (
                     <li key={st.key} className="flex items-start gap-2">
-                      <span aria-hidden className={cn("mt-1 size-2.5 shrink-0 rounded-xs", st.tone)} />
+                      <span aria-hidden className={cn("mt-1 size-2.5 shrink-0 rounded-full", st.tone)} />
                       <span className="min-w-0">
                         <span className="block text-sm text-fg">
                           {st.label} <span className="font-semibold tabular-nums">{count(st.key, lang)}</span>

@@ -5,7 +5,7 @@ import { Play, Plus } from "lucide-react";
 import { AddWordFab } from "@/components/app-shell/fab";
 import { BackLink } from "@/components/app-shell/back-link";
 import { DeckActionsMenu } from "@/components/deck/deck-actions-menu";
-import { DeckCover } from "@/components/deck/deck-cover";
+import { DeckArt } from "@/components/deck/deck-art";
 import { DeckWords } from "@/components/deck/deck-words";
 import { StudyStrip } from "@/components/deck/study-strip";
 import { SubscribeButton } from "@/components/deck/subscribe-button";
@@ -50,8 +50,8 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
     <div>
       <BackLink href="/decks" label="Bộ từ" />
       <header className="flex items-start gap-4 md:gap-6">
-        <DeckCover id={deckId} language={deck.language} name={deck.name} size="md" className="md:hidden" />
-        <DeckCover id={deckId} language={deck.language} name={deck.name} size="lg" className="hidden md:inline-flex" />
+        <DeckArt id={deckId} language={deck.language} name={deck.name} size="md" className="md:hidden" />
+        <DeckArt id={deckId} language={deck.language} name={deck.name} size="lg" className="hidden md:inline-flex" />
         <div className="min-w-0 flex-1">
           <h1 className="text-xl break-words sm:text-2xl">{deck.name}</h1>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-fg-muted">

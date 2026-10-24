@@ -618,17 +618,6 @@
   );
 }
 
-/* Stats: card knowledge stages in one blue, from pale to full */
-.stage-1 {
-  background: color-mix(in oklab, var(--primary) 35%, var(--surface));
-}
-.stage-2 {
-  background: color-mix(in oklab, var(--primary) 65%, var(--surface));
-}
-.stage-3 {
-  background: var(--primary);
-}
-
 /* A matched tile in the Match game: a green flash, then an empty dashed slot where it was (the board does not reflow) */
 .tile-gone {
   pointer-events: none;

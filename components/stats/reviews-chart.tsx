@@ -35,7 +35,7 @@ function Tip({ active, payload }: TooltipContentProps<number, string>) {
   );
 }
 
-/** Reviews per day for the last 30 days: one series in violet ink, today's bar the darkest (so no legend). */
+/** Reviews per day for the last 30 days: one series in blue, today's bar the darkest (so no legend). */
 export function ReviewsChart({ data }: { data: DayPoint[] }) {
   return (
     <div className="h-56 w-full">
@@ -53,7 +53,7 @@ export function ReviewsChart({ data }: { data: DayPoint[] }) {
           />
           <YAxis allowDecimals={false} tick={{ fill: "var(--fg-muted)", fontSize: 12 }} tickLine={false} axisLine={false} width={32} />
           <Tooltip content={(props) => <Tip {...(props as TooltipContentProps<number, string>)} />} cursor={{ fill: "var(--surface-2)" }} />
-          <Bar dataKey="reviews" radius={[3, 3, 0, 0]} maxBarSize={18} isAnimationActive={false}>
+          <Bar dataKey="reviews" radius={[8, 8, 0, 0]} maxBarSize={18} isAnimationActive={false}>
             {data.map((d, i) => (
               <Cell key={d.day} fill="var(--primary)" fillOpacity={i === data.length - 1 ? 1 : 0.62} />
             ))}

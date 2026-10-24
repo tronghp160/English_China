@@ -37,3 +37,26 @@ export const getMyDecks = cache(async () => {
   const { data } = await supabase.rpc("my_decks");
   return data ?? [];
 });
+
+/**
+ * The first word of each deck (oldest first), shown big on the deck cards. One cheap query per deck, run together;
+ * decks without words are left out.
+ */
+export const getDeckSamples = cache(async (deckIds: string[]) => {
+  const supabase = await createClient();
+  const rows = await Promise.all(
+    deckIds.map(async (id) => {
+      const { data } = await supabase
+        .from("words")
+        .select("term")
+        .eq("deck_id", id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return [id, data?.term] as const;
+    }),
+  );
+  const out: Record<string, string> = {};
+  for (const [id, term] of rows) if (term) out[id] = term;
+  return out;
+});

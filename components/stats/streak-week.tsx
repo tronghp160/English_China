@@ -1,4 +1,5 @@
-import { Flame } from "lucide-react";
+import { Check, Flame, Snowflake } from "lucide-react";
+import { IconTile } from "@/components/ui/icon-tile";
 import { addDays, weekStart, type Streak } from "@/lib/srs/streak";
 import { cn } from "@/lib/utils";
 
@@ -6,9 +7,9 @@ const LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 const STATE_TEXT = { done: "đã ôn", rest: "ngày nghỉ", future: "chưa tới", empty: "chưa ôn" } as const;
 
 /**
- * "Chuỗi ngày": the streak number in Literata and this week's seven days as small squares
- * (Monday first): reviewed = turmeric, today = ringed, a free rest day = struck through,
- * days to come = a dot. No emoji.
+ * "Chuỗi ngày" (REDESIGN_V2 §6.2): a pale sun card with the streak number and this week's seven days
+ * (Monday first): reviewed = sun dot with a check, a free rest day = snowflake, today not yet reviewed = dashed ring,
+ * days to come = faint dot.
  */
 export function StreakWeek({
   streak,
@@ -31,37 +32,44 @@ export function StreakWeek({
     return { label, day, state, isToday: day === today };
   });
   return (
-    <section aria-labelledby="streak-title" className={className}>
-      <h2 id="streak-title" className="flex items-center gap-1.5 text-base">
-        <Flame className="size-4 text-streak" strokeWidth={1.75} aria-hidden />
-        Chuỗi ngày
-      </h2>
-      <p className="mt-2 flex items-baseline gap-1.5">
-        <span className="font-display text-[2rem] leading-none font-semibold text-fg tabular-nums">{streak.current}</span>
-        <span className="text-sm text-fg-muted">ngày</span>
-      </p>
-      <ul aria-label="Tuần này" className="mt-3 grid grid-cols-7 gap-1.5">
+    <section
+      aria-labelledby="streak-title"
+      className={cn("flex flex-col gap-3.5 rounded-lg bg-streak-soft p-5 text-streak-fg", className)}
+    >
+      <div className="flex items-center gap-2.5">
+        <IconTile icon={Flame} tone="sun" size={32} solid className="text-white [&_svg]:fill-white [&_svg]:stroke-[var(--streak-fg)]" />
+        <h2 id="streak-title" className="text-base font-bold">
+          Chuỗi ngày
+        </h2>
+        <p className="ml-auto flex items-baseline gap-1">
+          <span className="font-display text-[1.875rem] leading-none tabular-nums">{streak.current}</span>
+          <span className="text-sm font-semibold">ngày</span>
+        </p>
+      </div>
+      <ul aria-label="Tuần này" className="grid grid-cols-7 gap-1.5 text-center text-xs font-semibold">
         {days.map((d) => (
           <li key={d.day} className="flex flex-col items-center gap-1">
             <span
               className={cn(
-                "relative grid size-8 place-items-center rounded-sm",
-                d.state === "done" && "bg-streak",
-                d.state === "empty" && "bg-surface-2",
-                d.state === "rest" && "heat-rest bg-surface-2",
-                d.state === "future" && "border border-dashed border-border-strong",
-                d.isToday && "ring-2 ring-fg ring-offset-1 ring-offset-canvas",
+                "grid size-[1.625rem] place-items-center rounded-full sm:size-[1.875rem]",
+                d.state === "done" && "bg-streak text-white",
+                d.state === "empty" && !d.isToday && "bg-surface",
+                d.state === "rest" && "bg-surface text-streak-fg",
+                d.state === "empty" && d.isToday && "border-2 border-dashed border-streak-fg/60",
+                d.state === "future" && "border border-dashed border-streak-fg/30",
               )}
             >
+              {d.state === "done" && <Check className="size-4" strokeWidth={3.2} aria-hidden />}
+              {d.state === "rest" && <Snowflake className="size-3.5" aria-hidden />}
               <span className="sr-only">{`${d.label}: ${STATE_TEXT[d.state]}`}</span>
             </span>
-            <span aria-hidden className={cn("text-xs", d.isToday ? "font-semibold text-fg" : "text-fg-muted")}>
+            <span aria-hidden className={cn(d.isToday && "font-extrabold")}>
               {d.label}
             </span>
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-sm text-fg-muted">
+      <p className="text-[0.8125rem]">
         {!streak.activeToday && streak.current > 0
           ? "Ôn 1 thẻ hôm nay để giữ chuỗi."
           : streak.restUsedThisWeek

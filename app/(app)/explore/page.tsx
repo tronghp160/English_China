@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { DeckCover } from "@/components/deck/deck-cover";
+import { DeckArt } from "@/components/deck/deck-art";
 import { SubscribeButton } from "@/components/deck/subscribe-button";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -78,7 +78,7 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
               className="group flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-surface p-4 transition-colors duration-[var(--dur-fast)] hover:border-border-strong sm:flex-row sm:items-center sm:gap-4"
             >
               <Link href={`/decks/${d.id}`} className="flex min-w-0 flex-1 items-center gap-4">
-                <DeckCover id={d.id} language={d.language} name={d.name} className="transition-transform duration-[var(--dur-fast)] group-hover:-translate-x-0.5" />
+                <DeckArt id={d.id} language={d.language} name={d.name} className="transition-transform duration-[var(--dur-fast)] group-hover:-translate-x-0.5" />
                 <span className="min-w-0 flex-1">
                   <span className="line-clamp-2 leading-snug font-semibold text-fg">{d.name}</span>
                   {d.description && <span className="mt-0.5 line-clamp-1 block text-sm text-fg">{d.description}</span>}

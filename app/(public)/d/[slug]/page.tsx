@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ShareActions } from "@/components/deck/share-actions";
-import { DeckCover } from "@/components/deck/deck-cover";
+import { DeckArt } from "@/components/deck/deck-art";
 import { Button } from "@/components/ui/button";
 import { WordSpecimen } from "@/components/word/word-specimen";
 import { getMe } from "@/lib/auth";
@@ -49,7 +49,7 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
   return (
     <div className="pt-2">
       <header className="flex items-start gap-4">
-        <DeckCover id={deck.id} language={deck.language} name={deck.name} size="lg" />
+        <DeckArt id={deck.id} language={deck.language} name={deck.name} size="lg" />
         <div className="min-w-0 flex-1">
           <h1 className="text-xl break-words sm:text-2xl">{deck.name}</h1>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-fg-muted">
