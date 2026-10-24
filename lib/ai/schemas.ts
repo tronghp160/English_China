@@ -27,6 +27,7 @@ export const Sense = z.object({
   /** English photo search words for this sense (so "bank" of a river gets river photos). */
   image_query: z.string(),
 });
+export type Sense = z.infer<typeof Sense>;
 
 export const EnrichResultEN = z.object({
   is_valid_word: z.boolean(),

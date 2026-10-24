@@ -1,5 +1,7 @@
-import type { EnrichResult } from "./schemas";
+import type { EnrichResult, Sense } from "./schemas";
 import type { WordInput } from "@/lib/word-schema";
+
+export type { Sense };
 
 /** One sense, several senses (in any order), or "merge" for all of them. */
 export type SenseChoice = number | number[] | "merge";

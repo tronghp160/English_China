@@ -27,7 +27,6 @@ export default async function EditWordPage({ params }: PageProps<"/words/[wordId
         <DeleteWordButton wordId={wordId} term={word.term} />
       </div>
       <WordForm
-        mode="edit"
         wordId={wordId}
         deckId={word.deck_id}
         deckName={view.deck.name}
