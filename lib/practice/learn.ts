@@ -19,9 +19,48 @@ export type LearnState = {
   queue: string[];
   /** Words of the current round (for the round summary). */
   roundWords: string[];
+  /** Stars (1 to 3) earned by each finished round, in order. Only this device remembers them. */
+  roundStars?: number[];
 };
 
 export const LEARN_ROUND_SIZE = 7;
+
+/** Stars for a round from its answers: 3 from 90% right, 2 from 70%, otherwise 1 (finishing always earns one). */
+export function starsFor(right: number, total: number): 1 | 2 | 3 {
+  const pct = total > 0 ? right / total : 1;
+  return pct >= 0.9 ? 3 : pct >= 0.7 ? 2 : 1;
+}
+
+/** Notes the stars of the round that just ended (the round number is how many have been started). */
+export function recordRound(state: LearnState, stars: number): LearnState {
+  const list = [...(state.roundStars ?? [])];
+  list[Math.max(0, state.round - 1)] = Math.max(1, Math.min(3, Math.round(stars)));
+  return { ...state, roundStars: Array.from({ length: list.length }, (_, i) => list[i] ?? 1) };
+}
+
+/** Rounds that are finished: all started ones, or all but the one being played. */
+export function roundsDone(state: LearnState): number {
+  return roundDone(state) ? state.round : Math.max(0, state.round - 1);
+}
+
+/** Nodes of the stage map: at least enough rounds for the words, plus the one to play now. */
+export function stageCount(state: LearnState, size = LEARN_ROUND_SIZE): number {
+  return Math.max(Math.ceil(state.words.length / size), roundsDone(state) + 1);
+}
+
+/** The words the next round would ask, split into new ones and ones to review. */
+export function previewRound(state: LearnState, size = LEARN_ROUND_SIZE): { ids: string[]; fresh: number; review: number } {
+  const ids = startRound(state, size).queue;
+  const fresh = ids.filter((id) => !seen(state.words.find((w) => w.wordId === id)!)).length;
+  return { ids, fresh, review: ids.length - fresh };
+}
+
+/** How many of the three mastery dots a word has: new 0, missed once 1, multiple choice passed 2, mastered 3. */
+export function masteryDots(state: LearnState, wordId: string): 0 | 1 | 2 | 3 {
+  const w = state.words.find((x) => x.wordId === wordId);
+  if (!w) return 0;
+  return w.level === 2 ? 3 : w.level === 1 ? 2 : w.misses > 0 ? 1 : 0;
+}
 
 const seen = (w: LearnWordState) => w.level > 0 || w.misses > 0;
 
@@ -140,5 +179,6 @@ export function restoreLearn(
     round: Number(s.round) || 0,
     queue: s.queue.filter((id) => known.has(id)),
     roundWords: (s.roundWords ?? []).filter((id) => known.has(id)),
+    roundStars: Array.isArray(s.roundStars) ? s.roundStars.filter((n) => Number.isInteger(n) && n >= 1 && n <= 3) : undefined,
   };
 }

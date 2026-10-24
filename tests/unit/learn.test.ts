@@ -116,3 +116,69 @@ describe("restoreLearn", () => {
     expect(restoreLearn(null, new Set(), [], 10)).toBeNull();
   });
 });
+
+describe("stars and the stage map", () => {
+  it("gives 3 stars from 90% right, 2 from 70%, otherwise 1", async () => {
+    const { starsFor } = await import("@/lib/practice/learn");
+    expect([10, 9].map((r) => starsFor(r, 10))).toEqual([3, 3]);
+    expect([8, 7].map((r) => starsFor(r, 10))).toEqual([2, 2]);
+    expect([6, 0].map((r) => starsFor(r, 10))).toEqual([1, 1]);
+    expect(starsFor(0, 0)).toBe(3);
+  });
+
+  it("notes the stars of each finished round, in order", async () => {
+    const { recordRound } = await import("@/lib/practice/learn");
+    let s = startRound(initLearn(ids(10)));
+    s = recordRound(s, 3);
+    expect(s.roundStars).toEqual([3]);
+    s = recordRound({ ...s, round: 2 }, 2);
+    expect(s.roundStars).toEqual([3, 2]);
+    // clamped to 1..3
+    expect(recordRound({ ...s, round: 3 }, 9).roundStars).toEqual([3, 2, 3]);
+  });
+
+  it("counts finished rounds and the nodes to draw", async () => {
+    const { roundsDone, stageCount } = await import("@/lib/practice/learn");
+    const fresh = initLearn(ids(10));
+    expect(roundsDone(fresh)).toBe(0);
+    expect(stageCount(fresh)).toBe(2); // 10 words = 2 rounds of 7
+    const playing = startRound(fresh);
+    expect(roundsDone(playing)).toBe(0);
+    const done = playRound(playing, () => true);
+    expect(roundsDone(done)).toBe(1);
+    // a miss drags the round on: more nodes than words need
+    let many = initLearn(ids(3));
+    for (let r = 0; r < 4; r++) many = { ...many, round: many.round + 1, queue: [] };
+    expect(stageCount(many)).toBe(5);
+  });
+
+  it("previews the next round into new words and words to review", async () => {
+    const { previewRound } = await import("@/lib/practice/learn");
+    const none = initLearn(ids(10));
+    expect(previewRound(none)).toMatchObject({ fresh: 7, review: 0 });
+    // three words are in progress: they come first, the rest of the 7 are new
+    const some: LearnState = { ...none, words: none.words.map((w, i) => (i < 3 ? { ...w, level: 1 } : w)) };
+    const p = previewRound(some);
+    expect(p.ids.slice(0, 3)).toEqual(["w1", "w2", "w3"]);
+    expect(p).toMatchObject({ fresh: 4, review: 3 });
+  });
+
+  it("shows 0 to 3 mastery dots", async () => {
+    const { masteryDots } = await import("@/lib/practice/learn");
+    let s = startRound(initLearn(ids(3)));
+    expect(masteryDots(s, "w1")).toBe(0);
+    s = answer(s, "w1", false);
+    expect(masteryDots(s, "w1")).toBe(1);
+    s = answer(s, "w2", true);
+    expect(masteryDots(s, "w2")).toBe(2);
+    s = answer({ ...s, queue: ["w2"] }, "w2", true);
+    expect(masteryDots(s, "w2")).toBe(3);
+  });
+
+  it("keeps the stars when a saved game is restored", () => {
+    const s = { ...startRound(initLearn(ids(3))), roundStars: [3, 2] };
+    const back = restoreLearn(JSON.parse(JSON.stringify(s)), new Set(ids(3)), ids(3), 3)!;
+    expect(back.roundStars).toEqual([3, 2]);
+    expect(restoreLearn({ ...s, roundStars: ["x", 9] }, new Set(ids(3)), ids(3), 3)!.roundStars).toEqual([]);
+  });
+});

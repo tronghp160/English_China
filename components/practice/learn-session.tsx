@@ -1,10 +1,12 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Star } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
+import { CountUp } from "@/components/fx/count-up";
 import { Pup } from "@/components/mascot/pup";
+import { useBinAction } from "@/components/mascot/use-bin";
 import { Celebration } from "@/components/review/celebration";
 import { SessionBar } from "@/components/review/session-bar";
 import { useSessionHud, type SessionHud } from "@/components/review/use-session-hud";
@@ -13,16 +15,25 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FigureTile } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { PronounceButton } from "@/components/word/pronounce-button";
+import type { Tone } from "@/lib/tone";
+import type { Example } from "@/lib/word-schema";
 import { checkTyping, type StudyWord, type TypingResult } from "@/lib/practice";
 import {
   answer,
   initLearn,
   learnComplete,
   levelOf,
+  masteryDots,
+  previewRound,
   progress,
   questionFor,
+  recordRound,
   restoreLearn,
   roundDone,
+  roundsDone,
+  stageCount,
+  starsFor,
   startRound,
   type LearnState,
 } from "@/lib/practice/learn";
@@ -41,14 +52,16 @@ import {
   useSpeak,
   type Outcome,
 } from "./question-parts";
+import { LearnMap } from "./learn-map";
+import { MasteryDots } from "./mastery-dots";
 
-type Phase = "loading" | "resume" | "question" | "round" | "done";
-type Asked = { q: Question; tag: { label: string; variant: "outline" | "secondary" | "destructive" } };
+type Phase = "loading" | "resume" | "map" | "intro" | "question" | "round" | "done";
+type Asked = { q: Question; tag: { label: string; tone: Tone } };
 
 function tagFor(s: LearnState, wordId: string, q: Question): Asked["tag"] {
-  if (q.kind === "typing") return { label: "Ôn lại — gõ từ", variant: "secondary" };
+  if (q.kind === "typing") return { label: "Ôn lại — gõ từ", tone: "blue" };
   const missed = (s.words.find((w) => w.wordId === wordId)?.misses ?? 0) > 0;
-  return missed ? { label: "Học lại", variant: "destructive" } : { label: "Từ mới", variant: "outline" };
+  return missed ? { label: "Học lại", tone: "red" } : { label: "Từ mới", tone: "orange" };
 }
 
 // Event handlers only; a module helper keeps the React compiler purity rule quiet.
@@ -126,6 +139,15 @@ export function LearnSession({
   const [typed, setTyped] = useState("");
   const shownAt = useRef(0);
   const continueRef = useRef<HTMLButtonElement>(null);
+  // Words Bin has shown a "new word" card for on this visit, and how this round went (for its stars)
+  const introduced = useRef(new Set<string>());
+  const tally = useRef({ right: 0, total: 0 });
+  const [masteredBefore, setMasteredBefore] = useState(0);
+  const bin = useBinAction("happy");
+  const playBin = useRef(bin.play);
+  useEffect(() => {
+    playBin.current = bin.play;
+  }, [bin.play]);
 
   const persist = useCallback(
     (s: LearnState) => {
@@ -140,23 +162,40 @@ export function LearnSession({
       setOutcome(null);
       setTyped("");
       if (roundDone(s)) {
+        // The round is over: it earns its stars from how many answers were right
+        const ended = recordRound(s, starsFor(tally.current.right, tally.current.total));
+        setState(ended);
+        persist(ended);
         setAsked(null);
-        setPhase(learnComplete(s) ? "done" : "round");
+        setPhase(learnComplete(ended) ? "done" : "round");
         return;
       }
-      const q = questionFor(s, byId.get(s.queue[0])!, choicePool);
-      setAsked({ q, tag: tagFor(s, s.queue[0], q) });
+      const id = s.queue[0];
+      const q = questionFor(s, byId.get(id)!, choicePool);
+      setAsked({ q, tag: tagFor(s, id, q) });
       shownAt.current = clock();
-      setPhase("question");
+      setPhase(masteryDots(s, id) === 0 && !introduced.current.has(id) ? "intro" : "question");
     },
-    [byId, choicePool],
+    [byId, choicePool, persist],
+  );
+
+  // A new round starts when its stage is picked on the map.
+  const startStage = useCallback(
+    (from: LearnState) => {
+      const s = startRound(from);
+      tally.current = { right: 0, total: 0 };
+      setMasteredBefore(progress(from).mastered);
+      persist(s);
+      show(s);
+    },
+    [persist, show],
   );
 
   const fresh = useCallback(() => {
-    const s = startRound(initLearn(words.map((w) => w.id)));
-    persist(s);
-    show(s);
-  }, [persist, show, words]);
+    introduced.current = new Set();
+    setState(initLearn(words.map((w) => w.id)));
+    setPhase("map");
+  }, [words]);
 
   // Saved progress is read once, on the client (IndexedDB).
   useEffect(() => {
@@ -185,6 +224,7 @@ export function LearnSession({
     (o: Outcome) => {
       if (!q || outcome) return;
       setOutcome(o);
+      tally.current = { right: tally.current.right + (o.correct ? 1 : 0), total: tally.current.total + 1 };
       answerHud(o);
       void enqueueReview({
         clientId: crypto.randomUUID(),
@@ -216,6 +256,12 @@ export function LearnSession({
   const next = useCallback(() => {
     if (outcome) show(state);
   }, [outcome, show, state]);
+
+  useEffect(() => {
+    if (phase !== "round") return;
+    const t = setTimeout(() => playBin.current("jump"), 250);
+    return () => clearTimeout(t);
+  }, [phase]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -256,7 +302,17 @@ export function LearnSession({
           </div>
           <ProgressRows state={saved} />
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button type="button" size="lg" autoFocus onClick={() => show(saved.queue.length ? saved : startRound(saved))} className="flex-1">
+            <Button
+              type="button"
+              size="lg"
+              autoFocus
+              onClick={() => {
+                setState(saved);
+                if (saved.queue.length) show(saved);
+                else setPhase("map");
+              }}
+              className="flex-1"
+            >
               Học tiếp
             </Button>
             <Button type="button" size="lg" variant="outline" onClick={fresh} className="flex-1">
@@ -268,12 +324,106 @@ export function LearnSession({
     );
   }
 
+  if (phase === "map") {
+    const p = progress(state);
+    const done = roundsDone(state);
+    return (
+      <div className="flex flex-1 flex-col">
+        <LearnBar state={state} exitHref={exitHref} />
+        <div className="flex items-center justify-between gap-3 py-3">
+          <div>
+            <p className="text-sm font-semibold text-fg-muted">Học</p>
+            <h1 className="text-lg leading-tight font-extrabold tracking-[-0.02em]">Chọn chặng để học</h1>
+          </div>
+          <span className="rounded-full bg-success-soft px-3 py-1 text-sm font-extrabold text-success-fg tabular-nums">
+            Đã thuộc {p.mastered}/{state.words.length}
+          </span>
+        </div>
+        <LearnMap
+          state={state}
+          stages={stageCount(state)}
+          done={done}
+          stars={state.roundStars ?? []}
+          next={previewRound(state)}
+          words={byId}
+          onStart={() => startStage(state)}
+        />
+      </div>
+    );
+  }
+
+  if (phase === "intro" && asked) {
+    const w = asked.q.word;
+    const example = (Array.isArray(w.examples) ? (w.examples as unknown as Example[]) : [])[0];
+    return (
+      <div className="flex flex-1 flex-col">
+        <LearnBar state={state} exitHref={exitHref} mood={prefs.mascot ? "happy" : undefined} hud={hud} />
+        <QuestionSlide id={`intro:${w.id}`} className="flex flex-1 flex-col justify-center gap-5 py-3">
+          <div className="flex items-end gap-2 self-center">
+            {prefs.mascot && <Pup mood="think" action="sniff" size={72} />}
+            <p className="mb-3 rounded-lg rounded-bl-[4px] bg-surface px-3.5 py-2 text-[0.9375rem] font-semibold shadow-sm dark:border dark:border-border">Từ mới nè!</p>
+          </div>
+          <div className="flex flex-col items-center gap-3 rounded-xl bg-surface px-5 py-6 shadow-md dark:border dark:border-border">
+            <Badge variant="soft" tone="orange" className="self-start">
+              Từ mới
+            </Badge>
+            {!prefs.hide_images && <WordVisual word={w} size={96} />}
+            <div className="flex items-center gap-2">
+              <TermLine word={w} />
+              <PronounceButton text={w.term} lang={w.language} size="lg" className="bg-surface-2" />
+            </div>
+            <MeaningLine word={w} bare />
+            {example && (
+              <p lang={w.language === "zh" ? "zh-CN" : "en"} className={cn("w-full max-w-md rounded-lg bg-surface-2 px-4 py-3 text-fg", w.language === "zh" && "font-hanzi")}>
+                {example.text}
+                {example.vi && <span className="mt-1 block text-sm text-fg-muted">{example.vi}</span>}
+              </p>
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="pressable"
+            size="xl"
+            autoFocus
+            onClick={() => {
+              introduced.current.add(w.id);
+              shownAt.current = clock();
+              if (prefs.auto_speak) say(w);
+              setPhase("question");
+            }}
+          >
+            Đã hiểu
+          </Button>
+        </QuestionSlide>
+      </div>
+    );
+  }
+
   if (phase === "round") {
+    const stars = state.roundStars?.[state.round - 1] ?? 1;
+    const p = progress(state);
     return (
       <div className="flex flex-1 flex-col">
         <LearnBar state={state} exitHref={exitHref} />
         <div className="flex flex-1 flex-col gap-6 py-6">
-          <h1 className="text-xl">Hết vòng {state.round}</h1>
+          <div className="flex flex-col items-center gap-2 text-center">
+            {prefs.mascot && <Pup mood={bin.mood} action={bin.action ?? "jump"} size={96} />}
+            <h1 className="text-xl">Hết vòng {state.round}</h1>
+            <span role="img" aria-label={`${stars} sao`} className="flex gap-1">
+              {[1, 2, 3].map((n) => (
+                <Star
+                  key={n}
+                  aria-hidden
+                  className={cn("size-7 animate-pop", n <= stars ? "fill-c-sun stroke-c-sun-fg" : "fill-surface-3 stroke-border-strong")}
+                  style={{ animationDelay: `${n * 140}ms` }}
+                  strokeWidth={1.6}
+                />
+              ))}
+            </span>
+            <p className="text-fg-muted">
+              Đã thuộc <span className="font-bold text-fg"><CountUp value={p.mastered} from={masteredBefore} /></span>/{state.words.length} từ
+            </p>
+          </div>
           <ProgressRows state={state} />
           <ul className="divide-y divide-border border-y border-border">
             {state.roundWords.map((id) => {
@@ -290,6 +440,7 @@ export function LearnSession({
                     {w.term}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm text-fg-muted">{w.meaning_vi}</span>
+                  <MasteryDots filled={masteryDots(state, id)} />
                   {mastered ? (
                     <Check className="size-5 shrink-0 text-success-fg" aria-label="Đã thuộc" />
                   ) : (
@@ -299,17 +450,7 @@ export function LearnSession({
               );
             })}
           </ul>
-          <Button
-            type="button"
-            size="lg"
-            autoFocus
-            onClick={() => {
-              const s = startRound(state);
-              persist(s);
-              show(s);
-            }}
-            className="mt-auto"
-          >
+          <Button type="button" variant="pressable" size="xl" autoFocus onClick={() => setPhase("map")} className="mt-auto">
             Tiếp tục
           </Button>
         </div>
@@ -363,12 +504,15 @@ export function LearnSession({
     <div className="flex flex-1 flex-col">
       <LearnBar state={state} exitHref={exitHref} mood={prefs.mascot ? "happy" : undefined} hud={hud} />
       <QuestionSlide id={q.id} className="flex flex-1 flex-col justify-center py-2">
-        <Badge variant={tag.variant} className="self-center">
-          {tag.label}
-        </Badge>
+        <div className="flex flex-col items-center gap-1.5">
+          <Badge variant="soft" tone={tag.tone}>
+            {tag.label}
+          </Badge>
+          <MasteryDots filled={masteryDots(state, q.word.id)} />
+        </div>
         {q.kind === "choice" && (
           <>
-            <div className="flex flex-col items-center gap-4 py-4">
+            <div className="my-3 flex flex-col items-center gap-4 rounded-xl bg-surface px-5 py-6 shadow-md dark:border dark:border-border">
               {q.prompt === "term" ? (
                 <>
                   <TermLine word={q.word} />
@@ -377,7 +521,7 @@ export function LearnSession({
               ) : (
                 <>
                   {!prefs.hide_images && <WordVisual word={q.word} size={96} />}
-                  <MeaningLine word={q.word} />
+                  <MeaningLine word={q.word} bare />
                   <p className="text-sm text-fg-muted">{zh ? "Chữ Hán nào?" : "Từ nào?"}</p>
                 </>
               )}
@@ -394,9 +538,9 @@ export function LearnSession({
         )}
         {q.kind === "typing" && (
           <>
-            <div className="flex flex-col items-center gap-4 py-4">
+            <div className="my-3 flex flex-col items-center gap-4 rounded-xl bg-surface px-5 py-6 shadow-md dark:border dark:border-border">
               {!prefs.hide_images && <WordVisual word={q.word} size={96} />}
-              <MeaningLine word={q.word} />
+              <MeaningLine word={q.word} bare />
             </div>
             <form
               onSubmit={(e) => {

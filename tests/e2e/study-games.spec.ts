@@ -130,13 +130,24 @@ test("học: thuộc hết 3 từ, từ sai được hỏi lại, tải lại th
   const input = page.getByLabel("Gõ từ tiếng Anh");
   const roundEnd = page.getByRole("heading", { name: /Hết vòng/ });
   const done = page.getByRole("heading", { name: /Bạn đã thuộc hết 3 từ/ });
+  // Learn opens on the stage map, and shows a card for every new word before it is asked
+  const stage = page.getByRole("button", { name: /^Bắt đầu chặng/ });
+  const gotIt = page.getByRole("button", { name: "Đã hiểu" });
   const asked: string[] = [];
   let missed: string | null = null;
   let reloaded = false;
 
   for (let step = 0; step < 30; step++) {
-    await expect(options.or(input).or(roundEnd).or(done)).toBeVisible();
+    await expect(options.or(input).or(roundEnd).or(done).or(stage).or(gotIt)).toBeVisible();
     if (await done.isVisible()) break;
+    if (await stage.isVisible()) {
+      await stage.click();
+      continue;
+    }
+    if (await gotIt.isVisible()) {
+      await gotIt.click();
+      continue;
+    }
     if (await roundEnd.isVisible()) {
       await page.getByRole("button", { name: /^Tiếp tục/ }).click();
       continue;
