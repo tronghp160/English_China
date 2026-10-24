@@ -4,8 +4,7 @@ import { Clock, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
-import { EndPup } from "@/components/mascot/end-pup";
-import { SealStamp } from "@/components/review/seal-stamp";
+import { Celebration } from "@/components/review/celebration";
 import { Button } from "@/components/ui/button";
 import { formatMs, isPair, MATCH_PENALTY_MS, type MatchTile } from "@/lib/practice/match";
 import { getMatchRecord, saveMatchTime, type MatchRecord } from "@/lib/practice/match-records";
@@ -163,7 +162,7 @@ export function MatchGame({
           <p className="max-w-sm text-fg-muted">
             Ghép {pairs} từ với nghĩa của chúng nhanh nhất có thể. Mỗi lần ghép sai bị cộng 1 giây.
           </p>
-          {record && <p className="text-fg">Kỷ lục của bạn: <span className="font-display font-semibold tabular-nums">{formatMs(record.ms)}</span></p>}
+          {record && <p className="text-fg">Kỷ lục của bạn: <span className="font-display tabular-nums">{formatMs(record.ms)}</span></p>}
           <Button type="button" size="lg" onClick={start} autoFocus className="mt-2 w-full max-w-xs">
             Bắt đầu
           </Button>
@@ -183,10 +182,7 @@ export function MatchGame({
           : "Xong rồi!";
     return (
       <div className="flex flex-1 flex-col py-6">
-        <div className="flex items-end justify-center gap-1">
-          <EndPup mood={result.isBest ? "cheer" : "happy"} size={96} />
-          {result.isBest && <SealStamp text="Kỷ lục" size={84} />}
-        </div>
+        <Celebration mood={result.isBest ? "cheer" : "happy"} confetti={Boolean(result.isBest)} />
         <h1 className="mt-6 text-center text-xl">{title}</h1>
         <p className="mt-2 text-center font-display text-5xl font-semibold text-fg tabular-nums">{formatMs(result.ms)}</p>
         <dl className="mt-6 border-t border-border">

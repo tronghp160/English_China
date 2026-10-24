@@ -10,20 +10,14 @@ import { previewDue, RATINGS, schedule, type DbCard, type RatingValue } from "@/
 import { enqueueReview, onFlushResult } from "@/lib/srs/outbox";
 import { answer, buildQueue, peek, remaining, type QueueItem } from "@/lib/srs/queue";
 import { speak } from "@/lib/tts";
-import { cn } from "@/lib/utils";
 import { Flashcard, type Direction } from "./flashcard";
 import { SessionBar } from "./session-bar";
 import { SessionSummary, type SessionResult } from "./session-summary";
 
 export type ReviewItem = QueueItem & { word: StudyWord; direction: Direction };
 
-// The colour of the top edge says what the rating means: seal = forgot, turmeric = hard, violet = good, leaf = easy.
-const RATING_EDGE: Record<RatingValue, string> = {
-  1: "border-t-danger",
-  2: "border-t-streak",
-  3: "border-t-primary",
-  4: "border-t-success",
-};
+// The colour of a rating button says what it means: red = forgot, orange = hard, blue = good, green = easy.
+const RATING_TONE: Record<RatingValue, "again" | "hard" | "good" | "easy"> = { 1: "again", 2: "hard", 3: "good", 4: "easy" };
 
 function isTyping(target: EventTarget | null) {
   const el = target as HTMLElement | null;
@@ -175,36 +169,35 @@ export function ReviewSession({
           toneColors={prefs.tone_colors}
         />
         {current.isNew && (
-          <Badge variant="outline" className="mt-3 self-center">
+          <Badge variant="soft" tone="orange" className="mt-3 self-center">
             Từ mới
           </Badge>
         )}
       </div>
 
       {/* Thumb zone */}
-      <div className="sticky bottom-0 -mx-4 bg-canvas/95 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur-sm">
+      <div className="sticky bottom-0 -mx-4 bg-canvas/80 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur-xl">
         {flipped && preview ? (
           <div className="grid grid-cols-4 gap-2" role="group" aria-label="Bạn nhớ từ này thế nào?">
             {RATINGS.map((r) => (
-              <button
+              <Button
                 key={r.value}
                 type="button"
+                variant="pressable"
+                tone={RATING_TONE[r.value]}
                 onClick={() => rate(r.value)}
-                className={cn(
-                  "flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-md border border-t-[3px] border-border-strong bg-surface px-1 text-fg transition-colors duration-[var(--dur-fast)] hover:bg-surface-2 active:translate-y-px",
-                  RATING_EDGE[r.value],
-                )}
+                className="h-16 flex-col gap-0 rounded-md px-1"
               >
-                <span className="text-base font-semibold">{r.label}</span>
-                <span className="text-xs text-fg-muted">{formatInterval(preview[r.value].getTime() - now.getTime())}</span>
-                <kbd className="hidden font-sans text-[0.6875rem] text-fg-subtle lg:block">{r.key}</kbd>
-              </button>
+                <span className="text-base font-extrabold">{r.label}</span>
+                <span className="text-xs font-normal opacity-90">{formatInterval(preview[r.value].getTime() - now.getTime())}</span>
+                <kbd className="hidden font-sans text-[0.6875rem] font-normal opacity-80 lg:block">{r.key}</kbd>
+              </Button>
             ))}
           </div>
         ) : (
-          <Button type="button" size="lg" onClick={flip} className="w-full">
+          <Button type="button" variant="pressable" size="xl" onClick={flip} className="w-full">
             Lật thẻ
-            <kbd className="hidden rounded-sm border border-primary-foreground/40 px-1.5 font-sans text-xs font-normal lg:inline">Space</kbd>
+            <kbd className="hidden rounded-xs bg-white/20 px-1.5 font-sans text-xs font-normal lg:inline">Space</kbd>
           </Button>
         )}
       </div>

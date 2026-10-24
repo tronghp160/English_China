@@ -4,9 +4,8 @@ import { Check } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
-import { EndPup } from "@/components/mascot/end-pup";
 import { Pup } from "@/components/mascot/pup";
-import { SealStamp } from "@/components/review/seal-stamp";
+import { Celebration } from "@/components/review/celebration";
 import { SessionBar } from "@/components/review/session-bar";
 import { WordVisual } from "@/components/review/word-visual";
 import { Badge } from "@/components/ui/badge";
@@ -315,10 +314,7 @@ export function LearnSession({
   if (phase === "done") {
     return (
       <div className="flex flex-1 flex-col py-6">
-        <div className="flex items-end justify-center gap-1">
-          {prefs.mascot && <EndPup mood="cheer" size={96} />}
-          <SealStamp text="Thuộc" size={88} />
-        </div>
+        <Celebration mood="cheer" />
         <h1 className="mt-6 text-center text-xl">Bạn đã thuộc hết {state.words.length} từ!</h1>
         <p className="mt-2 text-center text-fg-muted">Xong sau {state.round} vòng. Làm bài kiểm tra để chắc chắn nhé.</p>
         <div className="mt-auto flex flex-col gap-2 pt-8 sm:flex-row">

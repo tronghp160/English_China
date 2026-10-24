@@ -45,7 +45,7 @@ export function StrokeOrder({ char, size = 112, className }: { char: string; siz
   if (failed) {
     return (
       <div
-        className={cn("grid place-items-center rounded-sm border-[1.5px] border-border-strong bg-surface font-hanzi text-5xl text-fg", className)}
+        className={cn("grid place-items-center rounded-lg border-2 border-border bg-surface font-hanzi text-5xl text-fg", className)}
         style={{ width: size, height: size }}
         lang="zh-CN"
       >
@@ -59,11 +59,11 @@ export function StrokeOrder({ char, size = 112, className }: { char: string; siz
       type="button"
       onClick={() => writer.current?.animateCharacter()}
       aria-label={`Xem thứ tự nét chữ ${char}`}
-      className={cn("group relative rounded-sm border-[1.5px] border-border-strong bg-surface", className)}
+      className={cn("group relative rounded-lg border-2 border-border bg-surface", className)}
       style={{ width: size, height: size }}
     >
-      {/* 田字格 guide lines: dashed cross and diagonals in seal red */}
-      <svg aria-hidden className="pointer-events-none absolute inset-0 text-border-strong" width={size} height={size}>
+      {/* 田字格 guide lines: dashed cross and diagonals in the border color */}
+      <svg aria-hidden className="pointer-events-none absolute inset-0 text-border" width={size} height={size}>
         <line x1="0" y1={size / 2} x2={size} y2={size / 2} stroke="currentColor" strokeDasharray="4 4" />
         <line x1={size / 2} y1="0" x2={size / 2} y2={size} stroke="currentColor" strokeDasharray="4 4" />
         <line x1="0" y1="0" x2={size} y2={size} stroke="currentColor" strokeDasharray="4 4" opacity="0.6" />

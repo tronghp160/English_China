@@ -4,9 +4,8 @@ import { ArrowLeftRight, ChevronLeft, ChevronRight, RotateCcw, Shuffle } from "l
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
-import { EndPup } from "@/components/mascot/end-pup";
 import { Flashcard, type Direction } from "@/components/review/flashcard";
-import { SealStamp } from "@/components/review/seal-stamp";
+import { Celebration } from "@/components/review/celebration";
 import { SessionBar, useOutboxStatus } from "@/components/review/session-bar";
 import { Button } from "@/components/ui/button";
 import { shuffle, type StudyWord } from "@/lib/practice";
@@ -156,10 +155,7 @@ export function FlashcardDeck({
     const left = cards.filter((c) => marks[c.id] !== "known");
     return (
       <div className="flex flex-1 flex-col py-6">
-        <div className="flex items-end justify-center gap-1">
-          <EndPup mood={left.length === 0 || known >= left.length ? "cheer" : "happy"} size={96} />
-          {left.length === 0 && <SealStamp text="Thuộc" size={84} />}
-        </div>
+        <Celebration mood={left.length === 0 || known >= left.length ? "cheer" : "happy"} confetti={left.length === 0} />
         <h1 className="mt-6 text-center text-xl">Hết thẻ rồi!</h1>
         <p className="mt-2 text-center text-fg">
           {left.length === 0 ? "Bạn đã thuộc hết cả bộ thẻ này." : `Còn ${left.length} thẻ cần học thêm.`}

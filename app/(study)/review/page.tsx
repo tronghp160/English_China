@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ReviewSession, type ReviewItem } from "@/components/review/review-session";
-import { SealStamp } from "@/components/review/seal-stamp";
+import { Celebration } from "@/components/review/celebration";
 import { Button } from "@/components/ui/button";
 import type { StudyWord } from "@/lib/practice";
 import { createClient } from "@/lib/supabase/server";
@@ -51,7 +51,7 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
   if (!items.length) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-        <SealStamp text="Xong bài" size={96} animate={false} />
+        <Celebration mood="cheer" confetti={false} />
         <h1 className="mt-4 text-xl">Bạn đã ôn xong hôm nay.</h1>
         <p className="text-fg-muted">
           {tomorrowDue > 0 ? `Ngày mai có ${tomorrowDue} từ cần ôn.` : "Thêm từ mới để có thẻ ôn ngày mai."}

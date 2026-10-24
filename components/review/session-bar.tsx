@@ -15,7 +15,7 @@ export function useOutboxStatus() {
 }
 
 /**
- * Top bar of a focus session: exit, a 6px progress bar with the mascot standing at its end
+ * Top bar of a focus session: exit, a 12px progress bar with the mascot standing at its end
  * (it slides along as the bar grows and only changes its face), the count, and the sync state.
  */
 export function SessionBar({
@@ -32,7 +32,7 @@ export function SessionBar({
   exitHref: string;
   /** Mood of the tiny mascot at the head of the bar; omit to hide it (Bin off). */
   pup?: { mood: PupMood };
-  /** Two-part bar (Learn): `mastered` in leaf green, then `learning` in turmeric, out of `total`. */
+  /** Two-part bar (Learn): `mastered` in green, then `learning` in sun yellow, out of `total`. */
   segments?: { mastered: number; learning: number };
   /** Text at the right end instead of done/total */
   label?: string;
@@ -42,12 +42,12 @@ export function SessionBar({
   const pct = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
   const pctOf = (n: number) => (total ? Math.min(100, (n / total) * 100) : 0);
   return (
-    <div className="sticky top-0 z-10 -mx-4 bg-canvas/95 px-4 pb-2 backdrop-blur-sm">
+    <div className="sticky top-0 z-10 -mx-4 bg-canvas/80 px-4 pb-2 backdrop-blur-xl">
       <div className="flex h-14 items-center gap-2">
         <Link
           href={exitHref}
           aria-label="Thoát phiên"
-          className="-ml-2 grid size-11 shrink-0 place-items-center rounded-md text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+          className="-ml-2 grid size-11 shrink-0 place-items-center rounded-full text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
         >
           <X className="size-5" strokeWidth={1.75} aria-hidden />
         </Link>
@@ -58,18 +58,18 @@ export function SessionBar({
             aria-valuemax={total}
             aria-valuenow={done}
             aria-label={ariaLabel}
-            className="relative h-1.5 w-full overflow-hidden rounded-full bg-surface-2"
+            className="relative h-3 w-full overflow-hidden rounded-full bg-surface-3"
           >
             {segments ? (
               <>
-                <div className="absolute inset-y-0 left-0 bg-success transition-[width] duration-500 ease-[var(--ease-out)]" style={{ width: `${pctOf(segments.mastered)}%` }} />
+                <div className="absolute inset-y-0 left-0 bg-success transition-[width] duration-500 ease-[var(--ease-spring)]" style={{ width: `${pctOf(segments.mastered)}%` }} />
                 <div
                   className="absolute inset-y-0 bg-streak transition-[left,width] duration-500 ease-[var(--ease-out)]"
                   style={{ left: `${pctOf(segments.mastered)}%`, width: `${pctOf(segments.learning)}%` }}
                 />
               </>
             ) : (
-              <div className="h-full rounded-full bg-primary transition-[width] duration-500 ease-[var(--ease-out)]" style={{ width: `${pct}%` }} />
+              <div className="h-full rounded-full bg-primary transition-[width] duration-500 ease-[var(--ease-spring)]" style={{ width: `${pct}%` }} />
             )}
           </div>
           {pup && (
@@ -82,7 +82,7 @@ export function SessionBar({
             </span>
           )}
         </div>
-        <span className="min-w-12 text-right text-sm font-semibold whitespace-nowrap text-fg-muted tabular-nums">
+        <span className="min-w-12 text-right text-[0.9375rem] font-bold whitespace-nowrap text-fg-muted tabular-nums">
           {label ?? `${done}/${total}`}
         </span>
         {sync.pending > 0 && (
@@ -96,7 +96,7 @@ export function SessionBar({
         )}
       </div>
       {sync.pending > 0 && sync.error && !sync.syncing && (
-        <p role="status" className="rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">
+        <p role="status" className="rounded-md bg-streak-soft px-3 py-2 text-sm text-streak-fg">
           {sync.error}
         </p>
       )}

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
 import { Pup } from "@/components/mascot/pup";
-import { SealStamp } from "@/components/review/seal-stamp";
+import { Celebration } from "@/components/review/celebration";
 import { SessionBar, useOutboxStatus } from "@/components/review/session-bar";
 import {
   AlertDialog,
@@ -280,9 +280,7 @@ function Results({
         </div>
       </header>
       {grade.percent === 100 && (
-        <div className="mt-4">
-          <SealStamp text="Trọn điểm" size={72} />
-        </div>
+        <Celebration mood="cheer" size={72} className="mt-4" />
       )}
 
       {sync.pending > 0 && (

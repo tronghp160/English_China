@@ -113,7 +113,7 @@ export function WritingPad({
         ))}
       </div>
       <div
-        className="relative touch-none overflow-hidden rounded-sm border-[1.5px] border-border-strong bg-surface"
+        className="relative touch-none overflow-hidden rounded-xl border-2 border-border bg-surface"
         style={{ width: size, height: size }}
       >
         <svg

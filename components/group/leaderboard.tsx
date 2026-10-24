@@ -1,6 +1,6 @@
 import { Flame } from "lucide-react";
 import { UserAvatar } from "@/components/app-shell/user-menu";
-import { SealStamp } from "@/components/review/seal-stamp";
+import { Badge } from "@/components/ui/badge";
 import type { GroupView } from "@/lib/data/groups";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +28,7 @@ export function Leaderboard({ rows, userId }: { rows: GroupView["leaderboard"]; 
                     {r.display_name}
                     {me && <span className="font-normal text-fg-muted"> (bạn)</span>}
                   </span>
-                  {rank === 1 && r.xp > 0 && <SealStamp text="Nhất" size={32} animate={false} />}
+                  {rank === 1 && r.xp > 0 && <Badge variant="soft" tone="sun">Nhất</Badge>}
                 </span>
                 <span className="flex flex-wrap items-center gap-x-3 text-xs text-fg-muted">
                   <span>{r.reviews.toLocaleString("vi-VN")} lượt ôn</span>

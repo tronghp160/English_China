@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { ContactLinks } from "@/components/contact/contact-links";
 import { HeroSpecimen } from "@/components/marketing/hero-specimen";
-import { SealStamp } from "@/components/review/seal-stamp";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CONTACT } from "@/lib/contact";
 
@@ -143,7 +143,7 @@ export default function MarketingPage() {
                   <span className="flex items-center gap-2 font-medium">
                     {r.name}
                     {r.me && <span className="font-normal text-fg-muted">(bạn)</span>}
-                    {r.rank === 1 && <SealStamp text="Nhất" size={32} animate={false} />}
+                    {r.rank === 1 && <Badge variant="soft" tone="sun">Nhất</Badge>}
                   </span>
                   {r.streak > 0 && <span className="text-xs text-fg-muted">chuỗi {r.streak} ngày</span>}
                 </span>

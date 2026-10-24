@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LangMark } from "@/components/lang-mark";
 import { PosBadge } from "@/components/word/pos-badge";
 import { PronounceButton } from "@/components/word/pronounce-button";
 import { WordHero } from "@/components/word/word-hero";
@@ -35,69 +36,87 @@ function tapToFlip(onFlip: () => void) {
 /** One quiet line at the foot of a face; touch devices tap, keyboards use Space. */
 function FlipHint({ children = "lật", className }: { children?: string; className?: string }) {
   return (
-    <p className={cn("text-sm text-fg-muted", className)}>
+    <p className={cn("text-sm text-fg-subtle", className)}>
       <span className="lg:hidden">Chạm để {children}</span>
       <span className="hidden lg:inline">Nhấn Space để {children}</span>
     </p>
   );
 }
 
-/** Front face asking for the word: the specimen itself, on notebook paper (English) or in 田字格 cells (Chinese). */
+/** The studied word inside an example: bold and blue, the one place it carries meaning. */
+function Marked({ text, term }: { text: string; term: string }) {
+  const t = term.trim();
+  if (!t) return text;
+  const parts = text.split(new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"));
+  return parts.map((p, i) =>
+    p.toLowerCase() === t.toLowerCase() ? (
+      <b key={i} className="font-bold text-primary">
+        {p}
+      </b>
+    ) : (
+      p
+    ),
+  );
+}
+
+/** The round speaker of the card (48px, pale). */
+function Speaker({ word }: { word: StudyWord }) {
+  return <PronounceButton text={word.term} lang={word.language} size="lg" className="bg-surface-2" />;
+}
+
+/** Front face asking for the word: the word big, its reading, the speaker. */
 function TermFace({ word, toneColors, showReading, hideImage }: { word: StudyWord; toneColors: boolean; showReading: boolean; hideImage: boolean }) {
-  const zh = word.language === "zh";
-  const visual = !hideImage ? <WordVisual word={word} size={zh ? 96 : 72} /> : null;
-  const sound = <PronounceButton text={word.term} lang={word.language} size="lg" />;
-  if (!zh) {
-    return (
-      <WordHero
-        lang="en"
-        term={word.term}
-        reading={showReading ? word.reading : null}
-        actions={sound}
-        aside={visual}
-        framed={false}
-        innerClassName="flex min-h-[22rem] flex-col"
-      >
-        <FlipHint className="mt-auto flex h-[var(--line)] items-end" />
-      </WordHero>
-    );
-  }
   return (
-    <div className="flex min-h-[22rem] flex-col items-center justify-center gap-6 px-5 py-8">
-      {visual}
-      <WordHero lang="zh" term={word.term} reading={word.reading} toneColors={toneColors} showReading={showReading} align="center" actions={sound} />
+    <div className="flex min-h-[26rem] flex-col items-center gap-5 px-6 pt-5 pb-6">
+      <div className="flex w-full items-center justify-between">
+        <LangMark lang={word.language} label />
+      </div>
+      {!hideImage && <WordVisual word={word} size={120} />}
+      <div className="my-auto flex w-full flex-col items-center gap-4">
+        <WordHero
+          lang={word.language}
+          term={word.term}
+          reading={word.reading}
+          toneColors={toneColors}
+          showReading={showReading}
+          size="lg"
+          align="center"
+          framed={false}
+          actions={<Speaker word={word} />}
+        />
+      </div>
       <FlipHint />
     </div>
   );
 }
 
-/** Front face asking for the meaning (recall direction): the Vietnamese meaning written on the ruled page. */
+/** Front face asking for the meaning (recall direction): the Vietnamese meaning is the prompt. */
 function MeaningFace({ word, hideImage }: { word: StudyWord; hideImage: boolean }) {
   const zh = word.language === "zh";
   return (
-    <div className="relative flex min-h-[22rem] flex-col">
-      {!hideImage && (
-        <div className="absolute top-4 right-4">
-          <WordVisual word={word} size={72} />
-        </div>
-      )}
-      <p className="flex min-h-[calc(var(--line)*3)] flex-wrap content-end items-end gap-x-2 pr-20 text-[1.625rem] leading-[var(--line)] font-medium text-fg">
-        <span className="relative top-[0.25em]">{word.meaning_vi}</span>
-      </p>
-      <div className="flex min-h-[var(--line)] flex-wrap items-end gap-1.5 pb-1">
-        {word.parts_of_speech.map((p) => (
-          <PosBadge key={p} pos={p} />
-        ))}
+    <div className="flex min-h-[26rem] flex-col items-center gap-5 px-6 pt-5 pb-6">
+      <div className="flex w-full items-center justify-between">
+        <LangMark lang={word.language} label />
+        <span className="flex flex-wrap justify-end gap-1.5">
+          {word.parts_of_speech.map((p) => (
+            <PosBadge key={p} pos={p} />
+          ))}
+        </span>
       </div>
-      <p className="flex h-[var(--line)] items-end text-sm text-fg-muted">{zh ? "Chữ Hán là gì?" : "Từ tiếng Anh là gì?"}</p>
-      <FlipHint className="mt-auto flex h-[var(--line)] items-end" />
+      {!hideImage && <WordVisual word={word} size={120} />}
+      <div className="my-auto flex flex-col items-center gap-3 text-center">
+        <p className="text-[1.75rem] leading-tight font-extrabold tracking-[-0.02em] text-fg">{word.meaning_vi}</p>
+        <p className="text-sm text-fg-muted">{zh ? "Chữ Hán là gì?" : "Từ tiếng Anh là gì?"}</p>
+      </div>
+      <FlipHint />
     </div>
   );
 }
 
 /**
- * Two-sided card. Both faces share one grid cell, so the card is as tall as the taller face.
- * Front = the word as a specimen; back = its meaning with one font-bold text-primary-fg stroke.
+ * Two-sided card (REDESIGN_V2 §6.7). Both faces share one grid cell, so the card is as tall as the taller face.
+ * A strip of the language color sits on top (blue English, coral Chinese). Front = the word (or its meaning in
+ * the recall direction); back = the word again, its meaning and examples.
  */
 export function Flashcard({
   word,
@@ -112,19 +131,21 @@ export function Flashcard({
   const zh = word.language === "zh";
   const extra = (word.lang_extra ?? {}) as LangExtra;
   const examples = (Array.isArray(word.examples) ? (word.examples as unknown as Example[]) : []).slice(0, 2);
+  const strip = <div aria-hidden className={cn("h-1.5 shrink-0", zh ? "bg-zh" : "bg-en")} />;
 
   return (
-    <div className="flip-scene w-full">
+    <div className="flip-scene mx-auto w-full max-w-[32.5rem]">
       <div className="flip-card grid w-full [&>*]:[grid-area:1/1]" data-flipped={flipped}>
         {/* Front. Tapping anywhere flips; keyboard users have Space and the "Lật thẻ" button below. */}
         <div
           onClick={tapToFlip(onFlip)}
           inert={flipped}
           className={cn(
-            "flip-face rounded-lg border border-border/60 bg-surface shadow-sm shadow-lg cursor-pointer overflow-hidden rounded-xl",
+            "flip-face flex cursor-pointer flex-col overflow-hidden rounded-xl bg-surface shadow-lg dark:border dark:border-border",
             flipped && "pointer-events-none",
           )}
         >
+          {strip}
           {direction === "recognize" ? (
             <TermFace word={word} toneColors={toneColors} showReading={!(zh && hidePinyinFront)} hideImage={hideImageFront} />
           ) : (
@@ -137,78 +158,68 @@ export function Flashcard({
           onClick={flipBack ? tapToFlip(onFlip) : undefined}
           inert={!flipped}
           className={cn(
-            "flip-face flip-back rounded-lg border border-border/60 bg-surface shadow-sm shadow-lg  flex min-h-[22rem] flex-col gap-4 rounded-xl py-5 pr-5 pl-4",
+            "flip-face flip-back flex min-h-[26rem] flex-col overflow-hidden rounded-xl bg-surface shadow-lg dark:border dark:border-border",
             !flipped && "pointer-events-none",
             flipBack && "cursor-pointer",
           )}
         >
-          {/* The word again with its sound; in the recall direction it is the answer, so it is bigger */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border pb-3">
-            <span
-              lang={zh ? "zh-CN" : "en"}
-              className={cn(
-                "leading-tight font-medium text-fg",
-                direction === "recall" ? "text-4xl" : "text-2xl",
-                zh ? "font-hanzi" : "font-display",
-              )}
-            >
-              {word.term}
-            </span>
-            {word.reading &&
-              (zh ? (
-                <PinyinText pinyin={word.reading} colored={toneColors} className="text-lg font-medium" />
-              ) : (
-                <span className="font-ipa text-fg-muted">{word.reading}</span>
-              ))}
-            <PronounceButton text={word.term} lang={word.language} size="sm" />
-          </div>
+          {strip}
+          <div className="flex flex-1 flex-col gap-4 px-6 pt-5 pb-5">
+            <div className="flex items-center justify-between gap-2">
+              <LangMark lang={word.language} label />
+              <span className="flex flex-wrap justify-end gap-1.5">
+                {word.parts_of_speech.map((p) => (
+                  <PosBadge key={p} pos={p} />
+                ))}
+              </span>
+            </div>
 
-          <div className="flex items-start gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-[1.5rem] leading-snug font-medium text-fg">
-                <span className={cn("font-bold text-primary-fg", flipped && "")}>{word.meaning_vi}</span>
-              </p>
-              {word.meaning_en && <p className="mt-2 text-sm text-fg-muted">{word.meaning_en}</p>}
+            {/* The word again with its sound; in the recall direction it is the answer, so it is bigger */}
+            <WordHero
+              lang={word.language}
+              term={word.term}
+              reading={word.reading}
+              toneColors={toneColors}
+              size={direction === "recall" ? "lg" : "md"}
+              align="center"
+              framed={false}
+              actions={<Speaker word={word} />}
+            />
+
+            <div className="flex flex-col items-center gap-1 border-t border-border pt-4 text-center">
+              <div className="flex items-center gap-3">
+                <p className="text-[1.75rem] leading-tight font-extrabold tracking-[-0.02em] text-fg">{word.meaning_vi}</p>
+                {direction === "recognize" && hideImageFront && <WordVisual word={word} size={56} />}
+              </div>
+              {word.meaning_en && <p className="text-sm text-fg-muted">{word.meaning_en}</p>}
               {zh && extra.han_viet && (
-                <p className="mt-1 text-sm text-fg-muted">
-                  Hán Việt: <span className="font-medium text-fg">{extra.han_viet}</span>
+                <p className="text-sm text-fg-muted">
+                  Hán Việt: <span className="font-semibold text-fg">{extra.han_viet}</span>
                 </p>
               )}
-              {word.parts_of_speech.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {word.parts_of_speech.map((p) => (
-                    <PosBadge key={p} pos={p} />
-                  ))}
-                </div>
-              )}
             </div>
-            {direction === "recognize" && hideImageFront && <WordVisual word={word} size={72} />}
-          </div>
 
-          {examples.length > 0 && (
-            <ul className="divide-y divide-border border-t border-border">
-              {examples.map((ex, i) => (
-                <li key={i} className="flex items-start gap-2 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <p lang={zh ? "zh-CN" : "en"} className={cn("text-fg", zh && "font-hanzi text-lg")}>
-                      {ex.text}
-                    </p>
-                    {zh && ex.reading && <PinyinText pinyin={ex.reading} colored={false} className="text-sm text-fg-muted" />}
-                    {ex.vi && <p className="text-sm text-fg-muted">{ex.vi}</p>}
-                  </div>
-                  <PronounceButton text={ex.text} lang={word.language} size="sm" label="Đọc câu ví dụ" />
-                </li>
-              ))}
-            </ul>
-          )}
+            {examples.map((ex, i) => (
+              <div key={i} className="flex items-start gap-2 rounded-lg bg-surface-2 p-4">
+                <div className="min-w-0 flex-1">
+                  <p lang={zh ? "zh-CN" : "en"} className={cn("text-fg", zh ? "font-hanzi-sans text-lg font-medium" : "text-base")}>
+                    <Marked text={ex.text} term={word.term} />
+                  </p>
+                  {zh && ex.reading && <PinyinText pinyin={ex.reading} colored={false} className="text-sm text-fg-muted" />}
+                  {ex.vi && <p className="text-sm text-fg-muted">{ex.vi}</p>}
+                </div>
+                <PronounceButton text={ex.text} lang={word.language} size="sm" label="Đọc câu ví dụ" />
+              </div>
+            ))}
 
-          {word.personal_note && <p className="rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">{word.personal_note}</p>}
+            {word.personal_note && <p className="rounded-md bg-streak-soft px-3 py-2 text-sm text-streak-fg">{word.personal_note}</p>}
 
-          <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
-            {flipBack ? <FlipHint>lật lại</FlipHint> : <span />}
-            <Link href={`/words/${word.id}`} className="rounded-md px-1 py-2 text-sm font-medium text-primary hover:underline">
-              Xem chi tiết
-            </Link>
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
+              {flipBack ? <FlipHint>lật lại</FlipHint> : <span />}
+              <Link href={`/words/${word.id}`} className="rounded-md px-1 py-2 text-sm font-semibold text-primary-fg hover:underline">
+                Xem chi tiết
+              </Link>
+            </div>
           </div>
         </div>
       </div>
