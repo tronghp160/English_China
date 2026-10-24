@@ -1,5 +1,6 @@
 "use client";
 
+import { m } from "motion/react";
 import Link from "next/link";
 import { LangMark } from "@/components/lang-mark";
 import { PosBadge } from "@/components/word/pos-badge";
@@ -85,7 +86,7 @@ function TermFace({ word, toneColors, showReading, hideImage }: { word: StudyWor
           actions={<Speaker word={word} />}
         />
       </div>
-      <FlipHint />
+      <FlipHint className="hint-pulse" />
     </div>
   );
 }
@@ -108,7 +109,7 @@ function MeaningFace({ word, hideImage }: { word: StudyWord; hideImage: boolean 
         <p className="text-[1.75rem] leading-tight font-extrabold tracking-[-0.02em] text-fg">{word.meaning_vi}</p>
         <p className="text-sm text-fg-muted">{zh ? "Chữ Hán là gì?" : "Từ tiếng Anh là gì?"}</p>
       </div>
-      <FlipHint />
+      <FlipHint className="hint-pulse" />
     </div>
   );
 }
@@ -135,7 +136,12 @@ export function Flashcard({
 
   return (
     <div className="flip-scene mx-auto w-full max-w-[32.5rem]">
-      <div className="flip-card grid w-full [&>*]:[grid-area:1/1]" data-flipped={flipped}>
+      <m.div
+        className="grid w-full [&>*]:[grid-area:1/1] [transform-style:preserve-3d]"
+        initial={false}
+        animate={{ rotateY: flipped ? 180 : 0 }}
+        transition={{ type: "spring", stiffness: 260, damping: 22 }}
+      >
         {/* Front. Tapping anywhere flips; keyboard users have Space and the "Lật thẻ" button below. */}
         <div
           onClick={tapToFlip(onFlip)}
@@ -222,7 +228,7 @@ export function Flashcard({
             </div>
           </div>
         </div>
-      </div>
+      </m.div>
     </div>
   );
 }

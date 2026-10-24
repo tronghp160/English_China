@@ -335,7 +335,7 @@ export function ImportWizard({
 
       <div className="flex flex-wrap gap-2">
         {aiEnabled ? (
-          <Button type="button" disabled={!preview?.ok.length || running} onClick={() => start(true)} className="h-12 gap-2 rounded-md px-5 text-base">
+          <Button type="button" disabled={!preview?.ok.length || running} onClick={() => start(true)} className="h-12 gap-2 rounded-md px-5 text-base lg:h-12">
             <Sparkles className="size-5" aria-hidden />
             Điền tự động & thêm {preview?.ok.length ? `${preview.ok.length} từ` : ""}
           </Button>
@@ -347,7 +347,7 @@ export function ImportWizard({
           variant="outline"
           disabled={!preview?.ok.some((l) => l.meaning_vi) || running}
           onClick={() => start(false)}
-          className="h-12 rounded-md px-5 text-base"
+          className="h-12 rounded-md px-5 text-base lg:h-12"
         >
           Thêm luôn, không dùng AI
         </Button>

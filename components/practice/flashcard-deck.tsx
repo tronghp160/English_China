@@ -1,21 +1,70 @@
 "use client";
 
 import { ArrowLeftRight, ChevronLeft, ChevronRight, RotateCcw, Shuffle } from "lucide-react";
+import { m, useMotionValue, useTransform } from "motion/react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
+import { CardStack } from "@/components/review/card-stack";
 import { Flashcard, type Direction } from "@/components/review/flashcard";
 import { Celebration } from "@/components/review/celebration";
 import { SessionBar, useOutboxStatus } from "@/components/review/session-bar";
 import { Button } from "@/components/ui/button";
 import { shuffle, type StudyWord } from "@/lib/practice";
+import { playSfx } from "@/lib/sfx";
 import { enqueueReview } from "@/lib/srs/outbox";
 import { speak } from "@/lib/tts";
 import { cn } from "@/lib/utils";
 
 type Mark = "known" | "learning";
 
-const SWIPE_PX = 80;
+/** Let go past this many px to the side and the card is marked. */
+const SWIPE_PX = 100;
+
+/**
+ * The card you can throw to a side (REDESIGN_V3 §8.2): it tilts with your finger, "Chưa thuộc" fades in on the left
+ * and "Đã thuộc" on the right; past 100 px it is marked, otherwise it snaps back. A tap still flips it.
+ */
+function SwipeCard({ onSwipe, children }: { onSwipe: (side: "left" | "right") => void; children: React.ReactNode }) {
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 0, 200], [-10, 0, 10]);
+  const leftOpacity = useTransform(x, [-SWIPE_PX, -20, 0], [1, 0, 0]);
+  const rightOpacity = useTransform(x, [0, 20, SWIPE_PX], [0, 0, 1]);
+  const dragged = useRef(false);
+  return (
+    <m.div
+      drag="x"
+      dragSnapToOrigin
+      dragMomentum={false}
+      dragElastic={0.7}
+      style={{ x, rotate, touchAction: "pan-y" }}
+      onDragStart={() => {
+        dragged.current = true;
+      }}
+      onDragEnd={(_, info) => {
+        if (info.offset.x <= -SWIPE_PX) onSwipe("left");
+        else if (info.offset.x >= SWIPE_PX) onSwipe("right");
+        setTimeout(() => {
+          dragged.current = false;
+        }, 0);
+      }}
+      onClickCapture={(e) => {
+        if (dragged.current) e.stopPropagation();
+      }}
+      className="relative cursor-grab active:cursor-grabbing"
+    >
+      {children}
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-10">
+        <m.span style={{ opacity: leftOpacity }} className="absolute top-4 left-4 rounded-full bg-rate-hard px-3.5 py-1 text-sm font-extrabold text-white shadow-md">
+          Chưa thuộc
+        </m.span>
+        <m.span style={{ opacity: rightOpacity }} className="absolute top-4 right-4 rounded-full bg-rate-easy px-3.5 py-1 text-sm font-extrabold text-white shadow-md">
+          Đã thuộc
+        </m.span>
+      </div>
+    </m.div>
+  );
+}
 
 function isInteractive(target: EventTarget | null) {
   const el = target as HTMLElement | null;
@@ -49,9 +98,6 @@ export function FlashcardDeck({
   const [marks, setMarks] = useState<Record<string, Mark>>({});
   const [round, setRound] = useState(1);
   const [finished, setFinished] = useState(false);
-  const [drag, setDrag] = useState(0);
-  const dragStart = useRef<{ x: number; y: number } | null>(null);
-  const swiped = useRef(false);
   const shownAt = useRef(0);
   const recorded = useRef(new Set<string>());
   const word = cards[index];
@@ -85,6 +131,7 @@ export function FlashcardDeck({
       if (!f && prefs.auto_speak) say(word);
       return !f;
     });
+    playSfx("flip");
   }, [prefs.auto_speak, say, word]);
 
   const mark = useCallback(
@@ -224,32 +271,23 @@ export function FlashcardDeck({
 
   const current = marks[word.id];
 
-  function cancelDrag() {
-    dragStart.current = null;
-    setDrag(0);
-  }
-
   return (
     <div className="flex flex-1 flex-col">
       <SessionBar done={index} total={cards.length} exitHref={exitHref} />
 
       <div className="flex items-center gap-2">
-        <p className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-0.5 text-sm text-fg-muted">
-          <span className="font-medium">
-            Thẻ {index + 1}/{cards.length}
-            {round > 1 && ` (lượt ${round})`}
-          </span>
-          <span className="flex items-center gap-3" aria-label={`${known} đã thuộc, ${learning} chưa thuộc`}>
-            <span aria-hidden className="inline-flex items-center gap-1.5 tabular-nums">
-              <span className="size-2 rounded-full bg-success" />
-              {known}
-            </span>
-            <span aria-hidden className="inline-flex items-center gap-1.5 tabular-nums">
-              <span className="size-2 rounded-full bg-danger" />
-              {learning}
-            </span>
-          </span>
+        <p className="min-w-0 flex-1 text-sm font-medium text-fg-muted">
+          Thẻ {index + 1}/{cards.length}
+          {round > 1 && ` (lượt ${round})`}
         </p>
+        <span key={`l${learning}`} className={cn("rounded-full bg-due-soft px-2.5 py-1 text-sm font-extrabold text-due-fg tabular-nums", learning > 0 && "animate-pop")}>
+          <span className="max-sm:sr-only">Chưa thuộc: </span>
+          {learning}
+        </span>
+        <span key={`k${known}`} className={cn("rounded-full bg-success-soft px-2.5 py-1 text-sm font-extrabold text-success-fg tabular-nums", known > 0 && "animate-pop")}>
+          <span className="max-sm:sr-only">Đã thuộc: </span>
+          {known}
+        </span>
         <Button
           type="button"
           variant="ghost"
@@ -267,54 +305,26 @@ export function FlashcardDeck({
         </Button>
       </div>
 
-      {/* Swipe left/right to move; a tap (no drag) flips. */}
-      <div
-        className="flex flex-1 touch-pan-y flex-col justify-center py-4 select-none"
-        onPointerDown={(e) => {
-          dragStart.current = { x: e.clientX, y: e.clientY };
-          swiped.current = false;
-        }}
-        onPointerMove={(e) => {
-          const s = dragStart.current;
-          if (!s) return;
-          const dx = e.clientX - s.x;
-          if (Math.abs(dx) > Math.abs(e.clientY - s.y) && Math.abs(dx) > 8) setDrag(dx);
-        }}
-        onPointerUp={() => {
-          if (Math.abs(drag) > 8) swiped.current = true;
-          if (drag <= -SWIPE_PX) go(index + 1);
-          else if (drag >= SWIPE_PX) go(index - 1);
-          dragStart.current = null;
-          setDrag(0);
-        }}
-        onPointerCancel={cancelDrag}
-        onPointerLeave={cancelDrag}
-        onClickCapture={(e) => {
-          if (swiped.current) {
-            e.stopPropagation();
-            swiped.current = false;
-          }
-        }}
-      >
-        <div
-          className={cn(drag === 0 && "transition-transform duration-200")}
-          style={drag ? { transform: `translateX(${drag}px) rotate(${Math.max(-6, Math.min(6, drag / 20))}deg)` } : undefined}
-        >
-          <Flashcard
-            key={`${round}:${index}:${direction}`}
-            word={word}
-            direction={direction}
-            flipped={flipped}
-            onFlip={flip}
-            flipBack
-            hideImageFront={prefs.hide_images}
-            hidePinyinFront={prefs.hide_pinyin_front}
-            toneColors={prefs.tone_colors}
-          />
-        </div>
+      {/* Throw the card left (chưa thuộc) or right (đã thuộc); a tap flips it. */}
+      <div className="flex flex-1 flex-col justify-center py-4 select-none">
+        <CardStack behind={cards.length - index - 1}>
+          <SwipeCard onSwipe={(side) => mark(side === "left" ? "learning" : "known")}>
+            <Flashcard
+              key={`${round}:${index}:${direction}`}
+              word={word}
+              direction={direction}
+              flipped={flipped}
+              onFlip={flip}
+              flipBack
+              hideImageFront={prefs.hide_images}
+              hidePinyinFront={prefs.hide_pinyin_front}
+              toneColors={prefs.tone_colors}
+            />
+          </SwipeCard>
+        </CardStack>
         <p className="mt-3 text-center text-sm text-fg-muted">
           <span className="hidden lg:inline">Mũi tên chuyển thẻ, Space lật, phím 1 và 2 để đánh dấu</span>
-          <span className="lg:hidden">Vuốt trái/phải để chuyển thẻ</span>
+          <span className="lg:hidden">Vuốt trái: chưa thuộc. Vuốt phải: đã thuộc.</span>
         </p>
       </div>
 

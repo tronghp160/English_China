@@ -77,13 +77,19 @@ export function PronounceButton({
         if (!started) setSpeaking(false);
       }}
       className={cn(
-        "inline-grid shrink-0 place-items-center rounded-full text-primary transition-colors hover:bg-primary-soft",
+        "relative inline-grid shrink-0 place-items-center rounded-full text-primary transition-colors hover:bg-primary-soft",
         speaking && "bg-primary-soft",
         dims,
         className,
       )}
     >
-      <Volume2 className={icon} strokeWidth={1.75} aria-hidden />
+      {speaking && (
+        <>
+          <span aria-hidden className="pointer-events-none absolute inset-0 animate-ping rounded-full ring-2 ring-primary/40" />
+          <span aria-hidden className="pointer-events-none absolute inset-0 animate-ping rounded-full ring-2 ring-primary/25 [animation-delay:250ms]" />
+        </>
+      )}
+      <Volume2 className={cn("relative", icon)} strokeWidth={1.75} aria-hidden />
     </button>
   );
 }

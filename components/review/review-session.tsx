@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
 import { Badge } from "@/components/ui/badge";
@@ -9,8 +10,11 @@ import { formatInterval } from "@/lib/format";
 import { previewDue, RATINGS, schedule, type DbCard, type RatingValue } from "@/lib/srs/fsrs";
 import { enqueueReview, onFlushResult } from "@/lib/srs/outbox";
 import { answer, buildQueue, peek, remaining, type QueueItem } from "@/lib/srs/queue";
+import { playSfx } from "@/lib/sfx";
 import { speak } from "@/lib/tts";
+import { CardStack } from "./card-stack";
 import { Flashcard, type Direction } from "./flashcard";
+import { Flyer, RateDrag } from "./rate-drag";
 import { SessionBar } from "./session-bar";
 import { useSessionHud } from "./use-session-hud";
 import { SessionSummary, type SessionResult } from "./session-summary";
@@ -36,6 +40,8 @@ export function ReviewSession({
 }) {
   const { prefs } = useMe();
   const hud = useSessionHud();
+  const reduced = useReducedMotion();
+  const [flyer, setFlyer] = useState<{ id: number; word: StudyWord; direction: Direction; rating: RatingValue } | null>(null);
   const answerHud = hud.answer;
   const [queue, setQueue] = useState(() => buildQueue(items));
   const [flipped, setFlipped] = useState(false);
@@ -67,6 +73,7 @@ export function ReviewSession({
   const flip = useCallback(() => {
     if (!current || flipped) return;
     setFlipped(true);
+    playSfx("flip");
     if (prefs.auto_speak) speakTerm(current.word);
   }, [current, flipped, prefs.auto_speak, speakTerm]);
 
@@ -89,6 +96,8 @@ export function ReviewSession({
         updateCard: true,
       });
       answerHud({ correct: rating > 1 });
+      playSfx("whoosh");
+      if (!reduced) setFlyer({ id: results.length, word: current.word, direction: current.direction, rating });
       const nextQueue = answer(queue, current, { ...current, card }, rating === 1, at);
       setResults((r) => [
         ...r,
@@ -107,7 +116,7 @@ export function ReviewSession({
       shownAt.current = nextNow.getTime();
       if (!remaining(nextQueue)) setFinishedAt(Date.now());
     },
-    [current, flipped, answerHud, queue, now],
+    [current, flipped, answerHud, queue, now, reduced, results.length],
   );
 
   useEffect(() => {
@@ -156,16 +165,37 @@ export function ReviewSession({
         hud={{ combo: hud.combo, xp: hud.xp, reaction: hud.reaction }}
       />
       <div className="flex flex-1 flex-col justify-center py-4">
-        <Flashcard
-          key={`${current.key}:${done}`}
-          word={current.word}
-          direction={current.direction}
-          flipped={flipped}
-          onFlip={flip}
-          hideImageFront={prefs.hide_images}
-          hidePinyinFront={prefs.hide_pinyin_front}
-          toneColors={prefs.tone_colors}
-        />
+        <CardStack
+          behind={remaining(queue) - 1}
+          overlay={
+            flyer && (
+              <Flyer key={flyer.id} rating={flyer.rating} onDone={() => setFlyer(null)}>
+                <Flashcard
+                  word={flyer.word}
+                  direction={flyer.direction}
+                  flipped
+                  onFlip={() => {}}
+                  hideImageFront={prefs.hide_images}
+                  hidePinyinFront={prefs.hide_pinyin_front}
+                  toneColors={prefs.tone_colors}
+                />
+              </Flyer>
+            )
+          }
+        >
+          <RateDrag enabled={flipped} onRate={rate}>
+            <Flashcard
+              key={`${current.key}:${done}`}
+              word={current.word}
+              direction={current.direction}
+              flipped={flipped}
+              onFlip={flip}
+              hideImageFront={prefs.hide_images}
+              hidePinyinFront={prefs.hide_pinyin_front}
+              toneColors={prefs.tone_colors}
+            />
+          </RateDrag>
+        </CardStack>
         {current.isNew && (
           <Badge variant="soft" tone="orange" className="mt-3 self-center">
             Từ mới
@@ -184,7 +214,7 @@ export function ReviewSession({
                 variant="pressable"
                 tone={RATING_TONE[r.value]}
                 onClick={() => rate(r.value)}
-                className="h-16 flex-col gap-0 rounded-md px-1"
+                className="h-16 flex-col gap-0 rounded-md px-1 lg:h-16"
               >
                 <span className="text-base font-extrabold">{r.label}</span>
                 <span className="text-xs font-normal opacity-90">{formatInterval(preview[r.value].getTime() - now.getTime())}</span>

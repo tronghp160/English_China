@@ -56,7 +56,7 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
           <Search className="pointer-events-none absolute top-1/2 left-3.5 size-[1.125rem] -translate-y-1/2 text-fg-muted" strokeWidth={1.75} aria-hidden />
           <Input type="search" name="q" defaultValue={q} placeholder="Tìm theo tên bộ từ" aria-label="Tìm theo tên bộ từ" className="rounded-full pl-11" />
         </div>
-        <Button type="submit" variant="secondary" className="h-12 rounded-full px-5">
+        <Button type="submit" variant="secondary" className="h-12 rounded-full px-5 lg:h-12">
           Tìm
         </Button>
       </form>

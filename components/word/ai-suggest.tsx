@@ -214,7 +214,7 @@ export function useAiSuggest({
 
 export function AiSuggestButton({ loading, onClick }: { loading: boolean; onClick: () => void }) {
   return (
-    <Button type="button" onClick={onClick} disabled={loading} className="h-14 px-5">
+    <Button type="button" onClick={onClick} disabled={loading} className="h-14 px-5 lg:h-14">
       {loading ? <Loader2 className="animate-spin" aria-hidden /> : <Lightbulb aria-hidden />}
       Gợi ý
     </Button>

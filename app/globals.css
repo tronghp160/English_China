@@ -1539,6 +1539,16 @@
   transform: rotateY(180deg);
 }
 
+/* "Chạm để lật" blinks twice on a front face and then stays still */
+.hint-pulse {
+  animation: hint-pulse 1.3s ease-in-out 600ms 2;
+}
+@keyframes hint-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
 /* Reveal (components/fx/reveal.tsx): children fade up one after another */
 .reveal > * {
   animation: fade-up 320ms var(--ease-out) both;
