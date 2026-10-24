@@ -85,3 +85,10 @@ test("nút nổi chỉ có ở danh sách bộ từ và trang một bộ từ", 
   expect(Math.round(viewport.height - (box.y + box.height))).toBeGreaterThanOrEqual(80);
   expect(errors).toEqual([]);
 });
+
+test("thêm từ nhanh: gõ từ và chuyển trang đúng query", async () => {
+  await page.goto("/today");
+  await page.getByLabel("Từ muốn thêm").fill("resilient");
+  await page.getByRole("button", { name: "Thêm", exact: true }).click();
+  await expect(page).toHaveURL(/\/decks\/[0-9a-f-]{36}\/add\?term=resilient$/);
+});
