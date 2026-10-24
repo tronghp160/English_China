@@ -64,7 +64,7 @@ export function LoginForm({ next }: { next: string }) {
         }
       />
       {error && <FormAlert>{error}</FormAlert>}
-      <Button type="submit" size="lg" className="w-full" disabled={busy}>
+      <Button type="submit" variant="pressable" size="lg" className="w-full" disabled={busy}>
         {busy && <Loader2 className="animate-spin" aria-hidden />}
         Đăng nhập
       </Button>

@@ -44,7 +44,7 @@ export function ForgotPasswordForm({ initialEmail }: { initialEmail: string }) {
     <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
       <EmailField value={email} onChange={setEmail} error={emailError} />
       {error && <FormAlert>{error}</FormAlert>}
-      <Button type="submit" size="lg" className="w-full" disabled={busy}>
+      <Button type="submit" variant="pressable" size="lg" className="w-full" disabled={busy}>
         {busy && <Loader2 className="animate-spin" aria-hidden />}
         Gửi link đặt lại mật khẩu
       </Button>

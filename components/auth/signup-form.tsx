@@ -75,7 +75,7 @@ export function SignupForm({ next }: { next: string }) {
         hint={PASSWORD_HINT}
       />
       {error && <FormAlert>{error}</FormAlert>}
-      <Button type="submit" size="lg" className="w-full" disabled={busy}>
+      <Button type="submit" variant="pressable" size="lg" className="w-full" disabled={busy}>
         {busy && <Loader2 className="animate-spin" aria-hidden />}
         Tạo tài khoản
       </Button>

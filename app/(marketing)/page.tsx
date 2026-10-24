@@ -1,13 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { ContactLinks } from "@/components/contact/contact-links";
+import { FeatureBento } from "@/components/marketing/feature-bento";
 import { HeroSpecimen } from "@/components/marketing/hero-specimen";
-import { Badge } from "@/components/ui/badge";
+import { Pup } from "@/components/mascot/pup";
 import { Button } from "@/components/ui/button";
 import { CONTACT } from "@/lib/contact";
+import { TONE_CLASSES, type Tone } from "@/lib/tone";
+import { cn } from "@/lib/utils";
 
-const STEPS = [
+const STEPS: { title: string; body: string; src: string; alt: string; w: number; h: number; tone: Tone }[] = [
   {
     title: "Ghi từ",
     body: "Gõ một từ, Sổ Từ gợi ý phiên âm, nghĩa và câu ví dụ. Bạn xem lại, sửa nếu cần, rồi lưu.",
@@ -15,6 +19,7 @@ const STEPS = [
     alt: "Form thêm từ resilient với phiên âm, nghĩa và các nghĩa gợi ý đã được điền",
     w: 960,
     h: 1240,
+    tone: "blue",
   },
   {
     title: "Ôn mỗi sáng",
@@ -23,6 +28,7 @@ const STEPS = [
     alt: "Mặt sau thẻ ôn với nghĩa tiếng Việt và bốn nút đánh giá Quên, Khó, Nhớ, Dễ",
     w: 960,
     h: 1520,
+    tone: "mint",
   },
   {
     title: "Luyện theo cách bạn thích",
@@ -31,6 +37,7 @@ const STEPS = [
     alt: "Danh sách các chế độ luyện tập: Học, Kiểm tra, Ghép thẻ, Lật thẻ và các kỹ năng riêng",
     w: 896,
     h: 1424,
+    tone: "grape",
   },
 ];
 
@@ -53,147 +60,126 @@ const FAQ = [
   },
 ];
 
-const BOARD = [
-  { rank: 1, name: "Lan", xp: 320, streak: 14 },
-  { rank: 2, name: "Minh", xp: 290, streak: 0 },
-  { rank: 3, name: "Trọng", xp: 210, streak: 5, me: true },
-];
-
 export default function MarketingPage() {
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-x-clip px-4 pb-12 sm:px-6">
-      <header className="flex items-center justify-between gap-2 py-4">
-        <Logo />
-        <nav className="flex items-center gap-1" aria-label="Tài khoản">
-          <Button asChild variant="ghost">
-            <Link href="/login">Đăng nhập</Link>
-          </Button>
-          <Button asChild className="hidden sm:inline-flex">
-            <Link href="/signup">Đăng ký</Link>
-          </Button>
-        </nav>
+    <div className="flex flex-1 flex-col overflow-x-clip">
+      <header className="sticky top-0 z-30 bg-canvas/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-2 px-4 sm:px-6">
+          <Logo />
+          <nav className="flex items-center gap-1" aria-label="Tài khoản">
+            <Button asChild variant="ghost">
+              <Link href="/login">Đăng nhập</Link>
+            </Button>
+            <Button asChild className="hidden sm:inline-flex">
+              <Link href="/signup">Đăng ký</Link>
+            </Button>
+          </nav>
+        </div>
       </header>
 
-      <section className="grid items-center gap-12 pt-8 md:grid-cols-[1.15fr_1fr] md:pt-16">
-        <div>
-          <h1 className="font-display text-[clamp(2.25rem,4.4vw,3.25rem)] leading-[1.08] font-semibold tracking-tight">
-            Ghi từ như ghi vở.
-            <br />
-            Ôn đúng lúc sắp quên.
-          </h1>
-          <p className="mt-5 max-w-[62ch] text-lg text-fg-muted">
-            Sổ từ vựng tiếng Anh và tiếng Trung. Gõ một từ, app điền nghĩa, phiên âm và ví dụ; mỗi ngày bạn chỉ ôn những từ sắp quên.
-          </p>
-          <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-6">
-            <Button asChild size="lg">
-              <Link href="/signup">Tạo sổ miễn phí</Link>
-            </Button>
-            <Link href="/login" className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline">
-              Tôi đã có tài khoản
-            </Link>
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pb-12 sm:px-6">
+        <section className="grid items-center gap-12 pt-8 md:grid-cols-[1.1fr_1fr] md:pt-16">
+          <div>
+            <h1 className="text-[clamp(2.25rem,5vw,3.75rem)] leading-[1.05] tracking-[-0.035em]">
+              Học từ vựng Anh – Trung, nhớ lâu mà nhẹ nhàng.
+            </h1>
+            <p className="mt-5 max-w-[56ch] text-lg text-fg-muted">
+              Sổ từ vựng tiếng Anh và tiếng Trung. Gõ một từ, app điền nghĩa, phiên âm và ví dụ; mỗi ngày bạn chỉ ôn những từ sắp quên.
+            </p>
+            <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-6">
+              <Button asChild variant="pressable" size="lg">
+                <Link href="/signup">Tạo sổ miễn phí</Link>
+              </Button>
+              <Link href="/login" className="inline-flex min-h-11 items-center font-semibold text-primary-fg underline-offset-4 hover:underline">
+                Tôi đã có tài khoản
+              </Link>
+            </div>
           </div>
-        </div>
-        <HeroSpecimen />
-      </section>
+          <HeroSpecimen />
+        </section>
 
-      <section className="mt-24 md:mt-32" aria-labelledby="day-title">
-        <h2 id="day-title" className="text-xl sm:text-2xl">
-          Một ngày với Sổ Từ
-        </h2>
-        <ol className="mt-10 space-y-16 md:space-y-20">
-          {STEPS.map((s, i) => (
-            <li key={s.title} className="grid items-center gap-6 md:grid-cols-2 md:gap-12">
-              <div className={i % 2 ? "md:order-2" : undefined}>
-                <p className="font-display text-3xl font-semibold text-primary tabular-nums">{i + 1}</p>
-                <h3 className="mt-1 text-lg">{s.title}</h3>
-                <p className="mt-2 max-w-[48ch] text-fg-muted">{s.body}</p>
-              </div>
-              <Image
-                src={s.src}
-                alt={s.alt}
-                width={s.w}
-                height={s.h}
-                sizes="(min-width: 768px) 480px, 100vw"
-                className="mx-auto max-h-[34rem] w-auto max-w-full rounded-lg border border-border object-contain object-top"
-              />
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="mt-24 grid items-center gap-8 md:mt-32 md:grid-cols-2 md:gap-12" aria-labelledby="friends-title">
-        <div>
-          <h2 id="friends-title" className="text-xl sm:text-2xl">
-            Học cùng bạn bè
+        <section className="mt-24 md:mt-32" aria-labelledby="features-title">
+          <h2 id="features-title" className="text-[1.75rem] sm:text-[2.25rem]">
+            Mọi thứ để nhớ từ lâu hơn
           </h2>
-          <p className="mt-3 max-w-[48ch] text-fg-muted">
-            Chia sẻ bộ từ bằng một đường link. Lập nhóm có mã mời, mỗi người giữ tiến độ riêng và so điểm XP trên bảng xếp hạng tuần.
-          </p>
-        </div>
-        <div>
-          <p className="flex items-baseline justify-between text-sm text-fg-muted">
-            <span className="font-medium text-fg">Tuần này</span>
-            <span>Ví dụ</span>
-          </p>
-          <ol className="divide-y divide-border mt-2 border-y border-border" aria-label="Bảng xếp hạng mẫu">
-            {BOARD.map((r) => (
-              <li key={r.rank} className={`flex min-h-14 items-center gap-3 px-2 py-2 ${r.me ? "bg-primary-soft" : ""}`}>
-                <span className="w-6 text-center font-display text-xl font-semibold text-fg-muted tabular-nums">{r.rank}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2 font-medium">
-                    {r.name}
-                    {r.me && <span className="font-normal text-fg-muted">(bạn)</span>}
-                    {r.rank === 1 && <Badge variant="soft" tone="sun">Nhất</Badge>}
+          <div className="mt-8">
+            <FeatureBento />
+          </div>
+        </section>
+
+        <section className="mt-24 md:mt-32" aria-labelledby="day-title">
+          <h2 id="day-title" className="text-[1.75rem] sm:text-[2.25rem]">
+            Một ngày với Sổ Từ
+          </h2>
+          <ol className="mt-8 grid gap-4 md:grid-cols-3">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="flex flex-col gap-5 rounded-xl border border-border/60 bg-surface p-6 shadow-sm dark:border-border">
+                <div className="flex items-center gap-3">
+                  <span
+                    aria-hidden
+                    className={cn("grid size-10 place-items-center rounded-full font-display text-lg text-white", TONE_CLASSES[s.tone].solid)}
+                  >
+                    {i + 1}
                   </span>
-                  {r.streak > 0 && <span className="text-xs text-fg-muted">chuỗi {r.streak} ngày</span>}
-                </span>
-                <span className="font-display text-lg font-semibold tabular-nums">
-                  {r.xp} <span className="font-sans text-xs font-normal text-fg-muted">XP</span>
-                </span>
+                  <h3 className="text-lg">{s.title}</h3>
+                </div>
+                <p className="text-fg-muted">{s.body}</p>
+                <div className="mt-auto overflow-hidden rounded-[1.75rem] border-[6px] border-fg bg-fg">
+                  <Image
+                    src={s.src}
+                    alt={s.alt}
+                    width={s.w}
+                    height={s.h}
+                    sizes="(min-width: 768px) 320px, 100vw"
+                    className="max-h-[26rem] w-full rounded-[1.25rem] bg-canvas object-cover object-top"
+                  />
+                </div>
               </li>
             ))}
           </ol>
-        </div>
-      </section>
+        </section>
 
-      <section className="mt-24 md:mt-32" aria-labelledby="faq-title">
-        <h2 id="faq-title" className="text-xl sm:text-2xl">
-          Câu hỏi thường gặp
-        </h2>
-        <div className="mt-6 max-w-2xl divide-y divide-border border-y border-border">
-          {FAQ.map((f) => (
-            <details key={f.q} className="group py-1">
-              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 font-medium">
-                {f.q}
-                <span aria-hidden className="text-xl text-fg-muted transition-transform group-open:rotate-45">
-                  +
-                </span>
-              </summary>
-              <p className="pb-4 text-fg-muted">{f.a}</p>
-            </details>
-          ))}
-        </div>
-      </section>
+        <section className="mt-24 md:mt-32" aria-labelledby="faq-title">
+          <h2 id="faq-title" className="text-[1.75rem] sm:text-[2.25rem]">
+            Câu hỏi thường gặp
+          </h2>
+          <div className="mt-6 flex max-w-3xl flex-col gap-3">
+            {FAQ.map((f) => (
+              <details key={f.q} className="group rounded-lg border border-border/60 bg-surface px-5 shadow-sm dark:border-border">
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 font-bold">
+                  {f.q}
+                  <Plus aria-hidden className="size-5 shrink-0 text-fg-muted transition-transform group-open:rotate-45" />
+                </summary>
+                <p className="pb-5 text-fg-muted">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
 
-      <section className="rounded-lg border border-border/60 bg-surface shadow-sm mt-24 overflow-hidden md:mt-32">
-        <div className="py-10 pr-6 pl-6">
-          <p className="font-display text-2xl font-semibold sm:text-3xl">Sổ của bạn đang trống.</p>
-          <p className="mt-3 text-fg-muted">Tạo tài khoản mất chưa tới một phút, không cần xác nhận email.</p>
-          <Button asChild size="lg" className="mt-6">
-            <Link href="/signup">Tạo sổ miễn phí</Link>
-          </Button>
-        </div>
-      </section>
+        <section className="relative mt-24 overflow-hidden rounded-xl bg-primary p-8 text-on-primary shadow-hero md:mt-32 md:p-12">
+          <div className="max-w-[28rem]">
+            <p className="font-display text-[1.75rem] leading-tight sm:text-[2.25rem]">Sổ của bạn đang trống.</p>
+            <p className="mt-3 opacity-90">Tạo tài khoản mất chưa tới một phút, không cần xác nhận email.</p>
+            <Button asChild variant="white" size="lg" className="mt-6 shadow-[0_4px_0_0_var(--primary-press)]">
+              <Link href="/signup">Tạo sổ miễn phí</Link>
+            </Button>
+          </div>
+          <Pup mood="cheer" size={150} className="absolute right-6 -bottom-4 hidden sm:block" />
+        </section>
 
-      <footer className="mt-16 flex flex-col gap-4 border-t border-border pt-6 text-sm text-fg-muted sm:flex-row sm:items-center sm:justify-between">
-        <p>
-          © {new Date().getFullYear()} Sổ Từ, làm bởi {CONTACT.nickname}.{" "}
-          <Link href="/lien-he" className="text-primary underline underline-offset-4">
-            Liên hệ
-          </Link>
-        </p>
-        <ContactLinks compact />
-      </footer>
+        <footer className="mt-16 flex flex-col gap-4 border-t border-border pt-6 text-sm text-fg-muted sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <Logo className="scale-90 self-start" />
+            <p>
+              © {new Date().getFullYear()} Sổ Từ, làm bởi {CONTACT.nickname}.{" "}
+              <Link href="/lien-he" className="font-semibold text-primary-fg underline underline-offset-4">
+                Liên hệ
+              </Link>
+            </p>
+          </div>
+          <ContactLinks compact />
+        </footer>
+      </div>
     </div>
   );
 }

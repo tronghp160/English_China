@@ -1,9 +1,10 @@
-// Renders the app icon (flat ink-violet tile, a thin 田字格 cell with a serif "S") to PNG/ICO.
-// Same art as components/brand/logo.tsx. Usage: node scripts/gen-icons.mjs   (needs network for the Literata webfont)
+// Renders the app icon (blue tile, a white "S" in Be Vietnam Pro 800 and a small sun-yellow dot) to PNG/ICO.
+// Same art as components/brand/logo.tsx. Usage: node scripts/gen-icons.mjs   (needs network for the Be Vietnam Pro webfont)
 import fs from "node:fs";
 import { chromium } from "@playwright/test";
 
-const INK_VIOLET = "#3B2E8C";
+const BLUE = "#3557F5";
+const SUN = "#FFC23D";
 
 /** @param {number} size @param {{ maskable?: boolean, rounded?: boolean }} o */
 function svg(size, { maskable = false, rounded = true } = {}) {
@@ -12,18 +13,15 @@ function svg(size, { maskable = false, rounded = true } = {}) {
   const pad = (size * (1 - k)) / 2;
   const s = (v) => pad + v * size * k;
   const radius = rounded && !maskable ? size * 0.22 : 0;
-  const cell = size * k * 0.6;
-  const x0 = s(0.2);
-  const fontSize = size * k * 0.46;
-  const sw = Math.max(1, size * 0.014);
+  const fontSize = size * k * 0.62;
+  const dotR = size * k * 0.085;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <defs><clipPath id="c"><rect width="${size}" height="${size}" rx="${radius}"/></clipPath></defs>
   <g clip-path="url(#c)">
-    <rect width="${size}" height="${size}" fill="${INK_VIOLET}"/>
-    <rect x="${x0}" y="${x0}" width="${cell}" height="${cell}" rx="${size * 0.012}" fill="none" stroke="#fff" stroke-opacity="0.7" stroke-width="${sw}"/>
-    <path d="M${s(0.5)} ${x0}V${x0 + cell}M${x0} ${s(0.5)}H${x0 + cell}" stroke="#fff" stroke-opacity="0.35" stroke-width="${sw * 0.8}" stroke-dasharray="${sw * 3} ${sw * 3}"/>
-    <text x="${s(0.5)}" y="${s(0.5) + fontSize * 0.35}" text-anchor="middle" font-family="Literata" font-weight="600"
+    <rect width="${size}" height="${size}" fill="${BLUE}"/>
+    <text x="${s(0.5)}" y="${s(0.5) + fontSize * 0.36}" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="800"
       font-size="${fontSize}" fill="#ffffff">S</text>
+    <circle cx="${s(0.76)}" cy="${s(0.24)}" r="${dotR}" fill="${SUN}" stroke="${BLUE}" stroke-width="${size * 0.02}"/>
   </g>
 </svg>`;
 }
@@ -43,7 +41,7 @@ const page = await browser.newPage();
 for (const t of targets) {
   await page.setViewportSize({ width: t.size, height: t.size });
   await page.setContent(
-    `<html><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,600&display=block">
+    `<html><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@800&display=block">
     <style>html,body{margin:0;background:transparent}</style></head><body>${svg(t.size, t)}</body></html>`,
     { waitUntil: "networkidle" },
   );
