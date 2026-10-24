@@ -14,6 +14,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { m } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMe } from "@/components/app-shell/me-provider";
@@ -33,6 +34,10 @@ const PRIMARY: NavItem[] = [
   { href: "/groups", label: "Nhóm", icon: Users },
 ];
 
+/** The phone bar: the review button sits in the middle, "Nhóm" lives in the avatar menu there. */
+const PHONE_LEFT: NavItem[] = [PRIMARY[0], PRIMARY[1]];
+const PHONE_RIGHT: NavItem[] = [PRIMARY[2], PRIMARY[3]];
+
 const SECONDARY: NavItem[] = [
   { href: "/explore", label: "Khám phá", icon: Compass },
   { href: "/stats", label: "Thống kê", icon: BarChart3 },
@@ -49,37 +54,65 @@ function isActive(pathname: string, href: string) {
 /** Floating pill tab bar on phones (REDESIGN_V2 §6.1): the active tab's icon sits in a pale blue pill. */
 export function BottomNav() {
   const pathname = usePathname();
+  const { dueCount } = useMe();
+  const tab = ({ href, label, icon: Icon }: NavItem) => {
+    const active = isActive(pathname, href);
+    return (
+      <li key={href}>
+        <Link
+          href={href}
+          aria-current={active ? "page" : undefined}
+          className={cn(
+            "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-full text-[0.6875rem]",
+            active ? "font-bold text-primary-fg" : "font-medium text-fg-muted",
+          )}
+        >
+          <span className="relative grid h-8 w-14 place-items-center rounded-full">
+            {active && (
+              <m.span
+                layoutId="bottom-nav-pill"
+                aria-hidden
+                className="absolute inset-0 rounded-full bg-primary-soft"
+                transition={{ type: "spring", stiffness: 420, damping: 34 }}
+              />
+            )}
+            <span key={active ? "on" : "off"} className={cn("relative", active && "animate-pop")}>
+              <Icon className="size-5" strokeWidth={active ? 2.3 : 2} aria-hidden />
+            </span>
+          </span>
+          {label}
+        </Link>
+      </li>
+    );
+  };
   return (
     <nav
       aria-label="Điều hướng chính"
       className="fixed inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] z-40 h-16 rounded-full border border-border/60 bg-surface/85 shadow-lg backdrop-blur-xl lg:hidden"
     >
       <ul className="mx-auto grid h-full max-w-md grid-cols-5 items-center px-1.5">
-        {PRIMARY.map(({ href, label, icon: Icon }) => {
-          const active = isActive(pathname, href);
-          return (
-            <li key={href}>
-              <Link
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-full text-[0.6875rem]",
-                  active ? "font-bold text-primary-fg" : "font-medium text-fg-muted",
-                )}
+        {PHONE_LEFT.map(tab)}
+        <li className="relative h-full">
+          <Link
+            href="/review"
+            aria-label={dueCount > 0 ? `Ôn ngay, ${dueCount} từ đến hạn` : "Ôn ngay"}
+            className="absolute -top-3.5 left-1/2 grid size-14 -translate-x-1/2 place-items-center rounded-full bg-primary text-on-primary shadow-primary ring-4 ring-canvas transition-transform duration-[var(--dur-fast)] active:scale-95"
+          >
+            <Play className="size-6 translate-x-px fill-current" aria-hidden />
+            {dueCount > 0 && (
+              <span
+                aria-hidden
+                className="absolute -top-1 -right-1.5 grid min-w-6 place-items-center rounded-full bg-c-orange px-1.5 text-xs leading-6 font-extrabold text-black tabular-nums ring-2 ring-canvas"
               >
-                <span
-                  className={cn(
-                    "grid h-8 w-14 place-items-center rounded-full transition-colors duration-[var(--dur-base)]",
-                    active && "bg-primary-soft",
-                  )}
-                >
-                  <Icon className="size-5" strokeWidth={active ? 2.3 : 2} aria-hidden />
-                </span>
-                {label}
-              </Link>
-            </li>
-          );
-        })}
+                {dueCount > 99 ? "99+" : dueCount}
+              </span>
+            )}
+          </Link>
+          <span aria-hidden className="pointer-events-none absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[0.6875rem] font-bold text-primary-fg">
+            Ôn
+          </span>
+        </li>
+        {PHONE_RIGHT.map(tab)}
       </ul>
     </nav>
   );
@@ -98,14 +131,22 @@ export function SideNav() {
           href={href}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "flex h-[2.625rem] items-center gap-3 rounded-md px-3 text-[0.9375rem] transition-colors duration-[var(--dur-fast)]",
-            active
-              ? "bg-surface font-semibold text-fg shadow-sm dark:border dark:border-border"
-              : "font-medium text-fg-muted hover:bg-surface-2 hover:text-fg",
+            "relative flex h-[2.625rem] items-center gap-3 rounded-md px-3 text-[0.9375rem] transition-colors duration-[var(--dur-fast)]",
+            active ? "font-semibold text-fg" : "font-medium text-fg-muted hover:bg-surface-2 hover:text-fg",
           )}
         >
-          <Icon className={cn("size-5", active && "text-primary")} strokeWidth={active ? 2.25 : 2} aria-hidden />
-          {label}
+          {active && (
+            <m.span
+              layoutId="side-nav-pill"
+              aria-hidden
+              className="absolute inset-0 rounded-md bg-surface shadow-sm dark:border dark:border-border"
+              transition={{ type: "spring", stiffness: 420, damping: 34 }}
+            />
+          )}
+          <span key={active ? "on" : "off"} className={cn("relative", active && "animate-pop")}>
+            <Icon className={cn("size-5", active && "text-primary")} strokeWidth={active ? 2.25 : 2} aria-hidden />
+          </span>
+          <span className="relative">{label}</span>
         </Link>
       </li>
     );

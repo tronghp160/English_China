@@ -1,3 +1,4 @@
+import { BookOpen } from "lucide-react";
 import { LangMark } from "@/components/lang-mark";
 import { deckColor, deckColorClasses } from "@/lib/deck-colors";
 import type { LangCode } from "@/lib/lang/types";
@@ -110,5 +111,57 @@ export function DeckArt({
       </span>
       {s === "lg" && <LangMark lang={language} white className="absolute top-1.5 left-1.5" />}
     </span>
+  );
+}
+
+/**
+ * The picture at the top of a deck's page (REDESIGN_V3 §6.3): the deck's first word big in its color on a white
+ * card, with a few circles of the same hue in the corners; an open book when the deck has no words yet.
+ */
+export function DeckArtHero({
+  id,
+  language,
+  name,
+  sample,
+  className,
+}: {
+  id: string;
+  language: LangCode;
+  name?: string;
+  /** First word of the deck; missing = the deck is empty */
+  sample?: string;
+  className?: string;
+}) {
+  const c = deckColorClasses(deckColor(id));
+  const zh = language === "zh";
+  const word = (sample ?? "").trim();
+  return (
+    <div
+      aria-hidden
+      data-name={name}
+      className={cn(
+        "relative flex h-24 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/70 px-2 md:h-32 md:w-44 dark:bg-surface",
+        c.fg,
+        className,
+      )}
+    >
+      <span className={cn("absolute -top-5 -right-5 size-20 rounded-full opacity-20", c.bar)} />
+      <span className={cn("absolute -bottom-7 -left-5 size-20 rounded-full opacity-15", c.bar)} />
+      <span className={cn("absolute right-5 bottom-4 size-2.5 rounded-full opacity-50", c.bar)} />
+      {word ? (
+        <span
+          lang={zh ? "zh-CN" : "en"}
+          className={cn(
+            "relative line-clamp-2 max-w-full text-center leading-tight break-words",
+            zh ? "font-hanzi text-[2rem] font-bold md:text-[2.75rem]" : "text-[1.5rem] font-extrabold tracking-[-0.03em] md:text-[2.125rem]",
+          )}
+        >
+          {word}
+        </span>
+      ) : (
+        <BookOpen className="relative size-10 md:size-14" strokeWidth={1.75} />
+      )}
+      <LangMark lang={language} white className="absolute top-2 left-2" />
+    </div>
   );
 }

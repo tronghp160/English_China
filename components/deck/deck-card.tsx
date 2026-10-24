@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, Globe2, Link2, Lock, Users } from "lucide-react";
+import { Check, Globe2, Link2, Lock, Play, Users } from "lucide-react";
 import { DeckArtBlock } from "@/components/deck/deck-art";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -26,6 +26,7 @@ export function DeckCard({
   sample,
   compact,
   trailing,
+  quickReview,
   className,
 }: {
   d: DeckRow;
@@ -34,13 +35,15 @@ export function DeckCard({
   /** The smaller card of the phone carousel */
   compact?: boolean;
   trailing?: React.ReactNode;
+  /** A small "Ôn" button over the art for a mouse: shows on hover or focus when the deck has cards due. */
+  quickReview?: boolean;
   className?: string;
 }) {
   const started = Math.max(0, d.word_count - Number(d.new_count));
   const pct = d.word_count ? Math.round((started / d.word_count) * 100) : 0;
   const color = deckColorClasses(deckColor(d.id));
   return (
-    <Card interactive className={cn("h-full overflow-hidden", className)}>
+    <Card interactive className={cn("group/deck relative h-full overflow-hidden", className)}>
       <Link href={`/decks/${d.id}`} className="flex h-full flex-col rounded-[inherit]">
         <DeckArtBlock id={d.id} language={d.language} name={d.name} sample={sample} compact={compact}>
           <span className="grid size-6 place-items-center rounded-full bg-white/80 text-fg-muted">
@@ -69,6 +72,16 @@ export function DeckCard({
           <span className="sr-only">{pct}% đã học</span>
         </span>
       </Link>
+      {quickReview && d.due_count > 0 && (
+        <Link
+          href={`/review?deck=${d.id}`}
+          aria-label={`Ôn bộ ${d.name}`}
+          className="absolute top-2 right-2 hidden min-h-10 items-center gap-1 rounded-full bg-primary px-3 text-sm font-bold text-on-primary opacity-0 shadow-primary transition-opacity group-focus-within/deck:opacity-100 group-hover/deck:opacity-100 focus-visible:opacity-100 [@media(hover:hover)]:inline-flex"
+        >
+          <Play className="size-3 fill-current" aria-hidden />
+          Ôn
+        </Link>
+      )}
     </Card>
   );
 }

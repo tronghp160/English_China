@@ -62,6 +62,7 @@ export function PettablePup({
   onPet,
   bubble = false,
   bubbleClassName,
+  pupClassName,
   sleepAfterMs,
 }: {
   mood: PupMood;
@@ -73,6 +74,8 @@ export function PettablePup({
   /** Show the reaction as a small bubble next to the puppy (when the page has no bubble of its own). */
   bubble?: boolean;
   bubbleClassName?: string;
+  /** Class for the drawing itself, e.g. `size-24 xl:size-30` to grow it on wide screens (`size` is the small one). */
+  pupClassName?: string;
   sleepAfterMs?: number;
 }) {
   const home = useBinHome();
@@ -225,7 +228,7 @@ export function PettablePup({
         onContextMenu={(e) => e.preventDefault()}
         className="bin-pet relative block cursor-pointer touch-manipulation rounded-full select-none"
       >
-        <Pup mood={shown} action={bin.action} size={size} follow={size >= 40} />
+        <Pup mood={shown} action={bin.action} size={size} follow={size >= 40} className={pupClassName} />
         {petting && <Hearts key={pets} />}
       </button>
       {bubbleText && (

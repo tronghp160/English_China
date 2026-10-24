@@ -28,7 +28,9 @@ import type { LangCode } from "@/lib/lang/types";
 import { POS, posFor } from "@/lib/pos";
 import { STANDARD_TOPICS } from "@/lib/topics";
 import { cn } from "@/lib/utils";
-import { StatusDot, StatusLegend } from "./status-dot";
+import { PronounceButton } from "@/components/word/pronounce-button";
+import { ScrollFade } from "@/components/ui/scroll-fade";
+import { StatusChip } from "./status-dot";
 
 const STATUS = [
   { value: "", label: "Mọi trạng thái" },
@@ -57,19 +59,19 @@ function FilterSelect({
   children: React.ReactNode;
 }) {
   return (
-    <label className="relative shrink-0">
+    <label className="relative shrink-0 snap-start">
       <span className="sr-only">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          "h-10 appearance-none rounded-md border bg-surface pr-8 pl-3 text-sm outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary-soft",
+          "h-10 appearance-none rounded-full border bg-surface pr-9 pl-4 text-sm outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary-soft",
           value ? "border-primary bg-primary-soft font-medium text-fg" : "border-input text-fg-muted",
         )}
       >
         {children}
       </select>
-      <ChevronDown aria-hidden className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-fg-muted" />
+      <ChevronDown aria-hidden className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-fg-muted" />
     </label>
   );
 }
@@ -178,7 +180,7 @@ export function DeckWords({
 
   return (
     <section className="mt-10" aria-label="Danh sách từ">
-      <div className="relative">
+      <div className="relative scroll-mb-40">
         <Search className="pointer-events-none absolute top-1/2 left-3.5 size-[1.125rem] -translate-y-1/2 text-fg-muted" strokeWidth={1.75} aria-hidden />
         <Input
           type="search"
@@ -190,7 +192,7 @@ export function DeckWords({
         />
       </div>
 
-      <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+      <ScrollFade className="mt-3 scroll-mb-40">
         <FilterSelect label="Sắp xếp" value={sort === "newest" ? "" : sort} onChange={(v) => setSort((v || "newest") as typeof sort)}>
           {SORTS.map((s) => (
             <option key={s.value} value={s.value === "newest" ? "" : s.value}>
@@ -229,7 +231,7 @@ export function DeckWords({
             </option>
           ))}
         </FilterSelect>
-      </div>
+      </ScrollFade>
 
       <div className="mt-4 flex items-center justify-between gap-2">
         <p className="text-sm text-fg-muted" aria-live="polite">
@@ -301,7 +303,7 @@ export function DeckWords({
         )
       ) : view === "list" ? (
         <div className="mt-3 overflow-hidden rounded-lg border border-border/60 bg-surface pt-3 shadow-sm dark:border-border">
-          <div aria-hidden className={cn("hidden items-center gap-3 border-b border-border px-4 pb-2 text-xs font-medium text-fg-muted md:grid", ROW_COLS[selecting ? 1 : 0])}>
+          <div aria-hidden className={cn("hidden items-center gap-3 border-b border-border py-2 pr-[3.25rem] pl-4 text-sm font-medium text-fg-muted md:grid", ROW_COLS[selecting ? 1 : 0])}>
             {selecting && <span />}
             <span>Từ</span>
             <span>Cách đọc</span>
@@ -322,7 +324,6 @@ export function DeckWords({
             />
           ))}
           </ul>
-          <StatusLegend className="border-t border-border px-4 py-3" />
         </div>
       ) : (
         <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -428,8 +429,8 @@ export function DeckWords({
 
 // Table columns on desktop: word, reading, meaning, level, status dot (and a checkbox while selecting).
 const ROW_COLS = [
-  "md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1.6fr)_3rem_0.875rem]",
-  "md:grid-cols-[1.25rem_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1.6fr)_3rem_0.875rem]",
+  "md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1.6fr)_3rem_6rem]",
+  "md:grid-cols-[1.25rem_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1.6fr)_3rem_6rem]",
 ] as const;
 
 function SelectBox({ checked }: { checked: boolean }) {
@@ -479,23 +480,26 @@ function WordRowItem({
         <span className="block w-full truncate text-sm text-fg-muted md:w-auto md:text-base md:text-fg">{word.meaning_vi}</span>
         <span className="hidden text-xs text-fg-muted md:block">{levelOf(language, word.lang_extra)}</span>
       </span>
-      <StatusDot state={word.card_state} lapses={word.lapses} suspended={word.suspended} />
+      <StatusChip state={word.card_state} lapses={word.lapses} suspended={word.suspended} />
     </>
   );
   const cls = cn(
-    "flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-surface-2 md:grid md:gap-3",
+    "flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2.5 pl-4 text-left md:grid md:gap-3",
     ROW_COLS[selecting ? 1 : 0],
   );
   return (
-    <li>
+    <li className="group flex items-center pr-1 transition-colors hover:bg-surface-2">
       {selecting ? (
-        <button type="button" role="checkbox" aria-checked={selected} onClick={onToggle} className={cls}>
+        <button type="button" role="checkbox" aria-checked={selected} onClick={onToggle} className={cn(cls, "pr-4")}>
           {content}
         </button>
       ) : (
-        <Link href={`/words/${word.id}`} className={cls}>
-          {content}
-        </Link>
+        <>
+          <Link href={`/words/${word.id}`} className={cn(cls, "pr-2")}>
+            {content}
+          </Link>
+          <PronounceButton text={word.term} lang={language} className="mr-1 hover:bg-primary-soft hover:text-primary-fg" />
+        </>
       )}
     </li>
   );
@@ -533,7 +537,7 @@ function WordGridItem({
           </span>
         )}
         <span className="absolute top-2.5 right-2.5">
-          <StatusDot state={word.card_state} lapses={word.lapses} suspended={word.suspended} />
+          <StatusChip state={word.card_state} lapses={word.lapses} suspended={word.suspended} />
         </span>
       </span>
       <span className="block px-3 py-2.5">

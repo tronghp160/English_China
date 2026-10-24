@@ -17,8 +17,10 @@ function level(n: number) {
 const WEEKDAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
 function label(day: string) {
-  const [y, m, d] = day.split("-");
-  return `${Number(d)}/${Number(m)}/${y}`;
+  // "T6, 23/10": the weekday of the study day, then day/month
+  const [, m, d] = day.split("-");
+  const weekday = WEEKDAYS[(new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7];
+  return `${weekday}, ${Number(d)}/${Number(m)}`;
 }
 
 /** GitHub-style activity grid: columns are weeks (Monday on top), `weeks` long, ending today. */
@@ -72,6 +74,7 @@ export function Heatmap({
             return (
               <span
                 key={day}
+                title={future ? undefined : describe(day)}
                 onPointerEnter={() => setHover(day)}
                 onPointerLeave={() => setHover((h) => (h === day ? null : h))}
                 className={cn(

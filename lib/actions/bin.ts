@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { getProgress } from "@/lib/data/progress";
-import { OUTFITS, type LevelInfo, type OutfitId, type TrickId } from "@/lib/progress";
+import { OUTFITS, QUEST_BONES, QUEST_IDS, pruneClaimed, type LevelInfo, type OutfitId, type QuestId, type TrickId } from "@/lib/progress";
 import { createClient } from "@/lib/supabase/server";
 import { prefsSchema, type Prefs } from "@/lib/validation";
 import { fail, ok, type ActionResult } from "./result";
@@ -77,4 +77,29 @@ export async function setBinOutfit(input: unknown): Promise<ActionResult<{ outfi
   if (!saved) return fail("Không lưu được. Thử lại.");
   revalidatePath("/", "layout");
   return ok({ outfit });
+}
+
+const questSchema = z.enum(QUEST_IDS as [QuestId, ...QuestId[]]);
+
+/**
+ * Takes the reward of a daily quest (REDESIGN_V3 §6.1): the quest must be done today and not taken yet, both
+ * checked here again. The day goes into `quests_claimed` (last 7 days) and the lifetime count `quests_total` goes
+ * up, which is what the bones are counted from.
+ */
+export async function claimQuest(input: unknown): Promise<ActionResult<{ id: QuestId; bones: number }>> {
+  const user = await requireUser();
+  const parsed = questSchema.safeParse(input);
+  if (!parsed.success) return fail("Nhiệm vụ không có.");
+  const id = parsed.data;
+  const progress = await getProgress();
+  const quest = progress.quests.find((q) => q.id === id);
+  if (!quest?.done) return fail("Chưa xong nhiệm vụ này.");
+  if (quest.claimed) return fail("Đã nhận thưởng rồi.");
+  const saved = await savePrefs(user.id, (stored) => {
+    const claimed = { ...(stored.quests_claimed ?? {}) };
+    claimed[progress.today] = [...(claimed[progress.today] ?? []), id];
+    return { quests_claimed: pruneClaimed(claimed), quests_total: (stored.quests_total ?? 0) + 1 };
+  });
+  if (!saved) return fail("Không lưu được. Thử lại.");
+  return ok({ id, bones: progress.bones + QUEST_BONES });
 }

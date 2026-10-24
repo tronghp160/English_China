@@ -10,12 +10,16 @@ export const XP_TARGET_ATTR = "data-xp-counter";
 /** Fired on `window` when a burst lands (or at once under reduced motion), so the counter can bump. */
 export const XP_ARRIVE_EVENT = "sotu:xp-arrive";
 
-/** Runs `onArrive` each time an XP burst reaches the counter. */
-export function useXpArrive(onArrive: () => void) {
+/** The same for bones: the bone chip carries the attribute, the burst announces itself with the event. */
+export const BONE_TARGET_ATTR = "data-bone-counter";
+export const BONE_ARRIVE_EVENT = "sotu:bone-arrive";
+
+/** Runs `onArrive` each time a burst reaches its counter (XP by default, or pass BONE_ARRIVE_EVENT). */
+export function useXpArrive(onArrive: () => void, event: string = XP_ARRIVE_EVENT) {
   useEffect(() => {
-    window.addEventListener(XP_ARRIVE_EVENT, onArrive);
-    return () => window.removeEventListener(XP_ARRIVE_EVENT, onArrive);
-  }, [onArrive]);
+    window.addEventListener(event, onArrive);
+    return () => window.removeEventListener(event, onArrive);
+  }, [onArrive, event]);
 }
 
 type Flight = { id: number; from: { x: number; y: number }; to: { x: number; y: number } | null };
@@ -25,7 +29,22 @@ type Flight = { id: number; from: { x: number; y: number }; to: { x: number; y: 
  * to the XP counter (REDESIGN_V3 §3.6), 650 ms. Each change of `trigger` sends one. With no counter on the
  * page it floats up and fades; under reduced motion nothing flies and the counter is told straight away.
  */
-export function XpBurst({ trigger, amount = 1, className }: { trigger: number; amount?: number; className?: string }) {
+export function XpBurst({
+  trigger,
+  amount = 1,
+  unit = "XP",
+  target = XP_TARGET_ATTR,
+  arriveEvent = XP_ARRIVE_EVENT,
+  className,
+}: {
+  trigger: number;
+  amount?: number;
+  /** "XP" (violet pill, flies to the XP counter) or "xương" (sun pill, give `target` and `arriveEvent` of the bone chip). */
+  unit?: string;
+  target?: string;
+  arriveEvent?: string;
+  className?: string;
+}) {
   const anchor = useRef<HTMLSpanElement>(null);
   const reduced = useReducedMotion();
   const [flights, setFlights] = useState<Flight[]>([]);
@@ -37,11 +56,11 @@ export function XpBurst({ trigger, amount = 1, className }: { trigger: number; a
     const el = anchor.current;
     if (!el) return;
     if (reduced) {
-      window.dispatchEvent(new Event(XP_ARRIVE_EVENT));
+      window.dispatchEvent(new Event(arriveEvent));
       return;
     }
     const a = el.getBoundingClientRect();
-    const t = document.querySelector(`[${XP_TARGET_ATTR}]`)?.getBoundingClientRect();
+    const t = document.querySelector(`[${target}]`)?.getBoundingClientRect();
     const flight: Flight = {
       id: trigger,
       from: { x: a.left + a.width / 2, y: a.top + a.height / 2 },
@@ -49,11 +68,11 @@ export function XpBurst({ trigger, amount = 1, className }: { trigger: number; a
     };
     const id = requestAnimationFrame(() => setFlights((f) => [...f, flight]));
     return () => cancelAnimationFrame(id);
-  }, [trigger, reduced]);
+  }, [trigger, reduced, target, arriveEvent]);
 
   function land(flight: Flight) {
     setFlights((f) => f.filter((x) => x.id !== flight.id));
-    if (flight.to) window.dispatchEvent(new Event(XP_ARRIVE_EVENT));
+    if (flight.to) window.dispatchEvent(new Event(arriveEvent));
   }
 
   return (
@@ -65,7 +84,10 @@ export function XpBurst({ trigger, amount = 1, className }: { trigger: number; a
             <m.span
               key={f.id}
               aria-hidden
-              className="pointer-events-none fixed top-0 left-0 z-50 -mt-3 -ml-7 rounded-full bg-xp-fg px-2.5 py-0.5 text-sm font-extrabold text-on-primary shadow-md"
+              className={cn(
+                "pointer-events-none fixed top-0 left-0 z-50 -mt-3 -ml-7 rounded-full px-2.5 py-0.5 text-sm font-extrabold shadow-md",
+                unit === "XP" ? "bg-xp-fg text-on-primary" : "bg-c-sun text-c-sun-on",
+              )}
               initial={{ x: f.from.x, y: f.from.y, opacity: 0, scale: 0.8 }}
               animate={
                 f.to
@@ -75,7 +97,7 @@ export function XpBurst({ trigger, amount = 1, className }: { trigger: number; a
               transition={{ duration: 0.65, ease: [0.2, 0.7, 0.3, 1], times: [0, 0.15, 0.8, 1] }}
               onAnimationComplete={() => land(f)}
             >
-              +{amount} XP
+              +{amount} {unit}
             </m.span>
           )),
           document.body,

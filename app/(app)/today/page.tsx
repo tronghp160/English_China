@@ -9,6 +9,10 @@ import { MascotSay } from "@/components/mascot/mascot-say";
 import { PettablePup } from "@/components/mascot/pettable-pup";
 import { Pup } from "@/components/mascot/pup";
 import { CountUp } from "@/components/fx/count-up";
+import { Reveal } from "@/components/fx/reveal";
+import { Tilt } from "@/components/fx/tilt";
+import { LevelBar } from "@/components/today/level-bar";
+import { QuestCard } from "@/components/today/quest-card";
 import { Heatmap } from "@/components/stats/heatmap";
 import { ProgressRing } from "@/components/stats/progress-ring";
 import { StreakWeek } from "@/components/stats/streak-week";
@@ -18,8 +22,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { IconTile } from "@/components/ui/icon-tile";
 import { CONTACT } from "@/lib/contact";
 import { getDeckSamples, getMyDecks } from "@/lib/data/decks";
+import { getProgress } from "@/lib/data/progress";
 import { getStudySummary } from "@/lib/data/study";
-import { say, type LineKey, type PupMood } from "@/lib/mascot/lines";
+import { LINES, say, type LineKey, type PupMood } from "@/lib/mascot/lines";
 import { cn } from "@/lib/utils";
 import { readPrefs } from "@/lib/validation";
 
@@ -48,7 +53,7 @@ const QUICK = [
 ] as const;
 
 export default async function TodayPage() {
-  const [s, decks] = await Promise.all([getStudySummary(), getMyDecks()]);
+  const [s, decks, progress] = await Promise.all([getStudySummary(), getMyDecks(), getProgress()]);
   const due = s.langs.reduce((n, l) => n + l.due, 0);
   const fresh = s.langs.reduce((n, l) => n + l.newToday, 0);
   const tomorrow = s.langs.reduce((n, l) => n + l.dueTomorrow, 0);
@@ -73,6 +78,10 @@ export default async function TodayPage() {
     name: prefs.mascot_name,
     n: line === "streakAtRisk" ? s.streak.current : remaining,
   });
+  // The phone bubble takes turns through every line of this situation, starting with today's pick
+  const texts = Array.from({ length: LINES[line].length }, (_, i) =>
+    say(line, { seed: seed + i, name: prefs.mascot_name, n: line === "streakAtRisk" ? s.streak.current : remaining }),
+  );
   const minutes = Math.max(1, Math.ceil((remaining * 20) / 60));
   const activeDays = s.days.filter((d) => d.reviews > 0).map((d) => d.day);
   const topDecks = [...decks].sort((a, b) => Number(b.due_count) - Number(a.due_count)).slice(0, 4);
@@ -82,12 +91,19 @@ export default async function TodayPage() {
   const langChips = s.langs.filter((l) => l.due + l.newToday > 0);
 
   return (
-    <div className="flex flex-col gap-6 lg:gap-7">
+    <Reveal className="flex flex-col gap-6 lg:gap-7">
       <header>
         <p className="text-sm font-medium text-fg-muted">{dateLine(s.today)}</p>
         <h1 className="mt-0.5 text-[1.6875rem] leading-tight sm:text-[2.125rem]">
           {greeting(s.me.settings.timezone)}, {firstName}!
         </h1>
+        <LevelBar
+          level={progress.level.level}
+          xpInLevel={progress.level.xpInLevel}
+          xpForNext={progress.level.xpForNext}
+          linked={prefs.mascot}
+          name={prefs.mascot_name}
+        />
       </header>
 
       {s.totalCards === 0 ? (
@@ -172,7 +188,7 @@ export default async function TodayPage() {
                   </div>
                 </div>
                 {prefs.mascot && (
-                  <PettablePup mood="cheer" name={prefs.mascot_name} size={96} bubble bubbleClassName="right-0 bottom-full mr-0 mb-1" sleepAfterMs={30_000} className="absolute right-5 -bottom-1.5 hidden lg:block" />
+                  <PettablePup mood="cheer" name={prefs.mascot_name} size={96} pupClassName="xl:size-[7.5rem]" bubble bubbleClassName="right-0 bottom-full mr-0 mb-1" sleepAfterMs={30_000} className="absolute right-5 -bottom-1.5 hidden lg:block" />
                 )}
               </section>
             ) : (
@@ -190,7 +206,7 @@ export default async function TodayPage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <Button asChild variant="white" size="xl" className="text-success-fg">
+                  <Button asChild variant="white" size="xl" className="text-rate-easy-press">
                     <Link href="/practice">
                       <PenLine aria-hidden />
                       Luyện thêm
@@ -201,13 +217,13 @@ export default async function TodayPage() {
                   </Link>
                 </div>
                 {prefs.mascot && (
-                  <PettablePup mood="cheer" name={prefs.mascot_name} size={96} bubble bubbleClassName="right-0 bottom-full mr-0 mb-1" sleepAfterMs={30_000} className="absolute right-5 -bottom-1.5 hidden sm:block" />
+                  <PettablePup mood="cheer" name={prefs.mascot_name} size={96} pupClassName="xl:size-[7.5rem]" bubble bubbleClassName="right-0 bottom-full mr-0 mb-1" sleepAfterMs={30_000} className="absolute right-5 -bottom-1.5 hidden sm:block" />
                 )}
               </section>
             )}
 
             {prefs.mascot ? (
-              <MascotSay mood={mood} name={prefs.mascot_name} text={text} size={56} className="lg:hidden" />
+              <MascotSay mood={mood} name={prefs.mascot_name} text={text} texts={texts} size={88} className="lg:hidden" />
             ) : (
               <p className="text-fg-muted lg:hidden">{text}</p>
             )}
@@ -219,6 +235,8 @@ export default async function TodayPage() {
               className="lg:col-start-2 lg:row-start-1 lg:justify-center"
             />
           </div>
+
+          <QuestCard quests={progress.quests} bones={progress.bones} />
 
           <nav aria-label="Lối tắt" className="grid grid-cols-3 gap-3 lg:gap-4">
             <Card interactive>
@@ -256,7 +274,9 @@ export default async function TodayPage() {
               <ul className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 xl:grid-cols-4">
                 {topDecks.map((d) => (
                   <li key={d.id} className="w-[12.5rem] shrink-0 snap-start md:w-auto">
-                    <DeckCard d={d} sample={samples[d.id]} compact />
+                    <Tilt>
+                      <DeckCard d={d} sample={samples[d.id]} compact quickReview />
+                    </Tilt>
                   </li>
                 ))}
               </ul>
@@ -292,6 +312,6 @@ export default async function TodayPage() {
         </p>
         <ContactLinks compact />
       </section>
-    </div>
+    </Reveal>
   );
 }

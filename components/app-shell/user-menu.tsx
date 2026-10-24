@@ -1,6 +1,6 @@
 "use client";
 
-import { Bone, LogOut, MessageSquareHeart, Palette, Settings, User } from "lucide-react";
+import { Bone, LogOut, MessageSquareHeart, Palette, Settings, User, Users } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useOptionalMe } from "@/components/app-shell/me-provider";
@@ -93,6 +93,11 @@ export function UserMenu({
         <DropdownMenuItem asChild>
           <Link href="/settings#ho-so">
             <User aria-hidden /> Hồ sơ
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="lg:hidden">
+          <Link href="/groups">
+            <Users aria-hidden /> Nhóm
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

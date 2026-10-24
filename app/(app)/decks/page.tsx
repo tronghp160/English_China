@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { AddWordFab } from "@/components/app-shell/fab";
 import { DeckList } from "@/components/deck/deck-list";
 import { Button } from "@/components/ui/button";
 import { getDeckSamples, getMyDecks } from "@/lib/data/decks";
@@ -17,7 +18,7 @@ export default async function DecksPage({ searchParams }: PageProps<"/decks">) {
     <div>
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-[1.6875rem] sm:text-[2.125rem]">Bộ từ</h1>
-        <Button asChild>
+        <Button asChild className="max-lg:hidden">
           <Link href="/decks/new">
             <Plus aria-hidden />
             Tạo bộ từ
@@ -25,6 +26,7 @@ export default async function DecksPage({ searchParams }: PageProps<"/decks">) {
         </Button>
       </div>
       <DeckList decks={decks} langFilter={langFilter} samples={samples} />
+      <AddWordFab href="/decks/new" label="Tạo bộ từ" />
     </div>
   );
 }

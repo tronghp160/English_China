@@ -5,13 +5,13 @@ import { Play, Plus } from "lucide-react";
 import { AddWordFab } from "@/components/app-shell/fab";
 import { BackLink } from "@/components/app-shell/back-link";
 import { DeckActionsMenu } from "@/components/deck/deck-actions-menu";
-import { DeckArt } from "@/components/deck/deck-art";
+import { DeckArtHero } from "@/components/deck/deck-art";
 import { DeckWords } from "@/components/deck/deck-words";
 import { StudyStrip } from "@/components/deck/study-strip";
 import { SubscribeButton } from "@/components/deck/subscribe-button";
 import { Button } from "@/components/ui/button";
 import { LANGUAGES, type PracticeMode } from "@/lib/lang/registry";
-import { getDeck, getMyDecks } from "@/lib/data/decks";
+import { getDeck, getDeckSamples, getMyDecks } from "@/lib/data/decks";
 import { deckColor, deckColorClasses } from "@/lib/deck-colors";
 import { createClient } from "@/lib/supabase/server";
 import { publicEnv } from "@/lib/env";
@@ -36,9 +36,10 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
   const { deck, isOwner, canEdit, isSubscribed } = view;
 
   const supabase = await createClient();
-  const [{ data: topics }, myDecks] = await Promise.all([
+  const [{ data: topics }, myDecks, samples] = await Promise.all([
     supabase.rpc("deck_topics", { p_deck_id: deckId }),
     getMyDecks(),
+    getDeckSamples([deckId]),
   ]);
   const moveTargets = myDecks
     .filter((d) => d.relation === "own" && d.language === deck.language && d.id !== deckId)
@@ -52,8 +53,7 @@ export default async function DeckPage({ params }: PageProps<"/decks/[deckId]">)
     <div>
       <BackLink href="/decks" label="Bộ từ" />
       <header className={`flex items-start gap-4 rounded-xl p-5 md:gap-6 md:p-6 ${color.soft}`}>
-        <DeckArt id={deckId} language={deck.language} name={deck.name} size="md" className="bg-white/70 md:hidden dark:bg-surface" />
-        <DeckArt id={deckId} language={deck.language} name={deck.name} size="lg" className="hidden bg-white/70 md:inline-flex dark:bg-surface" />
+        <DeckArtHero id={deckId} language={deck.language} name={deck.name} sample={samples[deckId]} />
         <div className="min-w-0 flex-1">
           <h1 className="text-[1.5rem] break-words sm:text-[1.875rem]">{deck.name}</h1>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-fg-muted">

@@ -1,3 +1,4 @@
+import { TONE_CLASSES, type Tone } from "@/lib/tone";
 import { cn } from "@/lib/utils";
 
 type CardState = "new" | "learning" | "review" | "relearning";
@@ -68,5 +69,35 @@ export function StatusLegend({ className }: { className?: string }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+const CHIP_TONE: Record<StatusKey, Tone | null> = { new: null, learning: "sun", learned: "mint", hard: "red", suspended: null };
+
+/** The learning status as a small colored word: Mới, Đang học, Đã thuộc, Hay quên, Đang tạm ẩn. */
+export function StatusChip({
+  state,
+  lapses,
+  suspended,
+  className,
+}: {
+  state: CardState;
+  lapses: number;
+  suspended: boolean;
+  className?: string;
+}) {
+  const s = statusOf(state, lapses, suspended);
+  const tone = CHIP_TONE[s.key];
+  return (
+    <span
+      className={cn(
+        "inline-flex h-6 shrink-0 items-center rounded-full px-2.5 text-[0.8125rem] font-bold whitespace-nowrap",
+        tone ? cn(TONE_CLASSES[tone].soft, TONE_CLASSES[tone].fg) : "bg-surface-2 text-fg-muted",
+        s.key === "suspended" && "border border-dashed border-border-strong bg-transparent",
+        className,
+      )}
+    >
+      {s.label}
+    </span>
   );
 }

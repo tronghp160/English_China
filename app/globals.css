@@ -1382,6 +1382,39 @@
   }
 }
 
+/* The streak flame flares once when the page opens on a day already studied (REDESIGN_V3 §6.1) */
+.streak-flare {
+  animation: streak-flare 900ms var(--ease-spring) 250ms both;
+}
+@keyframes streak-flare {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.3) rotate(-6deg);
+    filter: saturate(1.4) brightness(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+/* Today's circle in the week gets a soft halo once it is done */
+.streak-today-glow {
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--streak) 35%, transparent);
+}
+
+/* Pages ease in when you move between them (app/(app)/template.tsx) */
+.page-in {
+  /* no fill after the end: a filling transform would make this box the containing block of the fixed buttons inside */
+  animation: page-in 160ms var(--ease-out);
+}
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
 /* A pointer over a pettable Bin makes the tail go faster */
 .bin-pet:hover .pup-tail {
   animation-duration: 340ms;
@@ -1415,18 +1448,18 @@
 }
 .heat-rest {
   position: relative;
+  background: var(--surface-2);
 }
 .heat-rest::after {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    to top right,
-    transparent calc(50% - 0.75px),
-    var(--border-strong) calc(50% - 0.75px) calc(50% + 0.75px),
-    transparent calc(50% + 0.75px)
-  );
+  top: 50%;
+  left: 50%;
+  width: 34%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--streak);
 }
 
 /* A matched tile in the Match game: a green flash, then an empty dashed slot where it was (the board does not reflow) */
@@ -1526,7 +1559,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .reveal > *,
-  .burst-dot {
+  .burst-dot,
+  .page-in,
+  .streak-flare {
     animation: none;
   }
   .burst-dot {

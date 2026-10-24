@@ -37,7 +37,13 @@ export function StreakWeek({
       className={cn("flex flex-col gap-3.5 rounded-lg bg-streak-soft p-5 text-streak-fg", className)}
     >
       <div className="flex items-center gap-2.5">
-        <IconTile icon={Flame} tone="sun" size={32} solid className="text-white [&_svg]:fill-white [&_svg]:stroke-[var(--streak-fg)]" />
+        <IconTile
+          icon={Flame}
+          tone="sun"
+          size={32}
+          solid
+          className={cn("text-white [&_svg]:fill-white [&_svg]:stroke-[var(--streak-fg)]", streak.activeToday && "streak-flare")}
+        />
         <h2 id="streak-title" className="text-base font-bold">
           Chuỗi ngày
         </h2>
@@ -53,6 +59,7 @@ export function StreakWeek({
               className={cn(
                 "grid size-[1.625rem] place-items-center rounded-full sm:size-[1.875rem]",
                 d.state === "done" && "bg-streak text-white",
+                d.state === "done" && d.isToday && "streak-today-glow",
                 d.state === "empty" && !d.isToday && "bg-surface",
                 d.state === "rest" && "bg-surface text-streak-fg",
                 d.state === "empty" && d.isToday && "border-2 border-dashed border-streak-fg/60",
