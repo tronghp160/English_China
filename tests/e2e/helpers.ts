@@ -35,6 +35,7 @@ export async function signUp(page: Page, email: string, displayName = "Người 
   await page.getByRole("radio", { name: /Tiếng Anh/ }).click();
   // Tests start from an empty notebook unless they ask for the sample decks (the switch is on by default).
   if (!opts.samples) await page.getByRole("switch", { name: "Thêm bộ từ mẫu" }).click();
+  await page.getByRole("button", { name: "Tiếp tục" }).click(); // step 3 of 3: the summary
   await page.getByRole("button", { name: /Bắt đầu học/ }).click();
   await page.waitForURL(/\/today/);
   return { username };

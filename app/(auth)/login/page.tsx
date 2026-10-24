@@ -18,12 +18,12 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
   return (
     <AuthCard
-      title="Đăng nhập"
-      subtitle="Tiếp tục với sổ từ của bạn."
+      title="Chào mừng trở lại!"
+      subtitle="Bin nhớ bạn lắm đó."
       alert={error}
       footer={
         <>
-          Chưa có tài khoản? <FooterLink href={signupHref}>Đăng ký</FooterLink>
+          Chưa có tài khoản? <FooterLink href={signupHref}>Tạo sổ miễn phí</FooterLink>
         </>
       }
     >

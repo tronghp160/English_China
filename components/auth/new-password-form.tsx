@@ -1,13 +1,11 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { passwordSchema } from "@/lib/validation";
-import { authErrorMessage, FormAlert, loadSupabase, PASSWORD_HINT, PasswordField } from "./auth-shared";
+import { authErrorMessage, FormAlert, loadSupabase, PASSWORD_HINT, PasswordField, PasswordStrength, SubmitButton } from "./auth-shared";
 
 /**
  * Sets the signed-in user's password: after a reset link (/reset-password) or
@@ -45,7 +43,7 @@ export function NewPasswordForm({ redirectTo, className }: { redirectTo?: string
   }
 
   return (
-    <form onSubmit={submit} className={cn("space-y-4", className)} noValidate>
+    <form onSubmit={submit} className={cn("space-y-5", className)} noValidate>
       <PasswordField
         id="new-password"
         label="Mật khẩu mới"
@@ -54,7 +52,9 @@ export function NewPasswordForm({ redirectTo, className }: { redirectTo?: string
         autoComplete="new-password"
         error={fieldErrors.password}
         hint={PASSWORD_HINT}
-      />
+      >
+        {password && <PasswordStrength password={password} />}
+      </PasswordField>
       <PasswordField
         id="confirm-password"
         label="Nhập lại mật khẩu mới"
@@ -64,10 +64,9 @@ export function NewPasswordForm({ redirectTo, className }: { redirectTo?: string
         error={fieldErrors.confirm}
       />
       {error && <FormAlert>{error}</FormAlert>}
-      <Button type="submit" variant="pressable" size="lg" className="w-full" disabled={busy}>
-        {busy && <Loader2 className="animate-spin" aria-hidden />}
+      <SubmitButton busy={busy} busyLabel="Đang lưu…">
         Lưu mật khẩu
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

@@ -1,12 +1,12 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { emailSchema } from "@/lib/validation";
-import { authErrorMessage, callbackUrl, EmailField, FormAlert, loadSupabase } from "./auth-shared";
+import { useAuthBin } from "./auth-bin";
+import { authErrorMessage, callbackUrl, EmailField, FormAlert, loadSupabase, SubmitButton } from "./auth-shared";
 
 export function ForgotPasswordForm({ initialEmail }: { initialEmail: string }) {
+  const bin = useAuthBin();
   const [email, setEmail] = useState(initialEmail);
   const [busy, setBusy] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -24,7 +24,10 @@ export function ForgotPasswordForm({ initialEmail }: { initialEmail: string }) {
       redirectTo: callbackUrl("/reset-password"),
     });
     setBusy(false);
-    if (error) return setError(authErrorMessage(error));
+    if (error) {
+      bin?.status("error");
+      return setError(authErrorMessage(error));
+    }
     // Same answer whether or not the address has an account (no account enumeration).
     setSentTo(addr.data);
   }
@@ -41,13 +44,12 @@ export function ForgotPasswordForm({ initialEmail }: { initialEmail: string }) {
   }
 
   return (
-    <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
+    <form onSubmit={submit} className="mt-6 space-y-5" noValidate>
       <EmailField value={email} onChange={setEmail} error={emailError} />
       {error && <FormAlert>{error}</FormAlert>}
-      <Button type="submit" variant="pressable" size="lg" className="w-full" disabled={busy}>
-        {busy && <Loader2 className="animate-spin" aria-hidden />}
+      <SubmitButton busy={busy} busyLabel="Đang gửi…">
         Gửi link đặt lại mật khẩu
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

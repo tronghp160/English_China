@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AuthCard, FooterLink } from "@/components/auth/auth-card";
+import { AuthCard } from "@/components/auth/auth-card";
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 
 export const metadata: Metadata = { title: "Quên mật khẩu" };
@@ -10,13 +10,8 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps<"/f
 
   return (
     <AuthCard
-      title="Quên mật khẩu"
+      title="Quên mật khẩu à? Không sao"
       subtitle="Nhập email đã đăng ký, Sổ Từ sẽ gửi link để bạn đặt mật khẩu mới."
-      footer={
-        <>
-          Nhớ ra rồi? <FooterLink href="/login">Đăng nhập</FooterLink>
-        </>
-      }
     >
       <ForgotPasswordForm initialEmail={email} />
     </AuthCard>

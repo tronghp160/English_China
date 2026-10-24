@@ -68,6 +68,9 @@
   --primary-soft: #e6ecff;
   --primary-fg: #2443c7;
   --on-primary: #ffffff;
+  /* The blue panel of the sign-in pages draws flat circles in these two */
+  --primary-lift: color-mix(in oklab, var(--primary) 88%, white);
+  --primary-deep: color-mix(in oklab, var(--primary) 92%, black);
 
   /* Palette: solid / soft / fg */
   --c-blue: #3d63ff;
@@ -305,6 +308,8 @@
   --color-primary-soft: var(--primary-soft);
   --color-primary-fg: var(--primary-fg);
   --color-on-primary: var(--on-primary);
+  --color-primary-lift: var(--primary-lift);
+  --color-primary-deep: var(--primary-deep);
 
   --color-c-blue: var(--c-blue);
   --color-c-blue-soft: var(--c-blue-soft);
@@ -1062,6 +1067,9 @@
 .bin[data-action="peek"] .bin-paw-l {
   opacity: 1;
   transform: none;
+}
+.bin[data-action="coverEyes"] .bin-paw-l,
+.bin[data-action="coverEyes"] .bin-paw-r {
   animation: bin-paw-up 300ms ease-out both;
 }
 .bin[data-action="peek"] .bin-paw-r {
@@ -1403,6 +1411,24 @@
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--streak) 35%, transparent);
 }
 
+/* Sign-in panel (components/auth/auth-shell.tsx): word cards drift slowly, and shift a little with the mouse */
+.auth-float {
+  animation: auth-float var(--float-dur, 7s) ease-in-out var(--float-delay, 0s) infinite;
+}
+@keyframes auth-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.auth-parallax {
+  translate: calc(var(--px, 0) * var(--depth, 1) * 10px) calc(var(--py, 0) * var(--depth, 1) * 10px);
+  transition: translate 220ms var(--ease-out);
+}
+
 /* Pages ease in when you move between them (app/(app)/template.tsx) */
 .page-in {
   /* no fill after the end: a filling transform would make this box the containing block of the fixed buttons inside */
@@ -1561,8 +1587,13 @@
   .reveal > *,
   .burst-dot,
   .page-in,
-  .streak-flare {
+  .streak-flare,
+  .auth-float {
     animation: none;
+  }
+  .auth-parallax {
+    translate: none;
+    transition: none;
   }
   .burst-dot {
     display: none;

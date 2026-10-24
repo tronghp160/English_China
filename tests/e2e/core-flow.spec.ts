@@ -30,6 +30,7 @@ test("đăng ký bằng email + mật khẩu (không cần xác nhận email) v�
   await page.getByRole("button", { name: "Tiếp tục" }).click();
   await page.getByRole("radio", { name: /Tiếng Anh/ }).click();
   await page.getByRole("switch", { name: "Thêm bộ từ mẫu" }).click(); // start from an empty notebook
+  await page.getByRole("button", { name: "Tiếp tục" }).click(); // the summary
   await page.getByRole("button", { name: /Bắt đầu học/ }).click();
   await expect(page).toHaveURL(/\/today/);
   await expect(page.getByRole("heading", { name: /Chào buổi .+, Thử!/ })).toBeVisible();
