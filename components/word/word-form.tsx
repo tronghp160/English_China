@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { createWord, findDuplicates, updateWord, type DuplicateHit } from "@/lib/actions/words";
+import { findDuplicates, updateWord, type DuplicateHit } from "@/lib/actions/words";
 import type { ImageSuggestion } from "@/lib/ai/to-word";
 import { LANGUAGES } from "@/lib/lang/registry";
 import type { LangCode } from "@/lib/lang/types";
@@ -44,23 +44,19 @@ function tabForError(errors: FieldErrors<WordInput>): DetailTab | null {
 }
 
 export function WordForm({
-  deckId,
-  deckName,
+  deckId: _deckId,
   language,
   userId,
   wordId,
   initial,
   aiEnabled,
-  mode = "edit",
 }: {
-  deckId: string;
-  deckName?: string;
+  deckId?: string;
   language: LangCode;
   userId: string;
-  wordId?: string;
+  wordId: string;
   initial?: WordInput;
   aiEnabled: boolean;
-  mode?: "create" | "edit";
 }) {
   const router = useRouter();
   const def = LANGUAGES[language];
@@ -69,7 +65,7 @@ export function WordForm({
     resolver: zodResolver(wordInputSchema),
     defaultValues: defaults,
   });
-  const { register, handleSubmit, reset, setValue, getValues, setError, formState, setFocus, control } = form;
+  const { register, handleSubmit, setValue, getValues, setError, formState, control } = form;
   const errors = formState.errors;
 
   const [pending, startTransition] = useTransition();
@@ -118,7 +114,7 @@ export function WordForm({
     getTerm: () => getValues("term"),
     onApply: applyAi,
     term,
-    autoEnabled: mode === "create",
+    autoEnabled: false,
     aiAvailable: aiEnabled,
   });
 
@@ -126,27 +122,15 @@ export function WordForm({
     (values) =>
       startTransition(async () => {
         const payload = cleanWordInput(values as WordInput);
-        const res = mode === "create" ? await createWord(deckId, payload) : await updateWord(wordId!, payload);
+        const res = await updateWord(wordId, payload);
         if (!res.ok) {
           Object.entries(res.fieldErrors ?? {}).forEach(([k, m]) => setError(k as keyof WordInput, { message: m }));
           toast.error(res.error);
           return;
         }
-        if (mode === "create") {
-          const saved = res.data.term;
-          toast.success(`Đã lưu ${saved}`, {
-            action: { label: "Xem", onClick: () => router.push(`/words/${res.data.id}`) },
-          });
-          reset(emptyWord());
-          setDuplicates([]);
-          setImageSuggestions([]);
-          ai.reset();
-          requestAnimationFrame(() => setFocus("term"));
-        } else {
-          toast.success("Đã lưu từ");
-          router.push(`/words/${wordId}`);
-          router.refresh();
-        }
+        toast.success("Đã lưu từ");
+        router.push(`/words/${wordId}`);
+        router.refresh();
       }),
     (errs) => {
       const target = tabForError(errs);
@@ -269,7 +253,6 @@ export function WordForm({
           {pending && <Loader2 className="animate-spin" aria-hidden />}
           Lưu từ
         </Button>
-        {mode === "create" && deckName && <span className="ml-3 hidden text-sm text-fg-muted sm:inline">vào bộ {deckName}</span>}
       </div>
     </form>
   );

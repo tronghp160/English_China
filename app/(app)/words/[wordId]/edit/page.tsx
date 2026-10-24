@@ -29,7 +29,6 @@ export default async function EditWordPage({ params }: PageProps<"/words/[wordId
       <WordForm
         wordId={wordId}
         deckId={word.deck_id}
-        deckName={view.deck.name}
         language={word.language}
         userId={user.id}
         initial={rowToWordInput(word)}

@@ -1,35 +1,35 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { BackLink } from "@/components/app-shell/back-link";
-import { WordForm } from "@/components/word/word-form";
+import { WordComposer } from "@/components/word/word-composer";
 import { requireUser } from "@/lib/auth";
-import { getDeck } from "@/lib/data/decks";
+import { getDeck, getMyDecks } from "@/lib/data/decks";
 import { aiProvider } from "@/lib/env";
-import { LANGUAGES } from "@/lib/lang/registry";
-import { emptyWord } from "@/lib/word-schema";
 
 export const metadata: Metadata = { title: "Thêm từ" };
 
 export default async function AddWordPage({ params, searchParams }: PageProps<"/decks/[deckId]/add">) {
-  const { deckId } = await params;
-  const prefill = (await searchParams).term;
+  const [{ deckId }, sp] = await Promise.all([params, searchParams]);
   const user = await requireUser();
   const view = await getDeck(deckId);
   if (!view) notFound();
   if (!view.canEdit) redirect(`/decks/${deckId}`);
-  const { deck } = view;
+  const myDecks = await getMyDecks();
+  const targets = myDecks
+    .filter((d) => d.language === view.deck.language && (d.relation === "own" || d.id === deckId))
+    .map((d) => ({ id: d.id, name: d.name }));
+  if (!targets.some((t) => t.id === deckId)) targets.unshift({ id: deckId, name: view.deck.name });
 
   return (
-    <div className="max-w-2xl">
-      <BackLink href={`/decks/${deckId}`} label={deck.name} />
-      <h1 className="mb-6 text-xl">Thêm từ {LANGUAGES[deck.language].label.toLowerCase()}</h1>
-      <WordForm
-        mode="create"
+    <div className="max-w-3xl">
+      <BackLink href={`/decks/${deckId}`} label={view.deck.name} />
+      <WordComposer
         deckId={deckId}
-        deckName={deck.name}
-        language={deck.language}
+        language={view.deck.language}
+        targets={targets}
         userId={user.id}
-        initial={typeof prefill === "string" ? { ...emptyWord(), term: prefill.slice(0, 80) } : undefined}
+        initialTerm={typeof sp.term === "string" ? sp.term.slice(0, 80) : undefined}
+        initialMode={sp.mode === "list" ? "list" : "cards"}
         aiEnabled={aiProvider() !== null}
       />
     </div>
