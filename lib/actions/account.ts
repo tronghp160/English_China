@@ -2,28 +2,12 @@
 
 import { z } from "zod";
 import { requireMe } from "@/lib/auth";
+import { removeUserFiles } from "@/lib/account-files";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "./result";
 
 const deleteSchema = z.object({ confirm: z.string().trim().max(40) });
-
-const BUCKETS = ["avatars", "word-images"] as const;
-
-/** Removes every file under `<userId>/` in the user's storage buckets. */
-async function removeUserFiles(userId: string) {
-  const storage = createAdminClient().storage;
-  for (const bucket of BUCKETS) {
-    for (;;) {
-      const { data, error } = await storage.from(bucket).list(userId, { limit: 1000 });
-      if (error) throw error;
-      if (!data?.length) break;
-      const { error: rmError } = await storage.from(bucket).remove(data.map((f) => `${userId}/${f.name}`));
-      if (rmError) throw rmError;
-      if (data.length < 1000) break;
-    }
-  }
-}
 
 /**
  * Deletes the account for good. The auth user row cascades to the profile and

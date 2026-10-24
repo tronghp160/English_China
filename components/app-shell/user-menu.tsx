@@ -1,6 +1,6 @@
 "use client";
 
-import { Bone, LogOut, MessageSquareHeart, Palette, Settings, User, Users } from "lucide-react";
+import { Bone, LogOut, MessageSquareHeart, Palette, Settings, ShieldCheck, User, Users } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useOptionalMe } from "@/components/app-shell/me-provider";
@@ -64,10 +64,13 @@ export function UserMenu({
   displayName,
   username,
   avatarUrl,
+  isAdmin = false,
 }: {
   displayName: string;
   username: string;
   avatarUrl: string | null;
+  /** Shows "Quản trị" (the server checked it). */
+  isAdmin?: boolean;
 }) {
   // The menu content only renders once it is opened, so reading the saved preference here never reaches the server render.
   const [theme, setTheme] = useState<ThemePreference>(readThemePreference);
@@ -128,6 +131,13 @@ export function UserMenu({
             </DropdownMenuRadioGroup>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
+        {isAdmin && (
+          <DropdownMenuItem asChild>
+            <Link href="/admin">
+              <ShieldCheck aria-hidden /> Quản trị
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link href="/lien-he">
             <MessageSquareHeart aria-hidden /> Liên hệ

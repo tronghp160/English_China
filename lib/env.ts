@@ -30,6 +30,8 @@ const serverSchema = z.object({
   VAPID_SUBJECT: z.string().default("mailto:sotu@example.com"),
   /** Bearer token Vercel Cron sends to /api/cron/reminders. */
   CRON_SECRET: z.string().optional(),
+  /** Comma-separated emails that are always admins of /admin (more can be granted there or with pnpm admin:grant). */
+  ADMIN_EMAILS: z.string().optional(),
   PEXELS_API_KEY: z.string().optional(),
   UNSPLASH_ACCESS_KEY: z.string().optional(),
 });

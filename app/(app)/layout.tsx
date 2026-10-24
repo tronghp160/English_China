@@ -9,6 +9,7 @@ import { ChatWidget } from "@/components/contact/chat-widget";
 import { QuickSearch } from "@/components/app-shell/quick-search";
 import { ThemeSwitch } from "@/components/app-shell/theme-switch";
 import { TopBar } from "@/components/app-shell/top-bar";
+import { isAdmin } from "@/lib/admin";
 import { requireMe } from "@/lib/auth";
 import { getStudySummary } from "@/lib/data/study";
 import { cjkFontVariables } from "@/lib/fonts";
@@ -17,7 +18,7 @@ import { readPrefs } from "@/lib/validation";
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const me = await requireMe();
   if (!me.settings.onboarded) redirect("/welcome");
-  const summary = await getStudySummary();
+  const [summary, admin] = await Promise.all([getStudySummary(), isAdmin()]);
   const dueCount = summary.langs.reduce((n, l) => n + l.due, 0);
 
   return (
@@ -46,6 +47,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               displayName={me.profile.display_name}
               username={me.profile.username}
               avatarUrl={me.profile.avatar_url}
+              isAdmin={admin}
             />
           </div>
         </TopBar>

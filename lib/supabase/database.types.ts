@@ -32,6 +32,26 @@ export type Database = {
           },
         ];
       };
+      app_admins: {
+        Row: {
+          granted_at: string;
+          granted_by: string | null;
+          user_id: string;
+        };
+        Insert: {
+          granted_at?: string;
+          granted_by?: string | null;
+          user_id: string;
+        };
+        Update: {
+          granted_at?: string;
+          granted_by?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+
+        ];
+      };
       chat_messages: {
         Row: {
           created_at: string;
