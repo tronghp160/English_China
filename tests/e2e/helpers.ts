@@ -25,7 +25,7 @@ export async function magicLinkPath(email: string, next = "/today") {
 }
 
 /** Signs a fresh account in through the callback and finishes onboarding (English only). */
-export async function signUp(page: Page, email: string, displayName = "Người Thử") {
+export async function signUp(page: Page, email: string, displayName = "Người Thử", opts: { samples?: boolean } = {}) {
   await page.goto(await magicLinkPath(email));
   await page.waitForURL(/\/welcome/);
   const username = `e2e_${Date.now().toString(36)}`;
@@ -33,7 +33,8 @@ export async function signUp(page: Page, email: string, displayName = "Người 
   await page.getByLabel("Tên người dùng").fill(username);
   await page.getByRole("button", { name: "Tiếp tục" }).click();
   await page.getByRole("radio", { name: /Tiếng Anh/ }).click();
-  await page.getByRole("switch", { name: "Thêm bộ từ mẫu" }).click(); // tests start from an empty notebook
+  // Tests start from an empty notebook unless they ask for the sample decks (the switch is on by default).
+  if (!opts.samples) await page.getByRole("switch", { name: "Thêm bộ từ mẫu" }).click();
   await page.getByRole("button", { name: /Bắt đầu học/ }).click();
   await page.waitForURL(/\/today/);
   return { username };

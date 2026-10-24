@@ -27,6 +27,8 @@ export default defineConfig({
     timezoneId: "Asia/Ho_Chi_Minh",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
+    // Animations (V3) would make assertions flaky; the app cuts them for this setting.
+    reducedMotion: "reduce",
   },
   projects: [{ name: "mobile", use: { ...devices["Pixel 7"] } }],
   webServer: process.env.E2E_BASE_URL

@@ -1,6 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { domMax, LazyMotion, MotionConfig } from "motion/react";
 import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,21 +30,27 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider delayDuration={300}>
-        {children}
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            classNames: {
-              // A white card with a soft shadow; the icon and text take the color of the verdict.
-              toast: "!bg-surface !text-fg !border !border-border !rounded-lg !font-sans !text-sm !font-semibold !shadow-lg",
-              description: "!text-fg-muted !font-normal",
-              success: "!text-success-fg",
-              error: "!text-danger-fg",
-            },
-          }}
-        />
-      </TooltipProvider>
+      {/* One motion setup for the whole app: m.* components load the features lazily, and "user" turns
+          transform animation off for people who asked the OS for reduced motion. */}
+      <MotionConfig reducedMotion="user">
+        <LazyMotion features={domMax} strict>
+          <TooltipProvider delayDuration={300}>
+            {children}
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                classNames: {
+                  // A white card with a soft shadow; the icon and text take the color of the verdict.
+                  toast: "!bg-surface !text-fg !border !border-border !rounded-lg !font-sans !text-sm !font-semibold !shadow-lg",
+                  description: "!text-fg-muted !font-normal",
+                  success: "!text-success-fg",
+                  error: "!text-danger-fg",
+                },
+              }}
+            />
+          </TooltipProvider>
+        </LazyMotion>
+      </MotionConfig>
     </QueryClientProvider>
   );
 }
