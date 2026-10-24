@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { WifiOff } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
-import { InkFigure } from "@/components/ui/empty-state";
+import { IconTile } from "@/components/ui/icon-tile";
 import { RetryButton } from "./retry-button";
 
 export const metadata: Metadata = { title: "Không có mạng" };
@@ -13,7 +14,7 @@ export default function OfflinePage() {
         <Logo />
       </header>
       <main className="mt-6 flex flex-col items-start">
-        <InkFigure name="notebook" size={72} />
+        <IconTile icon={WifiOff} tone="sun" size={72} />
         <h1 className="mt-4 text-xl">Bạn đang offline</h1>
         <p className="mt-2 text-fg-muted">
           Trang này cần mạng để tải. Nếu đang ôn dở, kết quả đã lưu trên máy và sẽ tự gửi khi có mạng lại.

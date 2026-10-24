@@ -35,11 +35,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
           position="top-center"
           toastOptions={{
             classNames: {
-              // Inverted: ink background, paper text. Errors get a seal bar on the left.
-              toast: "!bg-fg !text-canvas !border-0 !rounded-md !font-sans !text-sm !shadow-lift",
-              description: "!text-canvas/70",
-              error: "!border-l-[3px] !border-solid !border-l-danger",
-              icon: "!hidden",
+              // A white card with a soft shadow; the icon and text take the color of the verdict.
+              toast: "!bg-surface !text-fg !border !border-border !rounded-lg !font-sans !text-sm !font-semibold !shadow-lg",
+              description: "!text-fg-muted !font-normal",
+              success: "!text-success-fg",
+              error: "!text-danger-fg",
             },
           }}
         />

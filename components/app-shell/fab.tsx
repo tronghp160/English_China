@@ -30,7 +30,7 @@ export function AddWordFab({ href, label = "Thêm từ" }: { href: string; label
       href={href}
       aria-label={label}
       className={cn(
-        "fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 inline-flex h-14 items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground shadow-lift transition-[padding,background-color] duration-[var(--dur-base)] ease-[var(--ease-out)] hover:bg-primary-hover lg:hidden",
+        "fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 inline-flex h-14 items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground shadow-lg transition-[padding,background-color] duration-[var(--dur-base)] ease-[var(--ease-out)] hover:bg-primary-hover lg:hidden",
         compact ? "w-14" : "px-5 font-semibold",
       )}
     >

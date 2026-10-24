@@ -11,7 +11,7 @@ import { SessionBar } from "@/components/review/session-bar";
 import { WordVisual } from "@/components/review/word-visual";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { InkFigure } from "@/components/ui/empty-state";
+import { FigureTile } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { answerMood } from "@/lib/mascot/lines";
 import { checkTyping, type StudyWord, type TypingResult } from "@/lib/practice";
@@ -243,7 +243,7 @@ export function LearnSession({
         <LearnBar state={saved} exitHref={exitHref} />
         <div className="flex flex-1 flex-col justify-center gap-6 py-6">
           <div className="flex flex-col items-center gap-3 text-center">
-            {prefs.mascot ? <Pup mood="think" size={72} /> : <InkFigure name="notebook" size={72} />}
+            {prefs.mascot ? <Pup mood="think" size={72} /> : <FigureTile name="notebook" />}
             <h1 className="text-xl">Tiếp tục học?</h1>
             <p className="text-fg-muted">
               Đã thuộc {p.mastered}/{saved.words.length} từ

@@ -173,7 +173,7 @@ export function WelcomeForm({
                 onClick={() => setDaily(n)}
                 className={cn(
                   "h-9 min-w-14 rounded-full px-3 text-sm font-medium tabular-nums transition-colors",
-                  daily === n ? "bg-surface text-fg shadow-card" : "text-fg-muted hover:text-fg",
+                  daily === n ? "bg-surface text-fg shadow-sm" : "text-fg-muted hover:text-fg",
                 )}
               >
                 {n}

@@ -31,7 +31,7 @@ export function SegmentedRadio<T extends string | number>({
             key={String(o.value)}
             className={cn(
               "inline-flex h-9 cursor-pointer items-center rounded-full px-3.5 text-sm font-medium whitespace-nowrap transition-colors duration-[var(--dur-fast)] has-focus-visible:outline-2 has-focus-visible:outline-offset-1 has-focus-visible:outline-primary",
-              value === o.value ? "bg-surface text-fg shadow-card" : "text-fg-muted hover:text-fg",
+              value === o.value ? "bg-surface text-fg shadow-sm" : "text-fg-muted hover:text-fg",
             )}
           >
             <input type="radio" name={name} className="sr-only" checked={value === o.value} onChange={() => onChange(o.value)} />

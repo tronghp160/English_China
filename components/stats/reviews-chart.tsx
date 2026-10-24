@@ -25,7 +25,7 @@ function Tip({ active, payload }: TooltipContentProps<number, string>) {
   if (!active || !p) return null;
   const pct = p.reviews ? Math.round((p.correct / p.reviews) * 100) : 0;
   return (
-    <div className="rounded-md bg-fg px-3 py-2 text-sm text-canvas shadow-lift">
+    <div className="rounded-md bg-fg px-3 py-2 text-sm text-canvas shadow-lg">
       <p className="font-medium">{short(p.day)}</p>
       <p className="opacity-80">
         <span className="tabular-nums">{p.reviews}</span> lượt ôn

@@ -45,7 +45,7 @@ export function NewChatForm({
                 onClick={() => setLanguage(l)}
                 className={cn(
                   "inline-flex h-9 items-center rounded-full px-3.5 text-sm font-medium transition-colors",
-                  language === l ? "bg-surface text-fg shadow-card" : "text-fg-muted hover:text-fg",
+                  language === l ? "bg-surface text-fg shadow-sm" : "text-fg-muted hover:text-fg",
                 )}
               >
                 {LANGUAGES[l].label}

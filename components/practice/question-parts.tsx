@@ -220,7 +220,7 @@ export function FeedbackPanel({
     <div
       role="status"
       className={cn(
-        "sticky bottom-0 -mx-4 mt-4 flex animate-in flex-col gap-3 rounded-t-xl border-t-[3px] px-4 pt-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] shadow-lift duration-200 fade-in-0 slide-in-from-bottom-6",
+        "sticky bottom-0 -mx-4 mt-4 flex animate-in flex-col gap-3 rounded-t-xl border-t-[3px] px-4 pt-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] shadow-lg duration-200 fade-in-0 slide-in-from-bottom-6",
         v.tone,
       )}
     >

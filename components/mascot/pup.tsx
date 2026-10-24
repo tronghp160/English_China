@@ -2,13 +2,12 @@ import type { PupMood } from "@/lib/mascot/lines";
 import { cn } from "@/lib/utils";
 
 /**
- * "Bin", the puppy: a doodle in the margin of a notebook (REDESIGN_PLAN §5.8).
- * One uneven pen line in violet ink, a paper-colored body, pale pencil-shaded ears,
- * two cheek dots. Only the eyes blink and the tail wags; the extras around the head
+ * "Bin", the puppy (REDESIGN_V2 §5.16): a dark ink outline, white fur, solid brown ears, a cream muzzle,
+ * pink cheeks, a blue collar with a sun-yellow tag. Only the eyes blink and the tail wags; the extras around the head
  * (+, hearts, tear, z, ?, !) fade in once when the mood changes and then stay still.
  * Pure SVG, decorative (the words next to it carry the meaning); colors are the --pup-* tokens.
  */
-const INK = "var(--pup-fg)";
+const INK = "var(--pup-ink)";
 
 /** Heart outline centered on (x, y); `s` is about half its width. */
 function heart(x: number, y: number, s: number) {
@@ -210,8 +209,8 @@ export function Pup({
       <path d="M40 84C32 96 33 111 47 113h26c14-2 15-17 7-29" fill="var(--pup-fur)" />
       <path d="M47 113c0-6 8-6 8 0M65 113c0-6 8-6 8 0" />
       {mood === "wave" && <path d="M89 80C89 69 99 64 102 72c3 8-3 16-10 16" fill="var(--pup-fur)" />}
-      <path d="M42 81q18 9 36 0" />
-      <circle cx={60} cy={90} r={2.6} fill="var(--pup-fur)" />
+      <path d="M42 81q18 9 36 0" stroke="var(--pup-collar)" strokeWidth={sw + 2} />
+      <circle cx={60} cy={90} r={3.4} fill="var(--pup-tag)" strokeWidth={sw * 0.6} />
 
       <g transform={mood === "think" ? "rotate(-9 60 56)" : mood === "wink" ? "rotate(5 60 56)" : undefined}>
         {/* Ears sit behind the head and are shaded like pencil */}
@@ -219,6 +218,7 @@ export function Pup({
         <path d="M84 28c14-3 23 13 19 32-6 7-17 1-21-15z" fill="var(--pup-ear)" transform={`rotate(${-ear} 86 32)`} />
         {/* Head */}
         <path d="M29 50C27 31 42 22 60 22c19 0 33 10 31 31-1 19-15 28-31 28-17 0-30-9-31-31z" fill="var(--pup-fur)" />
+        <ellipse cx={60} cy={65} rx={17} ry={12.5} fill="var(--pup-muzzle)" stroke="none" />
         <circle cx={38} cy={62} r={3.6} fill="var(--pup-blush)" stroke="none" />
         <circle cx={82} cy={62} r={3.6} fill="var(--pup-blush)" stroke="none" />
         <Eyes mood={mood} animated={animated} />

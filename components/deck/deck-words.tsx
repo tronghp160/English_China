@@ -257,7 +257,7 @@ export function DeckWords({
               aria-label="Dạng danh sách"
               aria-pressed={view === "list"}
               onClick={() => setView("list")}
-              className={cn("grid size-9 place-items-center rounded-full", view === "list" ? "bg-surface text-fg shadow-card" : "text-fg-muted hover:text-fg")}
+              className={cn("grid size-9 place-items-center rounded-full", view === "list" ? "bg-surface text-fg shadow-sm" : "text-fg-muted hover:text-fg")}
             >
               <List className="size-4" aria-hidden />
             </button>
@@ -266,7 +266,7 @@ export function DeckWords({
               aria-label="Dạng lưới có ảnh"
               aria-pressed={view === "grid"}
               onClick={() => setView("grid")}
-              className={cn("grid size-9 place-items-center rounded-full", view === "grid" ? "bg-surface text-fg shadow-card" : "text-fg-muted hover:text-fg")}
+              className={cn("grid size-9 place-items-center rounded-full", view === "grid" ? "bg-surface text-fg shadow-sm" : "text-fg-muted hover:text-fg")}
             >
               <LayoutGrid className="size-4" aria-hidden />
             </button>
@@ -343,7 +343,7 @@ export function DeckWords({
         <div
           role="toolbar"
           aria-label="Thao tác với từ đã chọn"
-          className="fixed inset-x-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-lg bg-fg p-3 text-canvas shadow-lift lg:bottom-6 lg:left-64"
+          className="fixed inset-x-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-lg bg-fg p-3 text-canvas shadow-lg lg:bottom-6 lg:left-64"
         >
           <span className="mr-auto pl-1 text-sm font-medium">Đã chọn {ids.length}</span>
           {moveTargets.length > 0 && (

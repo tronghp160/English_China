@@ -1,15 +1,15 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Circular progress (0–100) with content in the middle. Ink violet, round ends, turns leaf green at 100%;
- * the stroke is drawn once on mount (`ink-draw`). Decorative: give the parent an accessible label.
+ * Circular progress (0–100) with content in the middle (REDESIGN_V2 §5.8): thick, round ends, blue,
+ * turning green at 100%. The stroke eases to its value when it changes. Decorative: give the parent an accessible label.
  */
 export function ProgressRing({
   value,
   size = 72,
-  stroke = 6,
+  stroke = 10,
   className,
-  trackClassName = "text-surface-2",
+  trackClassName = "text-surface-3",
   barClassName,
   children,
 }: {
@@ -17,8 +17,9 @@ export function ProgressRing({
   size?: number;
   stroke?: number;
   className?: string;
+  /** On a colored hero use `text-white/25` */
   trackClassName?: string;
-  /** Overrides the default ink violet / leaf color */
+  /** Overrides the default blue / green color */
   barClassName?: string;
   children?: React.ReactNode;
 }) {
@@ -42,8 +43,10 @@ export function ProgressRing({
           pathLength={100}
           strokeDasharray={100}
           strokeDashoffset={100 - pct}
-          style={{ "--ink-from": 100 } as React.CSSProperties}
-          className={cn("animate-ink-draw", barClassName ?? (pct >= 100 ? "text-success" : "text-primary"))}
+          className={cn(
+            "transition-[stroke-dashoffset] duration-[800ms] ease-[var(--ease-out)]",
+            barClassName ?? (pct >= 100 ? "text-success" : "text-primary")
+          )}
         />
       </svg>
       <span className="absolute inset-0 grid place-items-center">{children}</span>

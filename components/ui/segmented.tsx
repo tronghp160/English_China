@@ -36,7 +36,7 @@ export function SegmentedNav({
               aria-label={it.name}
               className={cn(
                 "inline-flex h-9 min-w-11 items-center justify-center gap-1.5 rounded-full px-3.5 text-sm font-medium whitespace-nowrap transition-colors duration-[var(--dur-fast)]",
-                it.active ? "bg-surface text-fg shadow-card" : "text-fg-muted hover:text-fg",
+                it.active ? "bg-surface text-fg shadow-sm" : "text-fg-muted hover:text-fg",
               )}
             >
               {it.label}

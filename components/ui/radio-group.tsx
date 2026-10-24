@@ -25,7 +25,7 @@ function RadioGroupItem({
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"
       className={cn(
-        "group/radio-group-item peer relative flex aspect-square size-5 shrink-0 rounded-full border border-input bg-surface outline-none group-has-[:focus-visible]/field-label:ring-0 after:absolute after:-inset-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-3 aria-invalid:ring-danger-soft data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground",
+        "group/radio-group-item peer relative flex aspect-square size-5 shrink-0 rounded-full border-2 border-border-strong bg-surface outline-none group-has-[:focus-visible]/field-label:ring-0 after:absolute after:-inset-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-4 aria-invalid:ring-danger/15 data-checked:border-primary data-checked:bg-primary data-checked:text-on-primary",
         className
       )}
       {...props}
@@ -34,7 +34,7 @@ function RadioGroupItem({
         data-slot="radio-group-indicator"
         className="flex size-5 items-center justify-center"
       >
-        <span className="absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-foreground" />
+        <span className="absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-on-primary" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   )
