@@ -1,3 +1,5 @@
+> Superseded by docs/redesign-v2/REDESIGN_V2.md (design system "Sáng Màu"). Kept for history.
+
 # Sổ Từ — Kế hoạch thiết kế lại toàn bộ giao diện ("Vở mực tím")
 
 > File này viết cho **Claude Code**. Đọc hết một lượt trước khi sửa code, rồi làm theo từng giai đoạn ở §9.

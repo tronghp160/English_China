@@ -155,10 +155,6 @@
   --shadow-primary: 0 8px 24px -8px color-mix(in oklab, var(--primary) 55%, transparent);
   --shadow-hero: 0 16px 32px -14px color-mix(in oklab, var(--primary) 60%, transparent);
 
-  /* Legacy notebook metrics, only until the screens using them are rewritten (REDESIGN_V2 phases 4-10) */
-  --line: 2rem;
-  --margin-x: 0px;
-
   /* Motion */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);

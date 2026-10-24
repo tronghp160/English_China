@@ -30,9 +30,9 @@ export function StrokeOrder({ char, size = 112, className }: { char: string; siz
         showOutline: true,
         strokeAnimationSpeed: 1.2,
         delayBetweenStrokes: 250,
-        strokeColor: cssVar("--fg", "#1E2A4A"),
+        strokeColor: cssVar("--fg", "#12131A"),
         radicalColor: cssVar("--zh", "#FF5C4D"),
-        outlineColor: cssVar("--border-strong", "#C5C6DA"),
+        outlineColor: cssVar("--border-strong", "#CDD2DF"),
         onLoadCharDataError: () => !cancelled && setFailed(true),
       });
     })();

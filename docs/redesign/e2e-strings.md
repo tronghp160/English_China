@@ -1,4 +1,4 @@
-# E2E-locked strings and structure (redesign "Vở mực tím")
+# E2E-locked strings and structure (still valid for redesign V2, docs/redesign-v2/REDESIGN_V2.md)
 
 Generated from `rg "getByRole|getByText|getByLabel|name:" tests/e2e` at commit `d7802e3` (see REDESIGN_PLAN §8.1).
 Keep these texts. Emoji next to them may go. If one must change, edit the test in the same commit and say why.

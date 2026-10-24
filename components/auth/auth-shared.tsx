@@ -149,7 +149,7 @@ export function PasswordField({
   );
 }
 
-/** Message under a field: seal red with a small alert icon. */
+/** Message under a field: red with a small alert icon. */
 export function FieldError({ id, children }: { id?: string; children: React.ReactNode }) {
   return (
     <p id={id} className="flex items-start gap-1.5 text-sm text-danger-fg">
@@ -159,7 +159,7 @@ export function FieldError({ id, children }: { id?: string; children: React.Reac
   );
 }
 
-/** Form-level message: a tinted box with a 3px bar on the left (seal for errors, leaf for good news). */
+/** Form-level message: a tinted box with a 3px bar on the left (red for errors, green for good news). */
 export function FormAlert({ children, tone = "error" }: { children: React.ReactNode; tone?: "error" | "success" }) {
   return (
     <div

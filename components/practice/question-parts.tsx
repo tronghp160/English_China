@@ -38,7 +38,7 @@ export function useSpeak() {
 /** The word as a medium specimen: in bold type with the pinyin under each character. */
 export function TermLine({ word, showReading = true, bare = false }: { word: StudyWord; showReading?: boolean; bare?: boolean }) {
   const { prefs } = useMe();
-  // Inside a page that is already ruled paper (the test sheet) an English word is just set in type.
+  // Inside a page that already has its own surface (the test sheet) an English word is just set in type.
   if (bare && word.language === "en")
     return (
       <div className="flex flex-col items-center gap-1 text-center">
@@ -78,10 +78,8 @@ export function MeaningLine({ word, bare = false }: { word: StudyWord; bare?: bo
     );
   return (
     <div className="w-full max-w-md rounded-xl bg-surface-2 p-5">
-      <p className="flex min-h-[calc(var(--line)*2)] items-end text-[1.5rem] leading-[var(--line)] font-medium text-fg">
-        <span className="relative top-[0.3em]">{word.meaning_vi}</span>
-      </p>
-      <div className="flex min-h-[var(--line)] flex-wrap items-center gap-1.5 pt-1">
+      <p className="text-[1.75rem] leading-tight font-extrabold tracking-[-0.02em] text-fg">{word.meaning_vi}</p>
+      <div className="flex flex-wrap items-center gap-1.5 pt-2">
         {word.parts_of_speech.map((p) => (
           <PosBadge key={p} pos={p} />
         ))}

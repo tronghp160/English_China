@@ -180,7 +180,7 @@ export function PracticeSession({
       body = (
         <>
           <div className="my-4 rounded-xl bg-surface-2 p-5">
-            <p lang={zh ? "zh-CN" : "en"} className={cn("text-xl leading-[var(--line)] text-fg", zh && "font-hanzi text-2xl")}>
+            <p lang={zh ? "zh-CN" : "en"} className={cn("text-xl leading-relaxed text-fg", zh && "font-hanzi text-2xl")}>
               {q.cloze.before}
               <span
                 className={cn(
@@ -192,7 +192,7 @@ export function PracticeSession({
               </span>
               {q.cloze.after}
             </p>
-            {q.cloze.vi && <p className="mt-[var(--line)] text-fg-muted">{q.cloze.vi}</p>}
+            {q.cloze.vi && <p className="mt-4 text-fg-muted">{q.cloze.vi}</p>}
           </div>
           <Options
             options={q.options}
