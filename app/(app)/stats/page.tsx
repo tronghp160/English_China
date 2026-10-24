@@ -11,7 +11,7 @@ import { ReviewsChart } from "@/components/stats/reviews-chart";
 import { getStudySummary } from "@/lib/data/study";
 import { LANGUAGES } from "@/lib/lang/registry";
 import type { PupMood } from "@/lib/mascot/lines";
-import { addDays } from "@/lib/srs/streak";
+import { summarize30 } from "@/lib/stats";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { readPrefs } from "@/lib/validation";
@@ -73,18 +73,7 @@ export default async function StatsPage() {
   const supabase = await createClient();
   const { data: dist } = await supabase.rpc("card_distribution");
 
-  const byDay = new Map(s.days.map((d) => [d.day, d]));
-  const last30 = Array.from({ length: 30 }, (_, i) => addDays(s.today, i - 29)).map((day) => ({
-    day,
-    reviews: byDay.get(day)?.reviews ?? 0,
-    correct: byDay.get(day)?.correct ?? 0,
-  }));
-  const reviews30 = last30.reduce((n, d) => n + d.reviews, 0);
-  const correct30 = last30.reduce((n, d) => n + d.correct, 0);
-  const activeDays30 = last30.filter((d) => d.reviews > 0).length;
-  const retention = reviews30 ? Math.round((correct30 / reviews30) * 100) : null;
-  const best = last30.reduce((a, b) => (b.reviews > a.reviews ? b : a), last30[0]);
-  const perActiveDay = activeDays30 ? Math.round(reviews30 / activeDays30) : 0;
+  const { last30, reviews30, activeDays30, retention, best, perActiveDay } = summarize30(s.days, s.today);
 
   const rows = dist ?? [];
   const langs = [...new Set(rows.map((d) => d.language))].sort();
