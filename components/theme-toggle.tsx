@@ -16,11 +16,11 @@ function subscribe(cb: () => void) {
   return () => listeners.delete(cb);
 }
 
-/** A tiny notebook page drawn in the colors of one theme (the `.light` / `.dark` classes re-apply that theme's tokens). */
+/** A tiny app screen drawn in the colors of one theme (the `.light` / `.dark` classes re-apply that theme's tokens). */
 function Page({ theme, className }: { theme: "light" | "dark"; className?: string }) {
   return (
     <span className={cn(theme, "block h-full bg-canvas p-1.5", className)}>
-      <span className=" block h-full rounded-sm border border-border bg-surface" />
+      <span className="block h-full rounded-sm border border-border bg-surface" />
     </span>
   );
 }
@@ -41,11 +41,11 @@ export function ThemeToggle({ className }: { className?: string }) {
             listeners.forEach((l) => l());
           }}
           className={cn(
-            "flex flex-col gap-2 rounded-md border p-2 text-left text-sm transition-colors",
-            current === value ? "border-primary bg-primary-soft ring-1 ring-primary" : "border-input bg-surface hover:border-fg-muted/50",
+            "flex flex-col gap-2 rounded-lg border-2 p-2 text-left text-sm transition-colors",
+            current === value ? "border-primary bg-primary-soft" : "border-border bg-surface hover:border-border-strong",
           )}
         >
-          <span aria-hidden className="block h-14 overflow-hidden rounded-sm border border-border">
+          <span aria-hidden className="block h-14 overflow-hidden rounded-md border border-border">
             {value === "system" ? (
               <span className="grid h-full grid-cols-2">
                 <Page theme="light" />

@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { Bell, Download, GraduationCap, KeyRound, MessageSquareHeart, PawPrint, Palette, Smartphone, Trash2, User, Volume2, type LucideIcon } from "lucide-react";
+import { IconTile } from "@/components/ui/icon-tile";
+import type { Tone } from "@/lib/tone";
 import { SettingsForm } from "@/components/settings/settings-form";
 import { SettingsNav } from "@/components/settings/settings-nav";
 import { VoiceSettings } from "@/components/settings/voice-settings";
@@ -32,15 +35,36 @@ const SECTIONS = [
   { id: "xoa-tai-khoan", label: "Xóa tài khoản" },
 ] as const;
 
+const LOOK: Record<(typeof SECTIONS)[number]["id"], { icon: LucideIcon; tone: Tone }> = {
+  "ho-so": { icon: User, tone: "blue" },
+  "mat-khau": { icon: KeyRound, tone: "teal" },
+  "on-tap": { icon: GraduationCap, tone: "mint" },
+  "linh-vat": { icon: PawPrint, tone: "sun" },
+  "thong-bao": { icon: Bell, tone: "orange" },
+  "phat-am": { icon: Volume2, tone: "coral" },
+  "giao-dien": { icon: Palette, tone: "grape" },
+  "ung-dung": { icon: Smartphone, tone: "blue" },
+  "lien-he": { icon: MessageSquareHeart, tone: "pink" },
+  "du-lieu": { icon: Download, tone: "blue" },
+  "xoa-tai-khoan": { icon: Trash2, tone: "red" },
+};
+
+/** One group of settings as a card with a colored icon tile (REDESIGN_V2 §6.15). */
 function Section({ id, title, children, danger }: { id: (typeof SECTIONS)[number]["id"]; title: string; children: React.ReactNode; danger?: boolean }) {
+  const { icon, tone } = LOOK[id];
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20 border-t border-border py-8 first:border-t-0 first:pt-0">
-      <div className={danger ? "rounded-lg border border-danger/60 p-5" : undefined}>
-        <h2 id={`${id}-title`} className="mb-4 text-lg">
+    <section
+      id={id}
+      aria-labelledby={`${id}-title`}
+      className={`scroll-mt-20 rounded-lg border bg-surface p-5 shadow-sm sm:p-6 ${danger ? "border-danger/50" : "border-border/60 dark:border-border"}`}
+    >
+      <div className="mb-4 flex items-center gap-3">
+        <IconTile icon={icon} tone={tone} size={32} />
+        <h2 id={`${id}-title`} className="text-lg">
           {title}
         </h2>
-        {children}
       </div>
+      {children}
     </section>
   );
 }
@@ -51,10 +75,10 @@ export default async function SettingsPage() {
 
   return (
     <div>
-      <h1 className="mb-8 text-xl">Cài đặt</h1>
+      <h1 className="mb-6 text-[1.6875rem] sm:text-[2.125rem]">Cài đặt</h1>
       <div className="lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-12">
         <SettingsNav items={[...SECTIONS]} />
-        <div className="max-w-xl">
+        <div className="flex max-w-2xl flex-col gap-4">
           <Section id="ho-so" title="Hồ sơ">
             <AvatarUpload userId={me.user.id} displayName={me.profile.display_name} avatarUrl={me.profile.avatar_url} />
             <SettingsForm

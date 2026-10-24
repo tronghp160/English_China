@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { DeckArt } from "@/components/deck/deck-art";
+import { DeckArtBlock } from "@/components/deck/deck-art";
 import { SubscribeButton } from "@/components/deck/subscribe-button";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { SegmentedNav } from "@/components/ui/segmented";
 import { LANGUAGES } from "@/lib/lang/registry";
+import { getDeckSamples } from "@/lib/data/decks";
 import { EXPLORE_PAGE_SIZE, getPublicDecks, type ExploreSort } from "@/lib/data/explore";
 
 export const metadata: Metadata = { title: "Khám phá" };
@@ -31,6 +34,7 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
   const page = Math.max(1, Math.min(100, Number(params.page) || 1));
   const { decks, total } = await getPublicDecks({ lang, q, sort, page });
   const pages = Math.ceil(total / EXPLORE_PAGE_SIZE);
+  const samples = await getDeckSamples(decks.map((d) => d.id));
 
   const href = (patch: Record<string, string | null>) => {
     const sp = new URLSearchParams();
@@ -42,7 +46,7 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
 
   return (
     <div>
-      <h1 className="text-xl">Khám phá</h1>
+      <h1 className="text-[1.6875rem] sm:text-[2.125rem]">Khám phá</h1>
       <p className="mt-1 text-fg-muted">Bộ từ công khai do mọi người chia sẻ. Học trực tiếp hoặc sao chép về.</p>
 
       <form action="/explore" role="search" className="mt-5 flex max-w-xl gap-2">
@@ -50,9 +54,9 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
         {sort !== "popular" && <input type="hidden" name="sort" value={sort} />}
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute top-1/2 left-3.5 size-[1.125rem] -translate-y-1/2 text-fg-muted" strokeWidth={1.75} aria-hidden />
-          <Input type="search" name="q" defaultValue={q} placeholder="Tìm theo tên bộ từ" aria-label="Tìm theo tên bộ từ" className="pl-10" />
+          <Input type="search" name="q" defaultValue={q} placeholder="Tìm theo tên bộ từ" aria-label="Tìm theo tên bộ từ" className="rounded-full pl-11" />
         </div>
-        <Button type="submit" variant="outline">
+        <Button type="submit" variant="secondary" className="h-12 rounded-full px-5">
           Tìm
         </Button>
       </form>
@@ -71,36 +75,34 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
       </div>
 
       {decks.length ? (
-        <ul className="mt-6 grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+        <ul className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {decks.map((d) => (
-            <li
-              key={d.id}
-              className="group flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-surface p-4 transition-colors duration-[var(--dur-fast)] hover:border-border-strong sm:flex-row sm:items-center sm:gap-4"
-            >
-              <Link href={`/decks/${d.id}`} className="flex min-w-0 flex-1 items-center gap-4">
-                <DeckArt id={d.id} language={d.language} name={d.name} className="transition-transform duration-[var(--dur-fast)] group-hover:-translate-x-0.5" />
-                <span className="min-w-0 flex-1">
-                  <span className="line-clamp-2 leading-snug font-semibold text-fg">{d.name}</span>
-                  {d.description && <span className="mt-0.5 line-clamp-1 block text-sm text-fg">{d.description}</span>}
-                  <span className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-fg-muted">
-                    <span>{LANGUAGES[d.language].label}</span>
-                    <span>{d.word_count} từ</span>
-                    <span>{d.isMine ? "của bạn" : d.owner?.display_name}</span>
+            <li key={d.id} className="min-w-0">
+              <Card interactive className="flex h-full flex-col overflow-hidden">
+                <Link href={`/decks/${d.id}`} className="flex flex-1 flex-col">
+                  <DeckArtBlock id={d.id} language={d.language} name={d.name} sample={samples[d.id]} />
+                  <span className="flex flex-1 flex-col gap-1 px-4 pt-3.5">
+                    <span className="line-clamp-2 leading-snug font-bold text-fg">{d.name}</span>
+                    {d.description && <span className="line-clamp-1 text-sm text-fg">{d.description}</span>}
+                    <span className="flex flex-wrap gap-x-3 text-[0.8125rem] text-fg-muted">
+                      <span>{LANGUAGES[d.language].label}</span>
+                      <span>{d.word_count} từ</span>
+                      <span>{d.isMine ? "của bạn" : d.owner?.display_name}</span>
+                    </span>
                   </span>
-                </span>
-                <ChevronRight className="hidden size-4 shrink-0 text-fg-subtle sm:block" aria-hidden />
-              </Link>
-              <div className="flex shrink-0 items-center justify-between gap-3 sm:flex-col sm:items-end sm:gap-2">
-                <span className="text-sm text-fg-muted tabular-nums">{d.learner_count} người học</span>
-                {d.isSubscribed ? (
-                  <span className="inline-flex items-center gap-1 text-sm text-success-fg">
-                    <Check className="size-4" aria-hidden />
-                    Đang theo học
-                  </span>
-                ) : !d.isMine ? (
-                  <SubscribeButton deckId={d.id} subscribed={false} variant="secondary" size="sm" />
-                ) : null}
-              </div>
+                </Link>
+                <div className="flex items-center justify-between gap-3 px-4 pt-3 pb-4">
+                  <span className="text-sm font-semibold text-fg-muted tabular-nums">{d.learner_count} người học</span>
+                  {d.isSubscribed ? (
+                    <Badge variant="success" className="h-7">
+                      <Check aria-hidden />
+                      Đang theo học
+                    </Badge>
+                  ) : !d.isMine ? (
+                    <SubscribeButton deckId={d.id} subscribed={false} variant="secondary" size="sm" />
+                  ) : null}
+                </div>
+              </Card>
             </li>
           ))}
         </ul>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ShareActions } from "@/components/deck/share-actions";
 import { DeckArt } from "@/components/deck/deck-art";
+import { deckColor, deckColorClasses } from "@/lib/deck-colors";
 import { Button } from "@/components/ui/button";
 import { WordHero } from "@/components/word/word-hero";
 import { getMe } from "@/lib/auth";
@@ -48,10 +49,10 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
 
   return (
     <div className="pt-2">
-      <header className="flex items-start gap-4">
-        <DeckArt id={deck.id} language={deck.language} name={deck.name} size="lg" />
+      <header className={`flex items-start gap-4 rounded-xl p-5 md:p-6 ${deckColorClasses(deckColor(deck.id)).soft}`}>
+        <DeckArt id={deck.id} language={deck.language} name={deck.name} size="lg" className="bg-white/70 dark:bg-surface" />
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl break-words sm:text-2xl">{deck.name}</h1>
+          <h1 className="text-[1.5rem] break-words sm:text-[1.875rem]">{deck.name}</h1>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-fg-muted">
             <span>{def.label}</span>
             <span>{deck.word_count} từ</span>
@@ -65,14 +66,14 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
       <div className="mt-6">
         {!me ? (
           <div>
-            <Button asChild size="lg" className="w-full sm:w-auto">
+            <Button asChild variant="pressable" size="xl" className="w-full sm:w-auto">
               <Link href={`/login?next=${encodeURIComponent(path)}`}>Đăng nhập để học bộ này</Link>
             </Button>
             <p className="mt-2 text-sm text-fg-muted">Miễn phí. Chưa có tài khoản thì đăng ký chỉ mất một phút.</p>
           </div>
         ) : subscribed ? (
           <div className="flex flex-col gap-3">
-            <Button asChild size="lg" className="w-full sm:w-auto">
+            <Button asChild variant="pressable" size="xl" className="w-full sm:w-auto">
               <Link href={`/decks/${deck.id}`}>Bạn đang học bộ này, mở bộ từ</Link>
             </Button>
             <ShareActions deckRef={{ slug }} showSubscribe={false} />

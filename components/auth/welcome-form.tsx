@@ -82,7 +82,7 @@ export function WelcomeForm({
       <div className="flex items-center gap-3">
         <div className="flex flex-1 gap-1.5" aria-hidden>
           {[1, 2].map((n) => (
-            <span key={n} className={cn("h-1.5 flex-1 rounded-full transition-colors", n <= step ? "bg-primary" : "bg-border")} />
+            <span key={n} className={cn("h-2 flex-1 rounded-full transition-colors", n <= step ? "bg-primary" : "bg-surface-3")} />
           ))}
         </div>
         <p className="text-sm font-medium text-fg-muted">Bước {step}/2</p>
@@ -127,7 +127,7 @@ export function WelcomeForm({
               )}
             </div>
           </div>
-          <Button type="submit" size="lg" className="mt-8 w-full">
+          <Button type="submit" variant="pressable" size="xl" className="mt-8 w-full">
             Tiếp tục
           </Button>
         </form>
@@ -145,13 +145,13 @@ export function WelcomeForm({
                   aria-checked={selected}
                   onClick={() => setLangs(opt.value)}
                   className={cn(
-                    "flex min-h-16 items-center gap-4 rounded-md border px-4 py-2 text-left transition-colors",
-                    selected ? "border-primary bg-primary-soft ring-1 ring-primary" : "border-input bg-surface hover:border-fg-muted/50",
+                    "flex min-h-16 items-center gap-4 rounded-lg border-2 px-4 py-2 text-left transition-colors",
+                    selected ? "border-primary bg-primary-soft" : "border-border bg-surface hover:border-border-strong",
                   )}
                 >
                   <span aria-hidden className="flex w-20 shrink-0 flex-col text-xl leading-tight text-fg">
-                    {opt.value.includes("en") && <span className="font-display font-medium">resilient</span>}
-                    {opt.value.includes("zh") && <span className="font-hanzi">坚强</span>}
+                    {opt.value.includes("en") && <span className="font-extrabold tracking-[-0.03em] text-en-fg">resilient</span>}
+                    {opt.value.includes("zh") && <span className="font-hanzi-sans font-bold text-zh-fg">坚强</span>}
                   </span>
                   <span className="flex-1">
                     <span className="block font-semibold">{opt.label}</span>
@@ -182,7 +182,7 @@ export function WelcomeForm({
           </div>
           <p className="mt-2 text-sm text-fg-muted">Có thể đổi sau trong Cài đặt.</p>
 
-          <label className="mt-6 flex items-center justify-between gap-4 border-y border-border py-3">
+          <label className="mt-6 flex items-center justify-between gap-4 rounded-lg bg-surface-2 px-4 py-3">
             <span>
               <span className="block font-medium text-fg">Thêm bộ từ mẫu</span>
               <span className="block text-sm text-fg-muted">Có sẵn vài chục từ để ôn thử ngay hôm nay.</span>
@@ -191,10 +191,10 @@ export function WelcomeForm({
           </label>
 
           <div className="mt-8 flex gap-3">
-            <Button type="button" variant="outline" size="icon-lg" onClick={() => setStep(1)} aria-label="Quay lại bước 1">
+            <Button type="button" variant="outline" size="icon-lg" className="h-14 w-14 rounded-lg" onClick={() => setStep(1)} aria-label="Quay lại bước 1">
               <ArrowLeft aria-hidden />
             </Button>
-            <Button type="button" size="lg" onClick={finish} disabled={pending} className="flex-1">
+            <Button type="button" variant="pressable" size="xl" onClick={finish} disabled={pending} className="flex-1">
               {pending && <Loader2 className="animate-spin" aria-hidden />}
               Bắt đầu học
             </Button>

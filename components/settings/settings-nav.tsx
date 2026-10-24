@@ -23,15 +23,15 @@ export function SettingsNav({ items }: { items: { id: string; label: string }[] 
 
   return (
     <nav aria-label="Các mục cài đặt" className="sticky top-20 hidden self-start lg:block">
-      <ul className="space-y-0.5 border-l border-border">
+      <ul className="space-y-0.5">
         {items.map((i) => (
           <li key={i.id}>
             <a
               href={`#${i.id}`}
               aria-current={active === i.id ? "location" : undefined}
               className={cn(
-                "-ml-px block border-l-2 py-1.5 pl-3 text-sm transition-colors",
-                active === i.id ? "border-primary font-medium text-fg" : "border-transparent text-fg-muted hover:text-fg",
+                "block rounded-full px-3.5 py-2 text-sm transition-colors",
+                active === i.id ? "bg-surface font-semibold text-fg shadow-sm dark:border dark:border-border" : "text-fg-muted hover:bg-surface-2 hover:text-fg",
               )}
             >
               {i.label}

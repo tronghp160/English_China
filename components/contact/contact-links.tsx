@@ -10,7 +10,7 @@ function FacebookIcon({ className }: { className?: string }) {
   );
 }
 
-/** Zalo as a one-color outlined mark, so it sits quietly next to the Facebook glyph. */
+/** Zalo as a one-color outlined mark next to the Facebook glyph. */
 function ZaloIcon({ className }: { className?: string }) {
   return (
     // The word is CSS content so it is not read or matched as a second "Zalo" next to the link's own text.
@@ -32,12 +32,14 @@ export function ContactLinks({ compact = false, className }: { compact?: boolean
       href: CONTACT.facebook,
       label: "Facebook",
       detail: "Nhắn tin qua Messenger",
+      tint: "bg-c-blue-soft text-c-blue-fg",
       icon: <FacebookIcon className="size-5" />,
     },
     {
       href: zaloUrl(CONTACT.zaloPhone),
       label: "Zalo",
       detail: phone,
+      tint: "bg-c-teal-soft text-c-teal-fg",
       icon: <ZaloIcon className="h-5 w-7" />,
     },
   ];
@@ -52,11 +54,11 @@ export function ContactLinks({ compact = false, className }: { compact?: boolean
             rel="noopener noreferrer"
             aria-label={`${it.label}: ${it.detail} (mở trong tab mới)`}
             className={cn(
-              "flex items-center gap-3 rounded-md border border-border-strong bg-surface text-fg transition-colors hover:bg-surface-2",
+              "flex items-center gap-3 rounded-lg border border-border/60 bg-surface text-fg shadow-sm transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md dark:border-border",
               compact ? "min-h-11 px-3 py-1.5 text-sm" : "min-h-16 px-4 py-3",
             )}
           >
-            <span className="shrink-0 text-fg-muted">{it.icon}</span>
+            <span className={cn("grid shrink-0 place-items-center rounded-md", it.tint, compact ? "size-8" : "size-10")}>{it.icon}</span>
             <span className="min-w-0 flex-1">
               <span className="block font-semibold">{it.label}</span>
               {!compact && <span className="block truncate text-sm text-fg-muted">{it.detail}</span>}

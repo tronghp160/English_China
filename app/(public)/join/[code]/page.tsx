@@ -49,10 +49,10 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
   }
 
   return (
-    <div className="mt-8 max-w-md">
-      <GroupAvatar id={group.id} name={group.name} className="size-16 text-3xl" />
+    <div className="mx-auto mt-8 max-w-md rounded-xl border border-border/60 bg-surface p-6 shadow-md dark:border-border">
+      <GroupAvatar id={group.id} name={group.name} className="size-20 rounded-lg text-4xl" />
       <p className="mt-4 text-sm text-fg-muted">{group.owner_name} mời bạn vào nhóm</p>
-      <h1 className="mt-1 text-xl break-words sm:text-2xl">{group.name}</h1>
+      <h1 className="mt-1 text-[1.625rem] break-words sm:text-[2rem]">{group.name}</h1>
       {group.description && <p className="mt-2 text-[0.9375rem] text-fg">{group.description}</p>}
       <p className="mt-2 text-sm text-fg-muted">{group.member_count} thành viên</p>
 
@@ -66,7 +66,7 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
         {me ? (
           <JoinButton code={code} />
         ) : (
-          <Button asChild size="lg" className="w-full sm:w-auto sm:px-8">
+          <Button asChild variant="pressable" size="xl" className="w-full">
             <Link href={`/login?next=${encodeURIComponent(path)}`}>Đăng nhập để vào nhóm</Link>
           </Button>
         )}

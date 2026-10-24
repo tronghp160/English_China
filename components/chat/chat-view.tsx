@@ -5,11 +5,14 @@ import { DefaultChatTransport } from "ai";
 import { ArrowUp, BookOpenCheck, Drama, PenLine, RotateCcw, Search, Square, Zap, type LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useOptionalMe } from "@/components/app-shell/me-provider";
+import { Pup } from "@/components/mascot/pup";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CHAT_MAX_CHARS } from "@/lib/ai/chat-prompt";
 import type { ChatMessage } from "@/lib/ai/chat-tools";
 import { LANGUAGES } from "@/lib/lang/registry";
+import { TONES } from "@/lib/tone";
 import type { LangCode } from "@/lib/lang/types";
 import { MessageText } from "./message-text";
 import { SuggestWordCard } from "./suggest-word-card";
@@ -56,6 +59,7 @@ export function ChatView({
   initialPrompt?: string;
   aiEnabled: boolean;
 }) {
+  const mascot = useOptionalMe()?.prefs.mascot !== false;
   const router = useRouter();
   const titled = useRef(false);
   const [transport] = useState(
@@ -136,10 +140,10 @@ export function ChatView({
       {messages.length === 0 &&
         (aiEnabled ? (
           <ul className="grid w-full gap-2 sm:grid-cols-2">
-            {starters(language).map((s) => (
+            {starters(language).map((s, i) => (
               <li key={s.label}>
-                <Button type="button" variant="outline" onClick={() => pickStarter(s)} className="h-auto min-h-12 w-full justify-start py-2.5 whitespace-normal">
-                  <s.icon className="text-fg-muted" aria-hidden />
+                <Button type="button" variant="soft" tone={TONES[(i * 2) % 8]} onClick={() => pickStarter(s)} className="h-auto min-h-12 w-full justify-start rounded-lg py-2.5 whitespace-normal">
+                  <s.icon aria-hidden />
                   {s.label}
                 </Button>
               </li>
@@ -153,20 +157,16 @@ export function ChatView({
         {messages.map((m, mi) =>
           m.role === "user" ? (
             <li key={m.id} className="flex justify-end">
-              <div className="max-w-[85%] rounded-xl rounded-br-sm bg-primary-soft px-4 py-2.5 whitespace-pre-wrap text-fg">
+              <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 whitespace-pre-wrap text-on-primary">
                 {m.parts.map((p, i) => (p.type === "text" ? <span key={i}>{p.text}</span> : null))}
               </div>
             </li>
           ) : (
-            // The tutor writes like a teacher in the margin of your notebook: no bubble, a thin red line on the left.
-            <li key={m.id} className="border-l-2 border-margin pl-4">
+            // The tutor answers in a white bubble beside Bin.
+            <li key={m.id} className="flex items-start gap-2.5">
+              {mascot ? <Pup mood="happy" size={32} className="mt-1" /> : <span aria-hidden className="size-8 shrink-0" />}
               <span className="sr-only">Gia sư: </span>
-              {messages[mi - 1]?.role !== "assistant" && (
-                <span aria-hidden className="mb-1 block text-xs text-fg-muted">
-                  Gia sư
-                </span>
-              )}
-              <div className="min-w-0 text-fg">
+              <div className="min-w-0 flex-1 rounded-2xl rounded-bl-md bg-surface px-4 py-3 text-fg shadow-sm dark:border dark:border-border">
                 {/* Text first, word cards last: models often call the tool before writing. */}
                 {[...m.parts].sort((a, b) => Number(a.type === "tool-suggestWord") - Number(b.type === "tool-suggestWord")).map((p, i) => {
                   if (p.type === "text") return <MessageText key={i} text={p.text} />;
@@ -186,8 +186,9 @@ export function ChatView({
           ),
         )}
         {status === "submitted" && (
-          <li className="border-l-2 border-margin pl-4" aria-label="Gia sư đang trả lời">
-            <span className="flex gap-1.5 py-2" aria-hidden>
+          <li className="flex items-center gap-2.5" aria-label="Gia sư đang trả lời">
+            {mascot ? <Pup mood="think" size={32} /> : <span aria-hidden className="size-8 shrink-0" />}
+            <span className="flex gap-1.5 rounded-2xl rounded-bl-md bg-surface px-4 py-3.5 shadow-sm" aria-hidden>
               <span className="size-1.5 animate-pulse rounded-full bg-fg-muted [animation-duration:1.4s] [animation-delay:-0.4s]" />
               <span className="size-1.5 animate-pulse rounded-full bg-fg-muted [animation-duration:1.4s] [animation-delay:-0.2s]" />
               <span className="size-1.5 animate-pulse rounded-full bg-fg-muted [animation-duration:1.4s]" />
@@ -212,7 +213,7 @@ export function ChatView({
           onSubmit={onSubmit}
           className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-5 lg:bottom-4"
         >
-          <div className="shadow-lg flex items-end gap-2 rounded-xl border border-border bg-surface p-2">
+          <div className="flex items-end gap-2 rounded-3xl border border-border/60 bg-surface p-2 shadow-lg dark:border-border">
             <label htmlFor="chat-input" className="sr-only">
               Tin nhắn cho gia sư
             </label>

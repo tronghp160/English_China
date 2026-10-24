@@ -36,7 +36,7 @@ export default async function GroupsPage() {
             <li key={g.id} className="min-w-0">
               <Link
                 href={`/groups/${g.id}`}
-                className="group flex items-center gap-4 rounded-lg border border-border bg-surface p-4 transition-colors duration-[var(--dur-fast)] hover:border-border-strong"
+                className="group flex items-center gap-4 rounded-lg border border-border/60 bg-surface p-4 shadow-sm transition-[transform,box-shadow] duration-[var(--dur-base)] hover:-translate-y-0.5 hover:shadow-md dark:border-border"
               >
                 <GroupAvatar id={g.id} name={g.name} />
                 <span className="min-w-0 flex-1">
@@ -44,7 +44,7 @@ export default async function GroupsPage() {
                   <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-fg-muted">
                     <span>{g.member_count} thành viên</span>
                     <span>{g.deck_count} bộ từ</span>
-                    {g.role === "owner" && <Badge variant="outline">Chủ nhóm</Badge>}
+                    {g.role === "owner" && <Badge variant="soft" tone="sun">Chủ nhóm</Badge>}
                   </span>
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-fg-subtle" aria-hidden />
@@ -58,7 +58,7 @@ export default async function GroupsPage() {
           figure={<EndPup mood="think" figure="people" size={96} />}
           title="Học một mình hơi vắng."
           actions={
-            <Button asChild size="lg">
+            <Button asChild variant="pressable" size="lg">
               <Link href="/groups/new">Tạo nhóm đầu tiên</Link>
             </Button>
           }

@@ -13,9 +13,10 @@ export function JoinButton({ code }: { code: string }) {
   return (
     <Button
       type="button"
-      size="lg"
+      variant="pressable"
+      size="xl"
       disabled={pending}
-      className="w-full sm:w-auto sm:px-8"
+      className="w-full"
       onClick={() =>
         start(async () => {
           const res = await joinGroup(code);

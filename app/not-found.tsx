@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
+import { Pup } from "@/components/mascot/pup";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata = { title: "Không tìm thấy trang" };
@@ -13,10 +14,10 @@ export default function NotFound() {
       </header>
       <main className="flex flex-1 flex-col justify-center">
         <EmptyState
-          figure="grid"
+          figure={<Pup mood="surprised" size={104} className="self-center" />}
           title="Không tìm thấy trang này."
           actions={
-            <Button asChild size="lg">
+            <Button asChild variant="pressable" size="lg">
               <Link href="/today">Về trang Hôm nay</Link>
             </Button>
           }

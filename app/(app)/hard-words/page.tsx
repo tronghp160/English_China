@@ -53,7 +53,7 @@ export default async function HardWordsPage({ searchParams }: PageProps<"/hard-w
       {words.length ? (
         <>
           <div className="mb-6 flex flex-wrap gap-2">
-            <Button asChild>
+            <Button asChild variant="pressable">
               <Link href={practice("learn")}>
                 <GraduationCap aria-hidden />
                 Luyện các từ này
@@ -73,7 +73,7 @@ export default async function HardWordsPage({ searchParams }: PageProps<"/hard-w
                   name="prompt"
                   value="Luyện giúp mình các từ mình hay quên: dùng chúng trong một đoạn hội thoại ngắn, rồi hỏi lại mình từng từ."
                 />
-                <Button type="submit" variant="secondary">
+                <Button type="submit" variant="soft" tone="grape">
                   <MessageCircleHeart aria-hidden />
                   Hỏi gia sư
                 </Button>
@@ -82,13 +82,13 @@ export default async function HardWordsPage({ searchParams }: PageProps<"/hard-w
           </div>
 
           <p className="mb-2 text-sm text-fg-muted">{words.length} từ</p>
-          <ul className="divide-y divide-border border-y border-border">
+          <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border/60 bg-surface shadow-sm dark:border-border">
             {words.map((w) => (
               <li key={w.id}>
-                <Link href={`/words/${w.id}`} className="flex min-h-16 items-center gap-3 px-1 py-3 transition-colors hover:bg-surface-2">
+                <Link href={`/words/${w.id}`} className="flex min-h-16 items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2">
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-baseline gap-x-3">
-                      <span lang={language} className={cn("truncate text-lg font-medium text-fg", l.termFontClass === "font-hanzi" ? "font-hanzi" : "font-display")}>
+                      <span lang={language} className={cn("truncate text-lg font-medium text-fg", l.termFontClass === "font-hanzi" ? "font-hanzi-sans font-bold" : "font-bold")}>
                         {w.term}
                       </span>
                       {w.reading &&
@@ -100,7 +100,7 @@ export default async function HardWordsPage({ searchParams }: PageProps<"/hard-w
                     </span>
                     <span className="block truncate text-sm text-fg-muted">{w.meaning_vi}</span>
                   </span>
-                  <span className={cn("shrink-0 text-sm font-medium tabular-nums", w.lapses >= 3 ? "text-danger-fg" : "text-streak-fg")}>
+                  <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-sm font-semibold tabular-nums", w.lapses >= 3 ? "bg-danger-soft text-danger-fg" : "bg-streak-soft text-streak-fg")}>
                     {w.lapses > 0 ? `quên ${w.lapses} lần` : "khó nhớ"}
                   </span>
                 </Link>
@@ -113,7 +113,7 @@ export default async function HardWordsPage({ searchParams }: PageProps<"/hard-w
           figure="check"
           title="Chưa có từ nào hay quên."
           actions={
-            <Button asChild size="lg">
+            <Button asChild variant="pressable" size="lg">
               <Link href="/review">Ôn tập ngay</Link>
             </Button>
           }
