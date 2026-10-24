@@ -1441,6 +1441,18 @@
   }
 }
 
+/* The right answer blinks twice when a wrong one was picked (components/practice/question-parts.tsx) */
+.answer-flash {
+  animation: answer-flash 420ms ease-in-out 2;
+}
+@keyframes answer-flash {
+  50% {
+    box-shadow:
+      0 3px 0 0 var(--success),
+      0 0 0 5px color-mix(in oklab, var(--success) 35%, transparent);
+  }
+}
+
 /* A pointer over a pettable Bin makes the tail go faster */
 .bin-pet:hover .pup-tail {
   animation-duration: 340ms;

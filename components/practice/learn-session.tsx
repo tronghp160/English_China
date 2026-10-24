@@ -7,12 +7,12 @@ import { useMe } from "@/components/app-shell/me-provider";
 import { Pup } from "@/components/mascot/pup";
 import { Celebration } from "@/components/review/celebration";
 import { SessionBar } from "@/components/review/session-bar";
+import { useSessionHud, type SessionHud } from "@/components/review/use-session-hud";
 import { WordVisual } from "@/components/review/word-visual";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FigureTile } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
-import { answerMood } from "@/lib/mascot/lines";
 import { checkTyping, type StudyWord, type TypingResult } from "@/lib/practice";
 import {
   answer,
@@ -33,8 +33,10 @@ import { cn } from "@/lib/utils";
 import {
   FeedbackPanel,
   isTyping,
+  KeyHints,
   MeaningLine,
   Options,
+  QuestionSlide,
   TermLine,
   useSpeak,
   type Outcome,
@@ -52,7 +54,7 @@ function tagFor(s: LearnState, wordId: string, q: Question): Asked["tag"] {
 // Event handlers only; a module helper keeps the React compiler purity rule quiet.
 const clock = () => Date.now();
 
-function LearnBar({ state, exitHref, mood }: { state: LearnState; exitHref: string; mood?: Parameters<typeof Pup>[0]["mood"] }) {
+function LearnBar({ state, exitHref, mood, hud }: { state: LearnState; exitHref: string; mood?: Parameters<typeof Pup>[0]["mood"]; hud?: SessionHud }) {
   const p = progress(state);
   return (
     <SessionBar
@@ -63,6 +65,7 @@ function LearnBar({ state, exitHref, mood }: { state: LearnState; exitHref: stri
       label={`Vòng ${state.round}`}
       ariaLabel={`Đã thuộc ${p.mastered}/${state.words.length}, đang học ${p.learning}`}
       pup={mood ? { mood } : undefined}
+      hud={hud ? { combo: hud.combo, xp: hud.xp, reaction: hud.reaction } : undefined}
     />
   );
 }
@@ -111,6 +114,8 @@ export function LearnSession({
 }) {
   const { userId, prefs } = useMe();
   const say = useSpeak();
+  const hud = useSessionHud();
+  const answerHud = hud.answer;
   const byId = useMemo(() => new Map([...pool, ...words].map((w) => [w.id, w])), [pool, words]);
   const choicePool = useMemo(() => [...byId.values()], [byId]);
   const [phase, setPhase] = useState<Phase>("loading");
@@ -180,6 +185,7 @@ export function LearnSession({
     (o: Outcome) => {
       if (!q || outcome) return;
       setOutcome(o);
+      answerHud(o);
       void enqueueReview({
         clientId: crypto.randomUUID(),
         wordId: q.word.id,
@@ -197,7 +203,7 @@ export function LearnSession({
       if (prefs.auto_speak) say(q.word);
       requestAnimationFrame(() => continueRef.current?.focus());
     },
-    [countsToSrs, outcome, persist, prefs.auto_speak, q, say, state],
+    [countsToSrs, answerHud, outcome, persist, prefs.auto_speak, q, say, state],
   );
 
   const pick = useCallback(
@@ -355,12 +361,8 @@ export function LearnSession({
 
   return (
     <div className="flex flex-1 flex-col">
-      <LearnBar
-        state={state}
-        exitHref={exitHref}
-        mood={prefs.mascot ? (outcome ? answerMood(outcome.close ? "close" : outcome.correct ? "correct" : "wrong", state.round) : "happy") : undefined}
-      />
-      <div className="flex flex-1 flex-col justify-center py-2">
+      <LearnBar state={state} exitHref={exitHref} mood={prefs.mascot ? "happy" : undefined} hud={hud} />
+      <QuestionSlide id={q.id} className="flex flex-1 flex-col justify-center py-2">
         <Badge variant={tag.variant} className="self-center">
           {tag.label}
         </Badge>
@@ -385,6 +387,7 @@ export function LearnSession({
               answerId={q.answerId}
               outcome={outcome}
               onPick={pick}
+              fx={hud.answers}
               lang={q.prompt !== "term" && zh ? "zh" : undefined}
             />
           </>
@@ -438,7 +441,18 @@ export function LearnSession({
             </form>
           </>
         )}
-      </div>
+        <KeyHints
+          items={
+            q.kind === "choice"
+              ? [
+                  { keys: "1–4", label: "chọn đáp án" },
+                  { keys: "R", label: "nghe lại" },
+                  { keys: "Enter", label: "tiếp tục" },
+                ]
+              : [{ keys: "Enter", label: "kiểm tra, rồi tiếp tục" }]
+          }
+        />
+      </QuestionSlide>
 
       {outcome && (
         <FeedbackPanel

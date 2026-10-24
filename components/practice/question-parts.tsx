@@ -1,14 +1,18 @@
 "use client";
 
 import { Check, Volume2, X } from "lucide-react";
-import { useCallback, type Ref } from "react";
+import { m, useReducedMotion } from "motion/react";
+import { useCallback, useEffect, useRef, type Ref } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
+import { Burst } from "@/components/fx/burst";
+import { XpBurst } from "@/components/fx/xp-burst";
 import { Pup } from "@/components/mascot/pup";
+import { useBinAction } from "@/components/mascot/use-bin";
 import { Button } from "@/components/ui/button";
 import { PosBadge } from "@/components/word/pos-badge";
 import { PronounceButton } from "@/components/word/pronounce-button";
 import { WordHero } from "@/components/word/word-hero";
-import { answerMood, say, seedOf } from "@/lib/mascot/lines";
+import { answerMood, say, seedOf, type LineKey } from "@/lib/mascot/lines";
 import { TONE_GLYPH, type StudyWord } from "@/lib/practice";
 import type { Option } from "@/lib/practice/questions";
 import { speak } from "@/lib/tts";
@@ -115,6 +119,7 @@ export function Options({
   big,
   selected,
   letters,
+  fx = 0,
 }: {
   options: Option[];
   answerId: string;
@@ -126,13 +131,16 @@ export function Options({
   selected?: string | null;
   /** A–D badges on every screen instead of the 1–4 keyboard hints. */
   letters?: boolean;
+  /** Counts the answers of the session: a right pick plays its burst and its "+1 XP" once per count. */
+  fx?: number;
 }) {
   return (
-    <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label="Các đáp án">
+    <div className="grid gap-2.5 md:grid-cols-2" role="group" aria-label="Các đáp án">
       {options.map((o, i) => {
         const isAnswer = o.id === answerId;
         const picked = outcome?.picked === o.id;
         const chosen = !outcome && selected === o.id;
+        const rightPick = !!outcome && picked && isAnswer;
         return (
           <button
             key={o.id}
@@ -142,10 +150,11 @@ export function Options({
             onClick={() => onPick(o.id)}
             lang={lang === "zh" ? "zh-CN" : undefined}
             className={cn(
-              "flex min-h-14 items-center gap-3 rounded-lg border-2 px-4 py-3 text-left font-semibold text-fg transition-[background-color,border-color,box-shadow,transform] duration-[var(--dur-fast)] disabled:cursor-default",
-              !outcome && !chosen && "border-border bg-surface shadow-[0_3px_0_0_var(--border)] hover:bg-surface-2 active:translate-y-[2px] active:shadow-[0_1px_0_0_var(--border)]",
+              "relative flex min-h-14 items-center gap-3 rounded-lg border-2 px-4 py-3 text-left text-lg font-semibold text-fg transition-[background-color,border-color,box-shadow,transform] duration-[var(--dur-fast)] disabled:cursor-default md:min-h-16",
+              !outcome && !chosen && "border-border bg-surface shadow-[0_3px_0_0_var(--border)] hover:-translate-y-0.5 hover:bg-surface-2 active:translate-y-[2px] active:shadow-[0_1px_0_0_var(--border)]",
               chosen && "border-primary bg-primary-soft shadow-[0_3px_0_0_var(--primary)]",
-              outcome && isAnswer && "border-success bg-success-soft text-success-fg",
+              outcome && isAnswer && "border-success bg-success-soft text-success-fg shadow-[0_3px_0_0_var(--success)]",
+              outcome && isAnswer && !picked && "answer-flash",
               outcome && picked && !isAnswer && "animate-shake border-danger bg-danger-soft text-danger-fg",
               outcome && !isAnswer && !picked && "border-border bg-surface opacity-60",
               big && "text-2xl",
@@ -162,22 +171,66 @@ export function Options({
               >
                 {"ABCDEF"[i]}
               </span>
+            ) : rightPick ? (
+              <span aria-hidden className="grid size-[1.875rem] shrink-0 animate-pop place-items-center rounded-[0.5625rem] bg-success text-on-primary">
+                <Check className="size-[1.125rem]" strokeWidth={3.4} />
+              </span>
             ) : (
-              <kbd className="hidden size-6 shrink-0 place-items-center rounded-xs bg-surface-2 font-sans text-xs font-semibold text-fg-muted lg:grid">
-                {i + 1}
-              </kbd>
+              <span
+                aria-hidden
+                className="grid size-[1.875rem] shrink-0 place-items-center rounded-[0.5625rem] bg-surface-2 font-sans text-sm font-extrabold text-fg-muted"
+              >
+                <span className="lg:hidden">{"ABCDEF"[i]}</span>
+                <span className="hidden lg:inline">{i + 1}</span>
+              </span>
             )}
             <span className="min-w-0 flex-1 break-words">{o.label}</span>
-            {outcome && isAnswer && (
+            {outcome && isAnswer && !rightPick && (
               <Check className="size-5 shrink-0 animate-pop text-success-fg" strokeWidth={3} aria-label="Đáp án đúng" />
             )}
+            {rightPick && <span className="sr-only">Đáp án đúng</span>}
             {outcome && picked && !isAnswer && (
               <X className="size-5 shrink-0 text-danger-fg" strokeWidth={3} aria-label="Bạn chọn" />
             )}
+            {isAnswer && <XpBurst trigger={rightPick ? fx : 0} className="top-0 right-5" />}
+            {rightPick && <Burst trigger={fx || 1} palette="success" radius={34} />}
           </button>
         );
       })}
     </div>
+  );
+}
+
+/** The 1–4, R and Enter hints under a question, for people with a keyboard (hidden on phones). */
+export function KeyHints({ items }: { items: { keys: string; label: string }[] }) {
+  return (
+    <p className="hidden items-center justify-center gap-5 pt-4 pb-2 text-sm text-fg-muted lg:flex">
+      {items.map((i) => (
+        <span key={i.keys} className="inline-flex items-center gap-1.5">
+          <kbd className="rounded-xs bg-surface-2 px-1.5 py-0.5 font-sans text-xs font-semibold text-fg-muted">{i.keys}</kbd>
+          {i.label}
+        </span>
+      ))}
+    </p>
+  );
+}
+
+/**
+ * A new question slides in from the right (220 ms). The old one is already gone, so what a test or a screen reader
+ * sees is always the current question. No move under reduced motion.
+ */
+export function QuestionSlide({ id, className, children }: { id: string; className?: string; children: React.ReactNode }) {
+  const reduced = useReducedMotion();
+  return (
+    <m.div
+      key={id}
+      initial={reduced ? false : { x: 40, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
+      className={className}
+    >
+      {children}
+    </m.div>
   );
 }
 
@@ -189,14 +242,15 @@ export function toneLabel(pattern: string) {
 }
 
 const VERDICT = {
-  correct: { title: "Đúng rồi!", tone: "bg-success-soft", text: "text-success-fg", btn: "easy" as const },
-  close: { title: "Gần đúng!", tone: "bg-streak-soft", text: "text-streak-fg", btn: "hard" as const },
-  wrong: { title: "Chưa đúng", tone: "bg-danger-soft", text: "text-danger-fg", btn: "again" as const },
+  correct: { title: "Đúng rồi!", tone: "bg-success-soft", text: "text-success-fg", btn: "easy" as const, line: "praise" as LineKey },
+  close: { title: "Gần đúng!", tone: "bg-streak-soft", text: "text-streak-fg", btn: "hard" as const, line: "close" as LineKey },
+  wrong: { title: "Chưa đúng", tone: "bg-danger-soft", text: "text-danger-fg", btn: "again" as const, line: "wrongComfort" as LineKey },
 } as const;
 
 /**
- * Sheet that slides up under an answered question: the verdict, the full answer, the mascot with a short
- * remark, and the continue button. Its tint and the button color carry the verdict (green, yellow, red).
+ * Sheet that springs up under an answered question (REDESIGN_V3 §7.2): Bin sticking out of its top edge (it jumps
+ * for a right answer, droops for a wrong one), the verdict, a praise or comfort line, the full answer with a speaker,
+ * and the continue button. Its tint and the button color carry the verdict (green, yellow, red).
  */
 export function FeedbackPanel({
   outcome,
@@ -213,37 +267,52 @@ export function FeedbackPanel({
 }) {
   const zh = word.language === "zh";
   const { prefs } = useMe();
+  const reduced = useReducedMotion();
   const verdict = outcome.close ? "close" : outcome.correct ? "correct" : "wrong";
   const v = VERDICT[verdict];
+  const bin = useBinAction(answerMood(verdict, seedOf(word.id)));
+  const play = useRef(bin.play);
+  useEffect(() => {
+    play.current = bin.play;
+  }, [bin.play]);
+  useEffect(() => {
+    const t = setTimeout(() => play.current(verdict === "correct" ? "jump" : verdict === "close" ? "surprised" : "droop"), 120);
+    return () => clearTimeout(t);
+  }, [verdict]);
   return (
-    <div
+    <m.div
       role="status"
+      initial={reduced ? false : { y: 72, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 380, damping: 32 }}
       className={cn(
-        "sticky bottom-0 -mx-4 mt-4 flex animate-in flex-col gap-3 rounded-t-xl px-4 pt-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] shadow-lg duration-200 fade-in-0 slide-in-from-bottom-6",
+        "sticky bottom-0 -mx-4 mt-10 flex flex-col gap-3 rounded-t-xl px-4 pt-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] shadow-lg",
         v.tone,
       )}
     >
       <div className="flex items-start gap-3">
-        {prefs.mascot && <Pup mood={answerMood(verdict, seedOf(word.id))} size={40} className="mt-0.5" />}
+        {prefs.mascot && <Pup mood={bin.mood} action={bin.action} size={72} className="-mt-11 shrink-0" />}
         <div className="min-w-0 flex-1">
-          <p className={cn("text-xl font-extrabold", v.text)}>{v.title}</p>
+          <p className={cn("text-[1.375rem] leading-tight font-extrabold tracking-[-0.02em]", v.text)}>{v.title}</p>
           {prefs.mascot && (
-            <p className="text-sm text-fg-muted">{say(verdict, { seed: seedOf(word.id), name: prefs.mascot_name })}</p>
+            <p className={cn("text-[0.9375rem] font-semibold", v.text)}>
+              {say(v.line, { seed: seedOf(word.id), name: prefs.mascot_name })}
+            </p>
           )}
-          <p className="mt-1 text-fg">
-            <span lang={zh ? "zh-CN" : "en"} className={cn("font-semibold", zh && "font-hanzi text-lg")}>
-              {word.term}
-            </span>
-            {word.reading && <span className="text-fg-muted"> {word.reading}</span>}
-            <span className="text-fg-muted"> {word.meaning_vi}</span>
-          </p>
         </div>
         <PronounceButton text={word.term} lang={word.language} />
       </div>
+      <p className={cn("text-fg", verdict === "wrong" && "text-lg")}>
+        <span lang={zh ? "zh-CN" : "en"} className={cn("font-extrabold", zh && "font-hanzi", verdict === "wrong" ? "text-2xl" : "text-lg")}>
+          {word.term}
+        </span>
+        {word.reading && <span className="text-fg-muted"> {word.reading}</span>}
+        <span className="text-fg-muted"> {word.meaning_vi}</span>
+      </p>
       <Button ref={buttonRef} type="button" variant="pressable" tone={v.btn} size="xl" onClick={onNext}>
         {nextLabel}
         <kbd className="hidden rounded-xs bg-white/20 px-1.5 font-sans text-xs font-normal lg:inline">Enter</kbd>
       </Button>
-    </div>
+    </m.div>
   );
 }

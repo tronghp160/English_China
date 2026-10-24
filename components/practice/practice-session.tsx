@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
 import { SessionBar } from "@/components/review/session-bar";
+import { useSessionHud } from "@/components/review/use-session-hud";
 import { SessionSummary, type SessionResult } from "@/components/review/session-summary";
 import { WordVisual } from "@/components/review/word-visual";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PronounceButton } from "@/components/word/pronounce-button";
-import { answerMood } from "@/lib/mascot/lines";
 import { PinyinText } from "@/components/zh/pinyin-text";
 import { checkTyping, type TypingResult } from "@/lib/practice";
 import { reviewModeOf, type Question } from "@/lib/practice/questions";
@@ -17,8 +17,10 @@ import { cn } from "@/lib/utils";
 import {
   FeedbackPanel,
   isTyping,
+  KeyHints,
   MeaningLine,
   Options,
+  QuestionSlide,
   ReplayButton,
   TermLine,
   toneLabel,
@@ -40,6 +42,8 @@ export function PracticeSession({
 }) {
   const { prefs } = useMe();
   const say = useSpeak();
+  const hud = useSessionHud();
+  const answerHud = hud.answer;
   const [index, setIndex] = useState(0);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [typed, setTyped] = useState("");
@@ -60,6 +64,7 @@ export function PracticeSession({
     (o: Outcome) => {
       if (!q || outcome) return;
       setOutcome(o);
+      answerHud(o);
       void enqueueReview({
         clientId: crypto.randomUUID(),
         wordId: q.word.id,
@@ -85,7 +90,7 @@ export function PracticeSession({
         say(q.word);
       requestAnimationFrame(() => continueRef.current?.focus());
     },
-    [countsToSrs, outcome, prefs.auto_speak, q, say],
+    [countsToSrs, answerHud, outcome, prefs.auto_speak, q, say],
   );
 
   const next = useCallback(() => {
@@ -171,6 +176,7 @@ export function PracticeSession({
             answerId={q.answerId}
             outcome={outcome}
             onPick={pick}
+            fx={hud.answers}
             lang={q.prompt !== "term" && zh ? "zh" : undefined}
           />
         </>
@@ -199,6 +205,7 @@ export function PracticeSession({
             answerId={q.answerId}
             outcome={outcome}
             onPick={pick}
+            fx={hud.answers}
             lang={zh ? "zh" : undefined}
           />
         </>
@@ -220,6 +227,7 @@ export function PracticeSession({
             answerId={q.answerId}
             outcome={outcome}
             onPick={pick}
+            fx={hud.answers}
             big
           />
         </>
@@ -318,9 +326,23 @@ export function PracticeSession({
         done={index + (outcome ? 1 : 0)}
         total={questions.length}
         exitHref={exitHref}
-        pup={prefs.mascot ? { mood: outcome ? answerMood(outcome.close ? "close" : outcome.correct ? "correct" : "wrong", index) : "happy" } : undefined}
+        pup={prefs.mascot ? { mood: "happy" } : undefined}
+        hud={{ combo: hud.combo, xp: hud.xp, reaction: hud.reaction }}
       />
-      <div className="flex flex-1 flex-col justify-center py-2">{body}</div>
+      <QuestionSlide id={q.id} className="flex flex-1 flex-col justify-center py-2">
+        {body}
+        <KeyHints
+          items={
+            "options" in q
+              ? [
+                  { keys: "1–4", label: "chọn đáp án" },
+                  { keys: "R", label: "nghe lại" },
+                  { keys: "Enter", label: "tiếp tục" },
+                ]
+              : [{ keys: "Enter", label: q.kind === "typing" ? "kiểm tra, rồi tiếp tục" : "tiếp tục" }]
+          }
+        />
+      </QuestionSlide>
 
       {outcome && (
         <FeedbackPanel

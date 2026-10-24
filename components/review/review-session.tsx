@@ -12,6 +12,7 @@ import { answer, buildQueue, peek, remaining, type QueueItem } from "@/lib/srs/q
 import { speak } from "@/lib/tts";
 import { Flashcard, type Direction } from "./flashcard";
 import { SessionBar } from "./session-bar";
+import { useSessionHud } from "./use-session-hud";
 import { SessionSummary, type SessionResult } from "./session-summary";
 
 export type ReviewItem = QueueItem & { word: StudyWord; direction: Direction };
@@ -34,6 +35,8 @@ export function ReviewSession({
   tomorrowDue: number;
 }) {
   const { prefs } = useMe();
+  const hud = useSessionHud();
+  const answerHud = hud.answer;
   const [queue, setQueue] = useState(() => buildQueue(items));
   const [flipped, setFlipped] = useState(false);
   const [results, setResults] = useState<SessionResult[]>([]);
@@ -85,6 +88,7 @@ export function ReviewSession({
         reviewedAt: at.toISOString(),
         updateCard: true,
       });
+      answerHud({ correct: rating > 1 });
       const nextQueue = answer(queue, current, { ...current, card }, rating === 1, at);
       setResults((r) => [
         ...r,
@@ -103,7 +107,7 @@ export function ReviewSession({
       shownAt.current = nextNow.getTime();
       if (!remaining(nextQueue)) setFinishedAt(Date.now());
     },
-    [current, flipped, queue, now],
+    [current, flipped, answerHud, queue, now],
   );
 
   useEffect(() => {
@@ -148,14 +152,8 @@ export function ReviewSession({
         done={done}
         total={total}
         exitHref={exitHref}
-        pup={
-          prefs.mascot
-            ? {
-                // Again → sad, Hard → think, Good → wink, Easy → cheer.
-                mood: !results.length ? "happy" : (["sad", "think", "wink", "cheer"] as const)[results.at(-1)!.rating - 1],
-              }
-            : undefined
-        }
+        pup={prefs.mascot ? { mood: "happy" } : undefined}
+        hud={{ combo: hud.combo, xp: hud.xp, reaction: hud.reaction }}
       />
       <div className="flex flex-1 flex-col justify-center py-4">
         <Flashcard
