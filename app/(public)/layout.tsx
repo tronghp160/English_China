@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
+import { ChatWidget } from "@/components/contact/chat-widget";
 import { Button } from "@/components/ui/button";
 import { getUser } from "@/lib/auth";
 import { cjkFontVariables } from "@/lib/fonts";
@@ -18,6 +19,7 @@ export default async function PublicLayout({ children }: LayoutProps<"/">) {
         </Button>
       </header>
       <main className="flex-1">{children}</main>
+      <ChatWidget tutor={Boolean(user)} />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { ExternalLink } from "lucide-react";
 import { CONTACT, formatPhone, zaloUrl } from "@/lib/contact";
 import { cn } from "@/lib/utils";
 
-function FacebookIcon({ className }: { className?: string }) {
+export function FacebookIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden className={className} fill="currentColor">
       <path d="M13.5 21.95V14h2.66l.4-3.1H13.5V8.92c0-.9.25-1.5 1.54-1.5h1.64V4.65A22 22 0 0 0 14.29 4.5c-2.37 0-3.99 1.45-3.99 4.1v2.3H7.62V14h2.68v7.95a10 10 0 1 1 3.2 0Z" />
@@ -11,7 +11,7 @@ function FacebookIcon({ className }: { className?: string }) {
 }
 
 /** Zalo as a one-color outlined mark next to the Facebook glyph. */
-function ZaloIcon({ className }: { className?: string }) {
+export function ZaloIcon({ className }: { className?: string }) {
   return (
     // The word is CSS content so it is not read or matched as a second "Zalo" next to the link's own text.
     <span

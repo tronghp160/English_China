@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
+import { ChatWidget } from "@/components/contact/chat-widget";
 import { ContactLinks } from "@/components/contact/contact-links";
 import { FeatureBento } from "@/components/marketing/feature-bento";
 import { HeroSpecimen } from "@/components/marketing/hero-specimen";
@@ -180,6 +181,7 @@ export default function MarketingPage() {
           <ContactLinks compact />
         </footer>
       </div>
+      <ChatWidget />
     </div>
   );
 }

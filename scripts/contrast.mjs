@@ -150,6 +150,7 @@ const pairs = [
   ["grape-fg on surface (mode stat line)", "grapeFg", "surface", 4.5],
   ["orange-fg on surface (mode stat line)", "orangeFg", "surface", 4.5],
   ["teal-fg on surface (mode stat line)", "tealFg", "surface", 4.5],
+  ["surface on teal-fg (Zalo button on /lien-he)", "surface", "tealFg", 4.5],
   ["pink-fg on surface (mode stat line)", "pinkFg", "surface", 4.5],
   ["pink-fg on pink-soft", "pinkFg", "pinkSoft", 4.5],
   ["due-fg on due-soft", "orangeFg", "orangeSoft", 4.5],

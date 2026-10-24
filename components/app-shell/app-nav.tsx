@@ -2,7 +2,6 @@
 
 import {
   BarChart3,
-  Bone,
   BookOpen,
   Compass,
   House,
@@ -19,9 +18,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMe } from "@/components/app-shell/me-provider";
 import { Logo } from "@/components/brand/logo";
-import { useBinHome } from "@/components/mascot/bin-home-provider";
-import { PettablePup } from "@/components/mascot/pettable-pup";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; icon: LucideIcon };
@@ -121,8 +117,6 @@ export function BottomNav() {
 /** Left column on desktop (≥ 1024px, 248px): on the canvas itself, the active row is a white pill. */
 export function SideNav() {
   const pathname = usePathname();
-  const { prefs, dueCount } = useMe();
-  const binHome = useBinHome();
   const item = ({ href, label, icon: Icon }: NavItem) => {
     const active = isActive(pathname, href);
     return (
@@ -168,38 +162,6 @@ export function SideNav() {
         </div>
       </nav>
 
-      {/* Bin with one line, and the way into a review */}
-      <div className="mt-auto flex flex-col gap-3 rounded-lg bg-primary-soft p-4">
-        {prefs.mascot ? (
-          <div className="flex items-end gap-2">
-            <PettablePup mood="happy" name={prefs.mascot_name} size={48} className="shrink-0" />
-            <p className="rounded-[14px_14px_14px_4px] bg-surface px-2.5 py-2 text-[0.8125rem] leading-snug text-fg">
-              Học một chút mỗi ngày nhé!
-            </p>
-          </div>
-        ) : (
-          <p className="text-sm text-fg">Học một chút mỗi ngày nhé!</p>
-        )}
-        <Button asChild variant="pressable" className="w-full">
-          <Link href="/review">
-            <Play className="size-3.5 fill-current" aria-hidden />
-            Ôn ngay
-            {dueCount > 0 && (
-              <span className="rounded-full bg-c-orange px-2 text-xs leading-5 font-bold text-black tabular-nums">{dueCount}</span>
-            )}
-          </Link>
-        </Button>
-        {prefs.mascot && binHome && (
-          <button
-            type="button"
-            onClick={binHome.open}
-            className="-mt-1 inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md text-sm font-semibold text-primary-fg hover:bg-surface/60"
-          >
-            <Bone className="size-4" aria-hidden />
-            Góc của {prefs.mascot_name}
-          </button>
-        )}
-      </div>
     </aside>
   );
 }
