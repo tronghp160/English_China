@@ -1,19 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  AlertTriangle,
-  ChevronDown,
-  ImageIcon,
-  Info,
-  Link2,
-  Loader2,
-  MessageSquareQuote,
-  StickyNote,
-  Tag,
-  Wand2,
-  type LucideIcon,
-} from "lucide-react";
+import { AlertCircle, AlertTriangle, Check, ChevronRight, Loader2, Wand2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -34,6 +22,7 @@ import { emptyWord, wordInputSchema, type WordData, type WordInput } from "@/lib
 import { CollocationsEditor, ExamplesEditor, FamilyEditor, TagInput } from "./list-editors";
 import { ImagePicker } from "./image-picker";
 import { PronounceButton } from "./pronounce-button";
+import { WordSpecimen } from "./word-specimen";
 import type { ImageSuggestion } from "@/lib/ai/to-word";
 import { AiSuggestButton, AiSuggestPanel, useAiSuggest, type AiFillResult } from "./ai-suggest";
 
@@ -90,16 +79,19 @@ function Field({
     <div className={cn("space-y-1.5", className)}>
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && (
+        <p className="flex items-center gap-1.5 text-sm text-seal-text">
+          <AlertCircle className="size-3.5 shrink-0" aria-hidden />
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
-/** One optional part of the word: a tappable row with a short summary that opens in place. */
+/** One optional part of the word: a ruled row with a one-line summary; the arrow turns when it opens. */
 function Section({
   id,
-  icon: Icon,
-  tone,
   title,
   summary,
   open,
@@ -107,8 +99,6 @@ function Section({
   children,
 }: {
   id: SectionId;
-  icon: LucideIcon;
-  tone: string;
   title: string;
   summary: React.ReactNode;
   open: boolean;
@@ -123,16 +113,11 @@ function Section({
         onClick={() => onToggle(id)}
         aria-expanded={open}
         aria-controls={panelId}
-        className="flex min-h-15 w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-muted/50"
+        className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-surface-sunk"
       >
-        <span className={cn("icon-tile size-9", tone)}>
-          <Icon className="size-[18px]" aria-hidden />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-medium text-ink">{title}</span>
-          <span className="block truncate text-sm text-ink-soft">{summary}</span>
-        </span>
-        <ChevronDown className={cn("size-5 shrink-0 text-ink-soft transition-transform", open && "rotate-180")} aria-hidden />
+        <ChevronRight className={cn("size-4 shrink-0 text-ink-soft transition-transform duration-200", open && "rotate-90")} aria-hidden />
+        <span className="shrink-0 font-medium text-ink">{title}</span>
+        <span className="ml-auto min-w-0 truncate text-sm text-ink-soft">{summary}</span>
       </button>
       {open && (
         <div id={panelId} className="space-y-5 px-4 pt-1 pb-5">
@@ -143,7 +128,7 @@ function Section({
   );
 }
 
-const joinParts = (parts: (string | number | null | undefined | false)[]) => parts.filter(Boolean).join(" · ");
+const joinParts = (parts: (string | number | null | undefined | false)[]) => parts.filter(Boolean).join(", ");
 
 export function WordForm({
   mode,
@@ -186,6 +171,7 @@ export function WordForm({
   const aiMeaning = useRef<string | null>(null);
 
   const term = useWatch({ control, name: "term" }) ?? "";
+  const reading = useWatch({ control, name: "reading" });
   const emoji = useWatch({ control, name: "emoji" });
   const imageUrl = useWatch({ control, name: "image_url" });
   const imageSource = useWatch({ control, name: "image_source" });
@@ -342,18 +328,23 @@ export function WordForm({
             spellCheck={false}
             lang={language === "zh" ? "zh-CN" : "en"}
             placeholder={def.termPlaceholder}
-            className={cn("h-16 flex-1 rounded-btn px-4 text-2xl font-semibold md:text-2xl", language === "zh" && "font-hanzi-sans")}
+            className={cn("h-14 flex-1 px-4 text-2xl font-medium md:text-2xl", language === "zh" ? "font-hanzi" : "font-display")}
             aria-invalid={Boolean(errors.term) || undefined}
           />
           <AiSuggestButton loading={ai.state.status === "loading"} onClick={() => void ai.suggest()} />
         </div>
-        {errors.term?.message && <p className="text-sm text-danger">{errors.term.message}</p>}
+        {errors.term?.message && (
+          <p className="flex items-center gap-1.5 text-sm text-seal-text">
+            <AlertCircle className="size-3.5 shrink-0" aria-hidden />
+            {errors.term.message}
+          </p>
+        )}
 
         <AiSuggestPanel ai={ai} onUseSpelling={(t) => setValue("term", t, { shouldDirty: true })} />
 
         {term.trim() && duplicates.length > 0 && (
-          <p role="status" className="flex items-start gap-2 rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-tone-2" aria-hidden />
+          <p role="status" className="flex items-start gap-2 rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-turmeric-text" aria-hidden />
             <span>
               Từ này đã có trong bộ{" "}
               {duplicates.map((d, i) => (
@@ -369,14 +360,26 @@ export function WordForm({
         )}
       </div>
 
-      <div className="notebook-card space-y-4 p-4">
+      {term.trim() && (
+        <WordSpecimen
+          lang={language}
+          term={term.trim()}
+          reading={reading?.trim() || null}
+          size="sm"
+          toneColors
+          actions={<PronounceButton text={term} lang={language} />}
+          className={language === "zh" ? "sheet p-4" : undefined}
+        />
+      )}
+
+      <div className="sheet space-y-4 p-4">
         <Field label={def.readingLabel} htmlFor="reading">
           <div className="flex gap-2">
             <Input
               id="reading"
               {...register("reading")}
               placeholder={def.readingPlaceholder}
-              className={cn("h-12 flex-1 rounded-btn text-base", language === "en" && "font-ipa")}
+              className={cn("flex-1", language === "en" && "font-ipa")}
             />
             {language === "zh" && (
               <Button
@@ -385,12 +388,12 @@ export function WordForm({
                 onClick={fillPinyin}
                 aria-label="Tự điền pinyin"
                 title="Tự điền pinyin"
-                className="size-12 rounded-btn p-0"
+                className="shrink-0"
+                size="icon"
               >
-                <Wand2 className="size-5" aria-hidden />
+                <Wand2 aria-hidden />
               </Button>
             )}
-            {term.trim() && <PronounceButton text={term} lang={language} />}
           </div>
         </Field>
 
@@ -399,21 +402,18 @@ export function WordForm({
             id="meaning_vi"
             {...register("meaning_vi")}
             placeholder="kiên cường, mau phục hồi"
-            className="h-12 rounded-btn text-base"
             aria-invalid={Boolean(errors.meaning_vi) || undefined}
           />
         </Field>
       </div>
 
       <section aria-labelledby="details-heading" className="space-y-2">
-        <h2 id="details-heading" className="px-1 text-base text-ink">
+        <h2 id="details-heading" className="px-1 text-base">
           Thêm chi tiết <span className="font-sans text-sm font-normal text-ink-soft">(không bắt buộc)</span>
         </h2>
-        <div className="notebook-card divide-y divide-rule overflow-hidden">
+        <div className="sheet divide-y divide-rule overflow-hidden">
           <Section
             id="examples"
-            icon={MessageSquareQuote}
-            tone="bg-wash-sky text-sky-text"
             title="Câu ví dụ"
             summary={summaries.examples}
             open={openSections.has("examples")}
@@ -424,13 +424,11 @@ export function WordForm({
 
           <Section
             id="image"
-            icon={ImageIcon}
-            tone="bg-wash-pink text-pink-text"
             title="Ảnh minh họa"
             summary={
               imageUrl ? (
                 <span className="inline-flex items-center gap-2">
-                  <span className="relative inline-block size-5 overflow-hidden rounded-md align-middle">
+                  <span className="relative inline-block size-5 overflow-hidden rounded-sm align-middle">
                     <Image src={imageUrl} alt="" fill sizes="20px" className="object-cover" />
                   </span>
                   {summaries.image}
@@ -458,8 +456,6 @@ export function WordForm({
 
           <Section
             id="tags"
-            icon={Tag}
-            tone="bg-wash-yellow text-sun-text"
             title="Loại từ & chủ đề"
             summary={summaries.tags}
             open={openSections.has("tags")}
@@ -481,10 +477,11 @@ export function WordForm({
                           aria-pressed={on}
                           onClick={() => field.onChange(on ? field.value!.filter((x) => x !== p) : [...(field.value ?? []), p])}
                           className={cn(
-                            "min-h-10 rounded-full border px-3 text-sm",
-                            on ? cn("border-transparent font-medium", POS[p].wash, POS[p].badge) : "border-rule text-ink-soft",
+                            "inline-flex min-h-10 items-center gap-1.5 rounded-chip border px-3 text-sm transition-colors",
+                            on ? "border-ink-violet bg-tint-violet font-medium text-ink" : "border-input text-ink-soft hover:text-ink",
                           )}
                         >
+                          {on && <Check className="size-3.5 text-ink-violet" strokeWidth={2.5} aria-hidden />}
                           {POS[p].label}
                         </button>
                       );
@@ -495,7 +492,7 @@ export function WordForm({
             />
             <div className="grid grid-cols-[1fr_6rem] gap-3">
               <Field label="Chủ đề" htmlFor="topic">
-                <Input id="topic" list="topic-options" {...register("topic")} placeholder="Cảm xúc" className="h-11 rounded-btn text-base" />
+                <Input id="topic" list="topic-options" {...register("topic")} placeholder="Cảm xúc" />
                 <datalist id="topic-options">
                   {STANDARD_TOPICS.map((t) => (
                     <option key={t} value={t} />
@@ -503,15 +500,13 @@ export function WordForm({
                 </datalist>
               </Field>
               <Field label="Emoji" htmlFor="emoji">
-                <Input id="emoji" {...register("emoji")} placeholder="🌱" className="h-11 rounded-btn text-center text-xl" maxLength={8} />
+                <Input id="emoji" {...register("emoji")} className="text-center text-xl" maxLength={8} />
               </Field>
             </div>
           </Section>
 
           <Section
             id="related"
-            icon={Link2}
-            tone="bg-wash-jade text-jade-text"
             title="Từ liên quan"
             summary={summaries.related}
             open={openSections.has("related")}
@@ -549,27 +544,25 @@ export function WordForm({
 
           <Section
             id="more"
-            icon={Info}
-            tone="bg-wash-grape text-grape-text"
             title="Thông tin thêm"
             summary={summaries.more}
             open={openSections.has("more")}
             onToggle={toggleSection}
           >
             <Field label="Giải nghĩa tiếng Anh" htmlFor="meaning_en">
-              <Input id="meaning_en" {...register("meaning_en")} placeholder="Able to recover quickly from difficulties." className="h-11 rounded-btn text-base" />
+              <Input id="meaning_en" {...register("meaning_en")} placeholder="Able to recover quickly from difficulties." />
             </Field>
 
             {language === "zh" ? (
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field label="Phồn thể" htmlFor="traditional">
-                  <Input id="traditional" {...register("lang_extra.traditional")} placeholder="堅強" className="h-11 rounded-btn font-hanzi-sans text-base" />
+                  <Input id="traditional" {...register("lang_extra.traditional")} placeholder="堅強" className="font-hanzi" />
                 </Field>
                 <Field label="Âm Hán Việt" htmlFor="han_viet">
-                  <Input id="han_viet" {...register("lang_extra.han_viet")} placeholder="kiên cường" className="h-11 rounded-btn text-base" />
+                  <Input id="han_viet" {...register("lang_extra.han_viet")} placeholder="kiên cường" />
                 </Field>
                 <Field label="HSK" htmlFor="hsk">
-                  <select id="hsk" {...register("lang_extra.hsk.level")} className="h-11 w-full rounded-btn border border-rule bg-surface px-3 text-base">
+                  <select id="hsk" {...register("lang_extra.hsk.level")} className="h-11 w-full rounded-btn border border-input bg-surface px-3 text-base outline-none focus-visible:border-ink-violet focus-visible:ring-3 focus-visible:ring-tint-violet">
                     <option value="">Không rõ</option>
                     {def.levels.map((l) => (
                       <option key={l} value={l}>
@@ -604,7 +597,7 @@ export function WordForm({
             ) : (
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field label="CEFR" htmlFor="cefr">
-                  <select id="cefr" {...register("lang_extra.cefr")} className="h-11 w-full rounded-btn border border-rule bg-surface px-3 text-base">
+                  <select id="cefr" {...register("lang_extra.cefr")} className="h-11 w-full rounded-btn border border-input bg-surface px-3 text-base outline-none focus-visible:border-ink-violet focus-visible:ring-3 focus-visible:ring-tint-violet">
                     <option value="">Không rõ</option>
                     {def.levels.map((l) => (
                       <option key={l} value={l}>
@@ -614,13 +607,13 @@ export function WordForm({
                   </select>
                 </Field>
                 <Field label="IPA Mỹ" htmlFor="us_ipa">
-                  <Input id="us_ipa" {...register("lang_extra.us_ipa")} className="h-11 rounded-btn font-ipa text-base" />
+                  <Input id="us_ipa" {...register("lang_extra.us_ipa")} className="font-ipa" />
                 </Field>
                 <Field label="IPA Anh" htmlFor="uk_ipa">
-                  <Input id="uk_ipa" {...register("lang_extra.uk_ipa")} className="h-11 rounded-btn font-ipa text-base" />
+                  <Input id="uk_ipa" {...register("lang_extra.uk_ipa")} className="font-ipa" />
                 </Field>
                 <Field label="Số nhiều" htmlFor="plural">
-                  <Input id="plural" {...register("lang_extra.plural")} className="h-11 rounded-btn text-base" />
+                  <Input id="plural" {...register("lang_extra.plural")} />
                 </Field>
                 <fieldset className="space-y-1.5 sm:col-span-3">
                   <legend className="text-sm font-medium">Dạng động từ</legend>
@@ -633,7 +626,7 @@ export function WordForm({
                         ["third_person", "Ngôi 3 số ít"],
                       ] as const
                     ).map(([k, l]) => (
-                      <Input key={k} aria-label={l} placeholder={l} {...register(`lang_extra.verb_forms.${k}`)} className="h-11 rounded-btn text-base" />
+                      <Input key={k} aria-label={l} placeholder={l} {...register(`lang_extra.verb_forms.${k}`)} />
                     ))}
                   </div>
                 </fieldset>
@@ -643,8 +636,6 @@ export function WordForm({
 
           <Section
             id="note"
-            icon={StickyNote}
-            tone="bg-wash-red text-danger"
             title="Ghi chú riêng"
             summary={summaries.note}
             open={openSections.has("note")}
@@ -655,18 +646,17 @@ export function WordForm({
               aria-label="Ghi chú riêng (mẹo nhớ)"
               {...register("personal_note")}
               rows={3}
-              className="rounded-btn text-base"
               placeholder="Chỉ mình bạn thấy khi ôn."
               aria-invalid={Boolean(errors.personal_note) || undefined}
             />
-            {errors.personal_note?.message && <p className="text-sm text-danger">{errors.personal_note.message}</p>}
+            {errors.personal_note?.message && <p className="text-sm text-seal-text">{errors.personal_note.message}</p>}
           </Section>
         </div>
       </section>
 
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 border-t border-rule bg-paper/95 px-4 py-3 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
-        <Button type="submit" disabled={pending} className="h-12 w-full gap-2 rounded-btn text-base sm:w-auto sm:px-10">
-          {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
+      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 border-t border-rule bg-surface px-4 py-3 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
+        <Button type="submit" size="lg" disabled={pending} className="w-full sm:w-auto sm:px-10">
+          {pending && <Loader2 className="animate-spin" aria-hidden />}
           Lưu từ
         </Button>
         {mode === "create" && <span className="ml-3 hidden text-sm text-ink-soft sm:inline">vào bộ {deckName}</span>}

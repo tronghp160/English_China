@@ -20,11 +20,9 @@ export default async function AddWordPage({ params, searchParams }: PageProps<"/
   const { deck } = view;
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="max-w-2xl">
       <BackLink href={`/decks/${deckId}`} label={deck.name} />
-      <h1 className="mb-6 text-xl text-ink">
-        Thêm từ {LANGUAGES[deck.language].label.toLowerCase()}
-      </h1>
+      <h1 className="mb-6 text-xl">Thêm từ {LANGUAGES[deck.language].label.toLowerCase()}</h1>
       <WordForm
         mode="create"
         deckId={deckId}

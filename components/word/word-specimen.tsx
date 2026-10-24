@@ -149,7 +149,7 @@ export function WordSpecimen({
   // Long words and phrases shrink to stay on one ruled line.
   const fit = Math.min(1, 11 / Math.max(term.trim().length, 1));
   return (
-    <Paper line={cfg.line} framed={framed} className={cn("relative", className)} innerClassName={innerClassName}>
+    <Paper line={cfg.line} framed={framed} className={cn("relative", className)} innerClassName={cn("pb-2", innerClassName)}>
       {aside && <div className="absolute top-4 right-4">{aside}</div>}
       <p
         lang="en"

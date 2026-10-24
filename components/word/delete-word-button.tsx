@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { deleteWord } from "@/lib/actions/words";
 
 export function DeleteWordButton({ wordId, term }: { wordId: string; term: string }) {
@@ -22,20 +23,22 @@ export function DeleteWordButton({ wordId, term }: { wordId: string; term: strin
   const [pending, start] = useTransition();
   return (
     <AlertDialog>
-      <AlertDialogTrigger className="inline-flex min-h-11 items-center gap-1.5 rounded-btn px-3 text-sm font-medium text-danger hover:bg-wash-red">
-        <Trash2 className="size-4" aria-hidden />
-        Xóa từ
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" size="sm">
+          <Trash2 aria-hidden />
+          Xóa từ
+        </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="rounded-sheet">
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa “{term}”?</AlertDialogTitle>
           <AlertDialogDescription>Lịch sử ôn của từ này cũng bị xóa. Không hoàn tác được.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="min-h-11 rounded-btn">Giữ lại</AlertDialogCancel>
+          <AlertDialogCancel>Giữ lại</AlertDialogCancel>
           <AlertDialogAction
             disabled={pending}
-            className="min-h-11 rounded-btn bg-danger text-paper hover:bg-danger/90"
+            className="bg-seal text-on-seal hover:bg-seal/90"
             onClick={() =>
               start(async () => {
                 const res = await deleteWord(wordId);

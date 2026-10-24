@@ -5,10 +5,13 @@ import { notFound } from "next/navigation";
 import { MessageCircleHeart, PenLine, Pencil, Plus } from "lucide-react";
 import { BackLink } from "@/components/app-shell/back-link";
 import { StatusDot } from "@/components/deck/status-dot";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ImageCredit } from "@/components/word/image-picker";
 import { PosBadge } from "@/components/word/pos-badge";
 import { PronounceButton } from "@/components/word/pronounce-button";
 import { SuspendToggle } from "@/components/word/suspend-toggle";
+import { WordSpecimen } from "@/components/word/word-specimen";
 import { PinyinText } from "@/components/zh/pinyin-text";
 import { StrokeOrder } from "@/components/zh/stroke-order";
 import { startChat } from "@/lib/actions/chat";
@@ -20,6 +23,7 @@ import { formatRelativeDue, formatShortDate } from "@/lib/format";
 import { LANGUAGES } from "@/lib/lang/registry";
 import { POS, isPosCode } from "@/lib/pos";
 import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
 import { readPrefs } from "@/lib/validation";
 import { collocationsOf, examplesOf, extraOf, familyOf, imageSourceOf } from "@/lib/word-mapper";
 
@@ -31,10 +35,18 @@ export async function generateMetadata({ params }: PageProps<"/words/[wordId]">)
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="border-t border-rule py-5">
-      <h2 className="mb-3 text-sm font-medium text-ink-soft">{title}</h2>
+      <h2 className="mb-3 text-base">{title}</h2>
       {children}
     </section>
   );
+}
+
+/** The studied word inside an example sentence gets the highlighter, the one place it carries meaning. */
+function Highlighted({ text, term }: { text: string; term: string }) {
+  const t = term.trim();
+  if (!t) return text;
+  const parts = text.split(new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"));
+  return parts.map((p, i) => (p.toLowerCase() === t.toLowerCase() ? <mark key={i} className="highlighter bg-transparent text-inherit">{p}</mark> : p));
 }
 
 export default async function WordPage({ params }: PageProps<"/words/[wordId]">) {
@@ -74,7 +86,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
     const id = existingMap.get(def.normalize(text));
     if (id) {
       return (
-        <Link href={`/words/${id}`} className="inline-flex min-h-10 items-center rounded-full bg-wash-blue px-3 text-sm text-ink">
+        <Link href={`/words/${id}`} className="inline-flex min-h-10 items-center rounded-chip bg-tint-violet px-3 text-sm text-ink">
           {text}
         </Link>
       );
@@ -82,78 +94,74 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
     return view!.canEdit ? (
       <Link
         href={`/decks/${word!.deck_id}/add?term=${encodeURIComponent(text)}`}
-        className="inline-flex min-h-10 items-center gap-1 rounded-full border border-dashed border-rule px-3 text-sm text-ink-soft hover:text-ink"
+        className="inline-flex min-h-10 items-center gap-1 rounded-chip border border-dashed border-rule-strong px-3 text-sm text-ink-soft hover:text-ink"
         title="Thêm từ này"
       >
         <Plus className="size-3.5" aria-hidden />
         {text}
       </Link>
     ) : (
-      <span className="inline-flex min-h-10 items-center rounded-full border border-rule px-3 text-sm text-ink">{text}</span>
+      <span className="inline-flex min-h-10 items-center rounded-chip border border-rule-strong px-3 text-sm text-ink">{text}</span>
     );
   }
 
   return (
-    <article className="mx-auto max-w-2xl">
+    <article className="max-w-2xl">
       <BackLink href={`/decks/${word.deck_id}`} label={view.deck.name} />
 
-      <div className="notebook-card px-5 py-6 sm:px-7">
-        <div className="flex items-start gap-4">
-          <div className="min-w-0 flex-1">
-            <h1 lang={isZh ? "zh-CN" : "en"} className="flex flex-wrap items-end gap-3">
-              <span className={`ruled-word font-bold break-words text-ink ${isZh ? "font-hanzi text-[3.5rem] leading-none" : "text-[2.5rem] leading-tight"}`}>
-                {word.term}
-              </span>
-              {isZh && extra.traditional && extra.traditional !== word.term && (
-                <span className="font-hanzi text-2xl text-ink-soft" title="Phồn thể">
-                  {extra.traditional}
+      <header>
+        <WordSpecimen
+          lang={lang}
+          term={word.term}
+          reading={word.reading}
+          readingNode={
+            !isZh && extra.uk_ipa && extra.uk_ipa !== extra.us_ipa ? (
+              <>
+                <span>
+                  <abbr title="Anh-Mỹ" className="mr-1 no-underline">US</abbr>
+                  {extra.us_ipa ?? word.reading}
                 </span>
-              )}
-            </h1>
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-              {word.reading &&
-                (isZh ? (
-                  <PinyinText pinyin={word.reading} colored={toneColors} className="text-xl font-medium" />
-                ) : (
-                  <span className="font-ipa text-lg text-ink-soft">
-                    {extra.uk_ipa && extra.uk_ipa !== extra.us_ipa ? (
-                      <>
-                        <abbr title="Anh-Mỹ" className="no-underline">US</abbr> {extra.us_ipa ?? word.reading} ·{" "}
-                        <abbr title="Anh-Anh" className="no-underline">UK</abbr> {extra.uk_ipa}
-                      </>
-                    ) : (
-                      word.reading
-                    )}
-                  </span>
-                ))}
-              <PronounceButton text={word.term} lang={lang} size="lg" />
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {word.parts_of_speech.map((p) => (
-                <PosBadge key={p} pos={p} />
-              ))}
-              {extra.cefr && <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-ink-soft">{extra.cefr}</span>}
-              {extra.hsk?.level && (
-                <span className="rounded-full bg-wash-jade px-2.5 py-0.5 text-xs font-medium text-jade-text">HSK {extra.hsk.level}</span>
-              )}
-              {word.topic && <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-ink-soft">{word.topic}</span>}
-            </div>
-          </div>
-          {word.image_url ? (
-            <div className="shrink-0">
+                <span>
+                  <abbr title="Anh-Anh" className="mr-1 no-underline">UK</abbr>
+                  {extra.uk_ipa}
+                </span>
+              </>
+            ) : undefined
+          }
+          toneColors={toneColors}
+          actions={<PronounceButton text={word.term} lang={lang} size="lg" />}
+          aside={
+            word.image_url ? (
               <div className="relative size-24 overflow-hidden rounded-card border border-rule sm:size-32">
                 <Image src={word.image_url} alt="" fill sizes="128px" className="object-cover" />
               </div>
-            </div>
-          ) : word.emoji ? (
-            <span className="grid size-20 shrink-0 place-items-center rounded-card bg-wash-blue text-5xl" aria-hidden>
-              {word.emoji}
-            </span>
-          ) : null}
-        </div>
+            ) : word.emoji ? (
+              <span className="grid size-20 place-items-center rounded-card bg-surface-sunk text-5xl" aria-hidden>
+                {word.emoji}
+              </span>
+            ) : null
+          }
+          className={isZh ? "sheet p-5 sm:p-6" : undefined}
+        >
+          {isZh && extra.traditional && extra.traditional !== word.term && (
+            <p className="text-sm text-ink-soft">
+              Phồn thể <span lang="zh-TW" className="ml-1 font-hanzi text-xl text-ink">{extra.traditional}</span>
+            </p>
+          )}
+        </WordSpecimen>
+        <h1 className="sr-only">{word.term}</h1>
         <ImageCredit source={imageSourceOf(word)} className="mt-2 text-right" />
 
-        <p className="mt-5 text-xl text-ink">{word.meaning_vi}</p>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {word.parts_of_speech.map((p) => (
+            <PosBadge key={p} pos={p} />
+          ))}
+          {extra.cefr && <Badge variant="secondary">{extra.cefr}</Badge>}
+          {extra.hsk?.level && <Badge variant="destructive">HSK {extra.hsk.level}</Badge>}
+          {word.topic && <Badge variant="outline">Chủ đề: {word.topic}</Badge>}
+        </div>
+
+        <p className="mt-5 text-[1.375rem] leading-snug font-medium text-ink">{word.meaning_vi}</p>
         {word.meaning_en && <p className="mt-1 text-ink-soft">{word.meaning_en}</p>}
         {isZh && extra.han_viet && (
           <p className="mt-2 text-sm text-ink-soft">
@@ -172,21 +180,25 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
           </p>
         )}
         {extra.needs_review && (
-          <p className="mt-3 rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">Pinyin có chữ đa âm — nên kiểm tra lại.</p>
+          <p className="mt-3 rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">Pinyin có chữ đa âm, nên kiểm tra lại.</p>
         )}
 
         <div className="mt-5 flex flex-wrap gap-2">
           {view.canEdit && (
-            <Link href={`/words/${wordId}/edit`} className="inline-flex min-h-11 items-center gap-1.5 rounded-btn border border-rule bg-surface px-4 text-sm font-medium hover:bg-muted">
-              <Pencil className="size-4" aria-hidden />
-              Sửa
-            </Link>
+            <Button asChild variant="outline">
+              <Link href={`/words/${wordId}/edit`}>
+                <Pencil aria-hidden />
+                Sửa
+              </Link>
+            </Button>
           )}
           {isZh && (
-            <Link href={`/practice/writing?word=${wordId}`} className="inline-flex min-h-11 items-center gap-1.5 rounded-btn border border-rule bg-surface px-4 text-sm font-medium hover:bg-muted">
-              <PenLine className="size-4" aria-hidden />
-              Luyện viết
-            </Link>
+            <Button asChild variant="outline">
+              <Link href={`/practice/writing?word=${wordId}`}>
+                <PenLine aria-hidden />
+                Tập viết
+              </Link>
+            </Button>
           )}
           {aiProvider() !== null && (
             <form action={startChat}>
@@ -197,27 +209,24 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
                 name="prompt"
                 value={`Giải thích kỹ hơn giúp mình từ "${word.term}" (${word.meaning_vi}): cách dùng, từ hay nhầm, và cho mình đặt thử một câu.`}
               />
-              <button
-                type="submit"
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-btn bg-wash-grape px-4 text-sm font-semibold text-grape-text hover:brightness-95"
-              >
-                <MessageCircleHeart className="size-4" aria-hidden />
+              <Button type="submit" variant="secondary">
+                <MessageCircleHeart aria-hidden />
                 Hỏi gia sư
-              </button>
+              </Button>
             </form>
           )}
         </div>
-      </div>
+      </header>
 
       <div className="mt-2">
         {examples.length > 0 && (
           <Section title="Câu ví dụ">
             <ul className="space-y-4">
               {examples.map((e, i) => (
-                <li key={i} className="flex gap-2">
+                <li key={i} className={cn("flex gap-2 border-l-2 pl-3", isZh ? "border-seal" : "border-ink-violet")}>
                   <div className="min-w-0 flex-1">
-                    <p lang={isZh ? "zh-CN" : "en"} className={isZh ? "font-hanzi-sans text-lg text-ink" : "text-ink"}>
-                      {e.text}
+                    <p lang={isZh ? "zh-CN" : "en"} className={isZh ? "font-hanzi text-lg text-ink" : "text-ink"}>
+                      <Highlighted text={e.text} term={word.term} />
                     </p>
                     {isZh && e.reading && <PinyinText pinyin={e.reading} colored={toneColors} className="block text-sm" />}
                     {e.vi && <p className="text-sm text-ink-soft">{e.vi}</p>}
@@ -276,7 +285,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
         )}
 
         {(word.synonyms.length > 0 || word.antonyms.length > 0) && (
-          <Section title="Đồng nghĩa · Trái nghĩa">
+          <Section title="Đồng nghĩa và trái nghĩa">
             {word.synonyms.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
                 <span className="w-20 text-sm text-ink-soft">Đồng nghĩa</span>
@@ -297,7 +306,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
         )}
 
         {(family.length > 0 || extra.verb_forms || extra.plural) && (
-          <Section title="Họ từ · Dạng từ">
+          <Section title="Họ từ và dạng từ">
             {family.length > 0 && (
               <ul className="ruled-list">
                 {family.map((f, i) => (
@@ -311,8 +320,10 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
             )}
             {extra.verb_forms && (
               <p className="mt-3 text-sm text-ink-soft">
-                Động từ: <span className="text-ink">{extra.verb_forms.past}</span> · <span className="text-ink">{extra.verb_forms.past_participle}</span> ·{" "}
-                <span className="text-ink">{extra.verb_forms.ing}</span> · <span className="text-ink">{extra.verb_forms.third_person}</span>
+                Động từ:{" "}
+                <span className="text-ink">
+                  {[extra.verb_forms.past, extra.verb_forms.past_participle, extra.verb_forms.ing, extra.verb_forms.third_person].join(", ")}
+                </span>
               </p>
             )}
             {extra.plural && (
@@ -325,7 +336,7 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
 
         {word.personal_note && (
           <Section title="Ghi chú riêng">
-            <p className="rounded-btn bg-wash-yellow px-4 py-3 whitespace-pre-line text-ink">{word.personal_note}</p>
+            <p className="rounded-btn bg-tint-turmeric px-4 py-3 whitespace-pre-line text-ink">{word.personal_note}</p>
           </Section>
         )}
 

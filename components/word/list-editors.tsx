@@ -29,7 +29,7 @@ function RowControls({
         aria-label={`Đưa ${noun} ${index + 1} lên`}
         disabled={index === 0}
         onClick={() => onMove(index, index - 1)}
-        className="grid size-9 place-items-center rounded-[8px] text-ink-soft hover:bg-muted disabled:opacity-30"
+        className="grid size-9 place-items-center rounded-md text-ink-soft transition-colors hover:bg-surface-sunk disabled:opacity-30"
       >
         <ArrowUp className="size-4" aria-hidden />
       </button>
@@ -38,7 +38,7 @@ function RowControls({
         aria-label={`Đưa ${noun} ${index + 1} xuống`}
         disabled={index === count - 1}
         onClick={() => onMove(index, index + 1)}
-        className="grid size-9 place-items-center rounded-[8px] text-ink-soft hover:bg-muted disabled:opacity-30"
+        className="grid size-9 place-items-center rounded-md text-ink-soft transition-colors hover:bg-surface-sunk disabled:opacity-30"
       >
         <ArrowDown className="size-4" aria-hidden />
       </button>
@@ -46,7 +46,7 @@ function RowControls({
         type="button"
         aria-label={`Xóa ${noun} ${index + 1}`}
         onClick={() => onRemove(index)}
-        className="grid size-9 place-items-center rounded-[8px] text-danger hover:bg-wash-red"
+        className="grid size-9 place-items-center rounded-md text-seal-text transition-colors hover:bg-tint-seal"
       >
         <Trash2 className="size-4" aria-hidden />
       </button>
@@ -59,7 +59,7 @@ function AddButton({ onClick, children }: { onClick: () => void; children: React
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex min-h-11 items-center gap-1.5 rounded-btn px-2 text-sm font-medium text-ink-blue hover:bg-wash-blue"
+      className="inline-flex min-h-11 items-center gap-1.5 rounded-btn px-2 text-sm font-medium text-ink-violet transition-colors hover:bg-tint-violet"
     >
       <Plus className="size-4" aria-hidden />
       {children}
@@ -67,7 +67,7 @@ function AddButton({ onClick, children }: { onClick: () => void; children: React
   );
 }
 
-const inputCls = "h-11 rounded-btn text-base";
+const inputCls = "";
 
 export function ExamplesEditor({
   control,
@@ -161,7 +161,7 @@ export function FamilyEditor({
             <Input aria-label={`Từ cùng họ ${i + 1}`} placeholder="resilience" className={inputCls} {...register(`word_family.${i}.text`)} />
             <select
               aria-label={`Loại từ ${i + 1}`}
-              className="h-11 rounded-btn border border-rule bg-surface px-2 text-base"
+              className="h-11 rounded-btn border border-input bg-surface px-2 text-base outline-none focus-visible:border-ink-violet focus-visible:ring-3 focus-visible:ring-tint-violet"
               {...register(`word_family.${i}.pos`)}
             >
               <option value="">Loại từ</option>
@@ -206,15 +206,15 @@ export function TagInput({
     setDraft("");
   }
   return (
-    <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-btn border border-rule bg-surface px-2 py-1.5">
+    <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-btn border border-input bg-surface px-2 py-1.5 focus-within:border-ink-violet focus-within:ring-3 focus-within:ring-tint-violet">
       {value.map((t) => (
-        <span key={t} className="inline-flex items-center gap-1 rounded-full bg-wash-blue py-1 pr-1 pl-3 text-sm text-ink">
+        <span key={t} className="inline-flex items-center gap-1 rounded-chip bg-tint-violet py-1 pr-1 pl-3 text-sm text-ink">
           {t}
           <button
             type="button"
             aria-label={`Bỏ ${t}`}
             onClick={() => onChange(value.filter((x) => x !== t))}
-            className="grid size-6 place-items-center rounded-full text-ink-soft hover:bg-surface"
+            className="grid size-6 place-items-center rounded-full text-ink-soft transition-colors hover:bg-surface"
           >
             ×
           </button>
@@ -237,7 +237,7 @@ export function TagInput({
         }}
         onBlur={() => commit(draft)}
         placeholder={value.length ? "" : placeholder}
-        className="min-w-24 flex-1 bg-transparent px-1 text-base outline-none placeholder:text-ink-soft"
+        className="min-w-24 flex-1 bg-transparent px-1 text-base outline-none placeholder:text-ink-faint"
       />
     </div>
   );

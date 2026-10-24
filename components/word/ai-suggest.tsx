@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Loader2, MessageSquareText, Sparkles } from "lucide-react";
+import { Check, Lightbulb, Loader2, MessageSquareText } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useOptionalMe } from "@/components/app-shell/me-provider";
 import { Button } from "@/components/ui/button";
@@ -214,13 +214,8 @@ export function useAiSuggest({
 
 export function AiSuggestButton({ loading, onClick }: { loading: boolean; onClick: () => void }) {
   return (
-    <Button
-      type="button"
-      onClick={onClick}
-      disabled={loading}
-      className="h-16 gap-2 rounded-btn bg-ink-blue px-4 text-base"
-    >
-      {loading ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <Sparkles className="size-5" aria-hidden />}
+    <Button type="button" onClick={onClick} disabled={loading} className="h-14 px-5">
+      {loading ? <Loader2 className="animate-spin" aria-hidden /> : <Lightbulb aria-hidden />}
       Gợi ý
     </Button>
   );
@@ -253,7 +248,7 @@ export function AiSuggestPanel({
       )}
 
       {state.status === "error" && (
-        <p role="alert" className="rounded-btn bg-wash-red px-3 py-2 text-sm text-danger">
+        <p role="alert" className="rounded-btn border-l-[3px] border-seal bg-tint-seal px-3 py-2 text-sm text-seal-text">
           {state.message}
         </p>
       )}
@@ -261,7 +256,7 @@ export function AiSuggestPanel({
       {state.status === "done" && (
         <>
           {state.result.did_you_mean && (
-            <div className="flex flex-wrap items-center gap-2 rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">
+            <div className="flex flex-wrap items-center gap-2 rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">
               <span>
                 Có phải bạn muốn gõ <em className="font-medium not-italic">{state.result.did_you_mean}</em>?
               </span>
@@ -271,7 +266,7 @@ export function AiSuggestPanel({
                   onUseSpelling(state.result.did_you_mean!);
                   void ai.suggest(state.result.did_you_mean!);
                 }}
-                className="min-h-9 rounded-btn bg-surface px-3 font-medium text-ink-blue"
+                className="min-h-9 rounded-btn bg-surface px-3 font-medium text-ink-violet"
               >
                 Áp dụng
               </button>
@@ -292,12 +287,12 @@ export function AiSuggestPanel({
                       key={i}
                       title={[s.meaning_en, s.examples[0]?.text].filter(Boolean).join(" — ")}
                       className={cn(
-                        "inline-flex min-h-10 max-w-full cursor-pointer items-center gap-1.5 rounded-full border-2 px-3 text-sm has-focus-visible:outline-2 has-focus-visible:outline-ink-blue",
-                        on ? "border-ink-blue bg-wash-blue text-ink" : "border-rule bg-surface text-ink-soft hover:text-ink",
+                        "inline-flex min-h-10 max-w-full cursor-pointer items-center gap-1.5 rounded-chip border px-3 text-sm transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink-violet",
+                        on ? "border-ink-violet bg-tint-violet text-ink" : "border-input bg-surface text-ink-soft hover:text-ink",
                       )}
                     >
                       <input type="checkbox" checked={on} onChange={() => toggle(i)} className="sr-only" />
-                      {on && <Check className="size-3.5 shrink-0 text-ink-blue" strokeWidth={3} aria-hidden />}
+                      {on && <Check className="size-3.5 shrink-0 text-ink-violet" strokeWidth={2.5} aria-hidden />}
                       <span className="truncate font-medium">{s.meaning_vi}</span>
                       {pos && <span className="shrink-0 text-xs text-ink-soft">{pos}</span>}
                     </label>
@@ -307,7 +302,7 @@ export function AiSuggestPanel({
                   <button
                     type="button"
                     onClick={chooseAll}
-                    className="min-h-10 rounded-full px-2 text-sm font-medium text-ink-blue hover:underline"
+                    className="min-h-10 rounded-chip px-2 text-sm font-medium text-ink-violet hover:underline"
                   >
                     Chọn tất cả
                   </button>
@@ -317,19 +312,15 @@ export function AiSuggestPanel({
           )}
 
           {state.result.checks.pinyin_needs_review && (
-            <p className="rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">Từ có chữ đa âm — hãy kiểm tra lại pinyin.</p>
+            <p className="rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">Từ có chữ đa âm, hãy kiểm tra lại pinyin.</p>
           )}
-          {state.aiNote && <p className="rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">{state.aiNote}</p>}
+          {state.aiNote && <p className="rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">{state.aiNote}</p>}
 
-          <p className="flex items-start gap-1.5 px-1 text-xs text-ink-soft">
-            {state.aiPending ? (
-              <Loader2 className="mt-px size-3.5 shrink-0 animate-spin" aria-hidden />
-            ) : (
-              <Sparkles className="mt-px size-3.5 shrink-0 text-ink-blue" aria-hidden />
-            )}
+          <p className="flex items-start gap-1.5 px-1 text-sm text-ink-soft">
+            {state.aiPending && <Loader2 className="mt-0.5 size-3.5 shrink-0 animate-spin" aria-hidden />}
             <span>
               {state.aiPending ? "AI đang bổ sung thêm. " : ""}
-              Đã tự điền
+              Đã điền
               {credit ? (
                 <>
                   {" "}từ{" "}
@@ -338,10 +329,10 @@ export function AiSuggestPanel({
                   </a>{" "}
                   (CC BY-SA)
                 </>
-              ) : state.cached ? (
-                " (không tốn lượt)"
+              ) : state.source === "ai" ? (
+                " bằng AI"
               ) : null}
-              , hãy xem lại trước khi lưu.
+              {state.source === "ai" && state.cached ? ", không tốn lượt" : ""}. Xem lại trước khi lưu.
               {state.remaining !== null && ` Còn ${state.remaining} lượt AI hôm nay.`}
             </span>
           </p>
@@ -358,7 +349,7 @@ export function AiSuggestPanel({
             maxLength={300}
             aria-label="Câu bạn gặp từ này"
             placeholder="Câu bạn gặp từ này, ví dụ: The company proved resilient during the crisis."
-            className="w-full rounded-btn border border-rule bg-surface px-3 py-2 text-base"
+            className="w-full rounded-btn border border-input bg-surface px-3 py-2 text-base outline-none focus-visible:border-ink-violet focus-visible:ring-3 focus-visible:ring-tint-violet"
           />
         ) : (
           <button

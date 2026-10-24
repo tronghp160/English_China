@@ -20,10 +20,10 @@ export default async function EditWordPage({ params }: PageProps<"/words/[wordId
   if (!view?.canEdit) redirect(`/words/${wordId}`);
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="max-w-2xl">
       <BackLink href={`/words/${wordId}`} label={word.term} />
       <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-xl text-ink">Sửa từ</h1>
+        <h1 className="text-xl">Sửa từ</h1>
         <DeleteWordButton wordId={wordId} term={word.term} />
       </div>
       <WordForm

@@ -1,9 +1,11 @@
 "use client";
 
-import { Camera, ImageOff, ImagePlus, Loader2, Search } from "lucide-react";
+import { Camera, Check, ImageOff, ImagePlus, Loader2, Search } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ImageSuggestion } from "@/lib/ai/to-word";
 import { compressImage, extensionFor } from "@/lib/image-compress";
@@ -155,12 +157,12 @@ export function ImagePicker({
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-3">
-        <div className="relative grid size-24 shrink-0 place-items-center overflow-hidden rounded-card border border-rule bg-wash-blue">
+        <div className="relative grid size-24 shrink-0 place-items-center overflow-hidden rounded-card border border-rule bg-surface-sunk">
           {value.image_url ? (
             <Image src={value.image_url} alt="Ảnh đã chọn" fill sizes="96px" className="object-cover" />
           ) : (
             <span className="text-4xl" aria-hidden>
-              {emoji || "🖼️"}
+              {emoji || <ImagePlus className="size-8 text-ink-faint" strokeWidth={1.5} />}
             </span>
           )}
         </div>
@@ -178,20 +180,16 @@ export function ImagePicker({
             />
             <label
               htmlFor="word-image-upload"
-              className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-btn border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted"
+              className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-btn border border-rule-strong bg-surface px-3 text-sm font-medium transition-colors hover:bg-surface-sunk"
             >
               {uploading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Camera className="size-4" aria-hidden />}
               Tải ảnh của tôi lên
             </label>
             {value.image_url && (
-              <button
-                type="button"
-                onClick={() => onChange({ image_url: null, image_source: null })}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-btn px-3 text-sm text-ink-soft hover:bg-muted"
-              >
-                <ImageOff className="size-4" aria-hidden />
+              <Button type="button" variant="ghost" onClick={() => onChange({ image_url: null, image_source: null })}>
+                <ImageOff aria-hidden />
                 Không dùng ảnh
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -202,12 +200,12 @@ export function ImagePicker({
         <label htmlFor="image-query" className="sr-only">
           Từ khóa tìm ảnh (tiếng Anh)
         </label>
-        <input
+        <Input
           id="image-query"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Từ khóa tiếng Anh, ví dụ: tree in rock"
-          className="h-11 min-w-0 flex-1 rounded-btn border border-rule bg-surface px-3 text-base"
+          className="min-w-0 flex-1"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -215,14 +213,10 @@ export function ImagePicker({
             }
           }}
         />
-        <button
-          type="button"
-          onClick={() => void search(query)}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-btn border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted"
-        >
-          <Search className="size-4" aria-hidden />
+        <Button type="button" variant="outline" onClick={() => void search(query)}>
+          <Search aria-hidden />
           Tìm ảnh
-        </button>
+        </Button>
       </div>
 
       {suggestions.length > 0 && (
@@ -242,10 +236,8 @@ export function ImagePicker({
                     void search(s.query);
                   }}
                   className={cn(
-                    "inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-full border-2 px-3 text-sm font-semibold",
-                    active
-                      ? "border-ink-blue bg-ink-blue text-primary-foreground"
-                      : "border-rule bg-surface text-ink-soft hover:text-ink",
+                    "inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-chip border px-3 text-sm transition-colors",
+                    active ? "border-ink-violet bg-tint-violet font-medium text-ink" : "border-input bg-surface text-ink-soft hover:text-ink",
                   )}
                 >
                   <span className="truncate">{s.label}</span>
@@ -259,16 +251,16 @@ export function ImagePicker({
       {loading === "new" ? (
         <div className="grid grid-cols-4 gap-2">
           {Array.from({ length: 12 }, (_, i) => (
-            <Skeleton key={i} className="aspect-square rounded-btn" />
+            <Skeleton key={i} className="aspect-square rounded-lg" />
           ))}
         </div>
       ) : error ? (
-        <p className="text-sm text-danger">{error}</p>
+        <p className="text-sm text-seal-text">{error}</p>
       ) : results && results.length === 0 ? (
         <p className="text-sm text-ink-soft">Không có ảnh phù hợp. Thử từ khóa cụ thể hơn.</p>
       ) : results ? (
         <>
-        <ul className="grid grid-cols-4 gap-2" aria-label="Ảnh gợi ý">
+        <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4" aria-label="Ảnh gợi ý">
           {results.map((r) => {
             const active = value.image_url === r.url;
             return (
@@ -279,30 +271,26 @@ export function ImagePicker({
                   aria-pressed={active}
                   aria-label={`Chọn ảnh của ${r.author} (${providerLabel(r.provider)})`}
                   className={cn(
-                    "relative block aspect-square w-full overflow-hidden rounded-btn border-2",
-                    active ? "border-ink-blue" : "border-transparent",
+                    "relative block aspect-square w-full overflow-hidden rounded-lg border-2",
+                    active ? "border-ink-violet" : "border-transparent",
                   )}
                 >
                   <Image src={r.thumb_url} alt={r.alt ?? ""} fill sizes="25vw" className="object-cover" />
+                  {active && (
+                    <span className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-ink-violet text-primary-foreground">
+                      <Check className="size-3" strokeWidth={3} aria-hidden />
+                    </span>
+                  )}
                 </button>
               </li>
             );
           })}
         </ul>
         {searched?.hasMore && (
-          <button
-            type="button"
-            disabled={loading === "more"}
-            onClick={() => void search(searched.q, searched.page + 1)}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-btn border border-rule bg-surface px-3 text-sm font-medium hover:bg-muted disabled:opacity-60"
-          >
-            {loading === "more" ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-            ) : (
-              <ImagePlus className="size-4" aria-hidden />
-            )}
+          <Button type="button" variant="outline" className="w-full" disabled={loading === "more"} onClick={() => void search(searched.q, searched.page + 1)}>
+            {loading === "more" ? <Loader2 className="animate-spin" aria-hidden /> : <ImagePlus aria-hidden />}
             Xem thêm ảnh
-          </button>
+          </Button>
         )}
         </>
       ) : null}
