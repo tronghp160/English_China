@@ -188,7 +188,7 @@ export default function MarketingPage() {
       <footer className="mt-16 flex flex-col gap-4 border-t border-rule pt-6 text-sm text-ink-soft sm:flex-row sm:items-center sm:justify-between">
         <p>
           © {new Date().getFullYear()} Sổ Từ, làm bởi {CONTACT.nickname}.{" "}
-          <Link href="/lien-he" className="text-ink-violet underline-offset-4 hover:underline">
+          <Link href="/lien-he" className="text-ink-violet underline underline-offset-4">
             Liên hệ
           </Link>
         </p>

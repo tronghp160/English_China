@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import { VOICE_HELP, detectPlatform, hasVoiceFor, loadVoices, speak, ttsSupported, type TtsLang } from "@/lib/tts";
 
-/** 🔊 button. Disabled with a how-to tooltip when the device lacks a voice for the language. */
+/** Speaker button. Disabled with a how-to tooltip when the device lacks a voice for the language. */
 export function PronounceButton({
   text,
   lang,

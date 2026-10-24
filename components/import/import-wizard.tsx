@@ -191,7 +191,7 @@ export function ImportWizard({
     const failed = items.filter((i) => i.state === "failed");
     return (
       <div className="space-y-5">
-        <div className="notebook-card px-5 py-5">
+        <div className="sheet px-5 py-5">
           <div className="flex items-center justify-between gap-3">
             <p className="font-medium text-ink">
               {running ? "Đang điền và thêm từ…" : `Đã thêm ${saved}/${items.length} từ`}
@@ -233,9 +233,9 @@ export function ImportWizard({
                 {it.state === "working" || it.state === "pending" ? (
                   <Loader2 className={cn("size-5 text-ink-soft", it.state === "working" && "animate-spin")} aria-label="Đang xử lý" />
                 ) : it.state === "saved" ? (
-                  <CheckCircle2 className="size-5 text-jade" aria-label="Đã thêm" />
+                  <CheckCircle2 className="size-5 text-leaf" aria-label="Đã thêm" />
                 ) : (
-                  <AlertCircle className={cn("size-5", it.state === "failed" ? "text-danger" : "text-ink-soft")} aria-label={it.state === "failed" ? "Lỗi" : "Bỏ qua"} />
+                  <AlertCircle className={cn("size-5", it.state === "failed" ? "text-seal-text" : "text-ink-soft")} aria-label={it.state === "failed" ? "Lỗi" : "Bỏ qua"} />
                 )}
               </span>
               <span className="min-w-0 flex-1">
@@ -247,7 +247,7 @@ export function ImportWizard({
                   <span className={cn("font-medium text-ink", language === "zh" && "font-hanzi-sans")}>{it.term}</span>
                 )}
                 {it.meaning_vi && <span className="ml-2 text-sm text-ink-soft">{it.meaning_vi}</span>}
-                {it.error && <span className="block text-sm text-danger">{it.error}</span>}
+                {it.error && <span className="block text-sm text-seal-text">{it.error}</span>}
               </span>
             </li>
           ))}
@@ -308,12 +308,12 @@ export function ImportWizard({
 
       {preview && (
         <div className="space-y-3">
-          <p className="text-sm text-ink">
-            <span className="font-medium text-jade-text">{preview.ok.length} từ hợp lệ</span>
-            {preview.duplicates.length > 0 && <span className="text-ink-soft"> · {preview.duplicates.length} trùng</span>}
-            {preview.errors.length > 0 && <span className="text-danger"> · {preview.errors.length} lỗi</span>}
+          <p className="flex flex-wrap gap-x-4 text-sm text-ink">
+            <span className="font-medium text-leaf-text">{preview.ok.length} từ hợp lệ</span>
+            {preview.duplicates.length > 0 && <span className="text-ink-soft">{preview.duplicates.length} trùng</span>}
+            {preview.errors.length > 0 && <span className="text-seal-text">{preview.errors.length} lỗi</span>}
           </p>
-          <ul className="ruled-list max-h-80 overflow-y-auto rounded-xl border border-rule bg-surface">
+          <ul className="ruled-list max-h-80 overflow-y-auto rounded-card border border-rule bg-surface">
             {preview.lines.map((l) => (
               <li key={`${l.lineNo}-${l.raw}`} className="flex items-baseline gap-3 px-4 py-2 text-sm">
                 <span className="w-6 shrink-0 text-right text-xs text-ink-soft">{l.lineNo}</span>
@@ -323,7 +323,7 @@ export function ImportWizard({
                   {l.meaning_vi && <span className="ml-2 text-ink">— {l.meaning_vi}</span>}
                 </span>
                 {l.status !== "ok" && (
-                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-xs", l.status === "duplicate" ? "bg-muted text-ink-soft" : "bg-wash-red text-danger")}>
+                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-xs", l.status === "duplicate" ? "bg-muted text-ink-soft" : "bg-tint-seal text-seal-text")}>
                     {l.message}
                   </span>
                 )}

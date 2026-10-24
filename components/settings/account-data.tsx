@@ -59,7 +59,7 @@ export function DeleteAccount({ username }: { username: string }) {
           setError(null);
         }}
       >
-        <AlertDialogTrigger className="mt-3 min-h-11 rounded-btn bg-wash-red px-4 text-sm font-medium text-danger">
+        <AlertDialogTrigger className="mt-3 min-h-11 rounded-btn bg-tint-seal px-4 text-sm font-medium text-seal-text">
           Xóa tài khoản
         </AlertDialogTrigger>
         <AlertDialogContent className="rounded-sheet">
@@ -72,7 +72,7 @@ export function DeleteAccount({ username }: { username: string }) {
           </AlertDialogHeader>
           <div>
             <label htmlFor="delete-confirm" className="text-sm text-ink">
-              Gõ <span className="font-mono font-medium">{username}</span> để xác nhận
+              Gõ <span className="font-medium">{username}</span> để xác nhận
             </label>
             <Input
               id="delete-confirm"
@@ -89,7 +89,7 @@ export function DeleteAccount({ username }: { username: string }) {
               className="mt-1.5 h-11 rounded-btn text-base"
             />
             {error && (
-              <p id="delete-confirm-error" className="mt-1.5 text-sm text-danger">
+              <p id="delete-confirm-error" className="mt-1.5 text-sm text-seal-text">
                 {error}
               </p>
             )}
@@ -100,7 +100,7 @@ export function DeleteAccount({ username }: { username: string }) {
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={!matches || pending}
-              className="min-h-11 gap-2 rounded-btn bg-danger text-paper hover:bg-danger/90"
+              className="min-h-11 gap-2 rounded-btn bg-seal text-on-seal hover:bg-seal/90"
               onClick={(e) => {
                 e.preventDefault(); // keep the dialog open until the server answers
                 start(async () => {

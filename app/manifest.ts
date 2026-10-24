@@ -3,9 +3,9 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Sổ Từ — sổ từ vựng Anh, Trung",
+    name: "Sổ Từ, sổ từ vựng Anh Trung",
     short_name: "Sổ Từ",
-    description: "Sổ ghi và ôn từ vựng tiếng Anh, tiếng Trung — dùng chung với bạn bè.",
+    description: "Sổ ghi và ôn từ vựng tiếng Anh, tiếng Trung, dùng chung với bạn bè.",
     lang: "vi",
     start_url: "/today?source=pwa",
     scope: "/",

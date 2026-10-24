@@ -13,12 +13,14 @@ function FacebookIcon({ className }: { className?: string }) {
 /** Zalo as a one-color outlined mark, so it sits quietly next to the Facebook glyph. */
 function ZaloIcon({ className }: { className?: string }) {
   return (
+    // The word is CSS content so it is not read or matched as a second "Zalo" next to the link's own text.
     <span
       aria-hidden
-      className={cn("grid place-items-center rounded-sm border-[1.5px] border-current text-[0.5625rem] leading-none font-bold tracking-tight", className)}
-    >
-      Zalo
-    </span>
+      className={cn(
+        "grid place-items-center rounded-sm border-[1.5px] border-current text-[0.5625rem] leading-none font-bold tracking-tight before:content-['Zalo']",
+        className,
+      )}
+    />
   );
 }
 

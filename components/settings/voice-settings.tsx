@@ -132,8 +132,8 @@ export function VoiceSettings({ prefs }: { prefs: Required<Prefs> }) {
               aria-checked={state.tts_rate === r.value}
               onClick={() => save({ tts_rate: r.value })}
               className={cn(
-                "min-h-11 rounded-[8px] px-4 text-sm text-ink-soft",
-                state.tts_rate === r.value && "bg-wash-blue font-medium text-ink",
+                "min-h-11 rounded-md px-4 text-sm text-ink-soft",
+                state.tts_rate === r.value && "bg-tint-violet font-medium text-ink",
               )}
             >
               {r.label}

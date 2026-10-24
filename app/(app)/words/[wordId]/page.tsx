@@ -352,8 +352,9 @@ export default async function WordPage({ params }: PageProps<"/words/[wordId]">)
                   Lần tới: <span className="text-ink">{formatRelativeDue(recognize.due)}</span>
                 </p>
               )}
-              <p className="text-ink-soft">
-                Đã ôn {recognize.reps} lần · quên {recognize.lapses} lần
+              <p className="flex flex-wrap gap-x-4 text-ink-soft">
+                <span>Đã ôn {recognize.reps} lần</span>
+                <span>quên {recognize.lapses} lần</span>
               </p>
             </div>
           ) : (

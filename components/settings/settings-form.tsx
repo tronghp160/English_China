@@ -37,7 +37,7 @@ function Field({
       <Label htmlFor={id}>{label}</Label>
       {children}
       {(error || hint) && (
-        <p className={cn("text-sm", error ? "text-danger" : "text-ink-soft")}>{error ?? hint}</p>
+        <p className={cn("text-sm", error ? "text-seal-text" : "text-ink-soft")}>{error ?? hint}</p>
       )}
     </div>
   );
@@ -122,7 +122,7 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
                     key={l.value}
                     className={cn(
                       "flex min-h-11 cursor-pointer items-center gap-2 rounded-btn border px-4 text-sm",
-                      checked ? "border-ink-blue bg-wash-blue font-medium" : "border-rule",
+                      checked ? "border-ink-violet bg-tint-violet font-medium" : "border-rule",
                     )}
                   >
                     <input
@@ -143,7 +143,7 @@ export function SettingsForm({ initial }: { initial: SettingsInput }) {
             </div>
           )}
         />
-        {e.study_langs && <p className="mt-1.5 text-sm text-danger">{e.study_langs.message}</p>}
+        {e.study_langs && <p className="mt-1.5 text-sm text-seal-text">{e.study_langs.message}</p>}
       </fieldset>
       <Button type="submit" disabled={pending} className="h-11 gap-2 rounded-btn px-5">
         {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}

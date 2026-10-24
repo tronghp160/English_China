@@ -117,12 +117,12 @@ export function ReminderSettings({ publicKey }: { publicKey: string | null }) {
         </button>
       )}
       {state === "denied" && (
-        <p className="rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">
+        <p className="rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">
           Bạn đã chặn thông báo của Sổ Từ. Mở biểu tượng ổ khóa cạnh địa chỉ trang → Thông báo → Cho phép, rồi tải lại trang.
         </p>
       )}
       {state === "ios-install" && (
-        <p className="rounded-btn bg-wash-sky px-3 py-2 text-sm text-ink">
+        <p className="rounded-btn bg-tint-violet px-3 py-2 text-sm text-ink">
           Trên iPhone, hãy cài Sổ Từ lên màn hình chính (mục “Ứng dụng” bên dưới), mở từ biểu tượng đó rồi bật nhắc ôn.
         </p>
       )}

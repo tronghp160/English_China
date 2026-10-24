@@ -49,8 +49,6 @@
  * 田字格 cells for Chinese. Color carries meaning (violet = action + English,
  * seal = Chinese + due + errors, leaf = correct, turmeric = streak), never decoration.
  * Every text/background pair passes WCAG AA; check new pairs with scripts/contrast.mjs.
- * The old token names (ink-blue, margin-red, wash-*, sun/sky/grape/pink, jade) stay as
- * aliases at the bottom of each block until the last component stops using them.
  */
 :root,
 .light {
@@ -144,33 +142,6 @@
   --sidebar-accent-foreground: var(--ink);
   --sidebar-border: var(--rule);
   --sidebar-ring: var(--ink-violet);
-
-  /* Legacy aliases (REDESIGN_PLAN §4.1); delete when `rg` finds no user */
-  --ink-blue: var(--ink-violet);
-  --ink-blue-shade: var(--ink-violet-hover);
-  --brand: #3b2e8c; /* violet text on the white buttons inside .hero-gradient (both themes) */
-  --margin-red: var(--seal);
-  --danger: var(--seal-text);
-  --highlight: var(--highlighter);
-  --jade: var(--leaf);
-  --jade-text: var(--leaf-text);
-  --sun: var(--turmeric);
-  --sun-text: var(--turmeric-text);
-  --sky: var(--ink-violet);
-  --sky-text: var(--ink-violet);
-  --grape: var(--ink-violet);
-  --grape-text: var(--ink-violet);
-  --pink: var(--seal);
-  --pink-text: var(--seal-text);
-  --wash-blue: var(--tint-violet);
-  --wash-jade: var(--tint-leaf);
-  --wash-red: var(--tint-seal);
-  --wash-yellow: var(--tint-turmeric);
-  --wash-sky: var(--tint-violet);
-  --wash-grape: var(--tint-violet);
-  --wash-pink: var(--tint-seal);
-  --shadow-pop: var(--shadow-lift);
-  --edge: transparent;
 }
 
 .dark {
@@ -249,33 +220,8 @@
   --color-tone-4: var(--tone-4);
   --color-tone-5: var(--tone-5);
 
-  /* Legacy aliases, see :root */
-  --color-ink-blue: var(--ink-blue);
-  --color-margin-red: var(--margin-red);
-  --color-danger: var(--danger);
-  --color-highlight: var(--highlight);
-  --color-jade: var(--jade);
-  --color-jade-text: var(--jade-text);
-  --color-wash-blue: var(--wash-blue);
-  --color-wash-jade: var(--wash-jade);
-  --color-wash-red: var(--wash-red);
-  --color-wash-yellow: var(--wash-yellow);
-  --color-brand: var(--brand);
-  --color-sun: var(--sun);
-  --color-sun-text: var(--sun-text);
-  --color-sky: var(--sky);
-  --color-sky-text: var(--sky-text);
-  --color-wash-sky: var(--wash-sky);
-  --color-grape: var(--grape);
-  --color-grape-text: var(--grape-text);
-  --color-wash-grape: var(--wash-grape);
-  --color-pink: var(--pink);
-  --color-pink-text: var(--pink-text);
-  --color-wash-pink: var(--wash-pink);
-
   --shadow-card: var(--shadow-card);
   --shadow-lift: var(--shadow-lift);
-  --shadow-pop: var(--shadow-pop);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -404,15 +350,6 @@
   .sheet-lift {
     box-shadow: var(--shadow-lift);
   }
-  /* Old name of .sheet, kept until every component moved over (REDESIGN_PLAN §9 P8) */
-  .notebook-card {
-    position: relative;
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: var(--radius-card);
-    box-shadow: var(--shadow-card);
-  }
-
   /* Ruled notebook page: a line every --line, text baselines sit on them (structure, not decoration) */
   .ruled-paper {
     --line: 2rem;
@@ -440,14 +377,6 @@
     .margin-line {
       --margin-x: 20px;
     }
-  }
-
-  /* Small icon on its own, no coloured tile */
-  .icon-tile {
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    border-radius: var(--radius-btn);
   }
 
   /* A word sitting on a ruled line, like handwriting in a notebook */
@@ -483,16 +412,6 @@
     animation: highlighter-sweep 700ms 200ms var(--ease-out) both;
   }
 
-  /* Logo tile: flat ink (the mark itself is drawn in components/brand/logo.tsx) */
-  .brand-tile {
-    background: var(--ink-violet);
-  }
-
-  /* Old call-to-action card, now flat ink. Replaced page by page (P3, P7). */
-  .hero-gradient {
-    background: #3b2e8c;
-    color: #ffffff;
-  }
 }
 
 @keyframes highlighter-sweep {

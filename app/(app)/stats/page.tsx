@@ -182,7 +182,7 @@ export default async function StatsPage() {
                 <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
                   {STAGES.map((st) => (
                     <li key={st.key} className="flex items-start gap-2">
-                      <span aria-hidden className={cn("mt-1 size-2.5 shrink-0 rounded-[2px]", st.tone)} />
+                      <span aria-hidden className={cn("mt-1 size-2.5 shrink-0 rounded-xs", st.tone)} />
                       <span className="min-w-0">
                         <span className="block text-sm text-ink">
                           {st.label} <span className="font-semibold tabular-nums">{count(st.key, lang)}</span>

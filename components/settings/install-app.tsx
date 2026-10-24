@@ -11,7 +11,7 @@ export function InstallApp() {
   if (state.kind === "installed") {
     return (
       <p className="flex items-center gap-2 text-sm text-ink">
-        <CheckCircle2 className="size-5 text-jade-text" aria-hidden />
+        <CheckCircle2 className="size-5 text-leaf-text" aria-hidden />
         Sổ Từ đã được cài trên máy này.
       </p>
     );

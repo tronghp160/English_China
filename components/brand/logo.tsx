@@ -10,7 +10,7 @@ export function Logo({ className }: { className?: string }) {
     <span className={cn("relative inline-flex items-center gap-2 font-heading text-ink", className)}>
       <span
         aria-hidden
-        className="brand-tile relative grid size-7 place-items-center overflow-hidden rounded-sm text-primary-foreground"
+        className="relative grid size-7 bg-ink-violet place-items-center overflow-hidden rounded-sm text-primary-foreground"
       >
         <svg viewBox="0 0 28 28" className="absolute inset-0 size-full" fill="none" stroke="currentColor" strokeWidth={1}>
           <rect x="3.5" y="3.5" width="21" height="21" rx="1.5" opacity="0.7" />

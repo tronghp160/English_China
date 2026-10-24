@@ -38,7 +38,7 @@ export function SealStamp({
         </filter>
       </svg>
       <span className="absolute inset-0 rounded-sm bg-seal text-on-seal" style={{ filter: `url(#${id})` }}>
-        <span className="absolute inset-[3px] rounded-[3px] border border-on-seal/70" />
+        <span className="absolute inset-[3px] rounded-xs border border-on-seal/70" />
         <span
           className={cn(
             "absolute inset-0 grid place-content-center text-center leading-tight font-bold",

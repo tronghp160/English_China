@@ -8,11 +8,11 @@ export type PushPayload = { title: string; body: string; url: string; tag: strin
 /** Notification text for the daily reminder. Pure, so it can be unit-tested. */
 export function reminderPayload(dueCount: number): PushPayload {
   return {
-    title: "Đến giờ ôn từ rồi! 📚",
+    title: "Đến giờ ôn từ rồi",
     body:
       dueCount === 1
-        ? "Hôm nay còn 1 từ cần ôn. Chưa tới một phút thôi!"
-        : `Hôm nay còn ${dueCount} từ cần ôn. Vài phút là xong, giữ chuỗi ngày nhé!`,
+        ? "Hôm nay còn 1 từ cần ôn. Chưa tới một phút."
+        : `Hôm nay còn ${dueCount} từ cần ôn. Vài phút là xong.`,
     url: "/review",
     tag: "daily-reminder",
   };

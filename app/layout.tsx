@@ -12,16 +12,18 @@ const beVietnam = Be_Vietnam_Pro({
 });
 
 // Reading serif for words (specimens), big numbers and landing/auth titles (font-display).
+// Two static weights (500 for words, 600 for headings and numbers) instead of the variable font with the
+// optical-size axis: about 22 KB per subset instead of 110 KB, which matters for the landing page.
 const literata = Literata({
   variable: "--font-literata",
-  axes: ["opsz"],
-  subsets: ["latin", "latin-ext", "vietnamese"],
+  weight: ["500", "600"],
+  subsets: ["latin", "vietnamese"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: { default: "Sổ Từ", template: "%s · Sổ Từ" },
-  description: "Sổ ghi và ôn từ vựng tiếng Anh, tiếng Trung — dùng chung với bạn bè.",
+  title: { default: "Sổ Từ", template: "%s | Sổ Từ" },
+  description: "Sổ ghi và ôn từ vựng tiếng Anh, tiếng Trung dùng chung với bạn bè.",
   applicationName: "Sổ Từ",
   appleWebApp: { capable: true, title: "Sổ Từ", statusBarStyle: "default" },
 };

@@ -17,7 +17,6 @@ export function HeroSpecimen() {
           type="button"
           onClick={() => setFlipped((f) => !f)}
           aria-pressed={flipped}
-          aria-label="Thẻ từ resilient, bấm để lật"
           className="block w-full rounded-sheet text-left"
         >
           <span className="flip-card grid w-full [&>*]:[grid-area:1/1]" data-flipped={flipped}>
