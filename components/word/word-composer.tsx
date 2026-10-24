@@ -3,7 +3,7 @@
 import { AlertCircle, FileSpreadsheet, Loader2, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { LangMark } from "@/components/lang-mark";
@@ -107,10 +107,15 @@ export function WordComposer({
     defaultValues: { cards: [emptyWord()] },
   });
 
-  const { fields, append, remove, insert, replace } = useFieldArray({
+  const { fields, append, remove, insert, replace, update } = useFieldArray({
     control: form.control,
     name: "cards",
     keyName: "key",
+  });
+
+  const fieldsRef = useRef(fields);
+  useEffect(() => {
+    fieldsRef.current = fields;
   });
 
   const watchedCards = useWatch({ control: form.control, name: "cards" });
@@ -265,7 +270,7 @@ export function WordComposer({
       const toRemove: number[] = [];
       indicesToSave.forEach((idx) => {
         const term = form.getValues(`cards.${idx}.term`);
-        const key = fields[idx]?.key;
+        const key = fieldsRef.current[idx]?.key;
         if (insertedTerms.has(term)) {
           toRemove.push(idx);
         } else if (skippedTerms.has(term)) {
@@ -311,22 +316,21 @@ export function WordComposer({
 
   // Batch enrichment for pasted or bulk cards
   const runBatchEnrich = useCallback(
-    async (startIndex: number, count: number) => {
-      if (count <= 0) return;
-      const targetCards = form.getValues("cards").slice(startIndex, startIndex + count);
+    async (startIndex: number, items: WordInput[]) => {
+      if (items.length <= 0) return;
       const BATCH = 10;
       const chunks: { offset: number; items: { term: string; meaning_vi?: string }[] }[] = [];
-      for (let i = 0; i < targetCards.length; i += BATCH) {
+      for (let i = 0; i < items.length; i += BATCH) {
         chunks.push({
           offset: startIndex + i,
-          items: targetCards.slice(i, i + BATCH).map((c) => ({
-            term: c.term?.trim(),
+          items: items.slice(i, i + BATCH).map((c) => ({
+            term: c.term?.trim() ?? "",
             meaning_vi: c.meaning_vi?.trim() || undefined,
           })),
         });
       }
 
-      setBatchProgress({ current: 0, total: targetCards.length });
+      setBatchProgress({ current: 0, total: items.length });
       let completed = 0;
 
       const queue = [...chunks];
@@ -373,7 +377,7 @@ export function WordComposer({
                     });
                   }
                   form.setValue(`cards.${cardIdx}.ai_generated` as never, true as never);
-                  const cardKey = fields[cardIdx]?.key;
+                  const cardKey = fieldsRef.current[cardIdx]?.key;
                   if (cardKey) {
                     updateMeta(cardKey, { images: imgs, source: "ai" });
                   }
@@ -406,7 +410,7 @@ export function WordComposer({
                         shouldDirty: true,
                       });
                     }
-                    const cardKey = fields[cardIdx]?.key;
+                    const cardKey = fieldsRef.current[cardIdx]?.key;
                     if (cardKey) {
                       updateMeta(cardKey, {
                         images: imageSuggestions(b.result, [0]),
@@ -420,8 +424,8 @@ export function WordComposer({
           }
           completed += chunk.items.length;
           setBatchProgress({
-            current: Math.min(completed, targetCards.length),
-            total: targetCards.length,
+            current: Math.min(completed, items.length),
+            total: items.length,
           });
         }
       }
@@ -429,7 +433,7 @@ export function WordComposer({
       await Promise.all([worker(), worker(), worker()]);
       setBatchProgress(null);
     },
-    [aiEnabled, fields, form, language, updateMeta],
+    [aiEnabled, form, language, updateMeta],
   );
 
   function handleCardPaste(index: number, text: string) {
@@ -449,14 +453,22 @@ export function WordComposer({
 
     let insertAt = index;
     if (currentIsBlank) {
-      remove(index);
+      if (fields.length === 1) {
+        replace(allowed);
+        insertAt = 0;
+      } else {
+        update(index, allowed[0]);
+        if (allowed.length > 1) {
+          insert(index + 1, allowed.slice(1));
+        }
+      }
     } else {
       insertAt = index + 1;
+      insert(insertAt, allowed);
     }
 
-    insert(insertAt, allowed);
     toast.success(`Đã tách thành ${allowed.length} thẻ`);
-    void runBatchEnrich(insertAt, allowed.length);
+    void runBatchEnrich(insertAt, allowed);
   }
 
   function handleParseList() {
@@ -482,15 +494,16 @@ export function WordComposer({
 
     let startIndex = fields.length;
     if (dropLast) {
-      remove(0);
+      replace(allowed);
       startIndex = 0;
+    } else {
+      insert(startIndex, allowed);
     }
 
-    insert(startIndex, allowed);
     toast.success(`Đã tách thành ${allowed.length} thẻ`);
     setListText("");
     setMode("cards");
-    void runBatchEnrich(startIndex, allowed.length);
+    void runBatchEnrich(startIndex, allowed);
   }
 
   function handleDelete(index: number) {

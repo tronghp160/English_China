@@ -98,6 +98,29 @@ UI and client logic only: no migration, no change to FSRS, existing actions or r
 - **Layout test** (`tests/e2e/layout.spec.ts`, always on): 17 routes × 6 viewports (320, 390, 768, 1280, 1920 and 844×390 landscape) must not scroll sideways, must not clip text marked `data-check-overflow`, and every `button`/`a` must be ≥ 40×40 (opt out with `data-inline-link`; switches are exempt because their ::after enlarges the hit area). Give new must-not-clip text `data-check-overflow`.
 - **Dev pitfalls**: after editing `globals.css` the dev server may keep serving stale CSS: kill it, delete `.next/dev`, restart. A transform animation with a fill mode on a wrapper makes `position: fixed` children relative to it (the page-in animation has no fill). Game records (Match best, Learn progress, last test score) are in IndexedDB per user, device-only.
 
+## Redesign V4 "Hôm nay & Soạn thẻ Quizlet" (PLAN-today-compose.md)
+UI and client logic only: no DB migration, no change to FSRS or existing server actions (only added `correctToday` to `getStudySummary()`).
+- **Today Page Bento Grid (`/today`)**:
+  - 12-column responsive layout with balanced card heights on desktop.
+  - Review Hero: zero-due shows completion ring (`ProgressRing value={100}` with Check icon) and review stats summary `Bạn đã ôn X lượt, nhớ đúng Y%`. Mascot dialog placed inside hero on mobile.
+  - `TodayCard`: integrates bare `StreakWeek` and 3 key metrics (Lượt ôn, Nhớ đúng %, XP).
+  - `QuickAdd`: "Thêm từ nhanh" with term input, language placeholder, target deck selector with `localStorage` memory, and link to list paste mode.
+  - `QuestCard`: supports `compact` prop for vertical display with 32px icons, 6px progress bar, and condensed "Đã nhận tất cả thưởng".
+  - `DeckCard`: sorted by due count then update time; shows dashed "Tạo bộ từ mới" card on `xl` when user has fewer than 4 decks.
+  - `ActivityCard`: combines fluid Heatmap (26 weeks on desktop, 12 weeks on mobile) and 30-day window stats (`summarize30` in `lib/stats.ts`).
+- **Flashcard Word Composer (`/decks/[deckId]/add`)**:
+  - Quizlet-style composer (`WordComposer`, `ComposeCard`) supporting single card, multi-card up to 100 cards, and "Dán danh sách" (bulk paste) mode.
+  - Multi-line pasting auto-splits into cards (`pasteToCards` in `lib/compose.ts`) and triggers batch enrichment (`/api/ai/enrich-batch` or `/api/dict`).
+  - Pre-filled/typed meanings and pronunciations are preserved during batch enrich and AI fill.
+  - Keyboard navigation: Enter jumps from Term to Meaning; Enter/Tab on last card creates next card; Ctrl/Cmd+Enter saves.
+  - Reusable 4-tab details Sheet (`WordDetails`: `examples`, `image`, `info`, `note`) with unsaved changes discard confirmation.
+  - Draft auto-save in `localStorage` (`sotu-compose:${userId}:${deckId}`, 800ms debounce, 7-day TTL) with restore banner and "Xóa nháp".
+  - Chunked bulk save via `createWordsBulk(targetDeckId, chunk)` in batches of 30. Duplicates remain on screen with "Đã có trong bộ này".
+  - Bulk insertion note: words inserted in the same chunk share identical `created_at` timestamps; default order is stable via `w.id`.
+- **Edit Word Page (`/words/[id]/edit`)**:
+  - Refactored `WordForm` to consume `WordDetails` directly, auto-switching tabs on validation errors. Duplicate create-mode code removed.
+- **E2E Tests**: `today-v4.spec.ts` (QuickAdd navigation, 26-week Heatmap at 1280px, zero-due review summary); `compose.spec.ts` (card tab navigation, multi-line paste with meaning retention, bulk save, duplicate card handling, draft restore, and Sheet details).
+
 ## Admin (`/admin`, migration 000011)
 - Who: `ADMIN_EMAILS` (comma separated, can only be changed in the env) or a row in `app_admins` (service role only, no client policies), granted in /admin → "Quản trị viên" or with `pnpm admin:grant <email>`. `lib/admin.ts` (`isAdmin`, `requireAdmin` → 404 for everyone else). The avatar menu shows "Quản trị" to admins.
 - What: overview counts, users (search, lock/unlock via Supabase `ban_duration`, delete with Storage cleanup from `lib/account-files.ts`), public decks (hide = make private, delete), groups (delete), admins (grant by email, revoke). Reads in `lib/data/admin.ts` and actions in `lib/actions/admin.ts` use the service role, and every action re-checks the caller; nobody can act on their own account or on another admin (revoke first).

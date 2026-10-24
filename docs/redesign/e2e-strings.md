@@ -27,3 +27,14 @@ Keep these texts. Emoji next to them may go. If one must change, edit the test i
 - Match: button "Bắt đầu" goes straight to the board when motion is reduced (else a 3-2-1 count first); "Bảng 1/1", "Kỷ lục đầu tiên!", "Số lần ghép sai", "Chơi lại".
 - Typing: buttons "Gợi ý" / "Gợi ý thêm" (hint line in the aria-live paragraph, "Gợi ý: b_____"), after a miss "Bạn gõ" / "Đáp án". Listening: "Nghe lại", "Nghe chậm".
 - End of a session (tests/e2e/session-gifts.spec.ts): stars as role img "3 sao", group "Phần thưởng của phiên" with a progressbar "Kinh nghiệm trong cấp này", dialog "Lên cấp N!" with button "Tuyệt vời!"; /review with nothing due: "Bạn đã ôn xong hôm nay.", "Nhiệm vụ còn lại hôm nay", region "Gợi ý cho bạn".
+
+## Added in V4 (tests/e2e/today-v4.spec.ts, compose.spec.ts)
+- Today page:
+  - QuickAdd: label "Từ muốn thêm", button "Thêm", text "Thêm từ nhanh".
+  - Hero zero-due: "Hôm nay ôn xong rồi", "Luyện thêm", "Học từ mới", review summary "Bạn đã ôn … lượt, nhớ đúng …%".
+  - Heatmap: `[role=img][aria-label^="Hoạt động 26 tuần"]` on desktop, `[role=img][aria-label^="Hoạt động 12 tuần"]` on mobile.
+- Word Composer & Details Sheet:
+  - Input labels: "Từ" (card 1), "Từ 2", "Từ 3"...; "Nghĩa tiếng Việt" (card 1), "Nghĩa tiếng Việt 2", "Nghĩa tiếng Việt 3"...
+  - Buttons: "Thêm thẻ", "Tách thành thẻ", "Xong" (in Sheet), "Lưu từ" (1 word), "Lưu N từ" (N > 1 words), "Xóa nháp", "Thêm câu ví dụ".
+  - Dialog / Sheet: title "Bỏ thay đổi chi tiết?", buttons "Bỏ thay đổi" / "Tiếp tục sửa".
+  - Toast & status: "Đã tách thành N thẻ", "Đã lưu <term>" (with action "Xem"), "Đã lưu N từ" (with action "Xem bộ"), "Đã khôi phục N thẻ chưa lưu.", "Đã có trong bộ này".

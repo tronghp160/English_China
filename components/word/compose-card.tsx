@@ -246,7 +246,10 @@ export function ComposeCard({
                 }
               }}
               onPaste={(e) => {
-                const text = e.clipboardData.getData("text");
+                const text =
+                  e.clipboardData.getData("text/plain") ||
+                  e.clipboardData.getData("text") ||
+                  "";
                 if (text.includes("\n")) {
                   e.preventDefault();
                   onCardPaste(index, text);

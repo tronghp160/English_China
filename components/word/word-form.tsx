@@ -44,7 +44,6 @@ function tabForError(errors: FieldErrors<WordInput>): DetailTab | null {
 }
 
 export function WordForm({
-  deckId: _deckId,
   language,
   userId,
   wordId,
