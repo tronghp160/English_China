@@ -3,7 +3,7 @@ import type { PupMood } from "@/lib/mascot/lines";
 import { cn } from "@/lib/utils";
 
 const INK = "var(--pup-ink)";
-const FONT = "var(--font-nunito), sans-serif";
+const FONT = "var(--font-sans), sans-serif"; // temporary: the drawing is redone in P2 (REDESIGN_PLAN §5.8)
 
 /** Heart centered on (x, y); `s` is about half its width. */
 function heart(x: number, y: number, s: number) {

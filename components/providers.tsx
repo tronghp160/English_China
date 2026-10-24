@@ -35,8 +35,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
           position="top-center"
           toastOptions={{
             classNames: {
-              toast:
-                "!bg-surface !text-ink !border-rule !rounded-xl !font-sans !text-sm",
+              // Inverted: ink background, paper text. Errors get a seal bar on the left.
+              toast: "!bg-ink !text-paper !border-0 !rounded-btn !font-sans !text-sm !shadow-lift",
+              description: "!text-paper/70",
+              error: "!border-l-[3px] !border-solid !border-l-seal",
+              icon: "!hidden",
             },
           }}
         />

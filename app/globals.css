@@ -44,59 +44,71 @@
 }
 
 /*
- * Design system "Vở màu" — a brighter take on the notebook of docs/PLAN.md §12:
- * violet ink, sunny highlighter, candy accents per section, chunky buttons.
- * Every text/background pair below passes WCAG AA (4.5:1). The old token
- * names (ink-blue, margin-red, wash-*) are kept so components did not churn.
+ * Design system "Vở mực tím" (docs: REDESIGN_PLAN §3–§5): a school notebook.
+ * Flat violet ink, red seal, leaf green, turmeric; ruled paper, a red margin line,
+ * 田字格 cells for Chinese. Color carries meaning (violet = action + English,
+ * seal = Chinese + due + errors, leaf = correct, turmeric = streak), never decoration.
+ * Every text/background pair passes WCAG AA; check new pairs with scripts/contrast.mjs.
+ * The old token names (ink-blue, margin-red, wash-*, sun/sky/grape/pink, jade) stay as
+ * aliases at the bottom of each block until the last component stops using them.
  */
 :root {
-  --paper: #f6f4ff;
+  --paper: #f5f6fa;
   --surface: #ffffff;
-  --ink: #1f1b3a;
-  --ink-soft: #625d80;
-  --ink-blue: #5848e8; /* primary: buttons, links, English */
-  --ink-blue-shade: #3f30c4; /* 3D edge under primary buttons */
-  --brand: #4b3ee0; /* violet text on the white buttons inside .hero-gradient (both themes) */
-  --margin-red: #ff5a5f;
-  --danger: #c5303e;
-  --highlight: #ffd43b;
-  --jade: #12b886;
-  --jade-text: #087556;
-  --rule: #e6e2f5;
-  --wash-blue: #eceaff;
-  --wash-jade: #e3f8f0;
-  --wash-red: #ffe9eb;
-  --wash-yellow: #fff3d6;
+  --surface-sunk: #eeeff5;
+  --ink: #1c1b26;
+  --ink-soft: #5b5a6e;
+  --ink-faint: #8e8da0; /* placeholder / disabled only, never text people must read */
+  --rule: #dcddeb;
+  --rule-strong: #c5c6da;
+  --ruling: #d9d6f2; /* lines of the ruled notebook page */
+  --margin: #e8a3a0; /* the red margin line; structure only, never text */
 
-  /* Candy accents: section colors, deck covers, icon tiles */
-  --sun: #ffb020;
-  --sun-text: #a14a06;
-  --sky: #22b8f0;
-  --sky-text: #0b6e9c;
-  --wash-sky: #e2f5fd;
-  --grape: #a855f7;
-  --grape-text: #8b2fd9;
-  --wash-grape: #f3e8ff;
-  --pink: #f06595;
-  --pink-text: #b5214f;
-  --wash-pink: #ffe8f1;
+  --ink-violet: #3b2e8c; /* primary: actions, links, English */
+  --ink-violet-hover: #2f2473;
+  --tint-violet: #eceaf7;
+  --seal: #b8362b; /* Chinese, "due", errors, the stamp */
+  --seal-text: #b8362b;
+  --tint-seal: #fbecea;
+  --on-seal: #ffffff;
+  --leaf: #1f6e50; /* correct, learned */
+  --leaf-text: #1f6e50;
+  --tint-leaf: #e6f2ec;
+  --turmeric: #c98a12; /* streak, warning: fills and icons */
+  --turmeric-text: #8a5a00;
+  --tint-turmeric: #fbf1dc;
+  --highlighter: #f5d547; /* only as a stroke behind text */
 
-  /* Puppy mascot (components/mascot/pup.tsx) */
-  --pup-fur: #fff4e2;
-  --pup-muzzle: #ffe3bd;
-  --pup-ear: #c9844a;
-  --pup-ink: #3b2a20;
-  --pup-blush: #ff8fab;
+  /* Notebook cover cloth (deck covers; text sits on a white label) */
+  --cover-indigo: #2e3a6b;
+  --cover-moss: #47613f;
+  --cover-plum: #6a2d49;
+  --cover-brick: #8e3a2b;
+  --cover-ochre: #9a6a0e;
+  --cover-slate: #475161;
 
+  /* Puppy mascot "Bin": a margin doodle in violet ink (components/mascot/pup.tsx) */
+  --pup-ink: var(--ink-violet);
+  --pup-fur: var(--surface);
+  --pup-ear: color-mix(in oklab, var(--ink-violet) 18%, transparent);
+  --pup-muzzle: transparent;
+  --pup-blush: color-mix(in oklab, var(--seal) 45%, transparent);
+
+  /* Pinyin tone colors, AA on white */
   --tone-1: #c8302f;
   --tone-2: #a65f00;
   --tone-3: #1f7f3c;
   --tone-4: #2f5bd3;
   --tone-5: var(--ink-soft);
 
-  --shadow-card: 0 1px 2px rgb(31 27 58 / 0.04), 0 8px 24px -12px rgb(88 72 232 / 0.22);
-  --shadow-pop: 0 2px 4px rgb(31 27 58 / 0.06), 0 18px 40px -16px rgb(88 72 232 / 0.38);
-  --edge: rgb(31 27 58 / 0.1); /* 3D edge under light buttons */
+  --shadow-card: 0 1px 0 rgb(28 27 38 / 0.04);
+  --shadow-lift: 0 1px 2px rgb(28 27 38 / 0.06), 0 12px 32px -12px rgb(28 27 38 / 0.18);
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-stamp: cubic-bezier(0.3, 1.4, 0.5, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-flip: 420ms;
 
   /* shadcn tokens mapped onto the palette */
   --background: var(--paper);
@@ -105,96 +117,144 @@
   --card-foreground: var(--ink);
   --popover: var(--surface);
   --popover-foreground: var(--ink);
-  --primary: var(--ink-blue);
+  --primary: var(--ink-violet);
   --primary-foreground: #ffffff;
-  --secondary: var(--wash-blue);
-  --secondary-foreground: var(--ink);
-  --muted: #efedf9;
+  --secondary: var(--tint-violet);
+  --secondary-foreground: var(--ink-violet);
+  --muted: var(--surface-sunk);
   --muted-foreground: var(--ink-soft);
-  --accent: var(--wash-blue);
+  --accent: var(--surface-sunk);
   --accent-foreground: var(--ink);
-  --destructive: var(--danger);
+  --destructive: var(--seal-text);
   --border: var(--rule);
-  --input: #dcd7f0;
-  --ring: var(--ink-blue);
-  --chart-1: var(--ink-blue);
-  --chart-2: var(--jade);
-  --chart-3: var(--sun);
-  --chart-4: var(--margin-red);
+  --input: var(--rule-strong);
+  --ring: var(--ink-violet);
+  --chart-1: var(--ink-violet);
+  --chart-2: var(--leaf);
+  --chart-3: var(--turmeric);
+  --chart-4: var(--seal);
   --chart-5: var(--ink-soft);
-  --radius: 0.875rem;
-  --sidebar: var(--surface);
+  --radius: 0.625rem;
+  --sidebar: var(--paper);
   --sidebar-foreground: var(--ink);
-  --sidebar-primary: var(--ink-blue);
+  --sidebar-primary: var(--ink-violet);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: var(--wash-blue);
+  --sidebar-accent: var(--surface-sunk);
   --sidebar-accent-foreground: var(--ink);
   --sidebar-border: var(--rule);
-  --sidebar-ring: var(--ink-blue);
+  --sidebar-ring: var(--ink-violet);
+
+  /* Legacy aliases (REDESIGN_PLAN §4.1); delete when `rg` finds no user */
+  --ink-blue: var(--ink-violet);
+  --ink-blue-shade: var(--ink-violet-hover);
+  --brand: #3b2e8c; /* violet text on the white buttons inside .hero-gradient (both themes) */
+  --margin-red: var(--seal);
+  --danger: var(--seal-text);
+  --highlight: var(--highlighter);
+  --jade: var(--leaf);
+  --jade-text: var(--leaf-text);
+  --sun: var(--turmeric);
+  --sun-text: var(--turmeric-text);
+  --sky: var(--ink-violet);
+  --sky-text: var(--ink-violet);
+  --grape: var(--ink-violet);
+  --grape-text: var(--ink-violet);
+  --pink: var(--seal);
+  --pink-text: var(--seal-text);
+  --wash-blue: var(--tint-violet);
+  --wash-jade: var(--tint-leaf);
+  --wash-red: var(--tint-seal);
+  --wash-yellow: var(--tint-turmeric);
+  --wash-sky: var(--tint-violet);
+  --wash-grape: var(--tint-violet);
+  --wash-pink: var(--tint-seal);
+  --shadow-pop: var(--shadow-lift);
+  --edge: transparent;
 }
 
 .dark {
-  --paper: #13111f;
-  --surface: #1e1b2e;
-  --ink: #eeebfa;
-  --ink-soft: #a9a3c7;
-  --ink-blue: #9d94ff;
-  --ink-blue-shade: #6a5fe0;
-  --margin-red: #ff8088;
-  --danger: #ff8088;
-  --highlight: #e0b82e;
-  --jade: #3dd6a3;
-  --jade-text: #3dd6a3;
-  --rule: #2e2a45;
-  --wash-blue: #272352;
-  --wash-jade: #15342c;
-  --wash-red: #3d1f29;
-  --wash-yellow: #3a3020;
+  --paper: #16151f;
+  --surface: #1d1d27;
+  --surface-sunk: #24242f;
+  --ink: #ecebf3;
+  --ink-soft: #a3a1b5;
+  --ink-faint: #6e6d82;
+  --rule: #2e2e3b;
+  --rule-strong: #3c3c4c;
+  --ruling: #2b2940;
+  --margin: #5a2e33;
 
-  --sun: #ffc24d;
-  --sun-text: #ffc24d;
-  --sky: #5bc8f5;
-  --sky-text: #5bc8f5;
-  --wash-sky: #15304a;
-  --grape: #c79bff;
-  --grape-text: #c79bff;
-  --wash-grape: #2f1f4d;
-  --pink: #ff85b3;
-  --pink-text: #ff85b3;
-  --wash-pink: #3f1d33;
-
-  --pup-fur: #f3e2c8;
-  --pup-muzzle: #e9cfa8;
-  --pup-ear: #b97a45;
-  --pup-blush: #f07a9a;
+  --ink-violet: #b4a8ff;
+  --ink-violet-hover: #c9bfff;
+  --tint-violet: #27234a;
+  --seal: #ff8a78;
+  --seal-text: #ff8a78;
+  --tint-seal: #3a1f22;
+  --on-seal: #16151f;
+  --leaf: #6fd1a6;
+  --leaf-text: #6fd1a6;
+  --tint-leaf: #16332a;
+  --turmeric: #e9b54a;
+  --turmeric-text: #e9b54a;
+  --tint-turmeric: #382b14;
+  --highlighter: #8c7420;
 
   --tone-1: #f07070;
   --tone-2: #f0a030;
   --tone-3: #4cc46a;
   --tone-4: #7c9bf0;
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -14px rgb(0 0 0 / 0.6);
-  --shadow-pop: 0 2px 4px rgb(0 0 0 / 0.3), 0 18px 40px -16px rgb(0 0 0 / 0.7);
-  --edge: rgb(0 0 0 / 0.45);
+  --shadow-card: 0 1px 0 rgb(0 0 0 / 0.3);
+  --shadow-lift: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -12px rgb(0 0 0 / 0.6);
 
-  --primary-foreground: #13111f;
-  --muted: #262338;
-  --input: #3a3557;
-  --sidebar-primary-foreground: #13111f;
+  --primary-foreground: #16151f;
+  --sidebar-primary-foreground: #16151f;
 }
 
 @theme inline {
   --color-paper: var(--paper);
   --color-surface: var(--surface);
+  --color-surface-sunk: var(--surface-sunk);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-ruling: var(--ruling);
+  --color-margin: var(--margin);
+  --color-ink-violet: var(--ink-violet);
+  --color-ink-violet-hover: var(--ink-violet-hover);
+  --color-tint-violet: var(--tint-violet);
+  --color-seal: var(--seal);
+  --color-seal-text: var(--seal-text);
+  --color-tint-seal: var(--tint-seal);
+  --color-on-seal: var(--on-seal);
+  --color-leaf: var(--leaf);
+  --color-leaf-text: var(--leaf-text);
+  --color-tint-leaf: var(--tint-leaf);
+  --color-turmeric: var(--turmeric);
+  --color-turmeric-text: var(--turmeric-text);
+  --color-tint-turmeric: var(--tint-turmeric);
+  --color-highlighter: var(--highlighter);
+  --color-cover-indigo: var(--cover-indigo);
+  --color-cover-moss: var(--cover-moss);
+  --color-cover-plum: var(--cover-plum);
+  --color-cover-brick: var(--cover-brick);
+  --color-cover-ochre: var(--cover-ochre);
+  --color-cover-slate: var(--cover-slate);
+  --color-tone-1: var(--tone-1);
+  --color-tone-2: var(--tone-2);
+  --color-tone-3: var(--tone-3);
+  --color-tone-4: var(--tone-4);
+  --color-tone-5: var(--tone-5);
+
+  /* Legacy aliases, see :root */
   --color-ink-blue: var(--ink-blue);
   --color-margin-red: var(--margin-red);
   --color-danger: var(--danger);
   --color-highlight: var(--highlight);
   --color-jade: var(--jade);
   --color-jade-text: var(--jade-text);
-  --color-rule: var(--rule);
   --color-wash-blue: var(--wash-blue);
   --color-wash-jade: var(--wash-jade);
   --color-wash-red: var(--wash-red);
@@ -211,33 +271,40 @@
   --color-pink: var(--pink);
   --color-pink-text: var(--pink-text);
   --color-wash-pink: var(--wash-pink);
-  --color-tone-1: var(--tone-1);
-  --color-tone-2: var(--tone-2);
-  --color-tone-3: var(--tone-3);
-  --color-tone-4: var(--tone-4);
-  --color-tone-5: var(--tone-5);
 
   --shadow-card: var(--shadow-card);
+  --shadow-lift: var(--shadow-lift);
   --shadow-pop: var(--shadow-pop);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: "Flag Emoji", var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Flag Emoji", var(--font-nunito), var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Flag Emoji", var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Flag Emoji", var(--font-literata), "Noto Serif SC", "Hero Hanzi", ui-serif, Georgia, serif;
   --font-ipa: "IPA Sans", "Noto Sans", "Segoe UI", "Lucida Sans Unicode", sans-serif;
   --font-hanzi: "Noto Serif SC", "Hero Hanzi", "Songti SC", "SimSun", serif;
   --font-hanzi-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono: ui-monospace, monospace;
 
-  /* Type scale (rem) from §12.3 */
+  /* Type scale (REDESIGN_PLAN §4.5) */
   --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.4;
   --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.5;
   --text-base: 1.0625rem;
-  --text-lg: 1.3125rem;
-  --text-xl: 1.75rem;
-  --text-2xl: 2.5rem;
-  --text-word: 4rem;
-  --text-hanzi: 5rem;
+  --text-base--line-height: 1.6;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.4;
+  --text-xl: 1.625rem;
+  --text-xl--line-height: 1.25;
+  --text-2xl: 2.25rem;
+  --text-2xl--line-height: 1.15;
+  --text-display: clamp(2.5rem, 6vw, 4.25rem);
+  --text-display--line-height: 1.05;
+  --text-word: clamp(2.75rem, 9vw, 4.5rem);
+  --text-word--line-height: 1.1;
+  --text-hanzi: clamp(4rem, 14vw, 6rem);
+  --text-hanzi--line-height: 1.1;
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -269,22 +336,23 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  /* Radius hierarchy: button 14px, card 20px, sheet/dialog 28px */
-  --radius-sm: 0.5rem;
-  --radius-md: 0.625rem;
-  --radius-lg: 0.875rem;
-  --radius-xl: 1.25rem;
-  --radius-2xl: 1.5rem;
-  --radius-3xl: 1.75rem;
+  /* Radius hierarchy: chip full, button/input 10px, card 14px, sheet/dialog/flashcard 22px */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.375rem;
+  --radius-3xl: 1.5rem;
   --radius-4xl: 2rem;
-  --radius-btn: 0.875rem;
-  --radius-card: 1.25rem;
-  --radius-sheet: 1.75rem;
+  --radius-chip: 999px;
+  --radius-btn: 0.625rem;
+  --radius-card: 0.875rem;
+  --radius-sheet: 1.375rem;
 
-  --animate-pop-in: pop-in 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  --animate-wiggle: wiggle 1.6s ease-in-out infinite;
-  --animate-float: float 3.2s ease-in-out infinite;
-  --animate-shake: shake 400ms ease-in-out both;
+  --animate-stamp-in: stamp-in 260ms var(--ease-stamp) both;
+  --animate-ink-draw: ink-draw 600ms var(--ease-out) both;
+  --animate-shake: shake 240ms ease-in-out both;
+  /* Bin only; removed together with the old drawing */
   --animate-hop: hop 900ms cubic-bezier(0.3, 0.7, 0.4, 1) 2;
   --animate-bob: bob 2.8s ease-in-out infinite;
 }
@@ -300,39 +368,45 @@
   body {
     @apply bg-background text-foreground;
     font-size: var(--text-base);
-    line-height: 1.55;
-    /* Soft candy blobs behind everything; fixed so long pages don't stretch them */
-    background-image:
-      radial-gradient(40rem 28rem at -10% -10%, color-mix(in oklab, var(--grape) 14%, transparent), transparent 70%),
-      radial-gradient(36rem 26rem at 110% 0%, color-mix(in oklab, var(--sky) 14%, transparent), transparent 70%),
-      radial-gradient(30rem 24rem at 50% 110%, color-mix(in oklab, var(--sun) 12%, transparent), transparent 70%);
-    background-attachment: fixed;
+    line-height: 1.6;
   }
   h1,
   h2,
   h3 {
     font-family: var(--font-heading);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
   }
   h1 {
-    font-weight: 900;
+    font-weight: 700;
   }
   h2,
   h3 {
-    font-weight: 800;
+    font-weight: 600;
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
   :focus-visible {
-    outline: 2px solid var(--ink-blue);
+    outline: 2px solid var(--ink-violet);
     outline-offset: 2px;
   }
 }
 
 @layer components {
-  /* Card: white, round, soft violet shadow (name kept from the notebook design) */
+  /* A sheet of paper: white, 1px rule, no shadow. Group content with space and headings, not nested cards. */
+  .sheet {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+  /* Only things that float: flashcards, dialogs, popovers, the bottom nav */
+  .sheet-lift {
+    box-shadow: var(--shadow-lift);
+  }
+  /* Old name of .sheet, kept until every component moved over (REDESIGN_PLAN §9 P8) */
   .notebook-card {
     position: relative;
     background: var(--surface);
@@ -341,25 +415,41 @@
     box-shadow: var(--shadow-card);
   }
 
-  /* Chunky "3D" press: a darker edge under the element that sinks when pressed */
-  .btn-3d {
-    box-shadow: 0 4px 0 0 var(--edge-color, var(--edge));
-    transition:
-      transform 90ms ease-out,
-      box-shadow 90ms ease-out,
-      background-color 150ms;
+  /* Ruled notebook page: a line every --line, text baselines sit on them (structure, not decoration) */
+  .ruled-paper {
+    --line: 2rem;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 calc(var(--line) - 1px),
+      var(--ruling) calc(var(--line) - 1px) var(--line)
+    );
   }
-  .btn-3d:not(:disabled):active {
-    transform: translateY(3px);
-    box-shadow: 0 1px 0 0 var(--edge-color, var(--edge));
+  /* Red margin line of the notebook, --margin-x from the left edge */
+  .margin-line {
+    --margin-x: 28px;
+    position: relative;
+  }
+  .margin-line::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    left: var(--margin-x);
+    width: 1px;
+    background: var(--margin);
+    pointer-events: none;
+  }
+  @media (max-width: 40rem) {
+    .margin-line {
+      --margin-x: 20px;
+    }
   }
 
-  /* Colored icon tile (section icons, mode cards) */
+  /* Small icon on its own, no coloured tile */
   .icon-tile {
     display: grid;
     place-items: center;
     flex-shrink: 0;
-    border-radius: 0.875rem;
+    border-radius: var(--radius-btn);
   }
 
   /* A word sitting on a ruled line, like handwriting in a notebook */
@@ -377,13 +467,13 @@
     border-top: 1px solid var(--rule);
   }
 
-  /* Highlighter marker stroke behind text */
+  /* Highlighter marker stroke behind text: the one allowed use of a decorative gradient */
   .highlighter {
     background-image: linear-gradient(
       100deg,
       transparent 0.2em,
-      color-mix(in oklab, var(--highlight) 85%, transparent) 0.3em,
-      color-mix(in oklab, var(--highlight) 75%, transparent) calc(100% - 0.3em),
+      color-mix(in oklab, var(--highlighter) 85%, transparent) 0.3em,
+      color-mix(in oklab, var(--highlighter) 75%, transparent) calc(100% - 0.3em),
       transparent calc(100% - 0.2em)
     );
     background-repeat: no-repeat;
@@ -392,27 +482,18 @@
     padding: 0 0.1em;
   }
   .highlighter-animate {
-    animation: highlighter-sweep 700ms 200ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
+    animation: highlighter-sweep 700ms 200ms var(--ease-out) both;
   }
 
-  /* Logo tile (same gradient as the app icon, scripts/gen-icons.mjs) */
+  /* Logo tile: flat ink (the mark itself is drawn in components/brand/logo.tsx) */
   .brand-tile {
-    background: linear-gradient(135deg, #6a4cf5, #4b3ee0);
+    background: var(--ink-violet);
   }
 
-  /* Hero gradient used by the big call-to-action cards */
+  /* Old call-to-action card, now flat ink. Replaced page by page (P3, P7). */
   .hero-gradient {
-    background:
-      radial-gradient(120% 140% at 100% 0%, color-mix(in oklab, var(--pink) 55%, transparent), transparent 55%),
-      radial-gradient(100% 120% at 0% 100%, color-mix(in oklab, var(--sky) 45%, transparent), transparent 60%),
-      linear-gradient(135deg, #6a4cf5, #4b3ee0);
+    background: #3b2e8c;
     color: #ffffff;
-  }
-  .dark .hero-gradient {
-    background:
-      radial-gradient(120% 140% at 100% 0%, color-mix(in oklab, var(--pink) 35%, transparent), transparent 55%),
-      radial-gradient(100% 120% at 0% 100%, color-mix(in oklab, var(--sky) 30%, transparent), transparent 60%),
-      linear-gradient(135deg, #4a35c9, #2f2696);
   }
 }
 
@@ -424,14 +505,21 @@
     background-size: 100% 0.55em;
   }
 }
-@keyframes pop-in {
+/* The seal lands on the page: slightly big and tilted, then settles at -8deg */
+@keyframes stamp-in {
   from {
     opacity: 0;
-    transform: scale(0.85) translateY(6px);
+    transform: scale(1.35) rotate(-12deg);
   }
   to {
     opacity: 1;
-    transform: none;
+    transform: scale(1) rotate(-8deg);
+  }
+}
+/* Strokes draw once: set stroke-dasharray on the path, the final stroke-dashoffset is the element's own */
+@keyframes ink-draw {
+  from {
+    stroke-dashoffset: var(--ink-from, 100);
   }
 }
 @keyframes shake {
@@ -439,31 +527,15 @@
   100% {
     transform: none;
   }
-  20%,
-  60% {
-    transform: translateX(-5px);
+  25%,
+  75% {
+    transform: translateX(-3px);
   }
-  40%,
-  80% {
-    transform: translateX(5px);
-  }
-}
-@keyframes wiggle {
-  0%,
-  100% {
-    transform: rotate(0);
-  }
-  15% {
-    transform: rotate(-10deg) scale(1.08);
-  }
-  30% {
-    transform: rotate(8deg) scale(1.08);
-  }
-  45% {
-    transform: rotate(0) scale(1);
+  50% {
+    transform: translateX(3px);
   }
 }
-/* Confetti (components/review/confetti.tsx); with reduced motion the pieces just end hidden */
+/* Confetti (components/review/confetti.tsx, removed in P4); with reduced motion the pieces just end hidden */
 .confetti-piece {
   opacity: 0;
   animation-name: confetti-fall;
@@ -483,17 +555,8 @@
     transform: translate(var(--drift), 65vh) rotate(var(--spin));
   }
 }
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
 
-/* Puppy mascot (components/mascot/pup.tsx) */
+/* Puppy mascot (components/mascot/pup.tsx), reworked in P2 */
 @keyframes hop {
   0%,
   100% {
@@ -702,21 +765,21 @@
   }
 }
 
-/* Activity heatmap: one hue (ink blue), light -> dark, mixed with the surface per theme */
+/* Activity heatmap: one hue (ink violet), light -> dark, mixed with the surface per theme */
 .heat-0 {
-  background: var(--muted);
+  background: var(--surface-sunk);
 }
 .heat-1 {
-  background: color-mix(in oklab, var(--ink-blue) 25%, var(--surface));
+  background: color-mix(in oklab, var(--ink-violet) 25%, var(--surface));
 }
 .heat-2 {
-  background: color-mix(in oklab, var(--ink-blue) 48%, var(--surface));
+  background: color-mix(in oklab, var(--ink-violet) 48%, var(--surface));
 }
 .heat-3 {
-  background: color-mix(in oklab, var(--ink-blue) 72%, var(--surface));
+  background: color-mix(in oklab, var(--ink-violet) 72%, var(--surface));
 }
 .heat-4 {
-  background: var(--ink-blue);
+  background: var(--ink-violet);
 }
 
 /* Flashcard flip */
@@ -725,7 +788,7 @@
 }
 .flip-card {
   transform-style: preserve-3d;
-  transition: transform 300ms cubic-bezier(0.3, 0.7, 0.3, 1);
+  transition: transform var(--dur-flip) var(--ease-out);
 }
 .flip-card[data-flipped="true"] {
   transform: rotateY(180deg);
@@ -763,6 +826,7 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

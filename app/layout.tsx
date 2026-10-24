@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro, Nunito } from "next/font/google";
+import { Be_Vietnam_Pro, Literata } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
@@ -11,11 +11,11 @@ const beVietnam = Be_Vietnam_Pro({
   display: "swap",
 });
 
-// Rounded display face for headings and big numbers (font-heading).
-const nunito = Nunito({
-  variable: "--font-nunito",
-  weight: ["800", "900"],
-  subsets: ["latin", "vietnamese"],
+// Reading serif for words (specimens), big numbers and landing/auth titles (font-display).
+const literata = Literata({
+  variable: "--font-literata",
+  axes: ["opsz"],
+  subsets: ["latin", "latin-ext", "vietnamese"],
   display: "swap",
 });
 
@@ -31,8 +31,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F6F4FF" },
-    { media: "(prefers-color-scheme: dark)", color: "#13111F" },
+    { media: "(prefers-color-scheme: light)", color: "#F5F6FA" },
+    { media: "(prefers-color-scheme: dark)", color: "#16151F" },
   ],
 };
 
@@ -46,7 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="vi"
       suppressHydrationWarning
-      className={`${beVietnam.variable} ${nunito.variable} h-full antialiased`}
+      className={`${beVietnam.variable} ${literata.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
