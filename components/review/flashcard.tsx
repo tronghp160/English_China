@@ -222,7 +222,7 @@ export function Flashcard({
 
             <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
               {flipBack ? <FlipHint>lật lại</FlipHint> : <span />}
-              <Link href={`/words/${word.id}`} className="rounded-md px-1 py-2 text-sm font-semibold text-primary-fg hover:underline">
+              <Link href={`/words/${word.id}`} className="inline-flex min-h-10 items-center rounded-md px-1 text-sm font-semibold text-primary-fg hover:underline">
                 Xem chi tiết
               </Link>
             </div>

@@ -1,5 +1,7 @@
 # Layout baseline (before V3)
 
+**Status after P14: every finding below is fixed and `tests/e2e/layout.spec.ts` runs by default (17 routes × 6 viewports, including 844×390 landscape), 0 findings.** What changed: the header and sidebar logo links, "Góc của Bin", the filter chips (`SegmentedNav`), the list/grid toggle, the Today language chips, `Button size="sm"` and the small speaker button are now ≥ 40px; "Xem chi tiết" got `min-h-10`; switches are exempt in the audit because their ::after hit area is 64×48.
+
 Produced by `tests/e2e/layout.spec.ts` on branch `v3-lively` before any V3 fix (REDESIGN_V3 §10.3). P14 must bring every line below to zero. Until then the spec only runs with `E2E_LAYOUT=1` (`E2E_LAYOUT=1 pnpm exec playwright test layout.spec.ts`).
 
 Checks: no horizontal scroll, no clipped text in `[data-check-overflow]` (no element has that mark yet, so that check is silent until pages add it), every visible `button`/`a` is at least 40×40 (inline links exempt).

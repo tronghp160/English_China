@@ -55,12 +55,12 @@ export function StudyStrip({ deckId, items, wordCount }: { deckId: string; items
             </span>
             <span className="flex min-w-0 flex-col px-1 pb-0.5">
               {suggested === mode && (
-                <span className="mb-1 inline-flex w-fit items-center gap-0.5 rounded-full bg-primary-soft px-1.5 py-0.5 text-[0.625rem] font-extrabold text-primary-fg">
+                <span className="mb-1 inline-flex w-fit items-center gap-0.5 rounded-full bg-primary-soft px-1.5 py-0.5 text-[0.8125rem] font-extrabold text-primary-fg">
                   <Sparkles className="size-2.5" strokeWidth={2.6} aria-hidden />
                   Gợi ý cho bạn
                 </span>
               )}
-              <span className="font-bold text-fg">{MODE_INFO[mode].label}</span>
+              <span data-check-overflow className="font-bold text-fg">{MODE_INFO[mode].label}</span>
               <span className={cn("min-h-4 text-xs leading-4 font-semibold tabular-nums", t.fg)}>{line(mode, n)}</span>
             </span>
           </Link>

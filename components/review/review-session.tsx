@@ -218,7 +218,7 @@ export function ReviewSession({
               >
                 <span className="text-base font-extrabold">{r.label}</span>
                 <span className="text-xs font-normal opacity-90">{formatInterval(preview[r.value].getTime() - now.getTime())}</span>
-                <kbd className="hidden font-sans text-[0.6875rem] font-normal opacity-80 lg:block">{r.key}</kbd>
+                <kbd className="hidden font-sans text-[0.8125rem] font-normal opacity-80 lg:block">{r.key}</kbd>
               </Button>
             ))}
           </div>

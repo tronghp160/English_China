@@ -34,7 +34,7 @@ export function PronounceButton({
     };
   }, [lang]);
 
-  const dims = size === "sm" ? "size-9" : size === "lg" ? "size-12" : "size-11";
+  const dims = size === "sm" ? "size-10" : size === "lg" ? "size-12" : "size-11";
   const icon = size === "lg" ? "size-6" : size === "sm" ? "size-4" : "size-5";
   const aria = label ?? `Đọc “${text}”`;
 

@@ -133,16 +133,16 @@ export function PracticeSetup({
         )}
         <span className="flex min-w-0 flex-col gap-0.5">
           {big && suggested === m && (
-            <span className="mb-0.5 inline-flex w-fit items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-[0.6875rem] font-extrabold text-primary-fg">
+            <span className="mb-0.5 inline-flex w-fit items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-[0.8125rem] font-extrabold text-primary-fg">
               <Sparkles className="size-3" strokeWidth={2.4} aria-hidden />
               Gợi ý cho bạn
             </span>
           )}
-          <span className="font-bold text-fg">{MODE_INFO[m].label}</span>
+          <span data-check-overflow className="font-bold text-fg">{MODE_INFO[m].label}</span>
           <span data-hint className="text-[0.8125rem] leading-snug text-fg-muted">
             {MODE_INFO[m].hint}
           </span>
-          {line && <span className={cn("mt-1 w-fit rounded-full px-2 py-0.5 text-xs font-extrabold tabular-nums", t.soft, t.fg)}>{line}</span>}
+          {line && <span data-check-overflow className={cn("mt-1 w-fit rounded-full px-2 py-0.5 text-xs font-extrabold tabular-nums", t.soft, t.fg)}>{line}</span>}
         </span>
       </label>
     );

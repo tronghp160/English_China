@@ -94,7 +94,7 @@ export default async function TodayPage() {
     <Reveal className="flex flex-col gap-6 lg:gap-7">
       <header>
         <p className="text-sm font-medium text-fg-muted">{dateLine(s.today)}</p>
-        <h1 className="mt-0.5 text-[1.6875rem] leading-tight sm:text-[2.125rem]">
+        <h1 data-check-overflow className="mt-0.5 text-[1.6875rem] leading-tight sm:text-[2.125rem]">
           {greeting(s.me.settings.timezone)}, {firstName}!
         </h1>
         <LevelBar
@@ -169,7 +169,7 @@ export default async function TodayPage() {
                       <li key={l.language}>
                         <Link
                           href={`/review?lang=${l.language}`}
-                          className="flex min-h-9 items-center gap-2 rounded-full bg-white/16 py-1 pr-3 pl-1 text-[0.8125rem] font-semibold tabular-nums hover:bg-white/24 sm:text-sm"
+                          className="flex min-h-10 items-center gap-2 rounded-full bg-white/16 py-1 pr-3 pl-1 text-[0.8125rem] font-semibold tabular-nums hover:bg-white/24 sm:text-sm"
                         >
                           <LangMark lang={l.language} white label />
                           {l.due} ôn, {l.newToday} mới

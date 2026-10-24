@@ -5,9 +5,7 @@ import { admin, deleteUserByEmail, signUp, testEmail, userIdByEmail, watchErrors
 // a control that is too small to tap. One account with the sample decks (onboarding default) serves all routes.
 // Tests are independent of each other so one broken page does not hide the next; a failing test restarts
 // the worker, which signs up a fresh account (and deletes the old one in afterAll).
-// Red on purpose until V3 phase P14 fixes everything in docs/redesign-v3/layout-baseline.md, so it only runs on
-// request (E2E_LAYOUT=1) and the other phases keep a green `pnpm test:e2e`. P14 removes this line.
-test.skip(!process.env.E2E_LAYOUT, "layout audit runs with E2E_LAYOUT=1 until V3 P14");
+// Text that must never be cut off carries `data-check-overflow` (headings, mode names, stat chips).
 
 const VIEWPORTS = [
   { width: 320, height: 640 },
@@ -15,6 +13,7 @@ const VIEWPORTS = [
   { width: 768, height: 1024 },
   { width: 1280, height: 800 },
   { width: 1920, height: 1080 },
+  { width: 844, height: 390 }, // a phone on its side
 ] as const;
 
 const MIN_TARGET = 40;
@@ -83,9 +82,25 @@ async function audit(p: Page): Promise<Problem[]> {
       }
     }
 
+    // Nothing a person reads is set below 13px (REDESIGN_V3 §3.7); badges, decorative (aria-hidden) text and screen-reader text are exempt.
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const small = new Set<string>();
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (!n.textContent?.trim()) continue;
+      const e = n.parentElement;
+      if (!e || e.closest("svg, script, style, [aria-hidden='true'], [data-slot='badge'], [data-small-text-ok], .sr-only, [class*='next-route']")) continue;
+      const box = e.getBoundingClientRect();
+      if (box.width === 0 || box.height === 0) continue;
+      const size = parseFloat(getComputedStyle(e).fontSize);
+      if (size < 12.9) small.add(`${size}px: ${(n.textContent ?? "").trim().slice(0, 30)}`);
+    }
+    for (const t of small) out.push(`text under 13px ${t}`);
+
     for (const el of document.querySelectorAll("button, a")) {
       const e = el as HTMLElement;
       if (e.closest("[data-inline-link]") || e.hasAttribute("data-inline-link")) continue;
+      // A switch is drawn small but its ::after extends the hit area to 64×48 (components/ui/switch.tsx), which a bounding box cannot see.
+      if (e.getAttribute("data-slot") === "switch") continue;
       if (e.closest("[aria-hidden='true']") || e.closest("[hidden]")) continue;
       const style = getComputedStyle(e);
       if (style.visibility === "hidden" || style.display === "none") continue;

@@ -259,7 +259,7 @@ export function DeckWords({
               aria-label="Dạng danh sách"
               aria-pressed={view === "list"}
               onClick={() => setView("list")}
-              className={cn("grid size-9 place-items-center rounded-full", view === "list" ? "bg-surface text-fg shadow-sm" : "text-fg-muted hover:text-fg")}
+              className={cn("grid size-10 place-items-center rounded-full", view === "list" ? "bg-surface text-fg shadow-sm" : "text-fg-muted hover:text-fg")}
             >
               <List className="size-4" aria-hidden />
             </button>
@@ -268,7 +268,7 @@ export function DeckWords({
               aria-label="Dạng lưới có ảnh"
               aria-pressed={view === "grid"}
               onClick={() => setView("grid")}
-              className={cn("grid size-9 place-items-center rounded-full", view === "grid" ? "bg-surface text-fg shadow-sm" : "text-fg-muted hover:text-fg")}
+              className={cn("grid size-10 place-items-center rounded-full", view === "grid" ? "bg-surface text-fg shadow-sm" : "text-fg-muted hover:text-fg")}
             >
               <LayoutGrid className="size-4" aria-hidden />
             </button>

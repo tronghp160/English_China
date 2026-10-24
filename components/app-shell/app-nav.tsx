@@ -63,7 +63,7 @@ export function BottomNav() {
           href={href}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-full text-[0.6875rem]",
+            "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-full text-[0.8125rem] leading-tight",
             active ? "font-bold text-primary-fg" : "font-medium text-fg-muted",
           )}
         >
@@ -108,7 +108,7 @@ export function BottomNav() {
               </span>
             )}
           </Link>
-          <span aria-hidden className="pointer-events-none absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[0.6875rem] font-bold text-primary-fg">
+          <span aria-hidden className="pointer-events-none absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[0.8125rem] leading-tight font-bold text-primary-fg">
             Ôn
           </span>
         </li>
@@ -153,7 +153,7 @@ export function SideNav() {
   };
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-62 flex-col overflow-y-auto bg-canvas px-4 pt-6 pb-4 lg:flex">
-      <Link href="/today" className="mb-6 self-start rounded-md px-2" aria-label="Sổ Từ — Hôm nay">
+      <Link href="/today" className="mb-6 inline-flex min-h-10 items-center self-start rounded-md px-2" aria-label="Sổ Từ — Hôm nay">
         <Logo />
       </Link>
 
@@ -193,7 +193,7 @@ export function SideNav() {
           <button
             type="button"
             onClick={binHome.open}
-            className="-mt-1 inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md text-sm font-semibold text-primary-fg hover:bg-surface/60"
+            className="-mt-1 inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md text-sm font-semibold text-primary-fg hover:bg-surface/60"
           >
             <Bone className="size-4" aria-hidden />
             Góc của {prefs.mascot_name}

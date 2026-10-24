@@ -19,6 +19,7 @@ const login = process.env.SHOT_LOGIN; // "email:password"
 const selector = process.env.SHOT_SELECTOR;
 const SIZES = [
   ["mobile", 390, 844],
+  ["tablet", 768, 1024],
   ["desktop", 1280, 860],
 ];
 

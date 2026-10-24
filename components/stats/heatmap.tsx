@@ -54,7 +54,7 @@ export function Heatmap({
     <figure className="m-0 flex flex-col gap-2" style={{ maxWidth: weeks * 30 + 32 }}>
       <div className="flex gap-1.5">
         <div
-          className="grid grid-rows-7 gap-[3px] pr-0.5 text-[0.6875rem] leading-none text-fg-muted"
+          className="grid grid-rows-7 gap-[3px] pr-0.5 text-[0.8125rem] leading-none text-fg-muted"
           aria-hidden
         >
           {WEEKDAYS.map((d, i) => (
