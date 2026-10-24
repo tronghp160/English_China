@@ -61,6 +61,13 @@ test("được cấp quyền: khóa rồi mở khóa người dùng, ẩn bộ t
   expect(banned.user?.banned_until).toBeTruthy();
   await row.getByRole("button", { name: "Mở khóa" }).click();
   await expect(row.getByText("Đã khóa")).toHaveCount(0);
+  // the detail page of that account
+  await row.getByRole("link", { name: "Xem chi tiết" }).click();
+  await expect(page).toHaveURL(new RegExp(`/admin/users/${otherId}`));
+  await expect(page.getByRole("heading", { name: "Lượt ôn 30 ngày qua" })).toBeVisible();
+  await expect(page.getByText(otherEmail, { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bộ từ (1)" })).toBeVisible();
+  await page.goBack();
   // my own row has no buttons
   await page.goto(`/admin?tab=users&q=${encodeURIComponent(email)}`);
   await expect(page.getByRole("listitem").filter({ hasText: email }).getByRole("button")).toHaveCount(0);

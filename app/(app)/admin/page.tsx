@@ -1,4 +1,14 @@
-import { BookOpen, Bot, Globe, ShieldCheck, Sparkles, UserPlus, Users, UsersRound, type LucideIcon } from "lucide-react";
+import {
+  BookOpen,
+  Bot,
+  Globe,
+  ShieldCheck,
+  Sparkles,
+  UserPlus,
+  Users,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminAction, GrantAdminForm } from "@/components/admin/admin-actions";
@@ -39,7 +49,11 @@ const TABS = [
 type Tab = (typeof TABS)[number]["value"];
 
 const date = (iso: string | null) =>
-  iso ? new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", dateStyle: "short" }).format(new Date(iso)) : "chưa";
+  iso
+    ? new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", dateStyle: "short" }).format(
+        new Date(iso),
+      )
+    : "chưa";
 
 export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const me = await requireAdmin();
@@ -54,14 +68,20 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         <IconTile icon={ShieldCheck} tone="grape" size={44} solid />
         <div>
           <h1 className="text-[1.6875rem] leading-tight sm:text-[2.125rem]">Quản trị</h1>
-          <p className="text-sm text-fg-muted">Chỉ quản trị viên thấy trang này. Mọi thao tác đều có hiệu lực ngay.</p>
+          <p className="text-sm text-fg-muted">
+            Chỉ quản trị viên thấy trang này. Mọi thao tác đều có hiệu lực ngay.
+          </p>
         </div>
       </div>
       <SegmentedNav
         label="Mục quản trị"
         scroll
         className="mt-5"
-        items={TABS.map((t) => ({ label: t.label, href: `/admin?tab=${t.value}`, active: t.value === tab }))}
+        items={TABS.map((t) => ({
+          label: t.label,
+          href: `/admin?tab=${t.value}`,
+          active: t.value === tab,
+        }))}
       />
       <div className="mt-6">
         {tab === "overview" && <Overview />}
@@ -74,7 +94,19 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   );
 }
 
-function Stat({ icon, tone, value, label, hint }: { icon: LucideIcon; tone: Tone; value: string; label: string; hint?: string }) {
+function Stat({
+  icon,
+  tone,
+  value,
+  label,
+  hint,
+}: {
+  icon: LucideIcon;
+  tone: Tone;
+  value: string;
+  label: string;
+  hint?: string;
+}) {
   return (
     <div className="flex items-center gap-3 rounded-lg bg-surface p-4 shadow-sm dark:border dark:border-border">
       <IconTile icon={icon} tone={tone} size={44} />
@@ -95,8 +127,19 @@ async function Overview() {
       <Stat icon={UserPlus} tone="mint" value={String(o.newUsers7d)} label="Đăng ký trong 7 ngày" />
       <Stat icon={Sparkles} tone="sun" value={String(o.activeToday)} label="Người học hôm nay" />
       <Stat icon={BookOpen} tone="coral" value={String(o.reviewsToday)} label="Lượt ôn hôm nay" />
-      <Stat icon={Bot} tone="grape" value={`${o.aiToday}/${o.aiLimit}`} label="Lượt AI hôm nay" hint="Giới hạn chung mỗi ngày (AI_GLOBAL_DAILY_LIMIT)" />
-      <Stat icon={Globe} tone="teal" value={`${o.publicDecks}/${o.decks}`} label="Bộ từ công khai / tất cả" />
+      <Stat
+        icon={Bot}
+        tone="grape"
+        value={`${o.aiToday}/${o.aiLimit}`}
+        label="Lượt AI hôm nay"
+        hint="Giới hạn chung mỗi ngày (AI_GLOBAL_DAILY_LIMIT)"
+      />
+      <Stat
+        icon={Globe}
+        tone="teal"
+        value={`${o.publicDecks}/${o.decks}`}
+        label="Bộ từ công khai / tất cả"
+      />
       <Stat icon={UsersRound} tone="orange" value={String(o.groups)} label="Nhóm" />
     </div>
   );
@@ -113,7 +156,13 @@ async function UsersTab({ meId, q, page }: { meId: string; q: string; page: numb
         <label htmlFor="admin-q" className="sr-only">
           Tìm người dùng
         </label>
-        <Input id="admin-q" name="q" defaultValue={q} placeholder="Tìm theo email, tên hoặc @username" className="flex-1" />
+        <Input
+          id="admin-q"
+          name="q"
+          defaultValue={q}
+          placeholder="Tìm theo email, tên hoặc @username"
+          className="flex-1"
+        />
         <Button type="submit">Tìm</Button>
       </form>
       <p className="mt-3 text-sm text-fg-muted">
@@ -123,10 +172,15 @@ async function UsersTab({ meId, q, page }: { meId: string; q: string; page: numb
         {users.map((u) => {
           const self = u.id === meId;
           return (
-            <li key={u.id} className="flex flex-col gap-3 rounded-lg bg-surface p-4 shadow-sm sm:flex-row sm:items-center dark:border dark:border-border">
+            <li
+              key={u.id}
+              className="flex flex-col gap-3 rounded-lg bg-surface p-4 shadow-sm sm:flex-row sm:items-center dark:border dark:border-border"
+            >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="font-bold">{u.displayName}</span>
+                  <Link href={`/admin/users/${u.id}`} className="font-bold hover:underline">
+                    {u.displayName}
+                  </Link>
                   {u.username && <span className="text-sm text-fg-muted">@{u.username}</span>}
                   {self && (
                     <Badge variant="soft" tone="blue">
@@ -146,38 +200,44 @@ async function UsersTab({ meId, q, page }: { meId: string; q: string; page: numb
                 </div>
                 <p className="truncate text-sm text-fg">{u.email}</p>
                 <p className="text-sm text-fg-muted">
-                  Tạo {date(u.createdAt)} · Đăng nhập gần nhất {date(u.lastSignInAt)} · {u.decks} bộ từ
+                  Tạo {date(u.createdAt)} · Đăng nhập gần nhất {date(u.lastSignInAt)} · {u.decks} bộ
+                  từ
                 </p>
               </div>
-              {!self && !u.admin && (
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  <AdminAction
-                    label={u.banned ? "Mở khóa" : "Khóa"}
-                    run={setUserBanned.bind(null, { userId: u.id, banned: !u.banned })}
-                    done={u.banned ? "Đã mở khóa tài khoản." : "Đã khóa tài khoản."}
-                    confirm={
-                      u.banned
-                        ? undefined
-                        : {
-                            title: `Khóa tài khoản ${u.email}?`,
-                            text: "Người này không đăng nhập được nữa cho tới khi bạn mở khóa. Phiên đang mở hết hạn trong khoảng một giờ. Dữ liệu vẫn giữ nguyên.",
-                            action: "Khóa tài khoản",
-                          }
-                    }
-                  />
-                  <AdminAction
-                    label="Xóa"
-                    destructive
-                    run={deleteUserAccount.bind(null, { userId: u.id })}
-                    done="Đã xóa tài khoản."
-                    confirm={{
-                      title: `Xóa hẳn tài khoản ${u.email}?`,
-                      text: "Xóa tài khoản, ảnh, bộ từ, tiến độ ôn và các nhóm người này làm chủ. Không hoàn tác được.",
-                      action: "Xóa tài khoản",
-                    }}
-                  />
-                </div>
-              )}
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <Button asChild size="sm" variant="soft" tone="blue">
+                  <Link href={`/admin/users/${u.id}`}>Xem chi tiết</Link>
+                </Button>
+                {!self && !u.admin && (
+                  <>
+                    <AdminAction
+                      label={u.banned ? "Mở khóa" : "Khóa"}
+                      run={setUserBanned.bind(null, { userId: u.id, banned: !u.banned })}
+                      done={u.banned ? "Đã mở khóa tài khoản." : "Đã khóa tài khoản."}
+                      confirm={
+                        u.banned
+                          ? undefined
+                          : {
+                              title: `Khóa tài khoản ${u.email}?`,
+                              text: "Người này không đăng nhập được nữa cho tới khi bạn mở khóa. Phiên đang mở hết hạn trong khoảng một giờ. Dữ liệu vẫn giữ nguyên.",
+                              action: "Khóa tài khoản",
+                            }
+                      }
+                    />
+                    <AdminAction
+                      label="Xóa"
+                      destructive
+                      run={deleteUserAccount.bind(null, { userId: u.id })}
+                      done="Đã xóa tài khoản."
+                      confirm={{
+                        title: `Xóa hẳn tài khoản ${u.email}?`,
+                        text: "Xóa tài khoản, ảnh, bộ từ, tiến độ ôn và các nhóm người này làm chủ. Không hoàn tác được.",
+                        action: "Xóa tài khoản",
+                      }}
+                    />
+                  </>
+                )}
+              </div>
             </li>
           );
         })}
@@ -212,10 +272,15 @@ async function DecksTab() {
   if (!decks.length) return <p className="text-fg-muted">Chưa có bộ từ công khai nào.</p>;
   return (
     <section aria-label="Bộ từ công khai">
-      <p className="mb-3 text-sm text-fg-muted">Các bộ từ đang hiện ở trang Khám phá. “Ẩn” đưa bộ từ về riêng tư của chủ, không xóa gì.</p>
+      <p className="mb-3 text-sm text-fg-muted">
+        Các bộ từ đang hiện ở trang Khám phá. “Ẩn” đưa bộ từ về riêng tư của chủ, không xóa gì.
+      </p>
       <ul className="flex flex-col gap-2.5">
         {decks.map((d) => (
-          <li key={d.id} className="flex flex-col gap-3 rounded-lg bg-surface p-4 shadow-sm sm:flex-row sm:items-center dark:border dark:border-border">
+          <li
+            key={d.id}
+            className="flex flex-col gap-3 rounded-lg bg-surface p-4 shadow-sm sm:flex-row sm:items-center dark:border dark:border-border"
+          >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <LangMark lang={d.language} />
@@ -232,14 +297,22 @@ async function DecksTab() {
                 label="Ẩn khỏi Khám phá"
                 run={hidePublicDeck.bind(null, { deckId: d.id })}
                 done="Đã ẩn bộ từ."
-                confirm={{ title: `Ẩn "${d.name}"?`, text: "Bộ từ thành riêng tư của chủ; người đang học vẫn giữ tiến độ của mình.", action: "Ẩn bộ từ" }}
+                confirm={{
+                  title: `Ẩn "${d.name}"?`,
+                  text: "Bộ từ thành riêng tư của chủ; người đang học vẫn giữ tiến độ của mình.",
+                  action: "Ẩn bộ từ",
+                }}
               />
               <AdminAction
                 label="Xóa"
                 destructive
                 run={deleteDeckAsAdmin.bind(null, { deckId: d.id })}
                 done="Đã xóa bộ từ."
-                confirm={{ title: `Xóa hẳn "${d.name}"?`, text: "Xóa bộ từ, mọi từ trong đó và tiến độ ôn của mọi người với các từ này. Không hoàn tác được.", action: "Xóa bộ từ" }}
+                confirm={{
+                  title: `Xóa hẳn "${d.name}"?`,
+                  text: "Xóa bộ từ, mọi từ trong đó và tiến độ ôn của mọi người với các từ này. Không hoàn tác được.",
+                  action: "Xóa bộ từ",
+                }}
               />
             </div>
           </li>
@@ -256,7 +329,10 @@ async function GroupsTab() {
     <section aria-label="Nhóm">
       <ul className="flex flex-col gap-2.5">
         {groups.map((g) => (
-          <li key={g.id} className="flex flex-col gap-3 rounded-lg bg-surface p-4 shadow-sm sm:flex-row sm:items-center dark:border dark:border-border">
+          <li
+            key={g.id}
+            className="flex flex-col gap-3 rounded-lg bg-surface p-4 shadow-sm sm:flex-row sm:items-center dark:border dark:border-border"
+          >
             <div className="min-w-0 flex-1">
               <p className="truncate font-bold">{g.name}</p>
               <p className="text-sm text-fg-muted">
@@ -268,7 +344,11 @@ async function GroupsTab() {
               destructive
               run={deleteGroupAsAdmin.bind(null, { groupId: g.id })}
               done="Đã xóa nhóm."
-              confirm={{ title: `Xóa nhóm "${g.name}"?`, text: "Các bộ từ của nhóm trở về thành bộ từ riêng của người tạo. Không hoàn tác được.", action: "Xóa nhóm" }}
+              confirm={{
+                title: `Xóa nhóm "${g.name}"?`,
+                text: "Các bộ từ của nhóm trở về thành bộ từ riêng của người tạo. Không hoàn tác được.",
+                action: "Xóa nhóm",
+              }}
             />
           </li>
         ))}
@@ -283,15 +363,25 @@ async function AdminsTab({ meId }: { meId: string }) {
     <section aria-label="Quản trị viên" className="flex flex-col gap-5">
       <div className="rounded-lg bg-surface p-4 shadow-sm dark:border dark:border-border">
         <h2 className="text-lg">Cấp quyền quản trị</h2>
-        <p className="mt-1 mb-3 text-sm text-fg-muted">Nhập email của một tài khoản đã đăng ký. Người đó thấy mục “Quản trị” trong menu tài khoản.</p>
+        <p className="mt-1 mb-3 text-sm text-fg-muted">
+          Nhập email của một tài khoản đã đăng ký. Người đó thấy mục “Quản trị” trong menu tài
+          khoản.
+        </p>
         <GrantAdminForm />
       </div>
       <ul className="flex flex-col gap-2.5">
         {admins.map((a) => (
-          <li key={a.email} className="flex flex-col gap-3 rounded-lg bg-surface p-4 shadow-sm sm:flex-row sm:items-center dark:border dark:border-border">
+          <li
+            key={a.email}
+            className="flex flex-col gap-3 rounded-lg bg-surface p-4 shadow-sm sm:flex-row sm:items-center dark:border dark:border-border"
+          >
             <div className="min-w-0 flex-1">
               <p className="truncate font-bold">{a.email}</p>
-              <p className="text-sm text-fg-muted">{a.envAdmin ? "Trong ADMIN_EMAILS (đổi ở biến môi trường)" : `Được cấp ngày ${date(a.grantedAt)}`}</p>
+              <p className="text-sm text-fg-muted">
+                {a.envAdmin
+                  ? "Trong ADMIN_EMAILS (đổi ở biến môi trường)"
+                  : `Được cấp ngày ${date(a.grantedAt)}`}
+              </p>
             </div>
             {a.userId && a.userId !== meId && (
               <AdminAction
@@ -299,7 +389,11 @@ async function AdminsTab({ meId }: { meId: string }) {
                 destructive
                 run={revokeAdmin.bind(null, { userId: a.userId })}
                 done="Đã gỡ quyền quản trị."
-                confirm={{ title: `Gỡ quyền của ${a.email}?`, text: "Người này vẫn dùng Sổ Từ bình thường, chỉ không vào được trang Quản trị.", action: "Gỡ quyền" }}
+                confirm={{
+                  title: `Gỡ quyền của ${a.email}?`,
+                  text: "Người này vẫn dùng Sổ Từ bình thường, chỉ không vào được trang Quản trị.",
+                  action: "Gỡ quyền",
+                }}
               />
             )}
           </li>
