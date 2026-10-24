@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { deleteDeck } from "@/lib/actions/decks";
 
@@ -23,20 +24,20 @@ export function DeleteDeckButton({ deckId, name }: { deckId: string; name: strin
   const [pending, start] = useTransition();
   return (
     <AlertDialog onOpenChange={() => setConfirm("")}>
-      <AlertDialogTrigger className="min-h-11 rounded-btn bg-wash-red px-4 text-sm font-medium text-danger">
-        Xóa bộ từ
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive">Xóa bộ từ</Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="rounded-sheet">
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa bộ “{name}”?</AlertDialogTitle>
           <AlertDialogDescription>Gõ tên bộ từ để xác nhận.</AlertDialogDescription>
         </AlertDialogHeader>
-        <Input value={confirm} onChange={(e) => setConfirm(e.target.value)} aria-label="Tên bộ từ" className="h-11 rounded-btn" />
+        <Input value={confirm} onChange={(e) => setConfirm(e.target.value)} aria-label="Tên bộ từ" />
         <AlertDialogFooter>
-          <AlertDialogCancel className="min-h-11 rounded-btn">Giữ lại</AlertDialogCancel>
+          <AlertDialogCancel>Giữ lại</AlertDialogCancel>
           <AlertDialogAction
             disabled={confirm.trim() !== name.trim() || pending}
-            className="min-h-11 rounded-btn bg-danger text-paper hover:bg-danger/90"
+            className="bg-seal text-on-seal hover:bg-seal/90"
             onClick={() =>
               start(async () => {
                 const res = await deleteDeck(deckId);

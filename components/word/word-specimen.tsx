@@ -117,10 +117,10 @@ export function WordSpecimen({
           style={{ minHeight: `calc(var(--line) * ${cfg.rows})`, fontSize: fit < 1 ? `calc(${cfg.font} * ${fit.toFixed(3)})` : cfg.font, lineHeight: 1 }}
         >
           {/* In a line-height 1 box the baseline is on the box's bottom edge, which is a rule: descenders cross it like handwriting */}
-          <span>{term}</span>
+          <span className="translate-y-[0.035em]">{term}</span>
         </p>
         <div className="flex items-end gap-1" style={{ height: "var(--line)" }}>
-          {showReading && reading && <span className="translate-y-[0.2em] font-ipa text-base leading-none text-ink-soft">{reading}</span>}
+          {showReading && reading && <span className="translate-y-[0.1em] font-ipa text-base leading-none text-ink-soft">{reading}</span>}
           {actions && <span className="-mb-2 flex">{actions}</span>}
         </div>
       </div>

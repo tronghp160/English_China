@@ -1,15 +1,29 @@
 "use client";
 
-import { Check, Copy, Share2 } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { SwitchRow } from "@/components/settings/study-prefs";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { setShareLink } from "@/lib/actions/decks";
 
-export function ShareDeckDialog({ deckId, slug, siteUrl }: { deckId: string; slug: string | null; siteUrl: string }) {
+/** Share dialog; the page opens it from the "⋯" menu, so it is controlled from outside. */
+export function ShareDeckDialog({
+  deckId,
+  slug,
+  siteUrl,
+  open,
+  onOpenChange,
+}: {
+  deckId: string;
+  slug: string | null;
+  siteUrl: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const router = useRouter();
   const [current, setCurrent] = useState(slug);
   const [copied, setCopied] = useState(false);
@@ -42,12 +56,8 @@ export function ShareDeckDialog({ deckId, slug, siteUrl }: { deckId: string; slu
   }
 
   return (
-    <Dialog>
-      <DialogTrigger className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-btn border border-rule bg-surface px-3.5 text-sm font-medium text-ink hover:bg-muted">
-        <Share2 className="size-4 text-ink-soft" aria-hidden />
-        Chia sẻ
-      </DialogTrigger>
-      <DialogContent className="rounded-sheet">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Chia sẻ bộ từ</DialogTitle>
           <DialogDescription>
@@ -62,28 +72,23 @@ export function ShareDeckDialog({ deckId, slug, siteUrl }: { deckId: string; slu
         />
         {url && (
           <div className="flex items-center gap-2">
-            <input
+            <Input
               readOnly
               value={url}
               aria-label="Link chia sẻ"
-              className="h-11 min-w-0 flex-1 rounded-btn border border-rule bg-muted px-3 text-sm text-ink"
+              className="min-w-0 flex-1 bg-surface-sunk"
               onFocus={(e) => e.currentTarget.select()}
             />
-            <Button type="button" onClick={copy} className="h-11 gap-1.5 rounded-btn px-4">
-              {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
+            <Button type="button" onClick={copy}>
+              {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
               Sao chép
             </Button>
           </div>
         )}
         {current && (
-          <button
-            type="button"
-            className="min-h-11 self-start text-sm text-ink-soft underline-offset-4 hover:underline"
-            onClick={() => toggle(true)}
-            disabled={pending}
-          >
+          <Button type="button" variant="link" className="self-start px-0 text-ink-soft" onClick={() => toggle(true)} disabled={pending}>
             Tạo link mới (link cũ sẽ không dùng được)
-          </button>
+          </Button>
         )}
       </DialogContent>
     </Dialog>

@@ -15,10 +15,10 @@ export default async function DecksPage({ searchParams }: PageProps<"/decks">) {
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-xl text-ink">Bộ từ</h1>
-        <Button asChild className="h-11 gap-1.5 rounded-btn px-4">
+        <h1 className="text-xl">Bộ từ</h1>
+        <Button asChild>
           <Link href="/decks/new">
-            <Plus className="size-4" aria-hidden />
+            <Plus aria-hidden />
             Tạo bộ từ
           </Link>
         </Button>

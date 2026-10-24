@@ -10,15 +10,19 @@ function FacebookIcon({ className }: { className?: string }) {
   );
 }
 
+/** Zalo as a one-color outlined mark, so it sits quietly next to the Facebook glyph. */
 function ZaloIcon({ className }: { className?: string }) {
   return (
-    <span aria-hidden className={cn("grid place-items-center rounded-lg bg-sky-text text-[0.6rem] font-black tracking-tight text-surface", className)}>
+    <span
+      aria-hidden
+      className={cn("grid place-items-center rounded-sm border-[1.5px] border-current text-[0.5625rem] leading-none font-bold tracking-tight", className)}
+    >
       Zalo
     </span>
   );
 }
 
-/** Facebook + Zalo buttons. Open in a new tab; `compact` is the one-line footer variant. */
+/** Facebook + Zalo buttons. Open in a new tab; `compact` is the one-line variant. */
 export function ContactLinks({ compact = false, className }: { compact?: boolean; className?: string }) {
   const phone = formatPhone(CONTACT.zaloPhone);
   const items = [
@@ -26,15 +30,13 @@ export function ContactLinks({ compact = false, className }: { compact?: boolean
       href: CONTACT.facebook,
       label: "Facebook",
       detail: "Nhắn tin qua Messenger",
-      icon: <FacebookIcon className="size-7 text-ink-blue" />,
-      tone: "bg-wash-blue",
+      icon: <FacebookIcon className="size-5" />,
     },
     {
       href: zaloUrl(CONTACT.zaloPhone),
       label: "Zalo",
       detail: phone,
-      icon: <ZaloIcon className="size-7" />,
-      tone: "bg-wash-sky",
+      icon: <ZaloIcon className="h-5 w-7" />,
     },
   ];
 
@@ -48,13 +50,13 @@ export function ContactLinks({ compact = false, className }: { compact?: boolean
             rel="noopener noreferrer"
             aria-label={`${it.label}: ${it.detail} (mở trong tab mới)`}
             className={cn(
-              "flex items-center gap-3 rounded-card border border-rule transition-transform hover:-translate-y-0.5",
-              compact ? "min-h-11 bg-surface px-3 py-1.5 text-sm" : cn("min-h-16 px-4 py-3", it.tone),
+              "flex items-center gap-3 rounded-btn border border-rule-strong bg-surface text-ink transition-colors hover:bg-surface-sunk",
+              compact ? "min-h-11 px-3 py-1.5 text-sm" : "min-h-16 px-4 py-3",
             )}
           >
-            {it.icon}
+            <span className="shrink-0 text-ink-soft">{it.icon}</span>
             <span className="min-w-0 flex-1">
-              <span className="block font-bold text-ink">{it.label}</span>
+              <span className="block font-semibold">{it.label}</span>
               {!compact && <span className="block truncate text-sm text-ink-soft">{it.detail}</span>}
             </span>
             {!compact && <ExternalLink className="size-4 shrink-0 text-ink-soft" aria-hidden />}

@@ -1,18 +1,34 @@
 "use client";
 
-import { BookmarkMinus, BookmarkPlus, CopyPlus, Loader2 } from "lucide-react";
+import { BookmarkPlus, CopyPlus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { cloneDeck, subscribeDeck, unsubscribeDeck } from "@/lib/actions/sharing";
-import { cn } from "@/lib/utils";
 
-export function SubscribeButton({ deckId, subscribed }: { deckId: string; subscribed: boolean }) {
+/** Adds a deck to "Đang theo học" (primary) or, with `subscribed`, takes it out again (quiet outline). */
+export function SubscribeButton({
+  deckId,
+  subscribed,
+  variant,
+  size,
+  label,
+}: {
+  deckId: string;
+  subscribed: boolean;
+  variant?: "default" | "outline" | "secondary";
+  size?: "default" | "sm" | "lg";
+  /** Overrides the default text */
+  label?: string;
+}) {
   const router = useRouter();
   const [pending, start] = useTransition();
   return (
-    <button
+    <Button
       type="button"
+      variant={variant ?? (subscribed ? "outline" : "default")}
+      size={size}
       disabled={pending}
       onClick={() =>
         start(async () => {
@@ -22,29 +38,21 @@ export function SubscribeButton({ deckId, subscribed }: { deckId: string; subscr
           router.refresh();
         })
       }
-      className={cn(
-        "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-btn px-4 text-sm font-medium",
-        subscribed ? "border border-rule bg-surface text-ink hover:bg-muted" : "bg-primary text-primary-foreground",
-      )}
     >
-      {pending ? (
-        <Loader2 className="size-4 animate-spin" aria-hidden />
-      ) : subscribed ? (
-        <BookmarkMinus className="size-4" aria-hidden />
-      ) : (
-        <BookmarkPlus className="size-4" aria-hidden />
-      )}
-      {subscribed ? "Bỏ theo học" : "Học bộ này"}
-    </button>
+      {pending ? <Loader2 className="animate-spin" aria-hidden /> : !subscribed && <BookmarkPlus aria-hidden />}
+      {label ?? (subscribed ? "Bỏ theo học" : "Theo học")}
+    </Button>
   );
 }
 
-export function CloneDeckButton({ deckId }: { deckId: string }) {
+export function CloneDeckButton({ deckId, variant = "outline", size }: { deckId: string; variant?: "default" | "outline" | "secondary"; size?: "default" | "sm" | "lg" }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   return (
-    <button
+    <Button
       type="button"
+      variant={variant}
+      size={size}
       disabled={pending}
       onClick={() =>
         start(async () => {
@@ -55,10 +63,9 @@ export function CloneDeckButton({ deckId }: { deckId: string }) {
           router.refresh();
         })
       }
-      className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-btn border border-rule bg-surface px-3.5 text-sm font-medium text-ink hover:bg-muted"
     >
-      {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <CopyPlus className="size-4 text-ink-soft" aria-hidden />}
+      {pending ? <Loader2 className="animate-spin" aria-hidden /> : <CopyPlus aria-hidden />}
       Sao chép
-    </button>
+    </Button>
   );
 }

@@ -11,9 +11,9 @@ export default async function NewDeckPage({ searchParams }: PageProps<"/decks/ne
   const groupId = typeof params.group === "string" ? params.group : undefined;
   const lang = params.lang === "zh" ? "zh" : "en";
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="max-w-3xl">
       <BackLink href="/decks" label="Bộ từ" />
-      <h1 className="mb-6 text-xl text-ink">Tạo bộ từ</h1>
+      <h1 className="mb-6 text-xl">Tạo bộ từ</h1>
       <DeckForm
         mode="create"
         groups={groups.map((g) => ({ id: g.id, name: g.name }))}

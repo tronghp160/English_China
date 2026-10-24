@@ -1,10 +1,10 @@
 "use client";
 
-import { Globe2, Loader2, Lock, Users } from "lucide-react";
+import { AlertCircle, Globe2, Loader2, Lock, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { LangFlag } from "@/components/lang-flag";
+import { DeckCover } from "@/components/deck/deck-cover";
 import { SwitchRow } from "@/components/settings/study-prefs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,20 @@ const VISIBILITY = [
   { value: "group", label: "Nhóm", hint: "Thành viên nhóm cùng học", icon: Users },
   { value: "public", label: "Công khai", hint: "Ai cũng tìm thấy ở mục Khám phá", icon: Globe2 },
 ] as const;
+
+function FieldError({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="flex items-center gap-1.5 text-sm text-seal-text">
+      <AlertCircle className="size-3.5 shrink-0" aria-hidden />
+      {children}
+    </p>
+  );
+}
+
+/** A choice drawn as a card: 1px outline, the chosen one gets a 2px violet outline and a pale violet fill. */
+const CARD = "rounded-btn border text-left transition-colors disabled:opacity-50";
+const CARD_ON = "border-ink-violet bg-tint-violet ring-1 ring-ink-violet";
+const CARD_OFF = "border-input bg-surface hover:border-ink-soft/50";
 
 export function DeckForm({
   mode,
@@ -67,125 +81,125 @@ export function DeckForm({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-6" noValidate>
-      <div className="space-y-1.5">
-        <Label htmlFor="deck-name">Tên bộ từ</Label>
-        <Input
-          id="deck-name"
-          value={v.name}
-          onChange={(e) => set("name", e.target.value)}
-          placeholder="Ví dụ: IELTS Speaking"
-          className="h-12 rounded-btn text-base"
-          aria-invalid={Boolean(errors.name) || undefined}
-          autoFocus={mode === "create"}
-        />
-        {errors.name && <p className="text-sm text-danger">{errors.name}</p>}
+    <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_8rem] md:gap-10">
+      {/* The cover follows what is typed; on phones it sits above the fields */}
+      <div className="md:order-last">
+        <div className="md:sticky md:top-20">
+          <DeckCover id={deckId ?? "new-deck"} language={v.language} name={v.name.trim() || "Tên bộ từ"} size="lg" />
+        </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="deck-desc">Mô tả (không bắt buộc)</Label>
-        <Textarea
-          id="deck-desc"
-          value={v.description ?? ""}
-          onChange={(e) => set("description", e.target.value)}
-          rows={2}
-          className="rounded-btn text-base"
-        />
-      </div>
+      <form onSubmit={submit} className="min-w-0 space-y-6" noValidate>
+        <div className="space-y-1.5">
+          <Label htmlFor="deck-name">Tên bộ từ</Label>
+          <Input
+            id="deck-name"
+            value={v.name}
+            onChange={(e) => set("name", e.target.value)}
+            placeholder="Ví dụ: IELTS Speaking"
+            aria-invalid={Boolean(errors.name) || undefined}
+            autoFocus={mode === "create"}
+          />
+          {errors.name && <FieldError>{errors.name}</FieldError>}
+        </div>
 
-      {mode === "create" && (
+        <div className="space-y-1.5">
+          <Label htmlFor="deck-desc">Mô tả (không bắt buộc)</Label>
+          <Textarea id="deck-desc" value={v.description ?? ""} onChange={(e) => set("description", e.target.value)} rows={2} />
+        </div>
+
+        {mode === "create" && (
+          <fieldset>
+            <legend className="mb-2 text-sm font-medium">Ngôn ngữ</legend>
+            <div role="radiogroup" className="grid grid-cols-2 gap-2">
+              {(["en", "zh"] as const).map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  role="radio"
+                  aria-checked={v.language === code}
+                  onClick={() => set("language", code)}
+                  className={cn(CARD, "flex min-h-20 flex-col justify-center gap-1 px-4 py-3", v.language === code ? CARD_ON : CARD_OFF)}
+                >
+                  <span
+                    aria-hidden
+                    className={cn("text-xl leading-none text-ink", code === "zh" ? "font-hanzi" : "font-display font-medium")}
+                  >
+                    {code === "zh" ? "坚强" : "resilient"}
+                  </span>
+                  <span className="text-sm font-medium text-ink">{LANGUAGES[code].label}</span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
+
         <fieldset>
-          <legend className="mb-2 text-sm font-medium">Ngôn ngữ</legend>
-          <div role="radiogroup" className="grid grid-cols-2 gap-2">
-            {(["en", "zh"] as const).map((code) => (
-              <button
-                key={code}
-                type="button"
-                role="radio"
-                aria-checked={v.language === code}
-                onClick={() => set("language", code)}
-                className={cn(
-                  "flex min-h-12 items-center justify-center gap-2 rounded-btn border text-base",
-                  v.language === code ? "border-ink-blue bg-wash-blue font-medium" : "border-rule",
-                )}
-              >
-                <LangFlag lang={code} /> {LANGUAGES[code].label}
-              </button>
-            ))}
+          <legend className="mb-2 text-sm font-medium">Ai được xem</legend>
+          <div role="radiogroup" className="grid gap-2">
+            {VISIBILITY.map(({ value, label, hint, icon: Icon }) => {
+              const disabled = value === "group" && !groups.length;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={v.visibility === value}
+                  disabled={disabled}
+                  onClick={() => set("visibility", value)}
+                  className={cn(CARD, "flex min-h-14 items-center gap-3 px-4", v.visibility === value ? CARD_ON : CARD_OFF)}
+                >
+                  <Icon className="size-5 shrink-0 text-ink-soft" strokeWidth={1.75} aria-hidden />
+                  <span>
+                    <span className="block font-medium text-ink">{label}</span>
+                    <span className="block text-sm text-ink-soft">{disabled ? "Bạn chưa tham gia nhóm nào" : hint}</span>
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </fieldset>
-      )}
 
-      <fieldset>
-        <legend className="mb-2 text-sm font-medium">Ai được xem</legend>
-        <div role="radiogroup" className="grid gap-2">
-          {VISIBILITY.map(({ value, label, hint, icon: Icon }) => {
-            const disabled = value === "group" && !groups.length;
-            return (
-              <button
-                key={value}
-                type="button"
-                role="radio"
-                aria-checked={v.visibility === value}
-                disabled={disabled}
-                onClick={() => set("visibility", value)}
-                className={cn(
-                  "flex min-h-14 items-center gap-3 rounded-btn border px-4 text-left disabled:opacity-50",
-                  v.visibility === value ? "border-ink-blue bg-wash-blue" : "border-rule",
-                )}
+        {v.visibility === "group" && groups.length > 0 && (
+          <div className="space-y-3 rounded-card border border-rule p-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="deck-group">Nhóm</Label>
+              <select
+                id="deck-group"
+                value={v.group_id ?? ""}
+                onChange={(e) => set("group_id", e.target.value)}
+                className="h-11 w-full rounded-btn border border-input bg-surface px-3 text-base outline-none focus-visible:border-ink-violet focus-visible:ring-3 focus-visible:ring-tint-violet"
               >
-                <Icon className="size-5 shrink-0 text-ink-soft" aria-hidden />
-                <span>
-                  <span className="block font-medium text-ink">{label}</span>
-                  <span className="block text-sm text-ink-soft">
-                    {disabled ? "Bạn chưa tham gia nhóm nào" : hint}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
-
-      {v.visibility === "group" && groups.length > 0 && (
-        <div className="space-y-3 rounded-card border border-rule p-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="deck-group">Nhóm</Label>
-            <select
-              id="deck-group"
-              value={v.group_id ?? ""}
-              onChange={(e) => set("group_id", e.target.value)}
-              className="h-11 w-full rounded-btn border border-rule bg-surface px-3 text-base"
-            >
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </select>
-            {errors.group_id && <p className="text-sm text-danger">{errors.group_id}</p>}
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+              {errors.group_id && <FieldError>{errors.group_id}</FieldError>}
+            </div>
+            <SwitchRow
+              id="allow-member-edit"
+              label="Thành viên được thêm/sửa từ"
+              checked={Boolean(v.allow_member_edit)}
+              onCheckedChange={(c) => set("allow_member_edit", c)}
+            />
           </div>
-          <SwitchRow
-            id="allow-member-edit"
-            label="Thành viên được thêm/sửa từ"
-            checked={Boolean(v.allow_member_edit)}
-            onCheckedChange={(c) => set("allow_member_edit", c)}
-          />
-        </div>
-      )}
+        )}
 
-      <SwitchRow
-        id="enable-recall"
-        label="Luyện cả chiều nghĩa → từ"
-        hint="Mở sau khi bạn đã nhớ chiều từ → nghĩa."
-        checked={Boolean(v.enable_recall)}
-        onCheckedChange={(c) => set("enable_recall", c)}
-      />
+        <SwitchRow
+          id="enable-recall"
+          label="Luyện cả chiều nghĩa → từ"
+          hint="Mở sau khi bạn đã nhớ chiều từ → nghĩa."
+          checked={Boolean(v.enable_recall)}
+          onCheckedChange={(c) => set("enable_recall", c)}
+        />
 
-      <Button type="submit" disabled={pending} className="h-12 w-full gap-2 rounded-btn text-base sm:w-auto sm:px-8">
-        {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
-        {mode === "create" ? "Tạo bộ từ" : "Lưu bộ từ"}
-      </Button>
-    </form>
+        <Button type="submit" size="lg" disabled={pending} className="w-full sm:w-auto sm:px-8">
+          {pending && <Loader2 className="animate-spin" aria-hidden />}
+          {mode === "create" ? "Tạo bộ từ" : "Lưu bộ từ"}
+        </Button>
+      </form>
+    </div>
   );
 }
