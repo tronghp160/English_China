@@ -25,6 +25,9 @@ export type Progress = {
   totalXp: number;
   totalCorrect: number;
   longestStreak: number;
+  /** Current streak in days. */
+  streak: number;
+  reviewedToday: boolean;
   quests: (Quest & { claimed: boolean })[];
   /** Quests that are done and whose reward is still waiting. */
   unclaimed: QuestId[];
@@ -72,6 +75,8 @@ export const getProgress = cache(async (): Promise<Progress> => {
     totalXp,
     totalCorrect,
     longestStreak: longest,
+    streak: streak.current,
+    reviewedToday: (todayRow?.reviews ?? 0) > 0,
     quests,
     unclaimed: quests.filter((q) => q.done && !q.claimed).map((q) => q.id),
     bones: bonesAvailable({ totalCorrect, questsClaimedTotal: prefs.quests_total, treatsFed: prefs.bin_treats_fed }),

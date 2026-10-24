@@ -17,6 +17,7 @@ import { ReminderSettings } from "@/components/settings/reminder-settings";
 import { NewPasswordForm } from "@/components/auth/new-password-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireMe } from "@/lib/auth";
+import { getProgress } from "@/lib/data/progress";
 import { vapidPublicKey } from "@/lib/push";
 import { readPrefs } from "@/lib/validation";
 
@@ -75,6 +76,7 @@ function Section({ id, title, children, danger }: { id: (typeof SECTIONS)[number
 export default async function SettingsPage() {
   const me = await requireMe();
   const prefs = readPrefs(me.settings.prefs);
+  const progress = await getProgress();
 
   return (
     <div>
@@ -111,7 +113,7 @@ export default async function SettingsPage() {
             <StudyPrefs prefs={prefs} />
           </Section>
           <Section id="linh-vat" title="Linh vật">
-            <MascotPrefs prefs={prefs} />
+            <MascotPrefs prefs={prefs} unlockedOutfits={progress.outfits} />
           </Section>
           <Section id="am-thanh" title="Âm thanh & rung">
             <SoundPrefs prefs={prefs} />

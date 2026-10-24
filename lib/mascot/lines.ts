@@ -98,6 +98,23 @@ export const LINES = {
   correct: ["Chuẩn.", "Nhớ tốt đó.", "Giữ nhịp này nhé.", "Tiếp nào."],
   close: ["Xem lại chính tả.", "Chỉ lệch một chút."],
   wrong: ["Từ này sẽ quay lại sớm.", "Xem đáp án rồi đi tiếp.", "Không sao, sẽ gặp lại."],
+
+  // REDESIGN_V3 §5.1: what Bin says to pats, play and game events (no emoji)
+  spin: ["Chóng mặt quá…", "Quay vòng vòng, {name} chóng mặt rồi."],
+  dance: ["Bạn là người bạn tốt nhất của {name}!", "{name} nhảy mừng vì có bạn!"],
+  wake: ["Ơ, {name} ngủ quên mất.", "Hả? {name} dậy rồi đây."],
+  feed: ["Ngon quá, cảm ơn bạn!", "Nom nom. {name} no rồi.", "Xương này ngon lắm."],
+  noBone: ["Học thêm 10 câu đúng để có xương nhé.", "Hết xương rồi. Trả lời đúng thêm là có quà cho {name}."],
+  play: ["Ném đi, {name} bắt được!", "Bắt được rồi! Ném nữa đi."],
+  playMiss: ["Hụt rồi, {name} đi nhặt lại.", "Bóng lăn xa quá, đợi {name} chút."],
+  outfit: ["Đẹp quá!", "{name} thích bộ này.", "Hợp với {name} ghê."],
+  trick: ["Xem {name} nè!", "Ta-đa!", "{name} làm được rồi."],
+  questDone: ["Xong nhiệm vụ rồi, giỏi quá!", "Nhận quà thôi!"],
+  levelUp: ["Lên cấp rồi! {name} tự hào về bạn.", "Cấp mới, trò mới cho {name}."],
+  combo: ["Liên tục luôn!", "Đang nóng đây, giữ nhịp nhé."],
+  praise: ["Chuẩn luôn!", "Giỏi quá!", "Nhớ dai ghê!", "Quá đỉnh!", "Đúng rồi đó!"],
+  wrongComfort: ["Không sao, lần sau nhớ nha", "Sai một lần là nhớ lâu hơn.", "Từ này sẽ quay lại, đừng lo."],
+  idleSession: ["Còn đó không? {name} chờ nè.", "{name} đang chờ bạn đó."],
 } as const;
 
 export type LineKey = keyof typeof LINES;

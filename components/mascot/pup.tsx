@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { useOptionalMe } from "@/components/app-shell/me-provider";
 import type { BinAction, PupMood } from "@/lib/mascot/lines";
 import { cn } from "@/lib/utils";
 import { OutfitHead, OutfitNeck } from "./outfits";
@@ -263,7 +264,7 @@ export function Pup({
   size = 96,
   animated = true,
   action,
-  outfit = "none",
+  outfit: outfitProp,
   look,
   follow = false,
   onActionEnd,
@@ -275,7 +276,7 @@ export function Pup({
   animated?: boolean;
   /** A one-off thing Bin does now (see useBinAction). */
   action?: BinAction | null;
-  /** What Bin wears: an id from OUTFITS in lib/progress.ts ("none" = nothing). */
+  /** What Bin wears: an id from OUTFITS in lib/progress.ts ("none" = nothing). Left out, it is the outfit the person chose (pref `bin_outfit`), so Bin looks the same everywhere. */
   outfit?: string;
   /** Where Bin looks, -1..1 on each axis (e.g. at a form field). Bin follows the mouse instead with `follow`. */
   look?: { x: number; y: number };
@@ -286,6 +287,8 @@ export function Pup({
   className?: string;
 }) {
   const ref = useRef<SVGSVGElement>(null);
+  const me = useOptionalMe();
+  const outfit = outfitProp ?? me?.prefs.bin_outfit ?? "none";
   useBinIdle(ref, { enabled: animated, mood });
   useBinLook(ref, follow && animated);
 

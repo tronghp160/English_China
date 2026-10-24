@@ -6,6 +6,7 @@ import { DeckCard } from "@/components/deck/deck-card";
 import { SampleDecksButton } from "@/components/deck/sample-decks-button";
 import { LangMark } from "@/components/lang-mark";
 import { MascotSay } from "@/components/mascot/mascot-say";
+import { PettablePup } from "@/components/mascot/pettable-pup";
 import { Pup } from "@/components/mascot/pup";
 import { CountUp } from "@/components/fx/count-up";
 import { Heatmap } from "@/components/stats/heatmap";
@@ -170,7 +171,9 @@ export default async function TodayPage() {
                     <span className="text-center text-[0.8125rem] opacity-85 sm:text-sm">khoảng {minutes} phút</span>
                   </div>
                 </div>
-                {prefs.mascot && <Pup mood="cheer" size={96} className="absolute right-5 -bottom-1.5 hidden lg:block" />}
+                {prefs.mascot && (
+                  <PettablePup mood="cheer" name={prefs.mascot_name} size={96} bubble bubbleClassName="right-0 bottom-full mr-0 mb-1" sleepAfterMs={30_000} className="absolute right-5 -bottom-1.5 hidden lg:block" />
+                )}
               </section>
             ) : (
               <section
@@ -197,7 +200,9 @@ export default async function TodayPage() {
                     Học từ mới
                   </Link>
                 </div>
-                {prefs.mascot && <Pup mood="cheer" size={96} className="absolute right-5 -bottom-1.5 hidden sm:block" />}
+                {prefs.mascot && (
+                  <PettablePup mood="cheer" name={prefs.mascot_name} size={96} bubble bubbleClassName="right-0 bottom-full mr-0 mb-1" sleepAfterMs={30_000} className="absolute right-5 -bottom-1.5 hidden sm:block" />
+                )}
               </section>
             )}
 

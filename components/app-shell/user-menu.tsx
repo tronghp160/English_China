@@ -1,8 +1,10 @@
 "use client";
 
-import { LogOut, MessageSquareHeart, Palette, Settings, User } from "lucide-react";
+import { Bone, LogOut, MessageSquareHeart, Palette, Settings, User } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useOptionalMe } from "@/components/app-shell/me-provider";
+import { useBinHome } from "@/components/mascot/bin-home-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -69,6 +71,8 @@ export function UserMenu({
 }) {
   // The menu content only renders once it is opened, so reading the saved preference here never reaches the server render.
   const [theme, setTheme] = useState<ThemePreference>(readThemePreference);
+  const me = useOptionalMe();
+  const binHome = useBinHome();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -96,6 +100,11 @@ export function UserMenu({
             <Settings aria-hidden /> Cài đặt
           </Link>
         </DropdownMenuItem>
+        {me?.prefs.mascot && binHome && (
+          <DropdownMenuItem onSelect={binHome.open}>
+            <Bone aria-hidden /> Góc của {me.prefs.mascot_name}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <Palette aria-hidden /> Giao diện

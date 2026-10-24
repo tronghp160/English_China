@@ -1,3 +1,5 @@
+import type { PupMood } from "@/lib/mascot/lines";
+
 /**
  * Levels, quests, bones and unlocks of the game layer (REDESIGN_V3 §3.5). Pure: the numbers come from
  * `daily_stats` and the prefs (lib/data/progress.ts); nothing here touches the database.
@@ -145,4 +147,43 @@ export const TRICKS: readonly { id: TrickId; name: string; level: number }[] = [
 
 export function unlockedTricks(level: number): TrickId[] {
   return TRICKS.filter((t) => level >= t.level).map((t) => t.id);
+}
+
+// ---- Bin's mood ------------------------------------------------------------
+
+export type BinMoodInput = {
+  /** At least one review today. */
+  reviewedToday: boolean;
+  /** Current streak in days. */
+  streak: number;
+  /** Fed a bone today. */
+  fedToday: boolean;
+  /** Daily quests that are done (0 to 3). */
+  questsDone: number;
+};
+
+/** 0 to 5: 2 for studying today, 1 each for a streak of 3+, a bone today and two quests done. */
+export function binMoodScore(i: BinMoodInput): number {
+  return (i.reviewedToday ? 2 : 0) + (i.streak >= 3 ? 1 : 0) + (i.fedToday ? 1 : 0) + (i.questsDone >= 2 ? 1 : 0);
+}
+
+/** The face for a score: sad (0-1), sleepy at night or thinking (2), happy (3), cheering (4-5). */
+export function binMoodFor(score: number, night: boolean): PupMood {
+  if (score <= 1) return "sad";
+  if (score === 2) return night ? "sleepy" : "think";
+  if (score === 3) return "happy";
+  return "cheer";
+}
+
+export const BIN_MOOD_LABEL: Partial<Record<PupMood, string>> = {
+  sad: "Buồn",
+  sleepy: "Buồn ngủ",
+  think: "Đang nghĩ",
+  happy: "Ổn",
+  cheer: "Vui vẻ",
+};
+
+/** After 19:00 the corner shows the night (and a sleepy Bin when the day was so-so). */
+export function isNight(hour: number): boolean {
+  return hour >= 19 || hour < 5;
 }

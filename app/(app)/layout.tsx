@@ -4,6 +4,7 @@ import { BottomNav, SideNav } from "@/components/app-shell/app-nav";
 import { UserMenu } from "@/components/app-shell/user-menu";
 import { Logo } from "@/components/brand/logo";
 import { MeProvider } from "@/components/app-shell/me-provider";
+import { BinHomeProvider } from "@/components/mascot/bin-home-provider";
 import { QuickSearch } from "@/components/app-shell/quick-search";
 import { ThemeSwitch } from "@/components/app-shell/theme-switch";
 import { TopBar } from "@/components/app-shell/top-bar";
@@ -29,6 +30,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         dueCount,
       }}
     >
+      <BinHomeProvider>
       <SideNav />
       <div className={`${cjkFontVariables} relative flex min-h-dvh flex-1 flex-col lg:pl-62`}>
         <TopBar>
@@ -49,6 +51,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-4 pb-32 lg:px-8 lg:pb-12">{children}</main>
       </div>
       <BottomNav />
+      </BinHomeProvider>
     </MeProvider>
   );
 }

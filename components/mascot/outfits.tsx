@@ -131,6 +131,8 @@ export function OutfitIcon({ outfit, size = 40 }: { outfit: OutfitId | string; s
       strokeLinecap="round"
       strokeLinejoin="round"
       className="shrink-0 overflow-visible"
+      // On a tile (not on the fur) the dark parts follow the text color, so the glasses show in dark mode too
+      style={{ "--pup-feature": "var(--fg)", "--pup-ink": "var(--fg)" } as React.CSSProperties}
     >
       {outfit === "none" ? <path d="M30 30L90 90M90 30L30 90" strokeWidth={8} stroke="var(--fg-subtle)" /> : null}
       <OutfitHead outfit={outfit} />

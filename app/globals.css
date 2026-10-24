@@ -143,6 +143,15 @@
   --pup-blush: color-mix(in oklab, var(--c-pink) 55%, transparent);
   --pup-collar: var(--primary);
   --pup-tag: var(--c-sun);
+  /* Bin's corner (components/mascot/bin-home.tsx) */
+  --scene-wall: var(--c-blue-soft);
+  --scene-floor: #f6e7d6;
+  --scene-rug: #c7d4ff;
+  --scene-window: #bfe9f5;
+  --scene-window-night: #1d2a55;
+  --scene-frame: #c98b5a;
+  --scene-bowl: #ff5c4d;
+  --scene-bowl-rim: #c7311f;
 
   /* Pinyin tone colors, AA on white */
   --tone-1: #d92d20;
@@ -261,6 +270,14 @@
   --pup-fur: #f3efe8;
   --pup-ear: #b97a4c;
   --pup-muzzle: #e9d8c3;
+  --scene-wall: color-mix(in oklab, var(--primary) 14%, var(--surface));
+  --scene-floor: #3a2f28;
+  --scene-rug: #2b3a78;
+  --scene-window: #3b6f86;
+  --scene-window-night: #0f1735;
+  --scene-frame: #b97a4c;
+  --scene-bowl: #ff7a6b;
+  --scene-bowl-rim: #c7311f;
 
   --tone-1: #ff7070;
   --tone-2: #ffab4a;
@@ -302,6 +319,14 @@
   --color-c-sun-soft: var(--c-sun-soft);
   --color-c-sun-fg: var(--c-sun-fg);
   --color-c-sun-on: var(--c-sun-on);
+  --color-scene-wall: var(--scene-wall);
+  --color-scene-floor: var(--scene-floor);
+  --color-scene-rug: var(--scene-rug);
+  --color-scene-window: var(--scene-window);
+  --color-scene-window-night: var(--scene-window-night);
+  --color-scene-frame: var(--scene-frame);
+  --color-scene-bowl: var(--scene-bowl);
+  --color-scene-bowl-rim: var(--scene-bowl-rim);
   --color-c-grape: var(--c-grape);
   --color-c-grape-soft: var(--c-grape-soft);
   --color-c-grape-fg: var(--c-grape-fg);
@@ -1355,6 +1380,11 @@
     opacity: 0;
     transform: translate(2px, -3px) scale(1);
   }
+}
+
+/* A pointer over a pettable Bin makes the tail go faster */
+.bin-pet:hover .pup-tail {
+  animation-duration: 340ms;
 }
 
 /* Stand-in for prefers-reduced-motion in the dev lab */

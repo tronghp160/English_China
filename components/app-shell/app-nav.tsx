@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  Bone,
   BookOpen,
   Compass,
   House,
@@ -17,6 +18,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMe } from "@/components/app-shell/me-provider";
 import { Logo } from "@/components/brand/logo";
+import { useBinHome } from "@/components/mascot/bin-home-provider";
 import { PettablePup } from "@/components/mascot/pettable-pup";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -87,6 +89,7 @@ export function BottomNav() {
 export function SideNav() {
   const pathname = usePathname();
   const { prefs, dueCount } = useMe();
+  const binHome = useBinHome();
   const item = ({ href, label, icon: Icon }: NavItem) => {
     const active = isActive(pathname, href);
     return (
@@ -145,6 +148,16 @@ export function SideNav() {
             )}
           </Link>
         </Button>
+        {prefs.mascot && binHome && (
+          <button
+            type="button"
+            onClick={binHome.open}
+            className="-mt-1 inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md text-sm font-semibold text-primary-fg hover:bg-surface/60"
+          >
+            <Bone className="size-4" aria-hidden />
+            Góc của {prefs.mascot_name}
+          </button>
+        )}
       </div>
     </aside>
   );
