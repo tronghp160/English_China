@@ -65,6 +65,7 @@ export const getStudySummary = cache(async () => {
     streak,
     goal: me.settings.daily_goal,
     reviewedToday: todayStats?.reviews ?? 0,
+    correctToday: todayStats?.correct ?? 0,
     xpToday: todayStats?.xp ?? 0,
     totalCards: langs.reduce((n, l) => n + l.total, 0),
   };

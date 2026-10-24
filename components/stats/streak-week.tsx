@@ -15,12 +15,14 @@ export function StreakWeek({
   streak,
   today,
   activeDays,
+  bare,
   className,
 }: {
   streak: Streak;
   today: string;
   /** Study days that have at least one review */
   activeDays: string[];
+  bare?: boolean;
   className?: string;
 }) {
   const active = new Set(activeDays);
@@ -34,7 +36,7 @@ export function StreakWeek({
   return (
     <section
       aria-labelledby="streak-title"
-      className={cn("flex flex-col gap-3.5 rounded-lg bg-streak-soft p-5 text-streak-fg", className)}
+      className={cn("flex flex-col gap-3.5 text-streak-fg", !bare && "rounded-lg bg-streak-soft p-5", className)}
     >
       <div className="flex items-center gap-2.5">
         <IconTile

@@ -29,11 +29,13 @@ export function Heatmap({
   today,
   weeks = 12,
   restDays = [],
+  fluid,
 }: {
   days: HeatDay[];
   today: string;
   weeks?: number;
   restDays?: string[];
+  fluid?: boolean;
 }) {
   const counts = new Map(days.map((d) => [d.day, d.reviews]));
   const rest = new Set(restDays);
@@ -51,7 +53,7 @@ export function Heatmap({
   };
 
   return (
-    <figure className="m-0 flex flex-col gap-2" style={{ maxWidth: weeks * 30 + 32 }}>
+    <figure className={cn("m-0 flex flex-col gap-2", fluid && "w-full")} style={fluid ? undefined : { maxWidth: weeks * 30 + 32 }}>
       <div className="flex gap-1.5">
         <div
           className="grid grid-rows-7 gap-[3px] pr-0.5 text-[0.8125rem] leading-none text-fg-muted"
