@@ -588,7 +588,7 @@ export function LearnSession({
                   </Button>
                 </div>
               )}
-              {!outcome && <TypingHint key={q.id} word={q.word} />}
+              {!outcome && <TypingHint key={`hint:${q.id}`} word={q.word} />}
               {outcome && typingResult !== "correct" && <TypingDiff typed={typed} word={q.word} />}
             </form>
           </>
