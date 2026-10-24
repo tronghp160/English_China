@@ -3,7 +3,10 @@
 import { Moon, Sun } from "lucide-react";
 import { applyThemePreference } from "@/lib/theme";
 
-/** Header button that flips light/dark. Icons switch by CSS, so the server render matches. */
+/**
+ * Header button that flips light/dark. The icon is chosen by CSS (`dark:`), so the server render matches;
+ * the one that appears turns in over 200ms (a response to the tap).
+ */
 export function ThemeSwitch() {
   return (
     <button
@@ -13,10 +16,10 @@ export function ThemeSwitch() {
       onClick={() =>
         applyThemePreference(document.documentElement.classList.contains("dark") ? "light" : "dark")
       }
-      className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-btn border border-rule bg-surface text-ink-soft transition-colors hover:bg-muted hover:text-ink"
+      className="inline-flex size-11 items-center justify-center rounded-btn text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
     >
-      <Moon className="size-5 dark:hidden" aria-hidden />
-      <Sun className="hidden size-5 text-sun dark:block" aria-hidden />
+      <Moon className="animate-in fade-in-0 spin-in-[-30deg] size-[1.125rem] duration-200 dark:hidden" strokeWidth={1.75} aria-hidden />
+      <Sun className="animate-in fade-in-0 spin-in-[30deg] hidden size-[1.125rem] duration-200 dark:block" strokeWidth={1.75} aria-hidden />
     </button>
   );
 }

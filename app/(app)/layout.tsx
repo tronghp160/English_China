@@ -6,6 +6,7 @@ import { Logo } from "@/components/brand/logo";
 import { MeProvider } from "@/components/app-shell/me-provider";
 import { QuickSearch } from "@/components/app-shell/quick-search";
 import { ThemeSwitch } from "@/components/app-shell/theme-switch";
+import { TopBar } from "@/components/app-shell/top-bar";
 import { requireMe } from "@/lib/auth";
 import { cjkFontVariables } from "@/lib/fonts";
 import { readPrefs } from "@/lib/validation";
@@ -25,23 +26,22 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       }}
     >
       <SideNav />
-      <div className={`${cjkFontVariables} flex min-h-dvh flex-1 flex-col lg:pl-60`}>
-        <header className="sticky top-0 z-30 border-b border-rule bg-paper/90 backdrop-blur">
-          <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 lg:px-10">
-            <Link href="/today" className="rounded-btn lg:invisible" aria-label="Sổ Từ — Hôm nay">
+      <div className={`${cjkFontVariables} relative flex min-h-dvh flex-1 flex-col lg:pl-58`}>
+        <TopBar>
+          <div className="mx-auto flex h-14 max-w-6xl items-center gap-1 px-4 lg:px-10">
+            {/* The logo lives in the sidebar on desktop; the search field takes the left edge there */}
+            <Link href="/today" className="mr-auto rounded-btn lg:hidden" aria-label="Sổ Từ — Hôm nay">
               <Logo />
             </Link>
-            <div className="flex items-center gap-2">
-              <QuickSearch />
-              <ThemeSwitch />
-              <UserMenu
-                displayName={me.profile.display_name}
-                username={me.profile.username}
-                avatarUrl={me.profile.avatar_url}
-              />
-            </div>
+            <QuickSearch />
+            <ThemeSwitch />
+            <UserMenu
+              displayName={me.profile.display_name}
+              username={me.profile.username}
+              avatarUrl={me.profile.avatar_url}
+            />
           </div>
-        </header>
+        </TopBar>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-5 pb-28 lg:px-10 lg:pb-12">{children}</main>
       </div>
       <BottomNav />

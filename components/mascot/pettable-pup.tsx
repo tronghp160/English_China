@@ -3,9 +3,38 @@
 import { useEffect, useRef, useState } from "react";
 import type { PupMood } from "@/lib/mascot/lines";
 import { cn } from "@/lib/utils";
-import { BOUNCY, Pup } from "./pup";
+import { Pup } from "./pup";
 
-/** The puppy as a button: a tap shows hearts and a hop for a moment, then it goes back to `mood`. */
+/** Three outline hearts that float up once, as the answer to a pat. */
+function Hearts() {
+  return (
+    <svg
+      viewBox="0 0 60 40"
+      aria-hidden
+      className="pointer-events-none absolute -top-5 left-1/2 w-2/3 -translate-x-1/2 overflow-visible"
+      fill="none"
+      stroke="var(--pup-ink)"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {[
+        { x: 12, delay: 0 },
+        { x: 30, delay: 0.12 },
+        { x: 48, delay: 0.24 },
+      ].map((h) => (
+        <path
+          key={h.x}
+          className="pup-rise"
+          style={{ animationDelay: `${h.delay}s` }}
+          d={`M${h.x} 30c-8-5-9-12-4-14c3-1 4 1 4 2c0-1 1-3 4-2c5 2 4 9-4 14z`}
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** The puppy as a button: a tap shows hearts rising once and the "love" face for a moment, then it goes back to `mood`. */
 export function PettablePup({
   mood,
   name,
@@ -37,17 +66,10 @@ export function PettablePup({
         clearTimeout(timer.current);
         timer.current = setTimeout(() => setPetting(false), 1800);
       }}
-      className={cn(
-        "shrink-0 cursor-pointer rounded-full transition-transform hover:scale-105 active:scale-95",
-        className,
-      )}
+      className={cn("relative shrink-0 cursor-pointer rounded-full", className)}
     >
-      <Pup
-        key={petting ? `pet-${pets}` : "idle"}
-        mood={petting ? "love" : mood}
-        size={size}
-        className={petting || BOUNCY.includes(mood) ? undefined : "animate-bob"}
-      />
+      <Pup mood={petting ? "love" : mood} size={size} />
+      {petting && <Hearts key={pets} />}
     </button>
   );
 }

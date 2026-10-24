@@ -1,11 +1,14 @@
-/** Candy color per deck (stable from its id), for covers and progress bars. */
+/**
+ * Notebook cover cloth per deck (stable from its id), for covers and progress bars.
+ * `tint` is the matching pale background; `wash` is its old name, kept until callers moved over.
+ */
 const TONES = [
-  { cover: "bg-ink-blue", bar: "bg-ink-blue", wash: "bg-wash-blue" },
-  { cover: "bg-grape", bar: "bg-grape", wash: "bg-wash-grape" },
-  { cover: "bg-sky", bar: "bg-sky", wash: "bg-wash-sky" },
-  { cover: "bg-sun", bar: "bg-sun", wash: "bg-wash-yellow" },
-  { cover: "bg-jade", bar: "bg-jade", wash: "bg-wash-jade" },
-  { cover: "bg-pink", bar: "bg-pink", wash: "bg-wash-pink" },
+  { cover: "bg-cover-indigo", bar: "bg-cover-indigo", tint: "bg-tint-violet", wash: "bg-tint-violet" },
+  { cover: "bg-cover-moss", bar: "bg-cover-moss", tint: "bg-tint-leaf", wash: "bg-tint-leaf" },
+  { cover: "bg-cover-plum", bar: "bg-cover-plum", tint: "bg-tint-seal", wash: "bg-tint-seal" },
+  { cover: "bg-cover-brick", bar: "bg-cover-brick", tint: "bg-tint-seal", wash: "bg-tint-seal" },
+  { cover: "bg-cover-ochre", bar: "bg-cover-ochre", tint: "bg-tint-turmeric", wash: "bg-tint-turmeric" },
+  { cover: "bg-cover-slate", bar: "bg-cover-slate", tint: "bg-surface-sunk", wash: "bg-surface-sunk" },
 ] as const;
 
 export type DeckTone = (typeof TONES)[number];

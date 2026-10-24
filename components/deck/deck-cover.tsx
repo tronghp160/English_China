@@ -1,50 +1,80 @@
-import { LangFlag } from "@/components/lang-flag";
+import { LangMark } from "@/components/lang-mark";
 import { deckTone } from "@/lib/deck-colors";
 import type { LangCode } from "@/lib/lang/types";
 import { cn } from "@/lib/utils";
 
-/** Colored square standing for a deck: "Aa" or 字 on the deck's candy color, flag in the corner. Decorative. */
+export type CoverSize = "sm" | "md" | "lg";
+
+const BOX: Record<CoverSize, string> = {
+  sm: "h-10 w-8",
+  md: "h-[4.5rem] w-14",
+  lg: "h-40 w-[7.5rem]",
+};
+
+/**
+ * A deck as a notebook: cover cloth in the deck's color, a darker spine on the left,
+ * a white name label, the language mark in the corner. Decorative (the name is always beside it).
+ * `small` is the old name of size="sm".
+ */
 export function DeckCover({
   id,
   language,
+  name,
+  size = "md",
   small,
   className,
 }: {
   id: string;
   language: LangCode;
-  /** 40px variant for compact lists */
+  /** Shown on the label; without it the label is just two ruled lines */
+  name?: string;
+  size?: CoverSize;
   small?: boolean;
   className?: string;
 }) {
+  const s = small ? "sm" : size;
   return (
     <span
       aria-hidden
       className={cn(
-        "relative grid shrink-0 place-items-center text-white",
-        small ? "size-10 rounded-xl" : "size-14 rounded-2xl",
+        "cover-radius relative inline-flex shrink-0 overflow-hidden dark:[filter:saturate(0.9)_brightness(0.9)]",
+        BOX[s],
         deckTone(id).cover,
         className,
       )}
     >
-      {!small && (
-        <span className="pointer-events-none absolute inset-x-2 top-1.5 h-2 rounded-full bg-white/25" />
+      <span className={cn("shrink-0 bg-black/15", s === "lg" ? "w-2" : "w-1")} />
+      {s !== "sm" && (
+        <span className={cn("flex min-w-0 flex-1 flex-col justify-between", s === "lg" ? "p-3" : "p-1.5")}>
+          <span
+            className={cn(
+              "block rounded-sm border border-rule bg-white text-ink",
+              s === "lg" ? "px-2 py-2" : "px-1 py-1",
+            )}
+          >
+            {name ? (
+              <span
+                className={cn(
+                  "line-clamp-2 block font-semibold break-words",
+                  s === "lg" ? "text-sm leading-snug" : "text-[0.5625rem] leading-[1.15]",
+                )}
+              >
+                {name}
+              </span>
+            ) : (
+              <span className="block h-2" />
+            )}
+            <span className={cn("mt-1 block border-t border-ink/15", s === "lg" && "mt-2")} />
+            <span className={cn("mt-1 block border-t border-ink/15", s === "lg" && "mt-2")} />
+          </span>
+          <span className="flex justify-end">
+            <LangMark
+              lang={language}
+              className={cn("border-white/40", s === "lg" ? "" : "h-4 min-w-5 px-0.5 text-[0.625rem]")}
+            />
+          </span>
+        </span>
       )}
-      <span
-        className={cn(
-          "leading-none font-black",
-          language === "zh" ? "font-hanzi-sans" : "font-heading",
-          small ? "text-base" : "text-2xl",
-        )}
-      >
-        {language === "zh" ? "字" : "Aa"}
-      </span>
-      <LangFlag
-        lang={language}
-        className={cn(
-          "absolute -right-1 -bottom-1 ring-2 ring-surface",
-          small ? "text-xs" : "text-sm",
-        )}
-      />
     </span>
   );
 }

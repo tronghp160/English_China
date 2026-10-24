@@ -1,199 +1,178 @@
-import type { CSSProperties } from "react";
 import type { PupMood } from "@/lib/mascot/lines";
 import { cn } from "@/lib/utils";
 
+/**
+ * "Bin", the puppy: a doodle in the margin of a notebook (REDESIGN_PLAN §5.8).
+ * One uneven pen line in violet ink, a paper-colored body, pale pencil-shaded ears,
+ * two cheek dots. Only the eyes blink and the tail wags; the extras around the head
+ * (+, hearts, tear, z, ?, !) fade in once when the mood changes and then stay still.
+ * Pure SVG, decorative (the words next to it carry the meaning); colors are the --pup-* tokens.
+ */
 const INK = "var(--pup-ink)";
-const FONT = "var(--font-sans), sans-serif"; // temporary: the drawing is redone in P2 (REDESIGN_PLAN §5.8)
 
-/** Heart centered on (x, y); `s` is about half its width. */
+/** Heart outline centered on (x, y); `s` is about half its width. */
 function heart(x: number, y: number, s: number) {
   return `M${x} ${y + s * 0.9}C${x - s * 1.6} ${y - s * 0.2} ${x - s * 0.7} ${y - s * 1.4} ${x} ${y - s * 0.5}C${x + s * 0.7} ${y - s * 1.4} ${x + s * 1.6} ${y - s * 0.2} ${x} ${y + s * 0.9}Z`;
 }
 
-/** Four-point sparkle centered on (x, y). */
-function sparkle(x: number, y: number, s: number) {
-  const k = s / 4;
-  return `M${x} ${y - s}L${x + k} ${y - k}L${x + s} ${y}L${x + k} ${y + k}L${x} ${y + s}L${x - k} ${y + k}L${x - s} ${y}L${x - k} ${y - k}Z`;
+/** A small "+" drawn with two strokes. */
+function plus(x: number, y: number, s: number) {
+  return `M${x - s} ${y}H${x + s}M${x} ${y - s}V${y + s}`;
 }
 
-const delay = (s: number): CSSProperties => ({ animationDelay: `${s}s` });
-
-function OpenEyes({ r = 5.2, animated }: { r?: number; animated: boolean }) {
-  return (
-    <g className={cn(animated && "pup-blink")}>
-      <circle cx={48} cy={50} r={r} fill={INK} />
-      <circle cx={72} cy={50} r={r} fill={INK} />
-      <circle cx={49.8} cy={48} r={r / 3} fill="white" />
-      <circle cx={73.8} cy={48} r={r / 3} fill="white" />
-    </g>
-  );
+/** A hand-drawn "z". */
+function zed(x: number, y: number, s: number) {
+  return `M${x} ${y}h${s}l${-s} ${s}h${s}`;
 }
 
 function Eyes({ mood, animated }: { mood: PupMood; animated: boolean }) {
-  const stroke = { fill: "none", stroke: INK, strokeWidth: 3.2, strokeLinecap: "round" as const };
+  const dot = (cx: number, r = 4.6) => <circle cx={cx} cy={50} r={r} fill={INK} stroke="none" />;
+  const blink = animated ? "pup-blink" : undefined;
   switch (mood) {
     case "cheer":
       return (
-        <g {...stroke}>
-          <path d="M42 52q6-8 12 0" />
-          <path d="M66 52q6-8 12 0" />
+        <g>
+          <path d="M41 52q6-8 12 0" />
+          <path d="M67 52q6-8 12 0" />
         </g>
       );
     case "sleepy":
       return (
-        <g {...stroke}>
-          <path d="M42 50q6 5 12 0" />
-          <path d="M66 50q6 5 12 0" />
+        <g>
+          <path d="M41 50q6 5 12 0" />
+          <path d="M67 50q6 5 12 0" />
         </g>
       );
     case "love":
       return (
-        <g fill="var(--margin-red)" className={cn(animated && "pup-pulse")}>
-          <path d={heart(48, 50, 6)} />
-          <path d={heart(72, 50, 6)} />
+        <g fill="var(--seal)" stroke="var(--seal)" strokeWidth={1.2}>
+          <path d={heart(47, 50, 6)} />
+          <path d={heart(73, 50, 6)} />
         </g>
       );
     case "surprised":
       return (
         <g>
-          <OpenEyes r={6.4} animated={false} />
-          <g fill="none" stroke={INK} strokeWidth={2.4} strokeLinecap="round">
-            <path d="M42 39q6-4 12 0" />
-            <path d="M66 39q6-4 12 0" />
-          </g>
+          {dot(47, 6)}
+          {dot(73, 6)}
+          <path d="M41 39q6-4 12 0" />
+          <path d="M67 39q6-4 12 0" />
         </g>
       );
     case "wink":
       return (
         <g>
-          <circle cx={48} cy={50} r={5.2} fill={INK} />
-          <circle cx={49.8} cy={48} r={1.7} fill="white" />
-          <path d="M66 51q6-7 12 0" {...stroke} />
+          <g className={blink}>{dot(47)}</g>
+          <path d="M67 51q6-7 12 0" />
         </g>
       );
     case "cool":
       return (
-        <g>
-          <path d="M38 45h44" stroke={INK} strokeWidth={2.4} strokeLinecap="round" />
-          <rect x={38} y={44} width={19} height={12} rx={5} fill={INK} />
-          <rect x={63} y={44} width={19} height={12} rx={5} fill={INK} />
-          <path d="M42 48l5 0M67 48l5 0" stroke="white" strokeWidth={1.8} strokeLinecap="round" opacity={0.7} />
+        <g fill={INK}>
+          <path d="M37 46h46" />
+          <rect x={37} y={44} width={20} height={13} rx={5.5} />
+          <rect x={63} y={44} width={20} height={13} rx={5.5} />
         </g>
       );
     case "sad":
       return (
         <g>
-          <OpenEyes r={4.5} animated={animated} />
-          <g fill="none" stroke={INK} strokeWidth={2.4} strokeLinecap="round">
-            <path d="M41 43l10-4" />
-            <path d="M79 43l-10-4" />
+          <g className={blink}>
+            {dot(47, 4.2)}
+            {dot(73, 4.2)}
           </g>
+          <path d="M40 43l10-4" />
+          <path d="M80 43l-10-4" />
         </g>
       );
     default:
-      return <OpenEyes animated={animated} />;
+      return (
+        <g className={blink}>
+          {dot(47)}
+          {dot(73)}
+        </g>
+      );
   }
 }
 
 function Mouth({ mood }: { mood: PupMood }) {
-  const line = { fill: "none", stroke: INK, strokeWidth: 2.4, strokeLinecap: "round" as const };
   switch (mood) {
     case "cheer":
     case "wave":
     case "love":
-      return (
-        <g>
-          <path d="M52 64q8 13 16 0z" fill={INK} />
-          <path d="M55.5 69q4.5 4 9 0q-4.5-3-9 0z" fill="var(--pup-blush)" />
-        </g>
-      );
+      return <path d="M52 66q8 14 16 0z" fill="var(--pup-blush)" />;
     case "surprised":
-      return <ellipse cx={60} cy={68} rx={3.6} ry={4.6} fill={INK} />;
+      return <ellipse cx={60} cy={69} rx={3.4} ry={4.4} fill={INK} stroke="none" />;
     case "wink":
       return (
         <g>
-          <path d="M53 64q3.5 4 7 0q3.5 4 7 0" {...line} />
-          <path d="M61 66.5h6v3.5a3 3 0 0 1-6 0z" fill="var(--pup-blush)" />
+          <path d="M52 66q4 4 8 0q4 4 8 0" />
+          <path d="M60 68.5h5v3.5a2.5 2.5 0 0 1-5 0z" fill="var(--pup-blush)" />
         </g>
       );
     case "cool":
-      return <path d="M54 65q7 4 13-2" {...line} />;
+      return <path d="M54 66q7 4 13-2" />;
     case "sad":
-      return <path d="M54 69q6-5 12 0" {...line} />;
+      return <path d="M54 71q6-5 12 0" />;
     case "sleepy":
-      return <ellipse cx={60} cy={67} rx={2.6} ry={3} fill={INK} />;
+      return <ellipse cx={60} cy={68} rx={2.4} ry={2.8} fill={INK} stroke="none" />;
     case "think":
-      return <path d="M55 67q5 1 10-2" {...line} />;
+      return <path d="M55 67q5 1 10-2" />;
     default:
-      return <path d="M53 64q3.5 4 7 0q3.5 4 7 0" {...line} />;
+      return <path d="M52 66q4 4 8 0q4 4 8 0" />;
   }
 }
 
-/** Floating extras around the puppy: sparkles, hearts, tears, zzz, ? and !. */
-function Extras({ mood, animated }: { mood: PupMood; animated: boolean }) {
+/** The marks around the head; the whole group fades in once (`pup-extra`) because Pup remounts it per mood. */
+function Extras({ mood }: { mood: PupMood }) {
   switch (mood) {
     case "cheer":
     case "cool":
       return (
-        <g fill="var(--sun)">
-          <path d={sparkle(14, 30, 6)} className={cn(animated && "pup-sparkle")} />
-          <path d={sparkle(106, 38, 5)} className={cn(animated && "pup-sparkle")} style={delay(0.5)} />
-          <path d={sparkle(98, 10, 4)} className={cn(animated && "pup-sparkle")} style={delay(0.9)} />
+        <g className="pup-extra">
+          <path d={plus(14, 30, 5)} />
+          <path d={plus(106, 38, 4)} />
+          <path d={plus(98, 10, 3.5)} />
         </g>
       );
     case "love":
       return (
-        <g fill="var(--pink)">
-          <path d={heart(100, 30, 5)} className={cn(animated && "pup-heart")} />
-          <path d={heart(16, 34, 4)} className={cn(animated && "pup-heart")} style={delay(0.7)} />
-          <path d={heart(92, 12, 3.5)} className={cn(animated && "pup-heart")} style={delay(1.2)} />
+        <g className="pup-extra">
+          <path d={heart(100, 30, 5)} />
+          <path d={heart(16, 34, 4)} />
+          <path d={heart(92, 12, 3.5)} />
         </g>
       );
     case "sad":
-      return (
-        <path
-          d="M43 55q-3.5 5.5 0 8q3.5-2.5 0-8z"
-          fill="var(--sky)"
-          className={cn(animated && "pup-tear")}
-        />
-      );
+      return <path className="pup-extra" d="M40 56q-3.5 5.5 0 8q3.5-2.5 0-8z" />;
     case "sleepy":
       return (
-        <g fill={INK} fontFamily={FONT} fontWeight={900}>
-          <text x={92} y={24} fontSize={16} opacity={0.55} className={cn(animated && "pup-z")}>
-            z
-          </text>
-          <text x={104} y={12} fontSize={11} opacity={0.55} className={cn(animated && "pup-z")} style={delay(1.2)}>
-            z
-          </text>
+        <g className="pup-extra">
+          <path d={zed(92, 14, 9)} />
+          <path d={zed(106, 4, 6)} />
         </g>
       );
     case "think":
       return (
-        <text x={94} y={24} fontSize={20} fontWeight={900} fill="var(--brand)" fontFamily={FONT} className={cn(animated && "pup-float")}>
-          ?
-        </text>
+        <g className="pup-extra">
+          <path d="M94 18c0-10 16-10 16-1c0 6-8 7-8 13" />
+          <circle cx={102} cy={37} r={1.8} fill={INK} stroke="none" />
+        </g>
       );
     case "surprised":
       return (
-        <text x={96} y={24} fontSize={22} fontWeight={900} fill="var(--margin-red)" fontFamily={FONT} className={cn(animated && "pup-float")}>
-          !
-        </text>
+        <g className="pup-extra">
+          <path d="M100 4v18" />
+          <circle cx={100} cy={30} r={1.9} fill={INK} stroke="none" />
+        </g>
       );
     default:
       return null;
   }
 }
 
-/** Moods that hop (animate-hop), so callers don't add the idle bob on top. */
-export const BOUNCY: PupMood[] = ["cheer", "love", "surprised"];
 const WAGGY: PupMood[] = ["cheer", "love", "wink", "cool", "wave"];
 
-/**
- * The puppy mascot ("Bin" by default): a pure SVG, decorative only (the speech
- * bubble carries the meaning). Colors are the --pup-* tokens in globals.css;
- * every animation class is switched off under prefers-reduced-motion.
- */
 export function Pup({
   mood = "happy",
   size = 96,
@@ -207,66 +186,49 @@ export function Pup({
 }) {
   // Ears hang lower when sad or sleepy and perk up when excited.
   const ear =
-    mood === "cheer" || mood === "surprised" || mood === "love"
-      ? -14
-      : mood === "sad" || mood === "sleepy"
-        ? 12
-        : 0;
-  const twitch = animated && mood !== "sleepy" && mood !== "sad";
-  const tail = !animated || mood === "sleepy" || mood === "sad" ? undefined : WAGGY.includes(mood) ? "pup-tail pup-tail-fast" : "pup-tail";
+    mood === "cheer" || mood === "surprised" || mood === "love" ? -12 : mood === "sad" || mood === "sleepy" ? 10 : 0;
+  // Small sizes need a heavier line to stay readable.
+  const sw = Math.max(2.25, 150 / size);
+  const tail =
+    !animated || mood === "sleepy" || mood === "sad" ? undefined : WAGGY.includes(mood) ? "pup-tail pup-tail-fast" : "pup-tail";
   return (
     <svg
       viewBox="0 0 120 120"
       width={size}
       height={size}
       aria-hidden
-      className={cn("shrink-0 overflow-visible", animated && BOUNCY.includes(mood) && "animate-hop", className)}
+      className={cn("shrink-0 overflow-visible", className)}
+      fill="none"
+      stroke={INK}
+      strokeWidth={sw}
+      strokeLinecap="round"
+      strokeLinejoin="round"
     >
-      {/* Tail */}
-      <path d="M84 94q18-2 16-22" fill="none" stroke="var(--pup-ear)" strokeWidth={8} strokeLinecap="round" className={tail} />
-      {/* Body and paws */}
-      <g className={cn(animated && "pup-breathe")}>
-        <ellipse cx={60} cy={96} rx={29} ry={20} fill="var(--pup-fur)" />
-      </g>
-      <ellipse cx={47} cy={113} rx={9} ry={5.5} fill="var(--pup-fur)" stroke="var(--pup-muzzle)" strokeWidth={1.5} />
-      {mood === "wave" ? (
-        <ellipse
-          cx={98}
-          cy={70}
-          rx={7}
-          ry={9}
-          fill="var(--pup-fur)"
-          stroke="var(--pup-muzzle)"
-          strokeWidth={1.5}
-          className={cn(animated && "pup-paw")}
-        />
-      ) : (
-        <ellipse cx={73} cy={113} rx={9} ry={5.5} fill="var(--pup-fur)" stroke="var(--pup-muzzle)" strokeWidth={1.5} />
-      )}
-      {/* Scarf */}
-      <path d="M35 76q25 13 50 0l-1 9q-24 11-48 0z" fill="var(--brand)" />
-      <path d="M70 82l6 14l6-3l-4-12z" fill="var(--brand)" />
+      {/* Tail: a single curved stroke */}
+      <path d="M82 100C97 98 102 86 95 76" className={tail} />
+      {/* Body, paws, collar */}
+      <path d="M40 84C32 96 33 111 47 113h26c14-2 15-17 7-29" fill="var(--pup-fur)" />
+      <path d="M47 113c0-6 8-6 8 0M65 113c0-6 8-6 8 0" />
+      {mood === "wave" && <path d="M89 80C89 69 99 64 102 72c3 8-3 16-10 16" fill="var(--pup-fur)" />}
+      <path d="M42 81q18 9 36 0" />
+      <circle cx={60} cy={90} r={2.6} fill="var(--pup-fur)" />
 
       <g transform={mood === "think" ? "rotate(-9 60 56)" : mood === "wink" ? "rotate(5 60 56)" : undefined}>
-        {/* Ears: the outer group twitches (CSS), the path keeps the mood angle (SVG attribute). */}
-        <g className={cn(twitch && "pup-ear-l")}>
-          <path d="M33 30q-17 3-15 28q2 12 11 9q6-15 9-33z" fill="var(--pup-ear)" transform={`rotate(${ear} 34 32)`} />
-        </g>
-        <g className={cn(twitch && "pup-ear-r")}>
-          <path d="M87 30q17 3 15 28q-2 12-11 9q-6-15-9-33z" fill="var(--pup-ear)" transform={`rotate(${-ear} 86 32)`} />
-        </g>
+        {/* Ears sit behind the head and are shaded like pencil */}
+        <path d="M36 28C22 25 13 41 17 60c6 7 17 1 21-15z" fill="var(--pup-ear)" transform={`rotate(${ear} 34 32)`} />
+        <path d="M84 28c14-3 23 13 19 32-6 7-17 1-21-15z" fill="var(--pup-ear)" transform={`rotate(${-ear} 86 32)`} />
         {/* Head */}
-        <ellipse cx={60} cy={52} rx={32} ry={28} fill="var(--pup-fur)" />
-        <ellipse cx={73} cy={48} rx={10} ry={9.5} fill="var(--pup-ear)" opacity={0.45} />
-        <ellipse cx={60} cy={64} rx={14} ry={10} fill="var(--pup-muzzle)" />
-        <ellipse cx={39} cy={62} rx={5.5} ry={3.2} fill="var(--pup-blush)" opacity={mood === "love" ? 0.95 : 0.6} />
-        <ellipse cx={81} cy={62} rx={5.5} ry={3.2} fill="var(--pup-blush)" opacity={mood === "love" ? 0.95 : 0.6} />
+        <path d="M29 50C27 31 42 22 60 22c19 0 33 10 31 31-1 19-15 28-31 28-17 0-30-9-31-31z" fill="var(--pup-fur)" />
+        <circle cx={38} cy={62} r={3.6} fill="var(--pup-blush)" stroke="none" />
+        <circle cx={82} cy={62} r={3.6} fill="var(--pup-blush)" stroke="none" />
         <Eyes mood={mood} animated={animated} />
-        <ellipse cx={60} cy={59} rx={5.5} ry={3.8} fill={INK} />
+        {/* Nose: a rounded triangle */}
+        <path d="M54.5 58c0-2.5 11-2.5 11 0c0 3.5-4 5.5-5.5 5.5S54.5 61.5 54.5 58z" fill={INK} stroke="none" />
+        <path d="M60 63.5V66" />
         <Mouth mood={mood} />
       </g>
 
-      <Extras mood={mood} animated={animated} />
+      <Extras key={mood} mood={mood} />
     </svg>
   );
 }

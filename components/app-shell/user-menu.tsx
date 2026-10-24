@@ -41,7 +41,7 @@ export function UserAvatar({
           and not text that would clash with the trigger aria-label (WCAG 2.5.3). */}
       <AvatarFallback
         data-initials={initials(name)}
-        className="bg-wash-blue text-sm font-medium text-ink-blue after:content-[attr(data-initials)]"
+        className="bg-tint-violet text-sm font-semibold text-ink-violet after:content-[attr(data-initials)]"
       />
     </Avatar>
   );
@@ -62,9 +62,9 @@ export function UserMenu({
         className="grid size-11 place-items-center rounded-full"
         aria-label="Tài khoản và cài đặt"
       >
-        <UserAvatar name={displayName} url={avatarUrl} className="size-9" />
+        <UserAvatar name={displayName} url={avatarUrl} className="size-8" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 rounded-xl">
+      <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuLabel className="font-normal">
           <span className="block font-medium text-ink">{displayName}</span>
           <span className="block text-sm text-ink-soft">@{username}</span>

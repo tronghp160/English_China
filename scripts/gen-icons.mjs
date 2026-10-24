@@ -1,11 +1,9 @@
-// Renders the app icon (violet tile, white "S" over a yellow highlighter stroke) to PNG/ICO.
-// Usage: node scripts/gen-icons.mjs   (needs network for the Nunito webfont)
+// Renders the app icon (flat ink-violet tile, a thin 田字格 cell with a serif "S") to PNG/ICO.
+// Same art as components/brand/logo.tsx. Usage: node scripts/gen-icons.mjs   (needs network for the Literata webfont)
 import fs from "node:fs";
 import { chromium } from "@playwright/test";
 
-const VIOLET_FROM = "#6A4CF5";
-const VIOLET_TO = "#4B3EE0";
-const HIGHLIGHT = "#FFD43B";
+const INK_VIOLET = "#3B2E8C";
 
 /** @param {number} size @param {{ maskable?: boolean, rounded?: boolean }} o */
 function svg(size, { maskable = false, rounded = true } = {}) {
@@ -14,19 +12,18 @@ function svg(size, { maskable = false, rounded = true } = {}) {
   const pad = (size * (1 - k)) / 2;
   const s = (v) => pad + v * size * k;
   const radius = rounded && !maskable ? size * 0.22 : 0;
+  const cell = size * k * 0.6;
+  const x0 = s(0.2);
+  const fontSize = size * k * 0.46;
+  const sw = Math.max(1, size * 0.014);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <defs>
-    <clipPath id="c"><rect width="${size}" height="${size}" rx="${radius}"/></clipPath>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="${VIOLET_FROM}"/><stop offset="1" stop-color="${VIOLET_TO}"/>
-    </linearGradient>
-  </defs>
+  <defs><clipPath id="c"><rect width="${size}" height="${size}" rx="${radius}"/></clipPath></defs>
   <g clip-path="url(#c)">
-    <rect width="${size}" height="${size}" fill="url(#g)"/>
-    <rect x="${s(0.22)}" y="${s(0.58)}" width="${size * k * 0.56}" height="${size * k * 0.15}" rx="${size * k * 0.05}"
-      fill="${HIGHLIGHT}" transform="rotate(-5 ${size / 2} ${size / 2})"/>
-    <text x="${s(0.5)}" y="${s(0.74)}" text-anchor="middle" font-family="Nunito" font-weight="900"
-      font-size="${size * k * 0.7}" fill="#ffffff">S</text>
+    <rect width="${size}" height="${size}" fill="${INK_VIOLET}"/>
+    <rect x="${x0}" y="${x0}" width="${cell}" height="${cell}" rx="${size * 0.012}" fill="none" stroke="#fff" stroke-opacity="0.7" stroke-width="${sw}"/>
+    <path d="M${s(0.5)} ${x0}V${x0 + cell}M${x0} ${s(0.5)}H${x0 + cell}" stroke="#fff" stroke-opacity="0.35" stroke-width="${sw * 0.8}" stroke-dasharray="${sw * 3} ${sw * 3}"/>
+    <text x="${s(0.5)}" y="${s(0.5) + fontSize * 0.35}" text-anchor="middle" font-family="Literata" font-weight="600"
+      font-size="${fontSize}" fill="#ffffff">S</text>
   </g>
 </svg>`;
 }
@@ -46,7 +43,7 @@ const page = await browser.newPage();
 for (const t of targets) {
   await page.setViewportSize({ width: t.size, height: t.size });
   await page.setContent(
-    `<html><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@900&display=block">
+    `<html><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,600&display=block">
     <style>html,body{margin:0;background:transparent}</style></head><body>${svg(t.size, t)}</body></html>`,
     { waitUntil: "networkidle" },
   );

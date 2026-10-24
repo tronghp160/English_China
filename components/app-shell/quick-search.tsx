@@ -15,7 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { LangFlag } from "@/components/lang-flag";
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { quickSearch, type QuickSearchResult } from "@/lib/actions/search";
@@ -41,11 +41,18 @@ function fold(s: string) {
 }
 
 const EMPTY: QuickSearchResult = { words: [], decks: [] };
+const subscribeNever = () => () => {};
 
 /** Header search button + Ctrl/⌘+K palette over the user's words, decks and pages. */
 export function QuickSearch() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  // "Ctrl K" on the server and during hydration; "⌘K" on Apple devices afterwards.
+  const shortcut = useSyncExternalStore(
+    subscribeNever,
+    () => (/mac|iphone|ipad/i.test(navigator.platform) ? "⌘K" : "Ctrl K"),
+    () => "Ctrl K",
+  );
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<{ q: string; data: QuickSearchResult }>({ q: "", data: EMPTY });
   const q = query.trim();
@@ -88,11 +95,11 @@ export function QuickSearch() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Tìm từ, bộ từ (Ctrl+K)"
-        className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-btn border border-rule bg-surface px-3 text-sm text-ink-soft transition-colors hover:bg-muted lg:min-w-56 lg:justify-start"
+        className="inline-flex size-11 items-center justify-center gap-2 rounded-btn text-sm text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink lg:mr-auto lg:h-11 lg:w-70 lg:justify-start lg:border lg:border-rule-strong lg:bg-surface lg:px-3"
       >
-        <Search className="size-5 shrink-0" aria-hidden />
-        <span className="hidden lg:inline">Tìm từ, bộ từ…</span>
-        <kbd className="ml-auto hidden rounded border border-rule px-1.5 font-sans text-xs lg:inline">Ctrl K</kbd>
+        <Search className="size-[1.125rem] shrink-0" strokeWidth={1.75} aria-hidden />
+        <span className="hidden lg:inline">Tìm từ trong sổ</span>
+        <kbd className="ml-auto hidden rounded-sm border border-rule px-1.5 font-sans text-xs lg:inline">{shortcut}</kbd>
       </button>
       <CommandDialog
         open={open}

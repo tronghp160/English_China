@@ -27,46 +27,30 @@ export const PUP_MOODS: PupMood[] = [
 
 export const LINES = {
   dueMany: [
-    "Ôi, {n} từ lận! Mình chia nhỏ ra làm từ từ nha 😮",
-    "Wow {n} từ! Làm 10 từ trước rồi nghỉ xíu cũng được nè.",
+    "{n} từ hơi nhiều. Làm 20 từ trước rồi tính tiếp.",
+    "{n} từ đang chờ. Chia nhỏ ra, mỗi lượt 10 từ cũng được.",
   ],
-  pet: [
-    "Hihi, nhột quá! 🐾",
-    "Gâu! Thương bạn nhiều 💜",
-    "Xoa đầu nữa đi mà~",
-    "{name} vui lắm luôn!",
-    "Gâu gâu! Học tiếp nha!",
-  ],
+  pet: ["Gâu.", "{name} thích được xoa đầu.", "Nhột.", "Cứ xoa tiếp, {name} không đi đâu."],
   empty: [
-    "Gâu! Mình là {name}. Thêm vài từ đầu tiên rồi mình học cùng nhau nha!",
-    "Sổ còn trống trơn nè. Thêm bộ từ mẫu để thử liền nhé! 🐾",
+    "Sổ còn trống. Thêm vài từ đầu tiên, {name} học cùng bạn.",
+    "Chưa có từ nào. Thêm bộ từ mẫu để thử ngay.",
   ],
   due: [
-    "Có {n} từ đang chờ đó. Mình làm cùng nha! 🐾",
-    "Gâu gâu! {n} từ thôi, 10 phút là xong!",
-    "{name} đã sẵn sàng. Ôn {n} từ rồi đi chơi nha!",
-    "Ôn đúng lúc là nhớ lâu gấp đôi. Bắt đầu thôi!",
+    "Có {n} từ đến hạn. Ôn xong là nghỉ.",
+    "{n} từ hôm nay, khoảng mười phút.",
+    "{n} từ đến hạn, làm lần lượt thôi.",
   ],
-  allDone: [
-    "Xong hết bài hôm nay rồi! {name} tự hào về bạn lắm 🦴",
-    "Gâu! Hôm nay giỏi quá trời. Luyện thêm chút không?",
-    "Bài hôm nay sạch bong! Mai gặp lại nha 🐾",
-  ],
+  allDone: ["Hôm nay xong bài rồi. Mai gặp lại.", "Xong bài. Muốn luyện thêm thì vào Luyện tập."],
   streakAtRisk: [
-    "Chuỗi {n} ngày đang chờ đó… Ôn 1 thẻ để giữ lửa nha 🔥",
-    "{name} buồn ngủ quá, ôn cùng mình để giữ chuỗi {n} ngày nhé!",
+    "Chuỗi {n} ngày vẫn còn. Ôn một thẻ là giữ được.",
+    "{name} nhớ chuỗi {n} ngày của bạn. Ôn một thẻ là giữ được.",
   ],
-  correct: [
-    "Đúng rồi! Giỏi quá 🐾",
-    "Chuẩn luôn! Gâu gâu!",
-    "Đúng rồi! Cứ thế phát huy nha!",
-    "Siêu ghê! Đúng rồi đó 🦴",
-  ],
-  close: ["Gần đúng! Sắp chuẩn rồi 👌", "Gần lắm rồi, để ý chút nữa nha!"],
+  correct: ["Đúng rồi.", "Chuẩn.", "Nhớ tốt đó.", "Đúng. Tiếp nào."],
+  close: ["Gần đúng, xem lại chính tả.", "Gần đúng. Chỉ lệch một chút."],
   wrong: [
-    "Chưa đúng, không sao đâu!",
-    "Sai xíu thôi, lần sau nhớ nha!",
-    "Ối, chưa đúng. Mình nhớ lại cùng nhau nhé!",
+    "Chưa đúng. Từ này sẽ quay lại sớm.",
+    "Chưa đúng. Xem đáp án rồi đi tiếp.",
+    "Chưa nhớ. Không sao, sẽ gặp lại.",
   ],
 } as const;
 
@@ -96,10 +80,10 @@ export function answerMood(verdict: "correct" | "close" | "wrong", seed = 0): Pu
   return happy[seed % happy.length];
 }
 
-/** End-of-session mood and line by accuracy (same thresholds as the old emoji cheer). */
+/** End-of-session mood and line by accuracy. */
 export function summaryMood(pct: number): { mood: PupMood; text: string } {
-  if (pct >= 90) return { mood: "cool", text: "Xuất sắc! Trí nhớ siêu đỉnh luôn 🏆" };
-  if (pct >= 70) return { mood: "cheer", text: "Tuyệt vời! Cứ thế phát huy nhé 🎉" };
-  if (pct >= 40) return { mood: "happy", text: "Khá lắm! Ôn thêm chút là thuộc ngay 💪" };
-  return { mood: "sad", text: "Khởi đầu nào cũng khó. Mai ôn lại sẽ nhớ hơn, mình ở đây nè 🌱" };
+  if (pct >= 90) return { mood: "cool", text: "Gần như nhớ hết." };
+  if (pct >= 70) return { mood: "cheer", text: "Nhớ phần lớn." };
+  if (pct >= 40) return { mood: "happy", text: "Một nửa đã vào đầu, ôn lại mai sẽ chắc hơn." };
+  return { mood: "sad", text: "Những từ này sẽ quay lại sớm để bạn ôn tiếp." };
 }

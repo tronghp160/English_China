@@ -75,9 +75,9 @@ export function Heatmap({
                 onPointerEnter={() => setHover(day)}
                 onPointerLeave={() => setHover((h) => (h === day ? null : h))}
                 className={cn(
-                  "aspect-square w-full rounded-[3px]",
+                  "heat-cell aspect-square w-full",
                   future ? "bg-transparent" : `heat-${level(counts.get(day) ?? 0)}`,
-                  rest.has(day) && "outline-1 -outline-offset-1 outline-ink-blue outline-dashed",
+                  rest.has(day) && "heat-rest",
                   day === today && "ring-2 ring-ink ring-offset-1 ring-offset-surface",
                 )}
               />
@@ -92,7 +92,7 @@ export function Heatmap({
         <span className="flex items-center gap-1" aria-hidden>
           Ít
           {[0, 1, 2, 3, 4].map((l) => (
-            <span key={l} className={cn("size-2.5 rounded-[2px]", `heat-${l}`)} />
+            <span key={l} className={cn("heat-cell size-2.5", `heat-${l}`)} />
           ))}
           Nhiều
         </span>

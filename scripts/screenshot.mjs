@@ -2,6 +2,7 @@
 //   node scripts/screenshot.mjs <path> [outPrefix] [--dark]
 //   node scripts/screenshot.mjs --all <outDir> [--dark]
 // Captures the page at phone (390px) and desktop (1280px) widths.
+// SHOT_SELECTOR=css captures only that element (first match) at 2x, e.g. to inspect one component.
 // SHOT_LOGIN=email:password signs in through /login first (the demo account from `pnpm db:seed`).
 // --all walks the main routes (public pages, then the app with SHOT_LOGIN); deck/word ids are read from the pages.
 import { mkdirSync } from "node:fs";
@@ -15,6 +16,7 @@ const dark = flags.includes("--dark");
 const all = flags.includes("--all");
 const cookie = process.env.SHOT_COOKIES; // optional JSON array of cookies
 const login = process.env.SHOT_LOGIN; // "email:password"
+const selector = process.env.SHOT_SELECTOR;
 const SIZES = [
   ["mobile", 390, 844],
   ["desktop", 1280, 860],
@@ -23,7 +25,7 @@ const SIZES = [
 async function newContext(browser, width, height, name) {
   const context = await browser.newContext({
     viewport: { width, height },
-    deviceScaleFactor: name === "mobile" ? 2 : 1,
+    deviceScaleFactor: name === "mobile" || selector ? 2 : 1,
     colorScheme: dark ? "dark" : "light",
     locale: "vi-VN",
   });
@@ -48,7 +50,8 @@ async function shoot(page, path, out, name) {
   await page.goto(base + path, { waitUntil: "networkidle" });
   await page.waitForTimeout(900);
   const file = `${out}-${name}${dark ? "-dark" : ""}.png`;
-  await page.screenshot({ path: file, fullPage: true });
+  if (selector) await page.locator(selector).first().screenshot({ path: file });
+  else await page.screenshot({ path: file, fullPage: true });
   console.log(file);
 }
 
