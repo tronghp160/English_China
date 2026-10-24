@@ -1,9 +1,8 @@
 import Image from "next/image";
-import { POS, isPosCode } from "@/lib/pos";
 import { cn } from "@/lib/utils";
 import type { StudyWord } from "@/lib/practice";
 
-/** Picture for a word: its image, else the emoji on a wash tinted by part of speech (§8.3). */
+/** Picture for a word: its image, else the emoji the owner chose on a pale square. */
 export function WordVisual({
   word,
   size = 112,
@@ -21,19 +20,17 @@ export function WordVisual({
         width={size}
         height={size}
         sizes={`${size}px`}
-        className={cn("shrink-0 rounded-card object-cover", className)}
+        className={cn("shrink-0 rounded-card border border-rule object-cover", className)}
         style={{ width: size, height: size }}
       />
     );
   }
   if (!word.emoji) return null;
-  const pos = word.parts_of_speech.find(isPosCode);
   return (
     <span
       aria-hidden
       className={cn(
-        "grid shrink-0 place-items-center rounded-card",
-        pos ? POS[pos].wash : "bg-muted",
+        "grid shrink-0 place-items-center rounded-card bg-surface-sunk",
         className,
       )}
       style={{ width: size, height: size, fontSize: size * 0.48 }}

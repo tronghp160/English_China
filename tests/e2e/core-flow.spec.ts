@@ -32,7 +32,7 @@ test("đăng ký bằng email + mật khẩu (không cần xác nhận email) v�
   await page.getByRole("switch", { name: "Thêm bộ từ mẫu" }).click(); // start from an empty notebook
   await page.getByRole("button", { name: /Bắt đầu học/ }).click();
   await expect(page).toHaveURL(/\/today/);
-  await expect(page.getByText(/Chào buổi .+, Thử!/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Chào buổi .+, Thử!/ })).toBeVisible();
 });
 
 test("thêm từ bằng AI", async () => {

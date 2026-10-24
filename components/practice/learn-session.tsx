@@ -1,12 +1,19 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { Check } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
 import { EndPup } from "@/components/mascot/end-pup";
-import { Confetti } from "@/components/review/confetti";
+import { Pup } from "@/components/mascot/pup";
+import { SealStamp } from "@/components/review/seal-stamp";
+import { SessionBar } from "@/components/review/session-bar";
 import { WordVisual } from "@/components/review/word-visual";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { InkFigure } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { answerMood } from "@/lib/mascot/lines";
 import { checkTyping, type StudyWord, type TypingResult } from "@/lib/practice";
 import {
   answer,
@@ -35,82 +42,55 @@ import {
 } from "./question-parts";
 
 type Phase = "loading" | "resume" | "question" | "round" | "done";
-type Asked = { q: Question; tag: { label: string; tone: string } };
+type Asked = { q: Question; tag: { label: string; variant: "outline" | "secondary" | "destructive" } };
 
 function tagFor(s: LearnState, wordId: string, q: Question): Asked["tag"] {
-  if (q.kind === "typing") return { label: "Ôn lại — gõ từ", tone: "bg-wash-yellow text-sun-text" };
+  if (q.kind === "typing") return { label: "Ôn lại — gõ từ", variant: "secondary" };
   const missed = (s.words.find((w) => w.wordId === wordId)?.misses ?? 0) > 0;
-  return missed
-    ? { label: "Học lại", tone: "bg-wash-red text-danger" }
-    : { label: "Từ mới", tone: "bg-wash-blue text-ink-blue" };
+  return missed ? { label: "Học lại", variant: "destructive" } : { label: "Từ mới", variant: "outline" };
 }
 
 // Event handlers only; a module helper keeps the React compiler purity rule quiet.
 const clock = () => Date.now();
 
-function LearnBar({ state, exitHref }: { state: LearnState; exitHref: string }) {
+function LearnBar({ state, exitHref, mood }: { state: LearnState; exitHref: string; mood?: Parameters<typeof Pup>[0]["mood"] }) {
   const p = progress(state);
-  const total = state.words.length || 1;
   return (
-    <div className="sticky top-0 z-10 -mx-4 bg-paper/95 px-4 pb-2 backdrop-blur">
-      <div className="flex h-12 items-center gap-3">
-        <Link
-          href={exitHref}
-          aria-label="Thoát"
-          className="-ml-2 grid size-11 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-muted hover:text-ink"
-        >
-          <X className="size-5" aria-hidden />
-        </Link>
-        <div
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={state.words.length}
-          aria-valuenow={p.mastered}
-          aria-label={`Đã thuộc ${p.mastered}/${state.words.length}, đang học ${p.learning}`}
-          className="flex h-4 flex-1 overflow-hidden rounded-full bg-rule"
-        >
-          <div
-            className="h-full bg-jade transition-[width] duration-500"
-            style={{ width: `${(p.mastered / total) * 100}%` }}
-          />
-          <div
-            className="h-full bg-sun transition-[width] duration-500"
-            style={{ width: `${(p.learning / total) * 100}%` }}
-          />
-        </div>
-        <span className="text-sm font-bold whitespace-nowrap text-ink-soft">Vòng {state.round}</span>
-      </div>
-    </div>
+    <SessionBar
+      done={p.mastered}
+      total={state.words.length || 1}
+      exitHref={exitHref}
+      segments={{ mastered: p.mastered, learning: p.learning }}
+      label={`Vòng ${state.round}`}
+      ariaLabel={`Đã thuộc ${p.mastered}/${state.words.length}, đang học ${p.learning}`}
+      pup={mood ? { mood } : undefined}
+    />
   );
 }
 
+/** Three ruled rows: how many words are not started, being learned, mastered. */
 function ProgressRows({ state }: { state: LearnState }) {
   const p = progress(state);
   const total = state.words.length || 1;
   const rows = [
-    { label: "Chưa học", value: p.notStarted, bar: "bg-ink-soft/40" },
-    { label: "Đang học", value: p.learning, bar: "bg-sun" },
-    { label: "Đã thuộc", value: p.mastered, bar: "bg-jade" },
+    { label: "Chưa học", value: p.notStarted, bar: "bg-rule-strong" },
+    { label: "Đang học", value: p.learning, bar: "bg-turmeric" },
+    { label: "Đã thuộc", value: p.mastered, bar: "bg-leaf" },
   ];
   return (
-    <dl className="flex flex-col gap-3">
+    <dl className="border-t border-rule">
       {rows.map((r) => (
-        <div key={r.label} className="grid grid-cols-[6rem_1fr_2.5rem] items-center gap-3">
-          <dt className="text-sm font-semibold text-ink">{r.label}</dt>
-          <div className="h-3 overflow-hidden rounded-full bg-muted" aria-hidden>
+        <div key={r.label} className="grid grid-cols-[6rem_1fr_2.5rem] items-center gap-3 border-b border-rule py-3">
+          <dt className="text-sm font-medium text-ink">{r.label}</dt>
+          <div className="h-1.5 overflow-hidden rounded-full bg-surface-sunk" aria-hidden>
             <div className={cn("h-full rounded-full", r.bar)} style={{ width: `${(r.value / total) * 100}%` }} />
           </div>
-          <dd className="text-right font-bold text-ink tabular-nums">{r.value}</dd>
+          <dd className="text-right font-display text-lg font-semibold text-ink tabular-nums">{r.value}</dd>
         </div>
       ))}
     </dl>
   );
 }
-
-const primaryBtn =
-  "btn-3d inline-flex min-h-14 flex-1 items-center justify-center rounded-btn bg-primary px-4 text-lg font-extrabold text-primary-foreground [--edge-color:var(--ink-blue-shade)]";
-const secondaryBtn =
-  "btn-3d inline-flex min-h-14 flex-1 items-center justify-center rounded-btn border-2 border-rule bg-surface px-4 text-lg font-bold text-ink [--edge-color:var(--rule)]";
 
 /** Learn mode (docs/PLAN-study-games.md §5): rounds of 7 words until every word is mastered. */
 export function LearnSession({
@@ -262,21 +242,21 @@ export function LearnSession({
       <div className="flex flex-1 flex-col">
         <LearnBar state={saved} exitHref={exitHref} />
         <div className="flex flex-1 flex-col justify-center gap-6 py-6">
-          <div className="text-center">
-            <span aria-hidden className="text-6xl">📚</span>
-            <h1 className="mt-3 text-2xl text-ink">Tiếp tục học?</h1>
-            <p className="mt-1 text-ink-soft">
+          <div className="flex flex-col items-center gap-3 text-center">
+            {prefs.mascot ? <Pup mood="think" size={72} /> : <InkFigure name="notebook" size={72} />}
+            <h1 className="text-xl">Tiếp tục học?</h1>
+            <p className="text-ink-soft">
               Đã thuộc {p.mastered}/{saved.words.length} từ
             </p>
           </div>
           <ProgressRows state={saved} />
           <div className="flex flex-col gap-2 sm:flex-row">
-            <button type="button" autoFocus onClick={() => show(saved.queue.length ? saved : startRound(saved))} className={primaryBtn}>
+            <Button type="button" size="lg" autoFocus onClick={() => show(saved.queue.length ? saved : startRound(saved))} className="flex-1">
               Học tiếp
-            </button>
-            <button type="button" onClick={fresh} className={secondaryBtn}>
+            </Button>
+            <Button type="button" size="lg" variant="outline" onClick={fresh} className="flex-1">
               Bắt đầu lại
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -288,46 +268,45 @@ export function LearnSession({
       <div className="flex flex-1 flex-col">
         <LearnBar state={state} exitHref={exitHref} />
         <div className="flex flex-1 flex-col gap-6 py-6">
-          <h1 className="text-center text-2xl text-ink">
-            <span className="highlighter highlighter-animate">Hết vòng {state.round}</span>
-          </h1>
+          <h1 className="text-xl">Hết vòng {state.round}</h1>
           <ProgressRows state={state} />
-          <ul className="ruled-list overflow-hidden rounded-card border border-rule bg-surface shadow-card">
+          <ul className="ruled-list border-y border-rule">
             {state.roundWords.map((id) => {
               const w = byId.get(id);
               if (!w) return null;
               const mastered = levelOf(state, id) === 2;
               const zh = w.language === "zh";
               return (
-                <li key={id} className="flex min-h-12 items-center gap-3 px-4 py-2">
+                <li key={id} className="flex min-h-12 items-center gap-3 px-1 py-2">
                   <span
                     lang={zh ? "zh-CN" : "en"}
-                    className={cn("font-semibold text-ink", zh && "font-hanzi text-lg")}
+                    className={cn("text-lg font-medium text-ink", zh ? "font-hanzi" : "font-display")}
                   >
                     {w.term}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm text-ink-soft">{w.meaning_vi}</span>
                   {mastered ? (
-                    <Check className="size-5 shrink-0 text-jade-text" aria-label="Đã thuộc" />
+                    <Check className="size-5 shrink-0 text-leaf-text" aria-label="Đã thuộc" />
                   ) : (
-                    <span className="shrink-0 text-xs font-semibold text-sun-text">Đang học</span>
+                    <span className="shrink-0 text-xs font-medium text-turmeric-text">Đang học</span>
                   )}
                 </li>
               );
             })}
           </ul>
-          <button
+          <Button
             type="button"
+            size="lg"
             autoFocus
             onClick={() => {
               const s = startRound(state);
               persist(s);
               show(s);
             }}
-            className={cn(primaryBtn, "mt-auto flex-none")}
+            className="mt-auto"
           >
             Tiếp tục
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -335,32 +314,32 @@ export function LearnSession({
 
   if (phase === "done") {
     return (
-      <div className="relative flex flex-1 flex-col py-6">
-        <Confetti />
-        <EndPup mood="cheer" emoji="🎓" />
-        <h1 className="mt-3 text-center text-2xl text-ink">
-          <span className="highlighter highlighter-animate">Bạn đã thuộc hết {state.words.length} từ!</span>
-        </h1>
-        <p className="mt-2 text-center text-ink-soft">
-          Xong sau {state.round} vòng. Làm bài kiểm tra để chắc chắn nhé.
-        </p>
+      <div className="flex flex-1 flex-col py-6">
+        <div className="flex items-end justify-center gap-1">
+          {prefs.mascot && <EndPup mood="cheer" size={96} />}
+          <SealStamp text="Thuộc" size={88} />
+        </div>
+        <h1 className="mt-6 text-center text-xl">Bạn đã thuộc hết {state.words.length} từ!</h1>
+        <p className="mt-2 text-center text-ink-soft">Xong sau {state.round} vòng. Làm bài kiểm tra để chắc chắn nhé.</p>
         <div className="mt-auto flex flex-col gap-2 pt-8 sm:flex-row">
-          <Link href={testHref} className={primaryBtn}>
-            Làm bài kiểm tra
-          </Link>
-          <button
+          <Button asChild size="lg" className="flex-1">
+            <Link href={testHref}>Làm bài kiểm tra</Link>
+          </Button>
+          <Button
             type="button"
+            size="lg"
+            variant="outline"
+            className="flex-1"
             onClick={() => {
               if (progressKey) void clearLearn(userId, progressKey);
               fresh();
             }}
-            className={secondaryBtn}
           >
             Học lại từ đầu
-          </button>
-          <Link href={exitHref} className={secondaryBtn}>
-            Xong
-          </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline" className="flex-1">
+            <Link href={exitHref}>Xong</Link>
+          </Button>
         </div>
       </div>
     );
@@ -380,11 +359,15 @@ export function LearnSession({
 
   return (
     <div className="flex flex-1 flex-col">
-      <LearnBar state={state} exitHref={exitHref} />
+      <LearnBar
+        state={state}
+        exitHref={exitHref}
+        mood={prefs.mascot ? (outcome ? answerMood(outcome.close ? "close" : outcome.correct ? "correct" : "wrong", state.round) : "happy") : undefined}
+      />
       <div className="flex flex-1 flex-col justify-center py-2">
-        <span className={cn("self-center rounded-full px-3 py-1 text-sm font-semibold", tag.tone)}>
+        <Badge variant={tag.variant} className="self-center">
           {tag.label}
-        </span>
+        </Badge>
         {q.kind === "choice" && (
           <>
             <div className="flex flex-col items-center gap-4 py-4">
@@ -428,7 +411,7 @@ export function LearnSession({
               <label htmlFor="learn-answer" className="text-sm text-ink-soft">
                 {zh ? "Gõ chữ Hán hoặc pinyin (có dấu, số thanh hay không dấu đều được)" : "Gõ từ tiếng Anh"}
               </label>
-              <input
+              <Input
                 id="learn-answer"
                 key={q.id}
                 autoFocus
@@ -441,29 +424,19 @@ export function LearnSession({
                 onChange={(e) => setTyped(e.target.value)}
                 lang={zh ? "zh-CN" : "en"}
                 className={cn(
-                  "h-14 rounded-btn border-2 bg-surface px-4 text-xl text-ink outline-none focus:border-ink-blue",
-                  typingResult === "wrong"
-                    ? "border-danger"
-                    : typingResult
-                      ? "border-jade-text"
-                      : "border-rule",
+                  "h-14 px-4 text-xl",
+                  zh ? "font-hanzi" : "font-display",
+                  typingResult === "wrong" ? "border-seal bg-tint-seal" : typingResult ? "border-leaf bg-tint-leaf" : "",
                 )}
               />
               {!outcome && (
                 <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="btn-3d min-h-12 flex-1 rounded-btn bg-primary font-bold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
-                  >
+                  <Button type="submit" className="flex-1">
                     Kiểm tra
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => finish({ correct: false })}
-                    className="btn-3d min-h-12 rounded-btn border-2 border-rule bg-surface px-4 font-semibold text-ink [--edge-color:var(--rule)]"
-                  >
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => finish({ correct: false })}>
                     Không nhớ
-                  </button>
+                  </Button>
                 </div>
               )}
             </form>

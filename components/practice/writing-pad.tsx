@@ -2,6 +2,7 @@
 
 import { Eye, SkipForward } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { cssVar } from "@/components/zh/stroke-order";
 
 type Writer = import("hanzi-writer").default;
@@ -27,7 +28,7 @@ export function WritingPad({
   const mistakes = useRef(0);
   const [pos, setPos] = useState(0);
   const [failed, setFailed] = useState(false);
-  const size = 260; // fits a 360px-wide phone with the page gutter
+  const size = 300; // fits a 360px-wide phone with the page gutter
   const [usedHint, setUsedHint] = useState(false);
   const onDoneRef = useRef(onDone);
   useEffect(() => {
@@ -49,8 +50,8 @@ export function WritingPad({
         showCharacter: false,
         showOutline: false,
         strokeColor: cssVar("--ink", "#1E2A4A"),
-        outlineColor: cssVar("--rule", "#DCE3F0"),
-        highlightColor: cssVar("--ink-blue", "#5848E8"),
+        outlineColor: cssVar("--rule-strong", "#C5C6DA"),
+        highlightColor: cssVar("--ink-violet", "#3B2E8C"),
         drawingColor: cssVar("--ink", "#1E2A4A"),
         drawingWidth: 6,
         onLoadCharDataError: () => !cancelled && setFailed(true),
@@ -85,13 +86,9 @@ export function WritingPad({
         <p className="text-ink-soft">
           Không tải được dữ liệu nét chữ (cần mạng). Bạn có thể bỏ qua câu này.
         </p>
-        <button
-          type="button"
-          onClick={() => onDone(false)}
-          className="min-h-12 rounded-btn border border-rule bg-surface px-4 text-ink"
-        >
+        <Button type="button" variant="outline" onClick={() => onDone(false)}>
           Bỏ qua
-        </button>
+        </Button>
       </div>
     );
   }
@@ -107,8 +104,8 @@ export function WritingPad({
               i < pos
                 ? "font-hanzi text-2xl text-ink"
                 : i === pos
-                  ? "font-hanzi text-2xl text-ink-blue"
-                  : "font-hanzi text-2xl text-rule"
+                  ? "font-hanzi text-2xl text-ink-violet"
+                  : "font-hanzi text-2xl text-rule-strong"
             }
           >
             {i < pos || disabled ? c : "□"}
@@ -116,12 +113,12 @@ export function WritingPad({
         ))}
       </div>
       <div
-        className="relative touch-none overflow-hidden rounded-card border border-rule bg-surface"
+        className="relative touch-none overflow-hidden rounded-sm border-[1.5px] border-seal/55 bg-surface"
         style={{ width: size, height: size }}
       >
         <svg
           aria-hidden
-          className="pointer-events-none absolute inset-0 text-rule"
+          className="pointer-events-none absolute inset-0 text-seal/30"
           width={size}
           height={size}
         >
@@ -169,27 +166,23 @@ export function WritingPad({
       </div>
       {!disabled && (
         <div className="flex gap-2">
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => {
               setUsedHint(true);
               mistakes.current += 2;
               writer.current?.showOutline();
             }}
             disabled={usedHint}
-            className="inline-flex min-h-11 items-center gap-2 rounded-btn border border-rule bg-surface px-4 text-sm text-ink disabled:opacity-50"
           >
-            <Eye className="size-4" aria-hidden />
+            <Eye aria-hidden />
             Hiện chữ mờ
-          </button>
-          <button
-            type="button"
-            onClick={() => onDone(false)}
-            className="inline-flex min-h-11 items-center gap-2 rounded-btn border border-rule bg-surface px-4 text-sm text-ink"
-          >
-            <SkipForward className="size-4" aria-hidden />
+          </Button>
+          <Button type="button" variant="outline" onClick={() => onDone(false)}>
+            <SkipForward aria-hidden />
             Bỏ qua
-          </button>
+          </Button>
         </div>
       )}
     </div>

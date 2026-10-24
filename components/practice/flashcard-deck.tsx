@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
 import { EndPup } from "@/components/mascot/end-pup";
-import { Confetti } from "@/components/review/confetti";
 import { Flashcard, type Direction } from "@/components/review/flashcard";
+import { SealStamp } from "@/components/review/seal-stamp";
 import { SessionBar, useOutboxStatus } from "@/components/review/session-bar";
+import { Button } from "@/components/ui/button";
 import { shuffle, type StudyWord } from "@/lib/practice";
 import { enqueueReview } from "@/lib/srs/outbox";
 import { speak } from "@/lib/tts";
@@ -154,61 +155,52 @@ export function FlashcardDeck({
   if (finished || !word) {
     const left = cards.filter((c) => marks[c.id] !== "known");
     return (
-      <div className="relative flex flex-1 flex-col py-6">
-        {known > 0 && <Confetti />}
-        <EndPup
-          mood={left.length === 0 || known >= left.length ? "cheer" : "happy"}
-          emoji={left.length === 0 ? "🏆" : known >= left.length ? "😎" : "💪"}
-        />
-        <h1 className="mt-3 text-center text-2xl text-ink">
-          <span className="highlighter highlighter-animate">Hết thẻ rồi!</span>
-        </h1>
-        <p className="mt-2 text-center font-semibold text-ink">
-          {left.length === 0
-            ? "Bạn đã thuộc hết cả bộ thẻ này."
-            : `Còn ${left.length} thẻ cần học thêm.`}
+      <div className="flex flex-1 flex-col py-6">
+        <div className="flex items-end justify-center gap-1">
+          <EndPup mood={left.length === 0 || known >= left.length ? "cheer" : "happy"} size={96} />
+          {left.length === 0 && <SealStamp text="Thuộc" size={84} />}
+        </div>
+        <h1 className="mt-6 text-center text-xl">Hết thẻ rồi!</h1>
+        <p className="mt-2 text-center text-ink">
+          {left.length === 0 ? "Bạn đã thuộc hết cả bộ thẻ này." : `Còn ${left.length} thẻ cần học thêm.`}
         </p>
 
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <div className="rounded-card bg-wash-jade p-4 text-center">
-            <p className="text-3xl font-extrabold text-jade-text">{known}</p>
-            <p className="text-sm text-ink">😎 Đã thuộc</p>
+        <dl className="mt-6 border-t border-rule">
+          <div className="flex items-baseline justify-between border-b border-rule py-3">
+            <dt className="flex items-center gap-2 text-ink-soft">
+              <span aria-hidden className="size-2.5 rounded-full bg-leaf" />
+              Đã thuộc
+            </dt>
+            <dd className="font-display text-xl font-semibold tabular-nums">{known}</dd>
           </div>
-          <div className="rounded-card bg-wash-red p-4 text-center">
-            <p className="text-3xl font-extrabold text-danger">{left.length}</p>
-            <p className="text-sm text-ink">😵 Chưa thuộc</p>
+          <div className="flex items-baseline justify-between border-b border-rule py-3">
+            <dt className="flex items-center gap-2 text-ink-soft">
+              <span aria-hidden className="size-2.5 rounded-full bg-seal" />
+              Chưa thuộc
+            </dt>
+            <dd className="font-display text-xl font-semibold tabular-nums">{left.length}</dd>
           </div>
-        </div>
+        </dl>
 
         {sync.pending > 0 && (
-          <p role="status" className="mt-4 rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">
-            Còn {sync.pending} kết quả chưa gửi được. Chúng được lưu trên máy và sẽ tự gửi khi có
-            mạng.
+          <p role="status" className="mt-4 rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">
+            Còn {sync.pending} kết quả chưa gửi được. Chúng được lưu trên máy và sẽ tự gửi khi có mạng.
           </p>
         )}
 
         {left.length > 0 && (
-          <section className="mt-8">
-            <h2 className="mb-2 text-base text-ink">Thẻ chưa thuộc ({left.length})</h2>
-            <ul className="ruled-list overflow-hidden rounded-card border border-rule bg-surface shadow-card">
+          <section className="mt-8" aria-labelledby="deck-left">
+            <h2 id="deck-left" className="mb-2 text-base">
+              Thẻ chưa thuộc ({left.length})
+            </h2>
+            <ul className="ruled-list border-y border-rule">
               {left.map((w) => (
                 <li key={w.id}>
-                  <Link
-                    href={`/words/${w.id}`}
-                    className="flex min-h-12 items-center gap-3 px-4 py-2 hover:bg-muted"
-                  >
-                    <span
-                      lang={w.language === "zh" ? "zh-CN" : "en"}
-                      className={cn(
-                        "font-semibold text-ink",
-                        w.language === "zh" && "font-hanzi text-lg",
-                      )}
-                    >
+                  <Link href={`/words/${w.id}`} className="flex min-h-12 items-center gap-3 px-1 py-2 transition-colors hover:bg-surface-sunk">
+                    <span lang={w.language === "zh" ? "zh-CN" : "en"} className={cn("text-lg font-medium text-ink", w.language === "zh" ? "font-hanzi" : "font-display")}>
                       {w.term}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-sm text-ink-soft">
-                      {w.meaning_vi}
-                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-ink-soft">{w.meaning_vi}</span>
                   </Link>
                 </li>
               ))}
@@ -218,33 +210,17 @@ export function FlashcardDeck({
 
         <div className="mt-auto flex flex-col gap-2 pt-8 sm:flex-row">
           {left.length > 0 && (
-            <button
-              type="button"
-              onClick={() => restart(true)}
-              className="btn-3d inline-flex min-h-14 flex-1 items-center justify-center gap-2 rounded-btn bg-primary px-4 text-lg font-extrabold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
-            >
-              <RotateCcw className="size-5" aria-hidden />
+            <Button type="button" size="lg" className="flex-1" onClick={() => restart(true)}>
+              <RotateCcw aria-hidden />
               Học lại {left.length} thẻ chưa thuộc
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            onClick={() => restart(false)}
-            className={cn(
-              "btn-3d inline-flex min-h-14 flex-1 items-center justify-center rounded-btn px-4 text-lg font-bold",
-              left.length > 0
-                ? "border-2 border-rule bg-surface text-ink [--edge-color:var(--rule)]"
-                : "bg-primary text-primary-foreground [--edge-color:var(--ink-blue-shade)]",
-            )}
-          >
+          <Button type="button" size="lg" variant={left.length > 0 ? "outline" : "default"} className="flex-1" onClick={() => restart(false)}>
             Lật lại cả bộ
-          </button>
-          <Link
-            href={exitHref}
-            className="btn-3d inline-flex min-h-14 flex-1 items-center justify-center rounded-btn border-2 border-rule bg-surface px-4 text-lg font-bold text-ink [--edge-color:var(--rule)]"
-          >
-            Xong
-          </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline" className="flex-1">
+            <Link href={exitHref}>Xong</Link>
+          </Button>
         </div>
       </div>
     );
@@ -262,32 +238,37 @@ export function FlashcardDeck({
       <SessionBar done={index} total={cards.length} exitHref={exitHref} />
 
       <div className="flex items-center gap-2">
-        <p className="min-w-0 flex-1 text-sm font-semibold text-ink-soft">
-          Thẻ {index + 1}/{cards.length}
-          {round > 1 && ` · lượt ${round}`}
-          <span className="ml-2 whitespace-nowrap" aria-label={`${known} đã thuộc, ${learning} chưa thuộc`}>
-            <span aria-hidden>😎 {known} · 😵 {learning}</span>
+        <p className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-0.5 text-sm text-ink-soft">
+          <span className="font-medium">
+            Thẻ {index + 1}/{cards.length}
+            {round > 1 && ` (lượt ${round})`}
+          </span>
+          <span className="flex items-center gap-3" aria-label={`${known} đã thuộc, ${learning} chưa thuộc`}>
+            <span aria-hidden className="inline-flex items-center gap-1.5 tabular-nums">
+              <span className="size-2 rounded-full bg-leaf" />
+              {known}
+            </span>
+            <span aria-hidden className="inline-flex items-center gap-1.5 tabular-nums">
+              <span className="size-2 rounded-full bg-seal" />
+              {learning}
+            </span>
           </span>
         </p>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => {
             setDirection((d) => (d === "recognize" ? "recall" : "recognize"));
             setFlipped(false);
           }}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-btn px-3 text-sm font-semibold text-ink-soft hover:bg-muted hover:text-ink"
         >
-          <ArrowLeftRight className="size-4" aria-hidden />
+          <ArrowLeftRight aria-hidden />
           {direction === "recognize" ? "Từ trước" : "Nghĩa trước"}
-        </button>
-        <button
-          type="button"
-          onClick={reshuffle}
-          aria-label="Xáo trộn thẻ"
-          className="grid size-11 place-items-center rounded-btn text-ink-soft hover:bg-muted hover:text-ink"
-        >
-          <Shuffle className="size-5" aria-hidden />
-        </button>
+        </Button>
+        <Button type="button" variant="ghost" size="icon" onClick={reshuffle} aria-label="Xáo trộn thẻ">
+          <Shuffle aria-hidden />
+        </Button>
       </div>
 
       {/* Swipe left/right to move; a tap (no drag) flips. */}
@@ -321,7 +302,7 @@ export function FlashcardDeck({
       >
         <div
           className={cn(drag === 0 && "transition-transform duration-200")}
-          style={drag ? { transform: `translateX(${drag}px) rotate(${drag / 24}deg)` } : undefined}
+          style={drag ? { transform: `translateX(${drag}px) rotate(${Math.max(-6, Math.min(6, drag / 20))}deg)` } : undefined}
         >
           <Flashcard
             key={`${round}:${index}:${direction}`}
@@ -336,41 +317,24 @@ export function FlashcardDeck({
           />
         </div>
         <p className="mt-3 text-center text-sm text-ink-soft">
-          <span className="hidden lg:inline">← → chuyển thẻ · Space lật · 1/2 đánh dấu</span>
+          <span className="hidden lg:inline">Mũi tên chuyển thẻ, Space lật, phím 1 và 2 để đánh dấu</span>
           <span className="lg:hidden">Vuốt trái/phải để chuyển thẻ</span>
         </p>
       </div>
 
       {/* Thumb zone */}
-      <div className="sticky bottom-0 -mx-4 flex flex-col gap-2 bg-paper/95 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur">
+      <div className="sticky bottom-0 -mx-4 flex flex-col gap-2 bg-paper/95 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur-sm">
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => go(index - 1)}
-            disabled={index === 0}
-            aria-label="Thẻ trước"
-            className="btn-3d grid min-h-14 w-14 shrink-0 place-items-center rounded-btn border-2 border-rule bg-surface text-ink [--edge-color:var(--rule)] disabled:opacity-40"
-          >
+          <Button type="button" variant="outline" size="lg" onClick={() => go(index - 1)} disabled={index === 0} aria-label="Thẻ trước" className="w-13 shrink-0 px-0">
             <ChevronLeft className="size-6" aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={flip}
-            className="btn-3d flex min-h-14 flex-1 items-center justify-center gap-2 rounded-btn bg-primary text-lg font-extrabold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
-          >
+          </Button>
+          <Button type="button" size="lg" onClick={flip} className="flex-1">
             {flipped ? "Lật lại" : "Lật thẻ"}
-            <kbd className="hidden rounded border border-primary-foreground/30 px-1.5 text-xs font-normal lg:inline">
-              Space
-            </kbd>
-          </button>
-          <button
-            type="button"
-            onClick={() => go(index + 1)}
-            aria-label="Thẻ sau"
-            className="btn-3d grid min-h-14 w-14 shrink-0 place-items-center rounded-btn border-2 border-rule bg-surface text-ink [--edge-color:var(--rule)]"
-          >
+            <kbd className="hidden rounded-sm border border-primary-foreground/40 px-1.5 font-sans text-xs font-normal lg:inline">Space</kbd>
+          </Button>
+          <Button type="button" variant="outline" size="lg" onClick={() => go(index + 1)} aria-label="Thẻ sau" className="w-13 shrink-0 px-0">
             <ChevronRight className="size-6" aria-hidden />
-          </button>
+          </Button>
         </div>
         <div className="grid grid-cols-2 gap-2" role="group" aria-label="Đánh dấu thẻ">
           <button
@@ -378,26 +342,24 @@ export function FlashcardDeck({
             onClick={() => mark("learning")}
             aria-pressed={current === "learning"}
             className={cn(
-              "btn-3d flex min-h-12 items-center justify-center gap-2 rounded-btn border-2 font-bold text-danger [--edge-color:var(--margin-red)]",
-              current === "learning"
-                ? "border-margin-red bg-wash-red"
-                : "border-margin-red/40 bg-wash-red/60",
+              "flex min-h-12 items-center justify-center gap-2 rounded-btn border border-t-[3px] border-rule-strong border-t-seal font-semibold text-ink transition-colors hover:bg-surface-sunk",
+              current === "learning" ? "bg-tint-seal" : "bg-surface",
             )}
           >
-            <span aria-hidden>😵</span> Chưa thuộc
-            <kbd className="hidden text-xs font-normal opacity-60 lg:inline">1</kbd>
+            Chưa thuộc
+            <kbd className="hidden font-sans text-xs font-normal text-ink-faint lg:inline">1</kbd>
           </button>
           <button
             type="button"
             onClick={() => mark("known")}
             aria-pressed={current === "known"}
             className={cn(
-              "btn-3d flex min-h-12 items-center justify-center gap-2 rounded-btn border-2 font-bold text-jade-text [--edge-color:var(--jade)]",
-              current === "known" ? "border-jade bg-wash-jade" : "border-jade/40 bg-wash-jade/60",
+              "flex min-h-12 items-center justify-center gap-2 rounded-btn border border-t-[3px] border-rule-strong border-t-leaf font-semibold text-ink transition-colors hover:bg-surface-sunk",
+              current === "known" ? "bg-tint-leaf" : "bg-surface",
             )}
           >
-            <span aria-hidden>😎</span> Đã thuộc
-            <kbd className="hidden text-xs font-normal opacity-60 lg:inline">2</kbd>
+            Đã thuộc
+            <kbd className="hidden font-sans text-xs font-normal text-ink-faint lg:inline">2</kbd>
           </button>
         </div>
       </div>

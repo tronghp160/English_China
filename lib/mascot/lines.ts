@@ -45,13 +45,10 @@ export const LINES = {
     "Chuỗi {n} ngày vẫn còn. Ôn một thẻ là giữ được.",
     "{name} nhớ chuỗi {n} ngày của bạn. Ôn một thẻ là giữ được.",
   ],
-  correct: ["Đúng rồi.", "Chuẩn.", "Nhớ tốt đó.", "Đúng. Tiếp nào."],
-  close: ["Gần đúng, xem lại chính tả.", "Gần đúng. Chỉ lệch một chút."],
-  wrong: [
-    "Chưa đúng. Từ này sẽ quay lại sớm.",
-    "Chưa đúng. Xem đáp án rồi đi tiếp.",
-    "Chưa nhớ. Không sao, sẽ gặp lại.",
-  ],
+  // Said next to the verdict ("Đúng rồi!", "Chưa đúng"), so they add something instead of repeating it
+  correct: ["Chuẩn.", "Nhớ tốt đó.", "Giữ nhịp này nhé.", "Tiếp nào."],
+  close: ["Xem lại chính tả.", "Chỉ lệch một chút."],
+  wrong: ["Từ này sẽ quay lại sớm.", "Xem đáp án rồi đi tiếp.", "Không sao, sẽ gặp lại."],
 } as const;
 
 export type LineKey = keyof typeof LINES;

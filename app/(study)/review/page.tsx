@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ReviewSession, type ReviewItem } from "@/components/review/review-session";
+import { SealStamp } from "@/components/review/seal-stamp";
+import { Button } from "@/components/ui/button";
 import type { StudyWord } from "@/lib/practice";
 import { createClient } from "@/lib/supabase/server";
 
@@ -48,28 +50,19 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
 
   if (!items.length) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-        <h1 className="text-2xl text-ink">
-          <span className="highlighter">Bạn đã ôn xong hôm nay.</span>
-        </h1>
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+        <SealStamp text="Xong bài" size={96} animate={false} />
+        <h1 className="mt-4 text-xl">Bạn đã ôn xong hôm nay.</h1>
         <p className="text-ink-soft">
-          {tomorrowDue > 0
-            ? `Ngày mai có ${tomorrowDue} từ cần ôn.`
-            : "Thêm từ mới để có thẻ ôn ngày mai."}
+          {tomorrowDue > 0 ? `Ngày mai có ${tomorrowDue} từ cần ôn.` : "Thêm từ mới để có thẻ ôn ngày mai."}
         </p>
         <div className="mt-2 flex flex-wrap justify-center gap-2">
-          <Link
-            href="/today"
-            className="inline-flex min-h-12 items-center rounded-btn bg-primary px-5 font-medium text-primary-foreground"
-          >
-            Về trang Hôm nay
-          </Link>
-          <Link
-            href={deckParam ? `/practice?deck=${deckParam}` : "/practice"}
-            className="inline-flex min-h-12 items-center rounded-btn border border-rule bg-surface px-5 font-medium text-ink"
-          >
-            Luyện tập thêm
-          </Link>
+          <Button asChild size="lg">
+            <Link href="/today">Về trang Hôm nay</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link href={deckParam ? `/practice?deck=${deckParam}` : "/practice"}>Luyện tập thêm</Link>
+          </Button>
         </div>
       </div>
     );

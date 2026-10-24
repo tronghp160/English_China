@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Pup } from "@/components/mascot/pup";
 import type { PupMood } from "@/lib/mascot/lines";
 import { subscribeOutbox, type OutboxStatus } from "@/lib/srs/outbox";
+import { cn } from "@/lib/utils";
 
 export function useOutboxStatus() {
   const [status, setStatus] = useState<OutboxStatus>({ pending: 0, syncing: false, error: null });
@@ -13,66 +14,89 @@ export function useOutboxStatus() {
   return status;
 }
 
-/** Top bar of a focus session: exit, progress, offline/sync state. */
+/**
+ * Top bar of a focus session: exit, a 6px progress bar with the mascot standing at its end
+ * (it slides along as the bar grows and only changes its face), the count, and the sync state.
+ */
 export function SessionBar({
   done,
   total,
   exitHref,
   pup,
+  segments,
+  label,
+  ariaLabel = "Tiến độ phiên",
 }: {
   done: number;
   total: number;
   exitHref: string;
-  /** Tiny mascot reacting to the last answer; `key` changes per answer to replay the hop. */
-  pup?: { mood: PupMood; key: number };
+  /** Mood of the tiny mascot at the head of the bar; omit to hide it (Bin off). */
+  pup?: { mood: PupMood };
+  /** Two-part bar (Learn): `mastered` in leaf green, then `learning` in turmeric, out of `total`. */
+  segments?: { mastered: number; learning: number };
+  /** Text at the right end instead of done/total */
+  label?: string;
+  ariaLabel?: string;
 }) {
   const sync = useOutboxStatus();
-  const pct = total ? Math.round((done / total) * 100) : 0;
+  const pct = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
+  const pctOf = (n: number) => (total ? Math.min(100, (n / total) * 100) : 0);
   return (
-    <div className="sticky top-0 z-10 -mx-4 bg-paper/95 px-4 pb-2 backdrop-blur">
-      <div className="flex h-12 items-center gap-3">
+    <div className="sticky top-0 z-10 -mx-4 bg-paper/95 px-4 pb-2 backdrop-blur-sm">
+      <div className="flex h-14 items-center gap-2">
         <Link
           href={exitHref}
           aria-label="Thoát phiên"
-          className="-ml-2 grid size-11 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-muted hover:text-ink"
+          className="-ml-2 grid size-11 shrink-0 place-items-center rounded-btn text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
         >
-          <X className="size-5" aria-hidden />
+          <X className="size-5" strokeWidth={1.75} aria-hidden />
         </Link>
-        <div
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={total}
-          aria-valuenow={done}
-          aria-label="Tiến độ phiên"
-          className="h-4 flex-1 overflow-hidden rounded-full bg-muted"
-        >
+        <div className="relative flex-1 pt-6">
           <div
-            className="relative h-full min-w-4 rounded-full bg-jade transition-[width] duration-500"
-            style={{ width: `${pct}%` }}
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={total}
+            aria-valuenow={done}
+            aria-label={ariaLabel}
+            className="relative h-1.5 w-full overflow-hidden rounded-full bg-surface-sunk"
           >
-            <span className="absolute inset-x-2 top-1 h-1 rounded-full bg-white/40" />
+            {segments ? (
+              <>
+                <div className="absolute inset-y-0 left-0 bg-leaf transition-[width] duration-500 ease-[var(--ease-out)]" style={{ width: `${pctOf(segments.mastered)}%` }} />
+                <div
+                  className="absolute inset-y-0 bg-turmeric transition-[left,width] duration-500 ease-[var(--ease-out)]"
+                  style={{ left: `${pctOf(segments.mastered)}%`, width: `${pctOf(segments.learning)}%` }}
+                />
+              </>
+            ) : (
+              <div className="h-full rounded-full bg-primary transition-[width] duration-500 ease-[var(--ease-out)]" style={{ width: `${pct}%` }} />
+            )}
           </div>
+          {pup && (
+            <span
+              aria-hidden
+              className={cn("absolute top-0 -translate-x-1/2 transition-[left] duration-500 ease-[var(--ease-out)]")}
+              style={{ left: `clamp(14px, ${pct}%, calc(100% - 14px))` }}
+            >
+              <Pup mood={pup.mood} size={28} />
+            </span>
+          )}
         </div>
-        <span className="min-w-12 text-right text-sm font-bold text-ink-soft tabular-nums">
-          {done}/{total}
+        <span className="min-w-12 text-right text-sm font-semibold whitespace-nowrap text-ink-soft tabular-nums">
+          {label ?? `${done}/${total}`}
         </span>
-        {pup && <Pup key={pup.key} mood={pup.mood} size={40} className="-my-1" />}
         {sync.pending > 0 && (
           <span
             className="grid size-8 place-items-center text-ink-soft"
             title={sync.error ?? "Đang gửi kết quả…"}
             aria-label={sync.error ?? `Đang gửi ${sync.pending} kết quả`}
           >
-            {sync.syncing ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-            ) : (
-              <CloudOff className="size-4" aria-hidden />
-            )}
+            {sync.syncing ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <CloudOff className="size-4" aria-hidden />}
           </span>
         )}
       </div>
       {sync.pending > 0 && sync.error && !sync.syncing && (
-        <p role="status" className="rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">
+        <p role="status" className="rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">
           {sync.error}
         </p>
       )}

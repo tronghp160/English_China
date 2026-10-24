@@ -1,15 +1,17 @@
 "use client";
 
-import { MessageCircleHeart } from "lucide-react";
+import { ChevronRight, MessageCircleHeart } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
-import { MascotSay } from "@/components/mascot/mascot-say";
+import { EndPup } from "@/components/mascot/end-pup";
+import { Button } from "@/components/ui/button";
 import { startChat } from "@/lib/actions/chat";
 import { formatDuration } from "@/lib/format";
 import type { LangCode } from "@/lib/lang/types";
 import { summaryMood } from "@/lib/mascot/lines";
 import { cn } from "@/lib/utils";
-import { Confetti } from "./confetti";
+import { SealStamp } from "./seal-stamp";
 import { useOutboxStatus } from "./session-bar";
 
 export type SessionResult = {
@@ -20,26 +22,23 @@ export type SessionResult = {
   rating: number;
 };
 
-function Stat({ label, value, emoji, tone }: { label: string; value: string; emoji: string; tone: string }) {
+/** One line of the score table: label on the left, a serif tabular number on the right. */
+function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className={cn("flex animate-pop-in flex-col items-center gap-0.5 rounded-card px-2 py-4 text-center", tone)}>
-      <span aria-hidden className="text-2xl">
-        {emoji}
-      </span>
-      <span className="font-heading text-2xl font-black text-ink tabular-nums">{value}</span>
-      <span className="text-sm font-medium text-ink-soft">{label}</span>
+    <div className="flex items-baseline justify-between gap-4 border-b border-rule py-3">
+      <dt className="text-ink-soft">{label}</dt>
+      <dd className="font-display text-xl font-semibold text-ink tabular-nums">{value}</dd>
     </div>
   );
 }
 
-function cheer(pct: number) {
-  if (pct >= 90) return { emoji: "🏆", text: "Xuất sắc! Trí nhớ siêu đỉnh." };
-  if (pct >= 70) return { emoji: "🎉", text: "Tuyệt vời! Cứ thế phát huy nhé." };
-  if (pct >= 40) return { emoji: "💪", text: "Khá lắm! Ôn thêm chút là thuộc ngay." };
-  return { emoji: "🌱", text: "Khởi đầu nào cũng khó — mai ôn lại sẽ nhớ hơn." };
+/** Today's date as "24.10", the way a teacher dates a seal. */
+function stampDate() {
+  const d = new Date();
+  return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-/** End of a review or practice session (§10.3). */
+/** End of a review or practice session (§10.3): the seal, the score as a ruled table, the words to look at again. */
 export function SessionSummary({
   results,
   durationMs,
@@ -61,14 +60,13 @@ export function SessionSummary({
 }) {
   const sync = useOutboxStatus();
   const { prefs } = useMe();
+  const [date] = useState(stampDate);
   const total = results.length;
   const remembered = results.filter((r) => r.rating > 1).length;
   const pct = total ? Math.round((remembered / total) * 100) : 0;
-  const missed = [
-    ...new Map(results.filter((r) => r.rating === 1).map((r) => [r.wordId, r])).values(),
-  ];
+  const missed = [...new Map(results.filter((r) => r.rating === 1).map((r) => [r.wordId, r])).values()];
 
-  const mood = cheer(pct);
+  const mood = summaryMood(pct);
   // A session can mix languages; the tutor thread uses the one most missed.
   const missedLang: LangCode | undefined = missed.length
     ? missed.filter((m) => m.language === "zh").length > missed.length / 2
@@ -78,82 +76,63 @@ export function SessionSummary({
   const missedTerms = missed.filter((m) => m.language === missedLang).slice(0, 15).map((m) => m.term);
 
   return (
-    <div className="relative flex flex-1 flex-col py-6">
-      {total > 0 && <Confetti />}
-      {total > 0 && !prefs.mascot && (
-        <span aria-hidden className="animate-float self-center text-7xl">
-          {mood.emoji}
-        </span>
-      )}
-      <h1 className={cn("text-2xl text-ink", total > 0 && "mt-3 text-center")}>
-        {total ? (
-          <span className="highlighter highlighter-animate">Xong phiên rồi!</span>
-        ) : (
-          "Chưa có thẻ nào"
+    <div className="flex flex-1 flex-col py-6">
+      <header className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl">{total ? "Xong phiên rồi!" : "Chưa có thẻ nào"}</h1>
+          {total > 0 && (
+            <p className="mt-2 text-ink">
+              Bạn nhớ {remembered}/{total} thẻ. <span className="text-ink-soft">{mood.text}</span>
+            </p>
+          )}
+          {tomorrowDue !== undefined && (
+            <p className="mt-1 text-sm text-ink-soft">
+              {tomorrowDue > 0 ? `Ngày mai có ${tomorrowDue} từ cần ôn.` : "Ngày mai chưa có từ nào đến hạn."}
+            </p>
+          )}
+        </div>
+        {total > 0 && (
+          <div className="flex shrink-0 items-end gap-1">
+            {prefs.mascot && <EndPup mood={mood.mood} size={88} className="self-end" />}
+            <SealStamp text="Đã ôn" sub={date} size={88} />
+          </div>
         )}
-      </h1>
-      {total > 0 &&
-        (prefs.mascot ? (
-          <MascotSay
-            {...summaryMood(pct)}
-            name={prefs.mascot_name}
-            size={96}
-            className="mt-4 self-center"
-          />
-        ) : (
-          <p className="mt-2 text-center font-semibold text-ink">{mood.text}</p>
-        ))}
-      {tomorrowDue !== undefined && (
-        <p className={cn("mt-1 text-ink-soft", total > 0 && "text-center")}>
-          {tomorrowDue > 0
-            ? `Ngày mai có ${tomorrowDue} từ cần ôn.`
-            : "Ngày mai chưa có từ nào đến hạn."}
-        </p>
-      )}
+      </header>
 
       {total > 0 && (
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat label={total === 1 ? "thẻ" : "lượt"} value={String(total)} emoji="🃏" tone="bg-wash-grape" />
-          <Stat label={correctLabel} value={`${pct}%`} emoji="🎯" tone="bg-wash-jade" />
-          <Stat label="Thời gian" value={formatDuration(durationMs)} emoji="⏱️" tone="bg-wash-sky" />
-          <Stat label="XP nhận được" value={`+${xp}`} emoji="⭐" tone="bg-wash-yellow" />
-        </div>
+        <dl className="mt-6 border-t border-rule">
+          <Row label={total === 1 ? "Số thẻ" : "Số lượt"} value={String(total)} />
+          <Row label={correctLabel === "Nhớ" ? "Nhớ đúng" : correctLabel} value={`${pct}%`} />
+          <Row label="Thời gian" value={formatDuration(durationMs)} />
+          <Row label="XP" value={`+${xp}`} />
+        </dl>
       )}
 
       {sync.pending > 0 && (
-        <p role="status" className="mt-4 rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">
-          Còn {sync.pending} kết quả chưa gửi được. Chúng được lưu trên máy và sẽ tự gửi khi có mạng
-          — đừng xóa dữ liệu trình duyệt.
+        <p role="status" className="mt-4 rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">
+          Còn {sync.pending} kết quả chưa gửi được. Chúng được lưu trên máy và sẽ tự gửi khi có mạng, đừng xóa dữ liệu trình duyệt.
         </p>
       )}
 
       {missed.length > 0 && (
-        <section className="mt-8">
-          <h2 className="mb-2 text-base text-ink">
+        <section className="mt-8" aria-labelledby="summary-missed">
+          <h2 id="summary-missed" className="mb-2 text-base">
             {missedTitle} ({missed.length})
           </h2>
-          <ul className="ruled-list overflow-hidden rounded-card border border-rule bg-surface shadow-card">
+          <ul className="ruled-list border-y border-rule">
             {missed.map((m) => (
               <li key={m.wordId}>
-                <Link
-                  href={`/words/${m.wordId}`}
-                  className="flex min-h-12 items-center gap-3 px-4 py-2 hover:bg-muted"
-                >
-                  <span
-                    lang={m.language === "zh" ? "zh-CN" : "en"}
-                    className={cn(
-                      "font-semibold text-ink",
-                      m.language === "zh" && "font-hanzi text-lg",
-                    )}
-                  >
+                <Link href={`/words/${m.wordId}`} className="flex min-h-14 items-center gap-3 px-1 py-2 transition-colors hover:bg-surface-sunk">
+                  <span lang={m.language === "zh" ? "zh-CN" : "en"} className={cn("text-lg font-medium text-ink", m.language === "zh" ? "font-hanzi" : "font-display")}>
                     {m.term}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm text-ink-soft">{m.meaning}</span>
+                  <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
                 </Link>
               </li>
             ))}
           </ul>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             <form action={startChat}>
               <input type="hidden" name="language" value={missedLang} />
               <input
@@ -161,38 +140,26 @@ export function SessionSummary({
                 name="prompt"
                 value={`Mình vừa quên các từ: ${missedTerms.join(", ")}. Giúp mình nhớ chúng: giải thích ngắn, cho mẹo nhớ, rồi hỏi lại mình từng từ.`}
               />
-              <button
-                type="submit"
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-btn bg-wash-grape px-4 text-sm font-semibold text-grape-text hover:brightness-95"
-              >
-                <MessageCircleHeart className="size-4" aria-hidden />
-                Nhờ gia sư giúp nhớ
-              </button>
+              <Button type="submit" variant="secondary">
+                <MessageCircleHeart aria-hidden />
+                Hỏi gia sư về các từ này
+              </Button>
             </form>
-            <Link
-              href={`/hard-words?lang=${missedLang}`}
-              className="inline-flex min-h-11 items-center rounded-btn border border-rule bg-surface px-4 text-sm font-semibold text-ink hover:bg-muted"
-            >
-              Xem tất cả từ hay quên
-            </Link>
+            <Button asChild variant="outline">
+              <Link href={`/hard-words?lang=${missedLang}`}>Từ hay quên</Link>
+            </Button>
           </div>
         </section>
       )}
 
       <div className="mt-auto flex flex-col gap-2 pt-8 sm:flex-row">
-        <Link
-          href={exitHref}
-          className="btn-3d inline-flex min-h-14 flex-1 items-center justify-center rounded-btn bg-primary px-4 text-lg font-extrabold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
-        >
-          Về trang Hôm nay
-        </Link>
+        <Button asChild size="lg" className="flex-1">
+          <Link href={exitHref}>Về trang Hôm nay</Link>
+        </Button>
         {againHref && (
-          <a
-            href={againHref}
-            className="btn-3d inline-flex min-h-14 flex-1 items-center justify-center rounded-btn border-2 border-rule bg-surface px-4 text-lg font-bold text-ink [--edge-color:var(--rule)]"
-          >
-            Luyện tiếp
-          </a>
+          <Button asChild size="lg" variant="outline" className="flex-1">
+            <a href={againHref}>Luyện tiếp</a>
+          </Button>
         )}
       </div>
     </div>

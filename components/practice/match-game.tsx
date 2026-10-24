@@ -1,11 +1,12 @@
 "use client";
 
-import { Shuffle, X } from "lucide-react";
+import { Clock, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
 import { EndPup } from "@/components/mascot/end-pup";
-import { Confetti } from "@/components/review/confetti";
+import { SealStamp } from "@/components/review/seal-stamp";
+import { Button } from "@/components/ui/button";
 import { formatMs, isPair, MATCH_PENALTY_MS, type MatchTile } from "@/lib/practice/match";
 import { getMatchRecord, saveMatchTime, type MatchRecord } from "@/lib/practice/match-records";
 import { cn } from "@/lib/utils";
@@ -16,22 +17,24 @@ const clock = () => performance.now();
 type Result = { ms: number; misses: number; previous: MatchRecord | null; isBest: boolean | null };
 
 function tileText(t: MatchTile) {
+  // words are set in the serif, meanings in the sans
   if (t.side === "term" && t.lang === "zh") return "font-hanzi text-2xl";
   const len = t.label.length;
+  const face = t.side === "term" ? "font-display" : "";
   // three narrow columns on phones: long words shrink, then hyphenate (lang is set on the tile)
-  return len <= 8 ? "text-lg" : len <= 24 ? "text-base" : "text-sm";
+  return cn(face, len <= 8 ? "text-lg" : len <= 24 ? "text-base" : "text-sm");
 }
 
 function TopBar({ exitHref, children }: { exitHref: string; children?: React.ReactNode }) {
   return (
-    <div className="sticky top-0 z-10 -mx-4 bg-paper/95 px-4 pb-2 backdrop-blur">
-      <div className="flex h-12 items-center gap-3">
+    <div className="sticky top-0 z-10 -mx-4 bg-paper/95 px-4 pb-2 backdrop-blur-sm">
+      <div className="flex h-14 items-center gap-3">
         <Link
           href={exitHref}
           aria-label="Thoát"
-          className="-ml-2 grid size-11 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-muted hover:text-ink"
+          className="-ml-2 grid size-11 shrink-0 place-items-center rounded-btn text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
         >
-          <X className="size-5" aria-hidden />
+          <X className="size-5" strokeWidth={1.75} aria-hidden />
         </Link>
         {children}
       </div>
@@ -156,26 +159,14 @@ export function MatchGame({
       <div className="flex flex-1 flex-col">
         <TopBar exitHref={exitHref} />
         <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-          <span className="icon-tile size-20 animate-pop-in bg-wash-yellow text-sun-text">
-            <Shuffle className="size-10" aria-hidden />
-          </span>
-          <h1 className="text-3xl text-ink">Ghép thẻ</h1>
+          <h1 className="text-xl">Ghép thẻ</h1>
           <p className="max-w-sm text-ink-soft">
             Ghép {pairs} từ với nghĩa của chúng nhanh nhất có thể. Mỗi lần ghép sai bị cộng 1 giây.
           </p>
-          {record && (
-            <p className="rounded-full bg-wash-yellow px-4 py-1.5 font-semibold text-ink">
-              🏆 Kỷ lục của bạn: {formatMs(record.ms)}
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={start}
-            autoFocus
-            className="btn-3d mt-2 min-h-14 w-full max-w-xs rounded-btn bg-primary text-lg font-extrabold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
-          >
+          {record && <p className="text-ink">Kỷ lục của bạn: <span className="font-display font-semibold tabular-nums">{formatMs(record.ms)}</span></p>}
+          <Button type="button" size="lg" onClick={start} autoFocus className="mt-2 w-full max-w-xs">
             Bắt đầu
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -191,50 +182,42 @@ export function MatchGame({
             : "Kỷ lục đầu tiên!"
           : "Xong rồi!";
     return (
-      <div className="relative flex flex-1 flex-col py-6 text-center">
-        {result.isBest && <Confetti />}
-        <EndPup mood={result.isBest ? "cheer" : "happy"} emoji={result.isBest ? "🏆" : "⏱️"} />
-        <h1 className="mt-3 text-2xl text-ink">
-          <span className="highlighter highlighter-animate">{title}</span>
-        </h1>
-        <p className="mt-2 font-heading text-4xl font-black text-ink tabular-nums">
-          {formatMs(result.ms)}
-        </p>
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <div className="flex animate-pop-in flex-col items-center gap-0.5 rounded-card bg-wash-red px-2 py-4">
-            <span className="font-heading text-2xl font-black text-ink tabular-nums">{result.misses}</span>
-            <span className="text-sm font-medium text-ink-soft">
-              lần ghép sai{result.misses > 0 && ` (+${result.misses} giây)`}
-            </span>
-          </div>
-          <div className="flex animate-pop-in flex-col items-center gap-0.5 rounded-card bg-wash-yellow px-2 py-4">
-            <span className="font-heading text-2xl font-black text-ink tabular-nums">
-              {result.previous ? formatMs(result.previous.ms) : "—"}
-            </span>
-            <span className="text-sm font-medium text-ink-soft">kỷ lục trước</span>
-          </div>
+      <div className="flex flex-1 flex-col py-6">
+        <div className="flex items-end justify-center gap-1">
+          <EndPup mood={result.isBest ? "cheer" : "happy"} size={96} />
+          {result.isBest && <SealStamp text="Kỷ lục" size={84} />}
         </div>
+        <h1 className="mt-6 text-center text-xl">{title}</h1>
+        <p className="mt-2 text-center font-display text-5xl font-semibold text-ink tabular-nums">{formatMs(result.ms)}</p>
+        <dl className="mt-6 border-t border-rule">
+          <div className="flex items-baseline justify-between gap-4 border-b border-rule py-3">
+            <dt className="text-ink-soft">Thời gian</dt>
+            <dd className="font-display text-xl font-semibold tabular-nums">{formatMs(result.ms)}</dd>
+          </div>
+          <div className="flex items-baseline justify-between gap-4 border-b border-rule py-3">
+            <dt className="text-ink-soft">Kỷ lục trước</dt>
+            <dd className="font-display text-xl font-semibold tabular-nums">{result.previous ? formatMs(result.previous.ms) : "—"}</dd>
+          </div>
+          <div className="flex items-baseline justify-between gap-4 border-b border-rule py-3">
+            <dt className="text-ink-soft">Số lần ghép sai</dt>
+            <dd className="font-display text-xl font-semibold tabular-nums">
+              {result.misses}
+              {result.misses > 0 && <span className="ml-1.5 font-sans text-sm font-normal text-ink-soft">(+{result.misses} giây)</span>}
+            </dd>
+          </div>
+        </dl>
         <div className="mt-auto flex flex-col gap-2 pt-8 sm:flex-row">
-          <a
-            href={againHref}
-            className="btn-3d inline-flex min-h-14 flex-1 items-center justify-center rounded-btn bg-primary px-4 text-lg font-extrabold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
-          >
-            Chơi lại
-          </a>
+          <Button asChild size="lg" className="flex-1">
+            <a href={againHref}>Chơi lại</a>
+          </Button>
           {learnHref && (
-            <Link
-              href={learnHref}
-              className="btn-3d inline-flex min-h-14 flex-1 items-center justify-center rounded-btn border-2 border-rule bg-surface px-4 text-lg font-bold text-ink [--edge-color:var(--rule)]"
-            >
-              Thử chế độ Học
-            </Link>
+            <Button asChild size="lg" variant="outline" className="flex-1">
+              <Link href={learnHref}>Thử chế độ Học</Link>
+            </Button>
           )}
-          <Link
-            href={exitHref}
-            className="btn-3d inline-flex min-h-14 flex-1 items-center justify-center rounded-btn border-2 border-rule bg-surface px-4 text-lg font-bold text-ink [--edge-color:var(--rule)]"
-          >
-            Xong
-          </Link>
+          <Button asChild size="lg" variant="outline" className="flex-1">
+            <Link href={exitHref}>Xong</Link>
+          </Button>
         </div>
       </div>
     );
@@ -244,15 +227,16 @@ export function MatchGame({
   return (
     <div className="flex flex-1 flex-col">
       <TopBar exitHref={exitHref}>
-        <span role="timer" aria-label="Thời gian" className="font-heading text-xl font-black text-ink tabular-nums">
-          ⏱️ {formatMs(elapsed)}
+        <span role="timer" aria-label="Thời gian" className="inline-flex items-center gap-1.5 text-lg font-semibold text-ink tabular-nums">
+          <Clock className="size-4 text-ink-soft" strokeWidth={1.75} aria-hidden />
+          {formatMs(elapsed)}
         </span>
         {penaltyFlash > 0 && wrong.length > 0 && (
-          <span key={penaltyFlash} className="animate-pop-in text-sm font-bold text-danger">
+          <span key={penaltyFlash} className="animate-in fade-in-0 slide-in-from-bottom-2 text-sm font-semibold text-seal-text duration-200">
             +1 giây
           </span>
         )}
-        <span className="ml-auto text-sm font-bold text-ink-soft tabular-nums">
+        <span className="ml-auto text-sm font-medium text-ink-soft tabular-nums">
           Bảng {boardIndex + 1}/{boards.length}
         </span>
       </TopBar>
@@ -277,12 +261,10 @@ export function MatchGame({
               onClick={() => pick(t)}
               lang={t.side === "term" ? (t.lang === "zh" ? "zh-CN" : "en") : "vi"}
               className={cn(
-                "notebook-card flex min-h-20 items-center justify-center border-2 p-2 text-center font-semibold break-words hyphens-auto text-ink transition-[opacity,transform,border-color] duration-300 sm:min-h-24",
-                isSelected
-                  ? "-translate-y-0.5 border-ink-blue bg-wash-blue"
-                  : "border-transparent hover:border-ink-blue/40",
-                isWrong && "animate-shake border-margin-red bg-wash-red",
-                gone && "pointer-events-none scale-90 border-jade bg-wash-jade opacity-0 delay-200",
+                "flex min-h-20 items-center justify-center rounded-md border border-rule-strong bg-surface p-2 text-center font-medium break-words hyphens-auto text-ink transition-colors duration-[var(--dur-fast)] sm:min-h-24",
+                isSelected ? "border-ink-violet bg-tint-violet ring-1 ring-ink-violet" : "hover:border-ink-soft/60",
+                isWrong && "animate-shake border-seal bg-tint-seal",
+                gone && "tile-gone",
                 tileText(t),
               )}
             >

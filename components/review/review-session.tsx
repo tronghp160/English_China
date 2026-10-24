@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { StudyWord } from "@/lib/practice";
 import { formatInterval } from "@/lib/format";
 import { previewDue, RATINGS, schedule, type DbCard, type RatingValue } from "@/lib/srs/fsrs";
@@ -15,11 +17,12 @@ import { SessionSummary, type SessionResult } from "./session-summary";
 
 export type ReviewItem = QueueItem & { word: StudyWord; direction: Direction };
 
-const RATING_STYLE: Record<RatingValue, { cls: string; emoji: string }> = {
-  1: { cls: "bg-wash-red text-danger border-margin-red/40 [--edge-color:var(--margin-red)]", emoji: "😵" },
-  2: { cls: "bg-wash-yellow text-sun-text border-sun/50 [--edge-color:var(--sun)]", emoji: "🤔" },
-  3: { cls: "bg-wash-jade text-jade-text border-jade/40 [--edge-color:var(--jade)]", emoji: "🙂" },
-  4: { cls: "bg-wash-blue text-ink-blue border-ink-blue/30 [--edge-color:var(--ink-blue)]", emoji: "🤩" },
+// The colour of the top edge says what the rating means: seal = forgot, turmeric = hard, violet = good, leaf = easy.
+const RATING_EDGE: Record<RatingValue, string> = {
+  1: "border-t-seal",
+  2: "border-t-turmeric",
+  3: "border-t-ink-violet",
+  4: "border-t-leaf",
 };
 
 function isTyping(target: EventTarget | null) {
@@ -155,10 +158,7 @@ export function ReviewSession({
           prefs.mascot
             ? {
                 // Again → sad, Hard → think, Good → wink, Easy → cheer.
-                mood: !results.length
-                  ? "happy"
-                  : (["sad", "think", "wink", "cheer"] as const)[results.at(-1)!.rating - 1],
-                key: results.length,
+                mood: !results.length ? "happy" : (["sad", "think", "wink", "cheer"] as const)[results.at(-1)!.rating - 1],
               }
             : undefined
         }
@@ -175,12 +175,14 @@ export function ReviewSession({
           toneColors={prefs.tone_colors}
         />
         {current.isNew && (
-          <p className="mt-3 self-center rounded-full bg-wash-yellow px-3 py-1 text-sm font-bold text-sun-text">✨ Từ mới</p>
+          <Badge variant="outline" className="mt-3 self-center">
+            Từ mới
+          </Badge>
         )}
       </div>
 
       {/* Thumb zone */}
-      <div className="sticky bottom-0 -mx-4 bg-paper/95 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur">
+      <div className="sticky bottom-0 -mx-4 bg-paper/95 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur-sm">
         {flipped && preview ? (
           <div className="grid grid-cols-4 gap-2" role="group" aria-label="Bạn nhớ từ này thế nào?">
             {RATINGS.map((r) => (
@@ -189,34 +191,21 @@ export function ReviewSession({
                 type="button"
                 onClick={() => rate(r.value)}
                 className={cn(
-                  "btn-3d flex min-h-[4.5rem] animate-pop-in flex-col items-center justify-center gap-0.5 rounded-btn border-2 px-1 font-bold",
-                  RATING_STYLE[r.value].cls,
+                  "flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-btn border border-t-[3px] border-rule-strong bg-surface px-1 text-ink transition-colors duration-[var(--dur-fast)] hover:bg-surface-sunk active:translate-y-px",
+                  RATING_EDGE[r.value],
                 )}
               >
-                <span aria-hidden className="text-lg leading-none">
-                  {RATING_STYLE[r.value].emoji}
-                </span>
-                <span className="text-base">{r.label}</span>
-                <span className="text-xs font-normal opacity-80">
-                  {formatInterval(preview[r.value].getTime() - now.getTime())}
-                </span>
-                <kbd className="hidden text-[0.6875rem] font-normal opacity-60 lg:block">
-                  {r.key}
-                </kbd>
+                <span className="text-base font-semibold">{r.label}</span>
+                <span className="text-xs text-ink-soft">{formatInterval(preview[r.value].getTime() - now.getTime())}</span>
+                <kbd className="hidden font-sans text-[0.6875rem] text-ink-faint lg:block">{r.key}</kbd>
               </button>
             ))}
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={flip}
-            className="btn-3d flex min-h-14 w-full items-center justify-center gap-2 rounded-btn bg-primary text-lg font-extrabold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
-          >
+          <Button type="button" size="lg" onClick={flip} className="w-full">
             Lật thẻ
-            <kbd className="hidden rounded border border-primary-foreground/30 px-1.5 text-xs font-normal lg:inline">
-              Space
-            </kbd>
-          </button>
+            <kbd className="hidden rounded-sm border border-primary-foreground/40 px-1.5 font-sans text-xs font-normal lg:inline">Space</kbd>
+          </Button>
         )}
       </div>
     </div>

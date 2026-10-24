@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FlashcardDeck } from "@/components/practice/flashcard-deck";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LearnSession } from "@/components/practice/learn-session";
 import { MatchGame } from "@/components/practice/match-game";
 import { TestSession } from "@/components/practice/test-session";
@@ -23,15 +25,18 @@ function isMode(v: string): v is PracticeMode {
 
 function CannotPractice({ back, why }: { back: string; why: string }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-      <h1 className="text-2xl text-ink">Chưa luyện được</h1>
-      <p className="text-ink-soft">{why}</p>
-      <Link
-        href={back}
-        className="inline-flex min-h-12 items-center rounded-btn bg-primary px-5 font-medium text-primary-foreground"
+    <div className="flex flex-1 flex-col items-center justify-center">
+      <EmptyState
+        figure="grid"
+        title="Chưa luyện được"
+        actions={
+          <Button asChild size="lg">
+            <Link href={back}>Chọn cách luyện khác</Link>
+          </Button>
+        }
       >
-        Chọn cách luyện khác
-      </Link>
+        {why}
+      </EmptyState>
     </div>
   );
 }

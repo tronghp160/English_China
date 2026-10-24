@@ -1,21 +1,18 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { LangMark } from "@/components/lang-mark";
+import { Button } from "@/components/ui/button";
+import { ChipChoice, SegmentedRadio } from "@/components/ui/segmented-radio";
 import { Switch } from "@/components/ui/switch";
 import { LANGUAGES, type PracticeMode } from "@/lib/lang/registry";
 import type { LangCode } from "@/lib/lang/types";
 import { countsFor, MODE_INFO } from "@/lib/practice/questions";
-import {
-  DEFAULT_TEST_TYPES,
-  TEST_TYPE_LABEL,
-  TEST_TYPES,
-  type TestAsk,
-  type TestType,
-} from "@/lib/practice/test";
-import { MODE_LOOK } from "./mode-look";
+import { DEFAULT_TEST_TYPES, TEST_TYPE_LABEL, TEST_TYPES, type TestAsk, type TestType } from "@/lib/practice/test";
 import { cn } from "@/lib/utils";
+import { ModeThumb } from "./mode-look";
 
 type DeckOption = { id: string; name: string; language: LangCode; wordCount: number };
 
@@ -26,48 +23,6 @@ const SOURCES = [
   { value: "recent", label: "Mới thêm" },
 ] as const;
 
-function Chips<T extends string | number>({
-  name,
-  legend,
-  value,
-  onChange,
-  options,
-}: {
-  name: string;
-  legend: string;
-  value: T;
-  onChange: (v: T) => void;
-  options: { value: T; label: string }[];
-}) {
-  return (
-    <fieldset>
-      <legend className="mb-2 font-heading text-base font-extrabold text-ink">{legend}</legend>
-      <div className="flex flex-wrap gap-2">
-        {options.map((o) => (
-          <label
-            key={String(o.value)}
-            className={cn(
-              "inline-flex min-h-11 cursor-pointer items-center rounded-full border-2 px-4 text-sm font-semibold transition-colors has-focus-visible:outline-2 has-focus-visible:outline-ink-blue",
-              value === o.value
-                ? "border-ink-blue bg-ink-blue text-primary-foreground"
-                : "border-rule bg-surface text-ink-soft hover:text-ink",
-            )}
-          >
-            <input
-              type="radio"
-              name={name}
-              className="sr-only"
-              checked={value === o.value}
-              onChange={() => onChange(o.value)}
-            />
-            {o.label}
-          </label>
-        ))}
-      </div>
-    </fieldset>
-  );
-}
-
 // How the set size reads per mode (questions by default).
 const COUNT_UNIT: Partial<Record<PracticeMode, { legend: string; unit: string }>> = {
   flashcard: { legend: "Số thẻ", unit: "thẻ" },
@@ -75,62 +30,14 @@ const COUNT_UNIT: Partial<Record<PracticeMode, { legend: string; unit: string }>
   learn: { legend: "Số từ", unit: "từ" },
 };
 
-const STUDY_GAMES: PracticeMode[] = ["learn", "test", "match"];
+// Ways to study the whole deck come first; the rest train one skill at a time.
+const STUDY_GAMES: PracticeMode[] = ["learn", "test", "match", "flashcard"];
 
 const ASKS: { value: TestAsk; label: string }[] = [
   { value: "both", label: "Trộn" },
   { value: "term", label: "Từ" },
   { value: "meaning", label: "Nghĩa" },
 ];
-
-/** Multi-select chips (at least one stays on). */
-function CheckChips<T extends string>({
-  legend,
-  value,
-  onChange,
-  options,
-}: {
-  legend: string;
-  value: T[];
-  onChange: (v: T[]) => void;
-  options: { value: T; label: string }[];
-}) {
-  return (
-    <fieldset>
-      <legend className="mb-2 font-heading text-base font-extrabold text-ink">{legend}</legend>
-      <div className="flex flex-wrap gap-2">
-        {options.map((o) => {
-          const on = value.includes(o.value);
-          const last = on && value.length === 1;
-          return (
-            <label
-              key={o.value}
-              className={cn(
-                "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border-2 px-4 text-sm font-semibold transition-colors has-focus-visible:outline-2 has-focus-visible:outline-ink-blue",
-                on
-                  ? "border-ink-blue bg-ink-blue text-primary-foreground"
-                  : "border-rule bg-surface text-ink-soft hover:text-ink",
-                last && "cursor-default",
-              )}
-            >
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={on}
-                disabled={last}
-                onChange={() =>
-                  onChange(on ? value.filter((v) => v !== o.value) : [...value, o.value])
-                }
-              />
-              {on && <Check className="size-4" strokeWidth={3} aria-hidden />}
-              {o.label}
-            </label>
-          );
-        })}
-      </div>
-    </fieldset>
-  );
-}
 
 export function PracticeSetup({
   decks,
@@ -173,39 +80,23 @@ export function PracticeSetup({
     router.push(`/practice/${activeMode}?${q}`);
   }
 
-  // Study games get wide cards on phones (icon beside the text); skills stay a 2-column grid.
-  function modeCard(m: PracticeMode, wide: boolean) {
-    const look = MODE_LOOK[m];
-    const Icon = look.icon;
-    const selected = activeMode === m;
+  // A mode is a radio card: a one-color sketch of how it works, its name and one line.
+  // The chosen card gets a 2px violet outline and a pale violet fill; no check mark flies in.
+  function modeCard(m: PracticeMode, big: boolean) {
+    const zhOnly = !LANGUAGES.en.practiceModes.includes(m);
     return (
       <label
         key={m}
         className={cn(
-          "relative flex cursor-pointer gap-2 rounded-card border-2 bg-surface p-3.5 shadow-card transition-transform has-focus-visible:outline-2 has-focus-visible:outline-ink-blue",
-          wide ? "min-h-20 items-center gap-3 pr-10 sm:min-h-32 sm:flex-col sm:items-start sm:gap-2 sm:pr-3.5" : "min-h-32 flex-col",
-          selected
-            ? cn(look.ring, "-translate-y-0.5")
-            : "border-transparent hover:-translate-y-0.5",
+          "relative flex cursor-pointer flex-col gap-2 rounded-btn border border-input bg-surface p-3.5 text-ink-soft transition-colors hover:border-ink-soft/50 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink-violet has-checked:border-ink-violet has-checked:bg-tint-violet has-checked:text-ink-violet has-checked:ring-1 has-checked:ring-ink-violet",
+          big ? "min-h-32" : "min-h-28",
         )}
       >
-        <input
-          type="radio"
-          name="mode"
-          className="sr-only"
-          checked={activeMode === m}
-          onChange={() => setMode(m)}
-        />
-        <span className={cn("icon-tile size-11", look.tile)}>
-          <Icon className="size-6" aria-hidden />
-        </span>
-        {selected && (
-          <span className="absolute top-3 right-3 grid size-6 animate-pop-in place-items-center rounded-full bg-ink-blue text-primary-foreground">
-            <Check className="size-4" strokeWidth={3} aria-hidden />
-          </span>
-        )}
-        <span className="flex flex-col gap-1">
-          <span className="font-bold text-ink">{MODE_INFO[m].label}</span>
+        <input type="radio" name="mode" className="sr-only" checked={activeMode === m} onChange={() => setMode(m)} />
+        <ModeThumb mode={m} />
+        {zhOnly && <LangMark lang="zh" className="absolute top-3 right-3" />}
+        <span className="flex flex-col gap-0.5">
+          <span className="font-semibold text-ink">{MODE_INFO[m].label}</span>
           <span className="text-sm leading-snug text-ink-soft">{MODE_INFO[m].hint}</span>
         </span>
       </label>
@@ -213,91 +104,81 @@ export function PracticeSetup({
   }
 
   return (
-    <form onSubmit={start} className="flex flex-col gap-6">
+    <form onSubmit={start} className="flex flex-col gap-8">
       <fieldset>
-        <legend className="mb-2 font-heading text-base font-extrabold text-ink">Chế độ</legend>
-        <p className="mb-2 text-sm font-semibold text-ink-soft">Học kiểu Quizlet</p>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <legend className="mb-3 text-lg font-semibold">Chế độ</legend>
+        <p className="mb-2 text-sm font-medium text-ink-soft">Học bộ từ</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {modes.filter((m) => STUDY_GAMES.includes(m)).map((m) => modeCard(m, true))}
         </div>
-        <p className="mt-5 mb-2 text-sm font-semibold text-ink-soft">Luyện từng kỹ năng</p>
-        <div className="grid grid-cols-2 gap-3">
+        <p className="mt-6 mb-2 text-sm font-medium text-ink-soft">Luyện riêng từng kỹ năng</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {modes.filter((m) => !STUDY_GAMES.includes(m)).map((m) => modeCard(m, false))}
         </div>
       </fieldset>
 
-      <label className="flex flex-col gap-2">
-        <span className="font-heading text-base font-extrabold text-ink">Bộ từ</span>
-        <select
-          value={scope}
-          onChange={(e) => setScope(e.target.value)}
-          className="h-12 rounded-btn border-2 border-rule bg-surface px-3 font-medium text-ink"
-        >
-          {langs.map((l) => (
-            <option key={l} value={`lang:${l}`}>
-              Mọi bộ {LANGUAGES[l].label.toLowerCase()}
-            </option>
-          ))}
-          {decks.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name} ({d.wordCount})
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <Chips
-        name="count"
-        legend={COUNT_UNIT[activeMode]?.legend ?? "Số câu"}
-        value={activeCount}
-        onChange={setCount}
-        options={counts.map((n) => ({
-          value: n,
-          label: n === 200 ? "Cả bộ" : `${n} ${COUNT_UNIT[activeMode]?.unit ?? "câu"}`,
-        }))}
-      />
-      {activeMode === "test" && (
-        <>
-          <CheckChips
-            legend="Dạng câu"
-            value={testTypes}
-            onChange={setTestTypes}
-            options={TEST_TYPES.map((t) => ({ value: t, label: TEST_TYPE_LABEL[t] }))}
-          />
-          <Chips name="ask" legend="Hỏi bằng" value={ask} onChange={setAsk} options={ASKS} />
-        </>
-      )}
-      <Chips
-        name="source"
-        legend="Nguồn từ"
-        value={source}
-        onChange={setSource}
-        options={[...SOURCES]}
-      />
-
-      {/* Match logs no reviews, so it has nothing to count. */}
-      {activeMode !== "match" && (
-        <label className="flex min-h-12 items-center justify-between gap-4 rounded-card border border-rule bg-surface px-4 py-3 shadow-card">
-          <span>
-            <span className="block font-medium text-ink">Tính vào ôn tập</span>
-            <span className="block text-sm text-ink-soft">
-              Kết quả luyện tập sẽ thay đổi lịch ôn của từ.
-            </span>
+      <div className="flex flex-col gap-6">
+        <label className="flex flex-col gap-2">
+          <span className="text-sm font-semibold text-ink">Bộ từ</span>
+          <span className="relative">
+            <select
+              value={scope}
+              onChange={(e) => setScope(e.target.value)}
+              className="h-11 w-full appearance-none rounded-btn border border-input bg-surface pr-9 pl-3 text-ink outline-none focus-visible:border-ink-violet focus-visible:ring-3 focus-visible:ring-tint-violet"
+            >
+              {langs.map((l) => (
+                <option key={l} value={`lang:${l}`}>
+                  Mọi bộ {LANGUAGES[l].label.toLowerCase()}
+                </option>
+              ))}
+              {decks.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name} ({d.wordCount})
+                </option>
+              ))}
+            </select>
+            <ChevronDown aria-hidden className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-ink-soft" />
           </span>
-          <Switch
-            checked={countsToSrs}
-            onCheckedChange={setCountsToSrs}
-            aria-label="Tính vào ôn tập"
-          />
         </label>
-      )}
 
-      <button
-        type="submit"
-        className="btn-3d min-h-14 rounded-btn bg-primary text-lg font-extrabold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
-      >
-        Bắt đầu luyện 🚀
-      </button>
+        <SegmentedRadio
+          name="count"
+          legend={COUNT_UNIT[activeMode]?.legend ?? "Số câu"}
+          value={activeCount}
+          onChange={setCount}
+          options={counts.map((n) => ({
+            value: n,
+            label: n === 200 ? "Cả bộ" : `${n} ${COUNT_UNIT[activeMode]?.unit ?? "câu"}`,
+          }))}
+        />
+        {activeMode === "test" && (
+          <>
+            <ChipChoice
+              legend="Dạng câu"
+              value={testTypes}
+              onChange={setTestTypes}
+              options={TEST_TYPES.map((t) => ({ value: t, label: TEST_TYPE_LABEL[t] }))}
+            />
+            <SegmentedRadio name="ask" legend="Hỏi bằng" value={ask} onChange={setAsk} options={ASKS} />
+          </>
+        )}
+        <SegmentedRadio name="source" legend="Nguồn từ" value={source} onChange={setSource} options={[...SOURCES]} />
+
+        {/* Match logs no reviews, so it has nothing to count. */}
+        {activeMode !== "match" && (
+          <label className="flex min-h-14 items-center justify-between gap-4 border-y border-rule py-3">
+            <span>
+              <span className="block font-medium text-ink">Tính vào ôn tập</span>
+              <span className="block text-sm text-ink-soft">Kết quả luyện tập sẽ thay đổi lịch ôn của từ.</span>
+            </span>
+            <Switch checked={countsToSrs} onCheckedChange={setCountsToSrs} aria-label="Tính vào ôn tập" />
+          </label>
+        )}
+      </div>
+
+      <Button type="submit" size="lg" className="w-full">
+        Bắt đầu luyện
+      </Button>
     </form>
   );
 }

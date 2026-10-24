@@ -5,9 +5,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
 import { Pup } from "@/components/mascot/pup";
-import { Confetti } from "@/components/review/confetti";
+import { SealStamp } from "@/components/review/seal-stamp";
 import { SessionBar, useOutboxStatus } from "@/components/review/session-bar";
-import { ProgressRing } from "@/components/stats/progress-ring";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { PronounceButton } from "@/components/word/pronounce-button";
 import { formatDuration } from "@/lib/format";
 import { reviewModeOf, type Question } from "@/lib/practice/questions";
@@ -38,11 +39,11 @@ import { MeaningLine, Options, TermLine } from "./question-parts";
 // Event handlers only; a module helper keeps the React compiler purity rule quiet.
 const clock = () => Date.now();
 
-const KIND_LOOK: Partial<Record<Question["kind"], { label: string; tone: string }>> = {
-  choice: { label: "Trắc nghiệm", tone: "bg-wash-grape text-grape-text" },
-  truefalse: { label: "Đúng / Sai", tone: "bg-wash-pink text-pink-text" },
-  typing: { label: "Gõ từ", tone: "bg-wash-sky text-sky-text" },
-  cloze: { label: "Điền từ", tone: "bg-wash-yellow text-sun-text" },
+const KIND_LABEL: Partial<Record<Question["kind"], string>> = {
+  choice: "Trắc nghiệm",
+  truefalse: "Đúng / Sai",
+  typing: "Gõ từ",
+  cloze: "Điền từ",
 };
 
 function questionText(q: Question): string {
@@ -79,13 +80,11 @@ function TrueFalse({
           aria-pressed={value === v}
           onClick={() => onChange(v)}
           className={cn(
-            "btn-3d flex min-h-14 items-center justify-center gap-2 rounded-btn border-2 text-lg font-bold text-ink",
-            value === v
-              ? "border-ink-blue bg-wash-blue [--edge-color:var(--ink-blue)]"
-              : "border-rule bg-surface [--edge-color:var(--rule)] hover:bg-wash-blue",
+            "flex min-h-14 items-center justify-center gap-2 rounded-btn border text-lg font-semibold text-ink transition-colors",
+            value === v ? "border-ink-violet bg-tint-violet ring-1 ring-ink-violet" : "border-input bg-surface hover:bg-surface-sunk",
           )}
         >
-          <Icon className="size-5" aria-hidden />
+          <Icon className="size-5" strokeWidth={1.75} aria-hidden />
           {label}
         </button>
       ))}
@@ -96,18 +95,16 @@ function TrueFalse({
 function QuestionCard({
   q,
   index,
-  total,
   answer,
   onAnswer,
 }: {
   q: Question;
   index: number;
-  total: number;
   answer: string | undefined;
   onAnswer: (v: string) => void;
 }) {
   const zh = q.word.language === "zh";
-  const look = KIND_LOOK[q.kind];
+  const label = KIND_LABEL[q.kind];
   const titleId = `q-${index}-title`;
   let body: React.ReactNode = null;
 
@@ -116,7 +113,7 @@ function QuestionCard({
       body = (
         <>
           <div className="flex flex-col items-center gap-2 py-3">
-            {q.prompt === "term" ? <TermLine word={q.word} /> : <MeaningLine word={q.word} />}
+            {q.prompt === "term" ? <TermLine word={q.word} bare /> : <MeaningLine word={q.word} bare />}
             <p className="text-sm text-ink-soft">
               {q.prompt === "term" ? "Nghĩa của từ này là gì?" : zh ? "Chữ Hán nào?" : "Từ nào?"}
             </p>
@@ -137,12 +134,12 @@ function QuestionCard({
       body = (
         <>
           <div className="flex flex-col items-center gap-2 py-3 text-center">
-            {q.prompt === "term" ? <TermLine word={q.word} /> : <MeaningLine word={q.word} />}
+            {q.prompt === "term" ? <TermLine word={q.word} bare /> : <MeaningLine word={q.word} bare />}
             <p className="text-sm text-ink-soft">{q.prompt === "term" ? "có nghĩa là" : "là từ"}</p>
             <p
               lang={q.prompt === "meaning" && zh ? "zh-CN" : undefined}
               className={cn(
-                "rounded-btn bg-wash-pink px-4 py-2 text-xl font-semibold text-ink",
+                "rounded-btn border border-rule bg-surface-sunk px-4 py-2 text-xl font-semibold text-ink",
                 q.prompt === "meaning" && zh && "font-hanzi text-3xl",
               )}
             >
@@ -157,12 +154,12 @@ function QuestionCard({
       body = (
         <>
           <div className="py-3">
-            <MeaningLine word={q.word} />
+            <MeaningLine word={q.word} bare />
           </div>
           <label htmlFor={`q-${index}-input`} className="mb-1 block text-sm text-ink-soft">
             {zh ? "Gõ chữ Hán hoặc pinyin" : "Gõ từ tiếng Anh"}
           </label>
-          <input
+          <Input
             id={`q-${index}-input`}
             autoComplete="off"
             autoCapitalize="off"
@@ -171,7 +168,10 @@ function QuestionCard({
             value={answer ?? ""}
             onChange={(e) => onAnswer(e.target.value)}
             lang={zh ? "zh-CN" : "en"}
-            className="h-14 w-full rounded-btn border-2 border-rule bg-surface px-4 text-xl text-ink outline-none focus:border-ink-blue"
+            className={cn(
+              "h-14 rounded-none border-0 border-b-2 border-ink-violet bg-transparent px-1 text-xl hover:border-ink-violet focus-visible:ring-0",
+              zh ? "font-hanzi" : "font-display",
+            )}
           />
         </>
       );
@@ -185,7 +185,7 @@ function QuestionCard({
             className={cn("py-3 text-xl leading-relaxed text-ink", zh && "font-hanzi text-2xl")}
           >
             {q.cloze.before}
-            <span className="mx-1 inline-block min-w-16 border-b-2 border-ink-blue text-center font-semibold text-ink-blue">
+            <span className="mx-1 inline-block min-w-16 border-b-2 border-ink-violet text-center font-semibold text-ink-violet">
               {picked ?? " "}
             </span>
             {q.cloze.after}
@@ -207,30 +207,32 @@ function QuestionCard({
   }
 
   return (
-    <section
-      id={`q-${index}`}
-      aria-labelledby={titleId}
-      className="notebook-card scroll-mt-20 p-4"
-    >
-      <div className="flex items-center gap-2">
-        <h2 id={titleId} className="text-base text-ink">
-          Câu {index + 1}/{total}
-        </h2>
-        {look && (
-          <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold", look.tone)}>
-            {look.label}
-          </span>
-        )}
-      </div>
+    <section id={`q-${index}`} aria-labelledby={titleId} className="scroll-mt-20 py-5 pr-4 pl-[calc(var(--margin-x)+1rem)]">
+      <h2 id={titleId} className="flex items-baseline gap-2 text-base">
+        <span className="font-display text-lg font-semibold tabular-nums">Câu {index + 1}:</span>
+        {label && <span className="text-sm font-normal text-ink-soft">{label}</span>}
+      </h2>
       {body}
     </section>
   );
 }
 
 function verdict(pct: number) {
-  if (pct >= 90) return { emoji: "🏆", text: "Xuất sắc!" };
-  if (pct >= 70) return { emoji: "🎉", text: "Làm tốt lắm!" };
-  return { emoji: "💪", text: "Cố thêm chút nữa nhé!" };
+  if (pct >= 90) return "Xuất sắc!";
+  if (pct >= 70) return "Làm tốt lắm!";
+  return "Cố thêm chút nữa nhé!";
+}
+
+/** The teacher's pen: a hand-drawn red loop around the percentage, a little crooked. */
+function PenScore({ percent }: { percent: number }) {
+  return (
+    <span className="relative grid size-28 shrink-0 -rotate-6 place-items-center text-seal-text">
+      <svg viewBox="0 0 112 112" aria-hidden className="absolute inset-0 size-full" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round">
+        <path d="M58 9C84 8 104 28 103 56c-1 28-22 47-50 46C27 101 8 80 10 53 12 27 34 10 62 11c8 0 14 2 20 5" />
+      </svg>
+      <span className="font-display text-2xl font-semibold tabular-nums">{percent}%</span>
+    </span>
+  );
 }
 
 function Results({
@@ -258,107 +260,75 @@ function Results({
   const { prefs } = useMe();
 
   return (
-    <div className="relative flex flex-1 flex-col py-6">
-      {grade.percent >= 90 && <Confetti />}
-      <div className="flex flex-col items-center gap-2 text-center">
-        <div className="flex items-end">
-          <ProgressRing
-            value={grade.percent}
-            size={140}
-            stroke={14}
-            trackClassName="text-muted"
-            barClassName={grade.percent >= 70 ? "text-jade" : "text-sun"}
-          >
-            <span className="font-heading text-4xl font-black text-ink tabular-nums">
-              {grade.percent}%
-            </span>
-          </ProgressRing>
-          {prefs.mascot && (
-            <Pup
-              mood={grade.percent >= 70 ? "cheer" : grade.percent >= 40 ? "happy" : "sad"}
-              size={84}
-              className="-ml-4"
-            />
-          )}
+    <div className="flex flex-1 flex-col py-6">
+      <header className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl">{mood}</h1>
+          <p className="mt-3 font-display text-5xl leading-none font-semibold text-ink tabular-nums">
+            Đúng {grade.correct}/{grade.total}
+          </p>
+          <p className="mt-3 flex flex-wrap gap-x-4 text-sm text-ink-soft">
+            <span>{formatDuration(durationMs)}</span>
+            <span>+{grade.correct} XP</span>
+          </p>
         </div>
-        <h1 className="mt-2 text-2xl text-ink">
-          {mood.text} {!prefs.mascot && <span aria-hidden>{mood.emoji}</span>}
-        </h1>
-        <p className="font-semibold text-ink">
-          Đúng {grade.correct}/{grade.total}
-        </p>
-        <p className="text-sm text-ink-soft">
-          {formatDuration(durationMs)} · +{grade.correct} XP
-        </p>
-      </div>
+        <div className="flex shrink-0 items-end">
+          {prefs.mascot && (
+            <Pup mood={grade.percent >= 70 ? "cheer" : grade.percent >= 40 ? "happy" : "sad"} size={72} className="-mr-3" />
+          )}
+          <PenScore percent={grade.percent} />
+        </div>
+      </header>
+      {grade.percent === 100 && (
+        <div className="mt-4">
+          <SealStamp text="Trọn điểm" size={72} />
+        </div>
+      )}
 
       {sync.pending > 0 && (
-        <p role="status" className="mt-4 rounded-btn bg-wash-yellow px-3 py-2 text-sm text-ink">
+        <p role="status" className="mt-4 rounded-btn bg-tint-turmeric px-3 py-2 text-sm text-ink">
           Còn {sync.pending} kết quả chưa gửi được. Chúng được lưu trên máy và sẽ tự gửi khi có mạng.
         </p>
       )}
 
       <div className="mt-6 grid gap-2 sm:grid-cols-2">
         {wrong.length > 0 && (
-          <button
-            type="button"
-            onClick={onRetryWrong}
-            className="btn-3d min-h-14 rounded-btn bg-primary px-4 text-lg font-extrabold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
-          >
+          <Button type="button" size="lg" onClick={onRetryWrong}>
             Làm lại câu sai ({wrong.length})
-          </button>
+          </Button>
         )}
         {wrong.length > 0 && learnHref && (
-          <Link
-            href={learnHref(wrong.map((i) => i.question.word.id))}
-            className="btn-3d inline-flex min-h-14 items-center justify-center rounded-btn border-2 border-rule bg-surface px-4 text-lg font-bold text-ink [--edge-color:var(--rule)]"
-          >
-            Học các từ sai
-          </Link>
+          <Button asChild size="lg" variant="outline">
+            <Link href={learnHref(wrong.map((i) => i.question.word.id))}>Học các từ sai</Link>
+          </Button>
         )}
-        <a
-          href={againHref}
-          className="btn-3d inline-flex min-h-14 items-center justify-center rounded-btn border-2 border-rule bg-surface px-4 text-lg font-bold text-ink [--edge-color:var(--rule)]"
-        >
-          Làm bài mới
-        </a>
-        <Link
-          href={exitHref}
-          className="btn-3d inline-flex min-h-14 items-center justify-center rounded-btn border-2 border-rule bg-surface px-4 text-lg font-bold text-ink [--edge-color:var(--rule)]"
-        >
-          Xong
-        </Link>
+        <Button asChild size="lg" variant="outline">
+          <a href={againHref}>Làm bài mới</a>
+        </Button>
+        <Button asChild size="lg" variant="outline">
+          <Link href={exitHref}>Xong</Link>
+        </Button>
       </div>
 
       {matchHref && (
         <p className="mt-4 text-center text-sm text-ink-soft">
           Đổi gió một chút?{" "}
-          <Link href={matchHref} className="font-semibold text-ink-blue underline-offset-4 hover:underline">
-            Chơi Ghép thẻ ⏱️
+          <Link href={matchHref} className="font-medium text-ink-violet underline-offset-4 hover:underline">
+            Chơi Ghép thẻ
           </Link>
         </p>
       )}
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-lg text-ink">Xem lại bài</h2>
+          <h2 className="text-lg">Xem lại bài</h2>
           {wrong.length > 0 && wrong.length < grade.total && (
-            <button
-              type="button"
-              aria-pressed={onlyWrong}
-              onClick={() => setOnlyWrong(!onlyWrong)}
-              className={cn(
-                "inline-flex min-h-11 items-center rounded-full border-2 px-4 text-sm font-semibold",
-                onlyWrong
-                  ? "border-ink-blue bg-ink-blue text-primary-foreground"
-                  : "border-rule bg-surface text-ink-soft hover:text-ink",
-              )}
-            >
+            <Button type="button" variant={onlyWrong ? "secondary" : "outline"} size="sm" aria-pressed={onlyWrong} onClick={() => setOnlyWrong(!onlyWrong)}>
               Chỉ câu sai
-            </button>
+            </Button>
           )}
         </div>
-        <ol className="flex flex-col gap-2">
+        <ol className="ruled-list border-y border-rule">
           {shown.map((item) => {
             const n = grade.items.indexOf(item) + 1;
             const q = item.question;
@@ -367,37 +337,34 @@ function Results({
             const zh = q.word.language === "zh";
             return (
               <li key={q.id}>
-                <details open={!ok} className="group notebook-card">
-                  <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 py-2">
+                <details open={!ok} className="group">
+                  <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-1 py-2">
                     {ok ? (
-                      <Check className="size-5 shrink-0 text-jade-text" aria-label="Đúng" />
+                      <Check className="size-5 shrink-0 text-leaf-text" aria-label="Đúng" />
                     ) : (
-                      <X className="size-5 shrink-0 text-danger" aria-label="Sai" />
+                      <X className="size-5 shrink-0 text-seal-text" aria-label="Sai" />
                     )}
-                    <span className="shrink-0 text-sm font-bold text-ink-soft">Câu {n}</span>
+                    <span className="shrink-0 font-display text-sm font-semibold text-ink-soft tabular-nums">Câu {n}</span>
                     {/* mixed scripts (term = meaning?), so no CJK serif face here */}
                     <span className="min-w-0 flex-1 truncate text-ink">{questionText(q)}</span>
-                    {item.result === "close" && (
-                      <span className="shrink-0 rounded-full bg-wash-yellow px-2 py-0.5 text-xs font-semibold text-sun-text">
-                        Gần đúng
-                      </span>
-                    )}
+                    {item.result === "close" && <span className="shrink-0 text-xs font-medium text-turmeric-text">Gần đúng</span>}
                   </summary>
-                  <div className="flex items-start gap-3 border-t border-rule px-4 py-3">
+                  <div className="flex items-start gap-3 border-t border-rule px-1 py-3">
                     <div className="min-w-0 flex-1 space-y-1 text-[0.9375rem]">
-                      <p className={ok ? "text-jade-text" : "text-danger"}>
-                        Bạn trả lời: <span className="font-semibold">{given ?? "(bỏ trống)"}</span>
+                      <p className={ok ? "text-leaf-text" : "text-seal-text"}>
+                        Bạn chọn:{" "}
+                        <span className={cn("font-semibold", !ok && "line-through decoration-seal decoration-2")}>{given ?? "(bỏ trống)"}</span>
                       </p>
                       {(!ok || item.result === "close") && (
-                        <p className="text-jade-text">
-                          Đáp án: <span className="font-semibold">{expectedText(q)}</span>
+                        <p className="text-leaf-text">
+                          Đáp án đúng: <span className="font-semibold">{expectedText(q)}</span>
                         </p>
                       )}
                       <p className="text-ink-soft">
                         <span lang={zh ? "zh-CN" : "en"} className={cn("font-semibold text-ink", zh && "font-hanzi")}>
                           {q.word.term}
                         </span>
-                        {q.word.reading && ` · ${q.word.reading}`} — {q.word.meaning_vi}
+                        {q.word.reading && <span> {q.word.reading}</span>} {q.word.meaning_vi}
                       </p>
                     </div>
                     <PronounceButton text={q.word.term} lang={q.word.language} />
@@ -499,7 +466,7 @@ export function TestSession({
         aria-label="Danh sách câu"
         className="fixed top-20 left-[calc(50%+22rem)] hidden w-40 lg:block"
       >
-        <p className="mb-2 text-sm font-bold text-ink-soft">Danh sách câu</p>
+        <p className="mb-2 text-sm font-semibold text-ink-soft">Danh sách câu</p>
         <div className="grid grid-cols-4 gap-1.5">
           {questions.map((q, i) => (
             <a
@@ -507,10 +474,10 @@ export function TestSession({
               href={`#q-${i}`}
               aria-label={`Câu ${i + 1}${answers[q.id]?.trim() ? ", đã làm" : ""}`}
               className={cn(
-                "grid size-9 place-items-center rounded-lg text-sm font-bold tabular-nums",
+                "grid size-9 place-items-center rounded-full text-sm font-medium tabular-nums",
                 answers[q.id]?.trim()
-                  ? "bg-ink-blue text-primary-foreground"
-                  : "border-2 border-rule bg-surface text-ink-soft hover:text-ink",
+                  ? "bg-ink-violet text-primary-foreground"
+                  : "border border-input bg-surface text-ink-soft hover:text-ink",
               )}
             >
               {i + 1}
@@ -519,44 +486,41 @@ export function TestSession({
         </div>
       </nav>
 
-      <h1 className="sr-only">Kiểm tra</h1>
-      <div className="flex flex-col gap-4 py-3">
+      <div className="my-3 overflow-hidden rounded-card border border-rule bg-surface">
+        <div className="margin-line">
+          <h1 className="border-b border-rule py-3 pr-4 pl-[calc(var(--margin-x)+1rem)] font-display text-lg font-semibold">Bài kiểm tra</h1>
+          <div className="divide-y divide-rule">
         {questions.map((q, i) => (
           <QuestionCard
             key={q.id}
             q={q}
             index={i}
-            total={questions.length}
             answer={answers[q.id]}
             onAnswer={(v) => setAnswers((a) => ({ ...a, [q.id]: v }))}
           />
         ))}
+          </div>
+        </div>
       </div>
 
-      <div className="sticky bottom-0 -mx-4 mt-auto flex items-center gap-3 border-t border-rule bg-paper/95 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur">
-        <p className="flex-1 font-semibold text-ink tabular-nums">
+      <div className="sticky bottom-0 -mx-4 mt-auto flex items-center gap-3 border-t border-rule bg-paper/95 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur-sm">
+        <p className="flex-1 font-medium text-ink tabular-nums">
           Đã làm {answered}/{questions.length}
         </p>
-        <button
-          type="button"
-          onClick={() => (left > 0 ? setConfirmOpen(true) : submit())}
-          className="btn-3d min-h-12 rounded-btn bg-primary px-6 text-lg font-extrabold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
-        >
+        <Button type="button" size="lg" onClick={() => (left > 0 ? setConfirmOpen(true) : submit())}>
           Nộp bài
-        </button>
+        </Button>
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent className="rounded-sheet">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Còn {left} câu chưa làm. Vẫn nộp?</AlertDialogTitle>
             <AlertDialogDescription>Câu bỏ trống được tính là sai.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-11 rounded-btn">Làm tiếp</AlertDialogCancel>
-            <AlertDialogAction className="min-h-11 rounded-btn" onClick={submit}>
-              Nộp bài
-            </AlertDialogAction>
+            <AlertDialogCancel>Làm tiếp</AlertDialogCancel>
+            <AlertDialogAction onClick={submit}>Nộp bài</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

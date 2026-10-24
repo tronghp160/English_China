@@ -4,9 +4,10 @@ import { Check, Volume2, X } from "lucide-react";
 import { useCallback, type Ref } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
 import { Pup } from "@/components/mascot/pup";
+import { Button } from "@/components/ui/button";
 import { PosBadge } from "@/components/word/pos-badge";
 import { PronounceButton } from "@/components/word/pronounce-button";
-import { PinyinText } from "@/components/zh/pinyin-text";
+import { Paper, WordSpecimen } from "@/components/word/word-specimen";
 import { answerMood, say, seedOf } from "@/lib/mascot/lines";
 import { TONE_GLYPH, type StudyWord } from "@/lib/practice";
 import type { Option } from "@/lib/practice/questions";
@@ -34,45 +35,61 @@ export function useSpeak() {
   );
 }
 
-export function TermLine({ word, showReading = true }: { word: StudyWord; showReading?: boolean }) {
+/** The word as a medium specimen: on ruled paper (English) or in 田字格 cells (Chinese). */
+export function TermLine({ word, showReading = true, bare = false }: { word: StudyWord; showReading?: boolean; bare?: boolean }) {
   const { prefs } = useMe();
-  const zh = word.language === "zh";
+  // Inside a page that is already ruled paper (the test sheet) an English word is just set in type.
+  if (bare && word.language === "en")
+    return (
+      <div className="flex flex-col items-center gap-1 text-center">
+        <span lang="en" className="font-display text-3xl font-medium text-ink">
+          {word.term}
+        </span>
+        {showReading && word.reading && <span className="font-ipa text-ink-soft">{word.reading}</span>}
+      </div>
+    );
   return (
-    <div className="flex flex-col items-center gap-1 text-center">
-      <span
-        lang={zh ? "zh-CN" : "en"}
-        className={cn("font-bold text-ink", zh ? "font-hanzi text-5xl" : "text-4xl")}
-      >
-        {word.term}
-      </span>
-      {showReading &&
-        word.reading &&
-        (zh ? (
-          <PinyinText
-            pinyin={word.reading}
-            colored={prefs.tone_colors}
-            className="text-lg font-medium"
-          />
-        ) : (
-          <span className="font-ipa text-ink-soft">{word.reading}</span>
-        ))}
-    </div>
+    <WordSpecimen
+      lang={word.language}
+      term={word.term}
+      reading={word.reading}
+      size="md"
+      toneColors={prefs.tone_colors}
+      showReading={showReading}
+      align="center"
+      className="w-full max-w-md"
+    />
   );
 }
 
-export function MeaningLine({ word }: { word: StudyWord }) {
+/** The Vietnamese meaning written on a ruled page, with the part-of-speech tags under it. */
+export function MeaningLine({ word, bare = false }: { word: StudyWord; bare?: boolean }) {
+  if (bare)
+    return (
+      <div className="flex flex-col items-center gap-2 text-center">
+        <p className="text-2xl font-medium text-ink">{word.meaning_vi}</p>
+        <div className="flex flex-wrap justify-center gap-1.5">
+          {word.parts_of_speech.map((p) => (
+            <PosBadge key={p} pos={p} />
+          ))}
+        </div>
+      </div>
+    );
   return (
-    <div className="flex flex-col items-center gap-2 text-center">
-      <p className="text-2xl font-semibold text-ink">{word.meaning_vi}</p>
-      <div className="flex flex-wrap justify-center gap-1.5">
+    <Paper className="w-full max-w-md" innerClassName="pt-0">
+      <p className="flex min-h-[calc(var(--line)*2)] items-end text-[1.5rem] leading-[var(--line)] font-medium text-ink">
+        <span className="relative top-[0.3em]">{word.meaning_vi}</span>
+      </p>
+      <div className="flex min-h-[var(--line)] flex-wrap items-center gap-1.5 pt-1">
         {word.parts_of_speech.map((p) => (
           <PosBadge key={p} pos={p} />
         ))}
       </div>
-    </div>
+    </Paper>
   );
 }
 
+/** Round play button: 72px with a 2px ink outline when it is the centre of a question, 44px otherwise. */
 export function ReplayButton({ word, big }: { word: StudyWord; big?: boolean }) {
   const say = useSpeak();
   return (
@@ -81,11 +98,11 @@ export function ReplayButton({ word, big }: { word: StudyWord; big?: boolean }) 
       onClick={() => say(word)}
       aria-label="Nghe lại"
       className={cn(
-        "grid place-items-center rounded-full bg-wash-blue text-ink-blue hover:bg-wash-blue/70",
-        big ? "size-24" : "size-12",
+        "grid place-items-center rounded-full text-ink-violet transition-colors hover:bg-tint-violet",
+        big ? "size-[4.5rem] border-2 border-ink-violet bg-surface" : "size-11 bg-tint-violet",
       )}
     >
-      <Volume2 className={big ? "size-10" : "size-5"} aria-hidden />
+      <Volume2 className={big ? "size-8" : "size-5"} strokeWidth={1.75} aria-hidden />
     </button>
   );
 }
@@ -126,12 +143,12 @@ export function Options({
             onClick={() => onPick(o.id)}
             lang={lang === "zh" ? "zh-CN" : undefined}
             className={cn(
-              "btn-3d flex min-h-14 items-center gap-3 rounded-btn border-2 px-4 py-3 text-left font-medium text-ink disabled:cursor-default",
-              !outcome && !chosen && "border-rule bg-surface [--edge-color:var(--rule)] hover:border-ink-blue/40 hover:bg-wash-blue",
-              chosen && "border-ink-blue bg-wash-blue [--edge-color:var(--ink-blue)]",
-              outcome && isAnswer && "animate-pop-in border-jade bg-wash-jade [--edge-color:var(--jade)]",
-              outcome && picked && !isAnswer && "border-margin-red bg-wash-red [--edge-color:var(--margin-red)]",
-              outcome && !isAnswer && !picked && "border-rule bg-surface opacity-60 [--edge-color:var(--rule)]",
+              "flex min-h-14 items-center gap-3 rounded-btn border px-4 py-3 text-left font-medium text-ink transition-colors duration-[var(--dur-fast)] disabled:cursor-default",
+              !outcome && !chosen && "border-input bg-surface hover:bg-surface-sunk",
+              chosen && "border-ink-violet bg-tint-violet ring-1 ring-ink-violet",
+              outcome && isAnswer && "border-leaf bg-tint-leaf ring-1 ring-leaf",
+              outcome && picked && !isAnswer && "border-seal bg-tint-seal ring-1 ring-seal",
+              outcome && !isAnswer && !picked && "border-rule bg-surface opacity-60",
               big && "text-2xl",
               lang === "zh" && "font-hanzi text-2xl",
             )}
@@ -140,23 +157,23 @@ export function Options({
               <span
                 aria-hidden
                 className={cn(
-                  "grid size-7 shrink-0 place-items-center rounded-full border-2 font-sans text-xs font-bold",
-                  chosen ? "border-ink-blue bg-ink-blue text-primary-foreground" : "border-rule text-ink-soft",
+                  "grid size-7 shrink-0 place-items-center rounded-full border font-sans text-xs font-semibold",
+                  chosen ? "border-ink-violet bg-ink-violet text-primary-foreground" : "border-input text-ink-soft",
                 )}
               >
                 {"ABCDEF"[i]}
               </span>
             ) : (
-              <kbd className="hidden size-6 shrink-0 place-items-center rounded-md border-2 border-rule font-sans text-xs font-bold text-ink-soft lg:grid">
+              <kbd className="hidden size-6 shrink-0 place-items-center rounded-sm border border-input font-sans text-xs font-medium text-ink-soft lg:grid">
                 {i + 1}
               </kbd>
             )}
             <span className="min-w-0 flex-1 break-words">{o.label}</span>
             {outcome && isAnswer && (
-              <Check className="size-5 shrink-0 text-jade-text" aria-label="Đáp án đúng" />
+              <Check className="size-5 shrink-0 text-leaf-text" aria-label="Đáp án đúng" />
             )}
             {outcome && picked && !isAnswer && (
-              <X className="size-5 shrink-0 text-danger" aria-label="Bạn chọn" />
+              <X className="size-5 shrink-0 text-seal-text" aria-label="Bạn chọn" />
             )}
           </button>
         );
@@ -172,7 +189,16 @@ export function toneLabel(pattern: string) {
     .join(" ");
 }
 
-/** Right/wrong sheet under an answered question, with the full answer and a continue button. */
+const VERDICT = {
+  correct: { title: "Đúng rồi!", tone: "border-t-leaf bg-tint-leaf", text: "text-leaf-text" },
+  close: { title: "Gần đúng!", tone: "border-t-turmeric bg-tint-turmeric", text: "text-turmeric-text" },
+  wrong: { title: "Chưa đúng", tone: "border-t-seal bg-tint-seal", text: "text-seal-text" },
+} as const;
+
+/**
+ * Sheet that slides up under an answered question: the verdict, the full answer, the mascot with a short
+ * remark, and the continue button. Its top edge and tint carry the verdict (leaf, turmeric, seal).
+ */
 export function FeedbackPanel({
   outcome,
   word,
@@ -189,62 +215,36 @@ export function FeedbackPanel({
   const zh = word.language === "zh";
   const { prefs } = useMe();
   const verdict = outcome.close ? "close" : outcome.correct ? "correct" : "wrong";
-  const title = prefs.mascot
-    ? say(verdict, { seed: seedOf(word.id), name: prefs.mascot_name })
-    : outcome.close
-      ? "Gần đúng! 👌"
-      : outcome.correct
-        ? "Đúng rồi! 🎉"
-        : "Chưa đúng 😅";
+  const v = VERDICT[verdict];
   return (
     <div
       role="status"
       className={cn(
-        "sticky bottom-0 -mx-4 mt-4 flex animate-pop-in flex-col gap-3 rounded-t-sheet border-t-2 px-4 pt-4 pb-[max(env(safe-area-inset-bottom),0.75rem)]",
-        outcome.correct ? "border-jade/50 bg-wash-jade" : "border-margin-red/50 bg-wash-red",
+        "sticky bottom-0 -mx-4 mt-4 flex animate-in flex-col gap-3 rounded-t-sheet border-t-[3px] px-4 pt-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] shadow-lift duration-200 fade-in-0 slide-in-from-bottom-6",
+        v.tone,
       )}
     >
       <div className="flex items-start gap-3">
-        {prefs.mascot && (
-          <Pup
-            mood={answerMood(verdict, seedOf(word.id))}
-            size={60}
-            className="-mt-1 -mb-2"
-          />
-        )}
+        {prefs.mascot && <Pup mood={answerMood(verdict, seedOf(word.id))} size={40} className="mt-0.5" />}
         <div className="min-w-0 flex-1">
-          <p
-            className={cn("font-heading text-xl font-black", outcome.correct ? "text-jade-text" : "text-danger")}
-          >
-            {title}
-          </p>
-          <p className="mt-0.5 text-ink">
-            <span
-              lang={zh ? "zh-CN" : "en"}
-              className={cn("font-semibold", zh && "font-hanzi text-lg")}
-            >
+          <p className={cn("text-lg font-semibold", v.text)}>{v.title}</p>
+          {prefs.mascot && (
+            <p className="text-sm text-ink-soft">{say(verdict, { seed: seedOf(word.id), name: prefs.mascot_name })}</p>
+          )}
+          <p className="mt-1 text-ink">
+            <span lang={zh ? "zh-CN" : "en"} className={cn("font-semibold", zh && "font-hanzi text-lg")}>
               {word.term}
             </span>
-            {word.reading && <span className="text-ink-soft"> · {word.reading}</span>}
-            <span className="text-ink-soft"> — {word.meaning_vi}</span>
+            {word.reading && <span className="text-ink-soft"> {word.reading}</span>}
+            <span className="text-ink-soft"> {word.meaning_vi}</span>
           </p>
         </div>
         <PronounceButton text={word.term} lang={word.language} />
       </div>
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={onNext}
-        className={cn(
-          "btn-3d min-h-14 rounded-btn text-lg font-extrabold text-white dark:text-paper",
-          outcome.correct
-            ? "bg-jade-text [--edge-color:color-mix(in_oklab,var(--jade-text),black_30%)]"
-            : "bg-danger [--edge-color:color-mix(in_oklab,var(--danger),black_30%)]",
-        )}
-      >
+      <Button ref={buttonRef} type="button" size="lg" onClick={onNext}>
         {nextLabel}
-        <kbd className="ml-2 hidden text-xs font-normal opacity-70 lg:inline">Enter</kbd>
-      </button>
+        <kbd className="hidden rounded-sm border border-primary-foreground/40 px-1.5 font-sans text-xs font-normal lg:inline">Enter</kbd>
+      </Button>
     </div>
   );
 }

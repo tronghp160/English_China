@@ -5,7 +5,11 @@ import { useMe } from "@/components/app-shell/me-provider";
 import { SessionBar } from "@/components/review/session-bar";
 import { SessionSummary, type SessionResult } from "@/components/review/session-summary";
 import { WordVisual } from "@/components/review/word-visual";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { PronounceButton } from "@/components/word/pronounce-button";
+import { Paper } from "@/components/word/word-specimen";
+import { answerMood } from "@/lib/mascot/lines";
 import { PinyinText } from "@/components/zh/pinyin-text";
 import { checkTyping, type TypingResult } from "@/lib/practice";
 import { reviewModeOf, type Question } from "@/lib/practice/questions";
@@ -176,24 +180,21 @@ export function PracticeSession({
     case "cloze":
       body = (
         <>
-          <div className="notebook-card my-4 py-5 pr-4">
-            <p
-              lang={zh ? "zh-CN" : "en"}
-              className={cn("text-xl leading-relaxed text-ink", zh && "font-hanzi text-2xl")}
-            >
+          <Paper className="my-4" innerClassName="py-[var(--line)]">
+            <p lang={zh ? "zh-CN" : "en"} className={cn("text-xl leading-[var(--line)] text-ink", zh && "font-hanzi text-2xl")}>
               {q.cloze.before}
               <span
                 className={cn(
                   "mx-1 inline-block min-w-16 border-b-2 text-center",
-                  outcome ? "border-jade-text font-semibold text-jade-text" : "border-ink-blue",
+                  outcome ? "border-leaf font-semibold text-leaf-text" : "border-ink-violet",
                 )}
               >
-                {outcome ? q.cloze.answer : " "}
+                {outcome ? q.cloze.answer : " "}
               </span>
               {q.cloze.after}
             </p>
-            {q.cloze.vi && <p className="mt-2 text-ink-soft">{q.cloze.vi}</p>}
-          </div>
+            {q.cloze.vi && <p className="mt-[var(--line)] text-ink-soft">{q.cloze.vi}</p>}
+          </Paper>
           <Options
             options={q.options}
             answerId={q.answerId}
@@ -253,7 +254,7 @@ export function PracticeSession({
                 ? "Gõ chữ Hán hoặc pinyin (có dấu, số thanh hay không dấu đều được)"
                 : "Gõ từ tiếng Anh"}
             </label>
-            <input
+            <Input
               id="typing-answer"
               autoFocus
               autoComplete="off"
@@ -265,29 +266,19 @@ export function PracticeSession({
               onChange={(e) => setTyped(e.target.value)}
               lang={zh ? "zh-CN" : "en"}
               className={cn(
-                "h-14 rounded-btn border-2 bg-surface px-4 text-xl text-ink outline-none focus:border-ink-blue",
-                typingResult === "wrong"
-                  ? "border-danger"
-                  : typingResult
-                    ? "border-jade-text"
-                    : "border-rule",
+                "h-14 px-4 text-xl",
+                zh ? "font-hanzi" : "font-display",
+                typingResult === "wrong" ? "border-seal bg-tint-seal" : typingResult ? "border-leaf bg-tint-leaf" : "",
               )}
             />
             {!outcome && (
               <div className="flex gap-2">
-                <button
-                  type="submit"
-                  className="btn-3d min-h-12 flex-1 rounded-btn bg-primary font-bold text-primary-foreground [--edge-color:var(--ink-blue-shade)]"
-                >
+                <Button type="submit" className="flex-1">
                   Kiểm tra
-                </button>
-                <button
-                  type="button"
-                  onClick={() => finish({ correct: false })}
-                  className="btn-3d min-h-12 rounded-btn border-2 border-rule bg-surface px-4 font-semibold text-ink [--edge-color:var(--rule)]"
-                >
+                </Button>
+                <Button type="button" variant="outline" onClick={() => finish({ correct: false })}>
                   Không nhớ
-                </button>
+                </Button>
               </div>
             )}
           </form>
@@ -324,7 +315,12 @@ export function PracticeSession({
 
   return (
     <div className="flex flex-1 flex-col">
-      <SessionBar done={index + (outcome ? 1 : 0)} total={questions.length} exitHref={exitHref} />
+      <SessionBar
+        done={index + (outcome ? 1 : 0)}
+        total={questions.length}
+        exitHref={exitHref}
+        pup={prefs.mascot ? { mood: outcome ? answerMood(outcome.close ? "close" : outcome.correct ? "correct" : "wrong", index) : "happy" } : undefined}
+      />
       <div className="flex flex-1 flex-col justify-center py-2">{body}</div>
 
       {outcome && (

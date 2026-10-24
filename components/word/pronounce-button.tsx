@@ -77,13 +77,13 @@ export function PronounceButton({
         if (!started) setSpeaking(false);
       }}
       className={cn(
-        "inline-grid shrink-0 place-items-center rounded-full text-ink-blue transition-colors hover:bg-wash-blue",
-        speaking && "bg-wash-blue",
+        "inline-grid shrink-0 place-items-center rounded-full text-ink-violet transition-colors hover:bg-tint-violet",
+        speaking && "bg-tint-violet",
         dims,
         className,
       )}
     >
-      <Volume2 className={icon} aria-hidden />
+      <Volume2 className={icon} strokeWidth={1.75} aria-hidden />
     </button>
   );
 }

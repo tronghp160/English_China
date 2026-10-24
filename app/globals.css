@@ -532,27 +532,6 @@
     transform: translateX(3px);
   }
 }
-/* Confetti (components/review/confetti.tsx, removed in P4); with reduced motion the pieces just end hidden */
-.confetti-piece {
-  opacity: 0;
-  animation-name: confetti-fall;
-  animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
-  animation-fill-mode: both;
-}
-@keyframes confetti-fall {
-  0% {
-    opacity: 1;
-    transform: translate(0, -20px) rotate(0);
-  }
-  85% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(var(--drift), 65vh) rotate(var(--spin));
-  }
-}
-
 /*
  * Puppy mascot "Bin" (components/mascot/pup.tsx). Only two things loop: the blink and the tail.
  * Marks around the head fade in once when the mood changes; a pat floats hearts up once.
@@ -635,6 +614,26 @@
 }
 .heat-4 {
   background: var(--ink-violet);
+}
+
+/* A matched tile in the Match game: a green flash, then an empty dashed slot where it was (the board does not reflow) */
+.tile-gone {
+  pointer-events: none;
+  animation: tile-gone 380ms var(--ease-out) forwards;
+}
+@keyframes tile-gone {
+  0%,
+  45% {
+    background: var(--tint-leaf);
+    border-color: var(--leaf);
+    color: var(--ink);
+  }
+  100% {
+    background: transparent;
+    border-color: var(--rule-strong);
+    border-style: dashed;
+    color: transparent;
+  }
 }
 
 /* Notebook cover: 4px on the spine side, 8px on the open side */
