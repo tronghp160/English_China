@@ -1,8 +1,8 @@
 "use client";
 
-import { Check, Volume2, X } from "lucide-react";
+import { Check, Turtle, Volume2, X } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
-import { useCallback, useEffect, useRef, type Ref } from "react";
+import { useCallback, useEffect, useRef, useState, type Ref } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
 import { Burst } from "@/components/fx/burst";
 import { XpBurst } from "@/components/fx/xp-burst";
@@ -30,10 +30,11 @@ export function isTyping(target: EventTarget | null) {
 export function useSpeak() {
   const { prefs } = useMe();
   return useCallback(
-    (word: StudyWord) =>
+    (word: StudyWord, options: { slow?: boolean; onEnd?: () => void } = {}) =>
       speak(word.term, word.language, {
         voiceName: word.language === "en" ? prefs.voice_en : prefs.voice_zh,
-        rate: prefs.tts_rate,
+        rate: options.slow ? SLOW_RATE : prefs.tts_rate,
+        onEnd: options.onEnd,
       }),
     [prefs],
   );
@@ -92,21 +93,61 @@ export function MeaningLine({ word, bare = false }: { word: StudyWord; bare?: bo
   );
 }
 
-/** Round play button: 72px sun yellow when it is the centre of a question, 44px pale otherwise. */
+/** The slow voice of "Nghe chậm" (the normal rate is the pref, 0.85 by default). */
+const SLOW_RATE = 0.5;
+
+/**
+ * Round play button. Big (the centre of a listening question): 96px sun yellow with ripples while the word is
+ * spoken, and a "Nghe chậm" pill under it. Small: 44px and pale.
+ */
 export function ReplayButton({ word, big }: { word: StudyWord; big?: boolean }) {
   const say = useSpeak();
+  const [speaking, setSpeaking] = useState(false);
+  const play = (slow: boolean) => {
+    setSpeaking(true);
+    if (!say(word, { slow, onEnd: () => setSpeaking(false) })) setSpeaking(false);
+  };
+  if (!big)
+    return (
+      <button
+        type="button"
+        onClick={() => play(false)}
+        aria-label="Nghe lại"
+        className="relative grid size-11 place-items-center rounded-full bg-surface-2 text-primary transition-[background-color,transform] hover:bg-primary-soft active:scale-95"
+      >
+        <Volume2 className="size-5" strokeWidth={2} aria-hidden />
+      </button>
+    );
   return (
-    <button
-      type="button"
-      onClick={() => say(word)}
-      aria-label="Nghe lại"
-      className={cn(
-        "grid place-items-center rounded-full transition-[background-color,transform] active:scale-95",
-        big ? "size-[4.5rem] bg-c-sun text-c-sun-fg shadow-sm hover:brightness-95" : "size-11 bg-surface-2 text-primary hover:bg-primary-soft",
-      )}
-    >
-      <Volume2 className={big ? "size-8" : "size-5"} strokeWidth={1.75} aria-hidden />
-    </button>
+    <div className="flex flex-col items-center gap-3">
+      <div className="relative grid size-24 place-items-center">
+        {speaking &&
+          [0, 1, 2].map((n) => (
+            <span
+              key={n}
+              aria-hidden
+              className="speak-ripple pointer-events-none absolute inset-0 rounded-full border-2 border-c-sun"
+              style={{ animationDelay: `${n * 280}ms` }}
+            />
+          ))}
+        <button
+          type="button"
+          onClick={() => play(false)}
+          aria-label="Nghe lại"
+          className="relative grid size-24 place-items-center rounded-full bg-c-sun text-c-sun-fg shadow-[0_6px_0_0_var(--c-orange)] transition-[transform,box-shadow] active:translate-y-1 active:shadow-[0_2px_0_0_var(--c-orange)]"
+        >
+          <Volume2 className="size-11" strokeWidth={2} aria-hidden />
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={() => play(true)}
+        className="inline-flex h-11 items-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm font-bold text-fg-muted transition-colors hover:bg-surface-3 hover:text-fg"
+      >
+        <Turtle className="size-4" strokeWidth={2} aria-hidden />
+        Nghe chậm
+      </button>
+    </div>
   );
 }
 

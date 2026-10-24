@@ -53,6 +53,7 @@ import {
   type Outcome,
 } from "./question-parts";
 import { LearnMap } from "./learn-map";
+import { TypingDiff, TypingHint } from "./typing-parts";
 import { MasteryDots } from "./mastery-dots";
 
 type Phase = "loading" | "resume" | "map" | "intro" | "question" | "round" | "done";
@@ -582,6 +583,8 @@ export function LearnSession({
                   </Button>
                 </div>
               )}
+              {!outcome && <TypingHint key={q.id} word={q.word} />}
+              {outcome && typingResult !== "correct" && <TypingDiff typed={typed} word={q.word} />}
             </form>
           </>
         )}

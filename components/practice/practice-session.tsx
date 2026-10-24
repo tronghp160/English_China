@@ -27,6 +27,7 @@ import {
   useSpeak,
   type Outcome,
 } from "./question-parts";
+import { TypingDiff, TypingHint } from "./typing-parts";
 import { WritingPad } from "./writing-pad";
 
 export function PracticeSession({
@@ -191,10 +192,10 @@ export function PracticeSession({
               <span
                 className={cn(
                   "mx-1 inline-block min-w-16 border-b-2 text-center",
-                  outcome ? "border-success font-semibold text-success-fg" : "border-primary",
+                  outcome ? "cloze-land border-success font-semibold text-success-fg" : "border-primary",
                 )}
               >
-                {outcome ? q.cloze.answer : " "}
+                {outcome ? <span key="answer">{q.cloze.answer}</span> : " "}
               </span>
               {q.cloze.after}
             </p>
@@ -288,6 +289,8 @@ export function PracticeSession({
                 </Button>
               </div>
             )}
+            {!outcome && <TypingHint key={q.id} word={q.word} />}
+            {outcome && typingResult !== "correct" && <TypingDiff typed={typed} word={q.word} />}
           </form>
         </>
       );
