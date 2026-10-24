@@ -203,6 +203,7 @@ export default async function PracticeModePage({
         ask={ask}
         learnBase={learnBase}
         matchHref={`/practice/match?${scope}&n=6`}
+        deckKey={deckKey}
       />
     );
   }

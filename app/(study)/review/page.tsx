@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ReviewSession, type ReviewItem } from "@/components/review/review-session";
-import { Celebration } from "@/components/review/celebration";
-import { Button } from "@/components/ui/button";
+import { AllDone } from "@/components/review/all-done";
+import { getProgress } from "@/lib/data/progress";
 import type { StudyWord } from "@/lib/practice";
 import { createClient } from "@/lib/supabase/server";
 
@@ -49,22 +48,13 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
   const exitHref = deckParam ? `/decks/${deckParam}` : "/today";
 
   if (!items.length) {
+    const progress = await getProgress().catch(() => null);
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-        <Celebration mood="cheer" confetti={false} />
-        <h1 className="mt-4 text-xl">Bạn đã ôn xong hôm nay.</h1>
-        <p className="text-fg-muted">
-          {tomorrowDue > 0 ? `Ngày mai có ${tomorrowDue} từ cần ôn.` : "Thêm từ mới để có thẻ ôn ngày mai."}
-        </p>
-        <div className="mt-2 flex flex-wrap justify-center gap-2">
-          <Button asChild size="lg">
-            <Link href="/today">Về trang Hôm nay</Link>
-          </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link href={deckParam ? `/practice?deck=${deckParam}` : "/practice"}>Luyện tập thêm</Link>
-          </Button>
-        </div>
-      </div>
+      <AllDone
+        tomorrowDue={tomorrowDue}
+        quests={progress?.quests ?? null}
+        practiceHref={deckParam ? `/practice?deck=${deckParam}` : "/practice"}
+      />
     );
   }
 

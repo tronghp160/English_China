@@ -24,3 +24,6 @@ Keep these texts. Emoji next to them may go. If one must change, edit the test i
 - Bin on the sign-in pages is an `svg.bin` whose `data-action` is coverEyes (password focused), peek (password shown) or droop (wrong answer); the bubble text is "Hình như sai rồi…".
 - Bin's corner: dialog "Góc của Bin" (button Đóng), buttons Cho ăn / Ném bóng / Làm trò / Trang phục, chip "N xương", locked outfits named like "Nơ hồng, mở khi cấp 3".
 - Today: region "Nhiệm vụ hôm nay" with buttons "Nhận 2 xương", chip "Xương: N"; phone bar link "Ôn ngay"; floating button "Tạo bộ từ" / "Thêm từ" only on the deck list and a deck page.
+- Match: button "Bắt đầu" goes straight to the board when motion is reduced (else a 3-2-1 count first); "Bảng 1/1", "Kỷ lục đầu tiên!", "Số lần ghép sai", "Chơi lại".
+- Typing: buttons "Gợi ý" / "Gợi ý thêm" (hint line in the aria-live paragraph, "Gợi ý: b_____"), after a miss "Bạn gõ" / "Đáp án". Listening: "Nghe lại", "Nghe chậm".
+- End of a session (tests/e2e/session-gifts.spec.ts): stars as role img "3 sao", group "Phần thưởng của phiên" with a progressbar "Kinh nghiệm trong cấp này", dialog "Lên cấp N!" with button "Tuyệt vời!"; /review with nothing due: "Bạn đã ôn xong hôm nay.", "Nhiệm vụ còn lại hôm nay", region "Gợi ý cho bạn".

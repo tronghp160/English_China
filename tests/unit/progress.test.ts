@@ -7,6 +7,8 @@ import {
   OUTFITS,
   outfitCondition,
   pruneClaimed,
+  sessionGains,
+  starsForPercent,
   TRICKS,
   unlockedOutfits,
   unlockedTricks,
@@ -130,5 +132,59 @@ describe("longestStreak", () => {
 
   it("ignores duplicates and order, and crosses month ends", () => {
     expect(longestStreak(["2026-11-01", "2026-10-31", "2026-10-30", "2026-10-31"])).toBe(3);
+  });
+});
+
+describe("sessionGains", () => {
+  const base = { correctBefore: 20, correctAfter: 30, streakNow: 1, extendedStreak: false };
+
+  it("finds the level before and after and flags a level-up", () => {
+    // 47 XP is level 1, 52 XP is level 2
+    const g = sessionGains({ ...base, xpBefore: 47, xpAfter: 52 });
+    expect(g.before.level).toBe(1);
+    expect(g.after.level).toBe(2);
+    expect(g.leveledUp).toBe(true);
+    expect(g.xpGained).toBe(5);
+  });
+
+  it("stays on the level when the XP does not cross a threshold", () => {
+    const g = sessionGains({ ...base, xpBefore: 65, xpAfter: 70 });
+    expect(g.leveledUp).toBe(false);
+    expect(g.before.level).toBe(g.after.level);
+  });
+
+  it("counts a bone for every 10 right answers crossed", () => {
+    const g = (before: number, after: number) => sessionGains({ ...base, xpBefore: 60, xpAfter: 70, correctBefore: before, correctAfter: after }).bonesEarned;
+    expect(g(29, 34)).toBe(1);
+    expect(g(30, 34)).toBe(0);
+    expect(g(15, 40)).toBe(3);
+  });
+
+  it("never reports a negative gain when the totals are out of step", () => {
+    const g = sessionGains({ ...base, xpBefore: 80, xpAfter: 70, correctBefore: 30, correctAfter: 20 });
+    expect(g.xpGained).toBe(0);
+    expect(g.bonesEarned).toBe(0);
+    expect(g.leveledUp).toBe(false);
+  });
+
+  it("opens the outfits and tricks of the level reached", () => {
+    // level 2 at 50 XP unlocks the "spin" trick; level 3 (150 XP) the bow
+    const two = sessionGains({ ...base, xpBefore: 45, xpAfter: 55 });
+    expect(two.newTricks.map((t) => t.id)).toEqual(["spin"]);
+    const three = sessionGains({ ...base, xpBefore: 145, xpAfter: 155 });
+    expect(three.newOutfits.map((o) => o.id)).toEqual(["bow"]);
+  });
+
+  it("opens a streak outfit only on the session that reaches the mark", () => {
+    const hit = sessionGains({ ...base, xpBefore: 60, xpAfter: 70, streakNow: 3, extendedStreak: true });
+    expect(hit.newOutfits.map((o) => o.id)).toEqual(["scarf"]);
+    const later = sessionGains({ ...base, xpBefore: 60, xpAfter: 70, streakNow: 3, extendedStreak: false });
+    expect(later.newOutfits).toEqual([]);
+  });
+});
+
+describe("starsForPercent", () => {
+  it("gives 3 stars from 90%, 2 from 60%, else 1", () => {
+    expect([100, 90, 89, 60, 59, 0].map(starsForPercent)).toEqual([3, 3, 2, 2, 1, 1]);
   });
 });

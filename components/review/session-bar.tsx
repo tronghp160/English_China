@@ -11,6 +11,7 @@ import { Pup } from "@/components/mascot/pup";
 import { useBinAction } from "@/components/mascot/use-bin";
 import { updatePrefs } from "@/lib/actions/profile";
 import { isComboMilestone } from "@/lib/combo";
+import { beginSessionBaseline } from "@/lib/session-baseline";
 import { say, type PupMood } from "@/lib/mascot/lines";
 import { playSfx, setSfxEnabled } from "@/lib/sfx";
 import { subscribeOutbox, type OutboxStatus } from "@/lib/srs/outbox";
@@ -82,6 +83,7 @@ export function SessionBar({
 }) {
   const { prefs } = useMe();
   const sync = useOutboxStatus();
+  useEffect(() => beginSessionBaseline(), []);
   const pct = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
   const pctOf = (n: number) => (total ? Math.min(100, (n / total) * 100) : 0);
 

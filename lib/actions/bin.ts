@@ -38,6 +38,30 @@ export async function loadBinHome(): Promise<ActionResult<BinHomeData>> {
   });
 }
 
+/** What the end screen of a session needs to show what it earned (REDESIGN_V3 §9). */
+export type SessionRewardData = {
+  totalXp: number;
+  totalCorrect: number;
+  streak: number;
+  /** Answers logged today, to tell whether this was the first session of the day. */
+  reviewsToday: number;
+  bones: number;
+  quests: { id: QuestId; title: string; progress: number; target: number; done: boolean; claimed: boolean }[];
+};
+
+export async function loadSessionRewards(): Promise<ActionResult<SessionRewardData>> {
+  await requireUser();
+  const p = await getProgress();
+  return ok({
+    totalXp: p.totalXp,
+    totalCorrect: p.totalCorrect,
+    streak: p.streak,
+    reviewsToday: p.reviewsToday,
+    bones: p.bones,
+    quests: p.quests.map(({ id, title, progress, target, done, claimed }) => ({ id, title, progress, target, done, claimed })),
+  });
+}
+
 /** Merges a change into the stored prefs, keeping only what the person set (like updatePrefs). */
 async function savePrefs(userId: string, change: (stored: Prefs) => Prefs): Promise<boolean> {
   const supabase = await createClient();

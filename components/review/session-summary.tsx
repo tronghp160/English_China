@@ -1,16 +1,18 @@
 "use client";
 
-import { ChevronRight, MessageCircleHeart } from "lucide-react";
+import { ChevronRight, MessageCircleHeart, Star } from "lucide-react";
 import Link from "next/link";
 import { ProgressRing } from "@/components/stats/progress-ring";
 import { Button } from "@/components/ui/button";
 import { startChat } from "@/lib/actions/chat";
 import { formatDuration } from "@/lib/format";
+import { starsForPercent } from "@/lib/progress";
 import type { LangCode } from "@/lib/lang/types";
 import { summaryMood } from "@/lib/mascot/lines";
 import { TONE_CLASSES, type Tone } from "@/lib/tone";
 import { cn } from "@/lib/utils";
 import { Celebration } from "./celebration";
+import { SessionGifts } from "./session-gifts";
 import { useOutboxStatus } from "./session-bar";
 
 export type SessionResult = {
@@ -58,6 +60,7 @@ export function SessionSummary({
   const missed = [...new Map(results.filter((r) => r.rating === 1).map((r) => [r.wordId, r])).values()];
 
   const mood = summaryMood(pct);
+  const stars = starsForPercent(pct);
   // A session can mix languages; the tutor thread uses the one most missed.
   const missedLang: LangCode | undefined = missed.length
     ? missed.filter((m) => m.language === "zh").length > missed.length / 2
@@ -80,6 +83,19 @@ export function SessionSummary({
           </Celebration>
         )}
         <div className="min-w-0">
+          {total > 0 && (
+            <span role="img" aria-label={`${stars} sao`} className="mb-2 flex justify-center gap-1.5">
+              {[1, 2, 3].map((n) => (
+                <Star
+                  key={n}
+                  aria-hidden
+                  className={cn("size-8 animate-pop", n <= stars ? "fill-c-sun stroke-c-sun-fg" : "fill-surface-3 stroke-border-strong")}
+                  style={{ animationDelay: `${300 + n * 180}ms` }}
+                  strokeWidth={1.6}
+                />
+              ))}
+            </span>
+          )}
           <h1 className="text-[1.875rem]">{total ? "Xong phiên rồi!" : "Chưa có thẻ nào"}</h1>
           {total > 0 && (
             <p className="mt-1.5 text-fg">
@@ -102,6 +118,8 @@ export function SessionSummary({
           <Kpi tone="grape" value={`+${xp}`} label="XP" />
         </dl>
       )}
+
+      {total > 0 && <SessionGifts xp={xp} correct={remembered} answers={total} />}
 
       {sync.pending > 0 && (
         <p role="status" className="mt-4 rounded-md bg-streak-soft px-3 py-2 text-sm text-streak-fg">

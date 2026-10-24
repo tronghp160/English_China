@@ -53,6 +53,7 @@ import {
   type Outcome,
 } from "./question-parts";
 import { LearnMap } from "./learn-map";
+import { SessionGifts } from "@/components/review/session-gifts";
 import { TypingDiff, TypingHint } from "./typing-parts";
 import { MasteryDots } from "./mastery-dots";
 
@@ -144,6 +145,8 @@ export function LearnSession({
   const introduced = useRef(new Set<string>());
   const tally = useRef({ right: 0, total: 0 });
   const [masteredBefore, setMasteredBefore] = useState(0);
+  // Every answer of this visit, for what the session earned on the last screen
+  const [visit, setVisit] = useState({ right: 0, total: 0 });
   const bin = useBinAction("happy");
   const playBin = useRef(bin.play);
   useEffect(() => {
@@ -226,6 +229,7 @@ export function LearnSession({
       if (!q || outcome) return;
       setOutcome(o);
       tally.current = { right: tally.current.right + (o.correct ? 1 : 0), total: tally.current.total + 1 };
+      setVisit((v) => ({ right: v.right + (o.correct ? 1 : 0), total: v.total + 1 }));
       answerHud(o);
       void enqueueReview({
         clientId: crypto.randomUUID(),
@@ -465,6 +469,7 @@ export function LearnSession({
         <Celebration mood="cheer" />
         <h1 className="mt-6 text-center text-xl">Bạn đã thuộc hết {state.words.length} từ!</h1>
         <p className="mt-2 text-center text-fg-muted">Xong sau {state.round} vòng. Làm bài kiểm tra để chắc chắn nhé.</p>
+        <SessionGifts xp={visit.right} correct={visit.right} answers={visit.total} />
         <div className="mt-auto flex flex-col gap-2 pt-8 sm:flex-row">
           <Button asChild size="lg" className="flex-1">
             <Link href={testHref}>Làm bài kiểm tra</Link>

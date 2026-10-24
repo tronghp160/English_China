@@ -190,3 +190,47 @@ export const BIN_MOOD_LABEL: Partial<Record<PupMood, string>> = {
 export function isNight(hour: number): boolean {
   return hour >= 19 || hour < 5;
 }
+
+// ---- What one session earned -----------------------------------------------
+
+export type SessionGains = {
+  /** XP the session earned, goal bonus included. */
+  xpGained: number;
+  before: LevelInfo;
+  after: LevelInfo;
+  leveledUp: boolean;
+  /** Bones earned by this session's right answers (one per 10 right answers in total). */
+  bonesEarned: number;
+  /** Outfits that opened with this session (a new level, or a streak that just reached the mark). */
+  newOutfits: Outfit[];
+  newTricks: { id: TrickId; name: string }[];
+};
+
+/**
+ * Compares the totals before and after one session. `streakNow` is the current streak and `extendedStreak` says
+ * this session was the first of the study day (so the streak went up by one and may have reached an outfit's mark).
+ */
+export function sessionGains(input: {
+  xpBefore: number;
+  xpAfter: number;
+  correctBefore: number;
+  correctAfter: number;
+  streakNow: number;
+  extendedStreak: boolean;
+}): SessionGains {
+  const before = levelFromXp(Math.max(0, input.xpBefore));
+  const after = levelFromXp(Math.max(input.xpBefore, input.xpAfter));
+  const bonesEarned = Math.max(0, Math.floor(Math.max(0, input.correctAfter) / 10) - Math.floor(Math.max(0, input.correctBefore) / 10));
+  const newOutfits = OUTFITS.filter((o) => {
+    if (!o.unlock) return false;
+    if (o.unlock.kind === "level") return before.level < o.unlock.value && after.level >= o.unlock.value;
+    return input.extendedStreak && input.streakNow === o.unlock.value;
+  });
+  const newTricks = TRICKS.filter((t) => before.level < t.level && after.level >= t.level).map(({ id, name }) => ({ id, name }));
+  return { xpGained: Math.max(0, input.xpAfter - input.xpBefore), before, after, leveledUp: after.level > before.level, bonesEarned, newOutfits, newTricks };
+}
+
+/** 1 to 3 stars for a session by the share of right answers (at least one when anything was answered). */
+export function starsForPercent(percent: number): 1 | 2 | 3 {
+  return percent >= 90 ? 3 : percent >= 60 ? 2 : 1;
+}

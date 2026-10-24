@@ -9,6 +9,7 @@ import { Pup } from "@/components/mascot/pup";
 import { Confetti } from "@/components/fx/confetti";
 import { useBinAction } from "@/components/mascot/use-bin";
 import { useOutboxStatus } from "@/components/review/session-bar";
+import { SessionGifts } from "@/components/review/session-gifts";
 import { ProgressRing } from "@/components/stats/progress-ring";
 import {
   AlertDialog,
@@ -39,6 +40,8 @@ import {
   type TestType,
 } from "@/lib/practice/test";
 import { playSfx } from "@/lib/sfx";
+import { beginSessionBaseline } from "@/lib/session-baseline";
+import { saveTestScore } from "@/lib/practice/test-records";
 import { enqueueReview } from "@/lib/srs/outbox";
 import { cn } from "@/lib/utils";
 import { MeaningLine, Options, TermLine } from "./question-parts";
@@ -325,6 +328,7 @@ function Results({
         </p>
       </header>
       {grade.percent >= 90 && <Confetti preset="small" />}
+      <SessionGifts xp={grade.correct} correct={grade.correct} answers={grade.total} />
 
       {sync.pending > 0 && (
         <p role="status" className="mt-4 rounded-md bg-streak-soft px-3 py-2 text-sm text-fg">
@@ -430,6 +434,7 @@ export function TestSession({
   ask,
   learnBase,
   matchHref,
+  deckKey,
 }: {
   questions: Question[];
   countsToSrs: boolean;
@@ -440,7 +445,10 @@ export function TestSession({
   /** Learn URL without the word list; "Học các từ sai" appends `&words=`. */
   learnBase?: string;
   matchHref?: string;
+  /** Where the latest score is remembered on this device (the deck id, or `lang:en`). */
+  deckKey: string;
 }) {
+  const { userId } = useMe();
   const [questions, setQuestions] = useState(initial);
   const [answers, setAnswers] = useState<TestAnswers>({});
   const [startedAt, setStartedAt] = useState(() => Date.now());
@@ -452,6 +460,7 @@ export function TestSession({
   const [current, setCurrent] = useState(0);
   const advance = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(advance.current), []);
+  useEffect(() => beginSessionBaseline(), []);
   const answered = questions.filter((q) => answers[q.id]?.trim()).length;
   const left = questions.length - answered;
 
@@ -511,6 +520,8 @@ export function TestSession({
       });
     }
     playSfx(g.percent >= 70 ? "complete" : "pop");
+    // a retry of the missed questions is not a score for the deck
+    if (questions.length === initial.length) void saveTestScore(userId, deckKey, { percent: g.percent, correct: g.correct, total: g.total });
     setGrade(g);
     setDurationMs(spent);
     window.scrollTo({ top: 0 });

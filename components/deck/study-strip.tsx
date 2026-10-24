@@ -1,77 +1,67 @@
 "use client";
 
+import { Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useOptionalMe } from "@/components/app-shell/me-provider";
+import { ModeArt } from "@/components/practice/mode-art";
 import { MODE_LOOK } from "@/components/practice/mode-look";
-import { IconTile } from "@/components/ui/icon-tile";
+import { useModeStats } from "@/components/practice/use-mode-stats";
 import type { PracticeMode } from "@/lib/lang/registry";
-import { MODE_INFO } from "@/lib/practice/questions";
-import { initLearn } from "@/lib/practice/learn";
-import { loadLearn } from "@/lib/practice/learn-store";
 import { formatMs } from "@/lib/practice/match";
-import { getMatchRecord } from "@/lib/practice/match-records";
+import { MODE_INFO } from "@/lib/practice/questions";
+import { suggestMode } from "@/lib/practice/suggest";
+import { TONE_CLASSES } from "@/lib/tone";
+import { cn } from "@/lib/utils";
 
 type Item = { mode: PracticeMode; n: number };
 
 /**
- * "Học bộ này": the four quick ways in as colored tiles, one hue per mode.
- * The line under each name is only what is really known on this device (unfinished Learn progress,
- * the Match record, the card count); nothing is made up while it loads.
+ * "Học bộ này": the four quick ways in, in the same card style as the practice picker (a picture in the hue of the
+ * mode, its name, and one line). The line is only what this device really knows (Learn progress, the last test,
+ * the Match record, the card count); nothing is made up while it loads. One card carries "Gợi ý cho bạn".
  */
 export function StudyStrip({ deckId, items, wordCount }: { deckId: string; items: Item[]; wordCount: number }) {
-  const me = useOptionalMe();
-  const userId = me?.userId;
-  const [learnLeft, setLearnLeft] = useState<number | null>(null);
-  const [matchBest, setMatchBest] = useState<number | null>(null);
+  const matchPairs = items.find((i) => i.mode === "match")?.n ?? 0;
+  const stats = useModeStats(deckId, matchPairs);
+  const suggested = suggestMode(stats);
 
-  useEffect(() => {
-    if (!userId) return;
-    let alive = true;
-    loadLearn(userId, `${deckId}:all`).then((raw) => {
-      const state = raw as ReturnType<typeof initLearn> | null;
-      if (alive && state?.version === 1 && Array.isArray(state.words)) {
-        const left = state.words.filter((w) => w.level < 2).length;
-        setLearnLeft(left);
-      }
-    });
-    const pairs = items.find((i) => i.mode === "match")?.n;
-    if (pairs) getMatchRecord(userId, deckId, pairs).then((r) => alive && r && setMatchBest(r.ms));
-    return () => {
-      alive = false;
-    };
-  }, [userId, deckId, items]);
-
-  const hint = (mode: PracticeMode, n: number): string | null => {
+  const line = (mode: PracticeMode, n: number): string => {
     switch (mode) {
       case "learn":
-        return learnLeft !== null ? `còn ${learnLeft} từ` : null;
+        return stats.learnPercent !== null ? `Đã thuộc ${stats.learnPercent}%` : "Chưa học";
       case "test":
-        return `${Math.min(n, wordCount)} câu`;
+        return stats.testPercent !== null ? `Lần trước ${stats.testPercent}%` : `${Math.min(n, wordCount)} câu`;
       case "match":
-        return matchBest !== null ? `kỷ lục ${formatMs(matchBest)}` : null;
+        return stats.matchMs !== null ? `Kỷ lục ${formatMs(stats.matchMs)}` : "Chưa có kỷ lục";
       case "flashcard":
         return `${wordCount} thẻ`;
       default:
-        return null;
+        return "";
     }
   };
 
   return (
     <nav aria-label="Học bộ này" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {items.map(({ mode, n }) => {
-        const { icon, tone } = MODE_LOOK[mode];
-        const line = hint(mode, n);
+        const { tone } = MODE_LOOK[mode];
+        const t = TONE_CLASSES[tone];
         return (
           <Link
             key={mode}
             href={`/practice/${mode}?deck=${deckId}&n=${n}&from=deck`}
-            className="flex min-h-16 items-center gap-3 rounded-lg border border-border/60 bg-surface p-3 shadow-sm transition-[transform,box-shadow] duration-[var(--dur-base)] hover:-translate-y-0.5 hover:shadow-md dark:border-border"
+            className="flex flex-col gap-2 rounded-lg border border-border/60 bg-surface p-2.5 shadow-sm transition-[transform,box-shadow] duration-[var(--dur-base)] hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 dark:border-border"
           >
-            <IconTile icon={icon} tone={tone} size={40} solid />
-            <span className="flex min-w-0 flex-col">
+            <span className={cn("relative block overflow-hidden rounded-md px-2 py-1.5", t.soft)}>
+              <ModeArt mode={mode} className="mx-auto max-h-12" />
+            </span>
+            <span className="flex min-w-0 flex-col px-1 pb-0.5">
+              {suggested === mode && (
+                <span className="mb-1 inline-flex w-fit items-center gap-0.5 rounded-full bg-primary-soft px-1.5 py-0.5 text-[0.625rem] font-extrabold text-primary-fg">
+                  <Sparkles className="size-2.5" strokeWidth={2.6} aria-hidden />
+                  Gợi ý cho bạn
+                </span>
+              )}
               <span className="font-bold text-fg">{MODE_INFO[mode].label}</span>
-              <span className="min-h-4 text-xs leading-4 text-fg-muted">{line}</span>
+              <span className={cn("min-h-4 text-xs leading-4 font-semibold tabular-nums", t.fg)}>{line(mode, n)}</span>
             </span>
           </Link>
         );
