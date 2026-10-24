@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
+import { Button } from "@/components/ui/button";
 import { getUser } from "@/lib/auth";
 import { cjkFontVariables } from "@/lib/fonts";
 
@@ -12,12 +13,9 @@ export default async function PublicLayout({ children }: LayoutProps<"/">) {
         <Link href={user ? "/today" : "/"} className="rounded-btn" aria-label="Sổ Từ">
           <Logo />
         </Link>
-        <Link
-          href={user ? "/today" : "/login"}
-          className="inline-flex min-h-11 items-center rounded-btn px-3 text-sm font-medium text-ink-soft hover:text-ink"
-        >
-          {user ? "Vào Sổ Từ" : "Đăng nhập"}
-        </Link>
+        <Button asChild variant="ghost">
+          <Link href={user ? "/today" : "/login"}>{user ? "Vào Sổ Từ" : "Đăng nhập"}</Link>
+        </Button>
       </header>
       <main className="flex-1">{children}</main>
     </div>

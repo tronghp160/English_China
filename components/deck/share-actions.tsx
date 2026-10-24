@@ -4,12 +4,12 @@ import { BookmarkPlus, CopyPlus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { cloneDeck, subscribeDeck } from "@/lib/actions/sharing";
-import { cn } from "@/lib/utils";
 
 type Ref = { slug: string } | { deckId: string };
 
-/** "Học bộ này" (subscribe, follows the owner's updates) and "Sao chép" (own copy). */
+/** "Lưu vào sổ của tôi" (subscribe, follows the owner's updates) and "Sao chép" (an own copy to edit). */
 export function ShareActions({ deckRef, showSubscribe = true }: { deckRef: Ref; showSubscribe?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState<"sub" | "clone" | null>(null);
@@ -27,29 +27,18 @@ export function ShareActions({ deckRef, showSubscribe = true }: { deckRef: Ref; 
     });
   }
 
-  const base = "inline-flex min-h-12 items-center justify-center gap-2 rounded-btn px-5 text-base font-medium";
   return (
     <div className="flex flex-col gap-2 sm:flex-row">
       {showSubscribe && (
-        <button
-          type="button"
-          disabled={busy !== null}
-          onClick={() => run("sub")}
-          className={cn(base, "bg-primary text-primary-foreground")}
-        >
-          {busy === "sub" ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <BookmarkPlus className="size-5" aria-hidden />}
-          Học bộ này
-        </button>
+        <Button type="button" size="lg" disabled={busy !== null} onClick={() => run("sub")}>
+          {busy === "sub" ? <Loader2 className="animate-spin" aria-hidden /> : <BookmarkPlus aria-hidden />}
+          Lưu vào sổ của tôi
+        </Button>
       )}
-      <button
-        type="button"
-        disabled={busy !== null}
-        onClick={() => run("clone")}
-        className={cn(base, "border border-rule bg-surface text-ink hover:bg-muted")}
-      >
-        {busy === "clone" ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <CopyPlus className="size-5 text-ink-soft" aria-hidden />}
+      <Button type="button" size="lg" variant="outline" disabled={busy !== null} onClick={() => run("clone")}>
+        {busy === "clone" ? <Loader2 className="animate-spin" aria-hidden /> : <CopyPlus aria-hidden />}
         Sao chép về bộ của tôi
-      </button>
+      </Button>
     </div>
   );
 }

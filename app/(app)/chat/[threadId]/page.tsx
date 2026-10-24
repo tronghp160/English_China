@@ -4,7 +4,7 @@ import { z } from "zod";
 import { BackLink } from "@/components/app-shell/back-link";
 import { ChatView } from "@/components/chat/chat-view";
 import { DeleteChatButton } from "@/components/chat/delete-chat-button";
-import { LangFlag } from "@/components/lang-flag";
+import { LangMark } from "@/components/lang-mark";
 import { CHAT_MAX_CHARS } from "@/lib/ai/chat-prompt";
 import type { ChatMessage } from "@/lib/ai/chat-tools";
 import { requireUser } from "@/lib/auth";
@@ -32,12 +32,12 @@ export default async function ChatThreadPage({ params, searchParams }: PageProps
   const title = thread.title ?? "Cuộc trò chuyện mới";
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="max-w-2xl">
       <BackLink href="/chat" label="Gia sư" />
       <div className="mb-5 flex items-center gap-3">
-        <LangFlag lang={thread.language} label className="shrink-0" />
+        <LangMark lang={thread.language} label className="shrink-0" />
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg text-ink">{title}</h1>
+          <h1 className="truncate text-lg">{title}</h1>
           {thread.deck?.name && <p className="truncate text-sm text-ink-soft">Bộ từ: {thread.deck.name}</p>}
         </div>
         <DeleteChatButton threadId={thread.id} title={title} redirectTo="/chat" />

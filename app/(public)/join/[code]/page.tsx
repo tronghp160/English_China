@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Users } from "lucide-react";
+import { GroupAvatar } from "@/components/group/group-avatar";
 import { JoinButton } from "@/components/group/join-button";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { getMe } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,18 +21,18 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
 
   if (!group) {
     return (
-      <div className="notebook-card mt-6 px-6 py-8">
-        <h1 className="text-lg text-ink">Mã mời không dùng được</h1>
-        <p className="mt-1 text-[0.9375rem] text-ink-soft">
-          Mã “{code}” không đúng hoặc chủ nhóm đã đổi mã mới. Hãy hỏi lại người mời bạn.
-        </p>
-        <Link
-          href="/groups"
-          className="mt-5 inline-flex min-h-11 items-center rounded-btn border border-rule bg-surface px-4 text-sm font-medium text-ink"
-        >
-          Nhập mã khác
-        </Link>
-      </div>
+      <EmptyState
+        className="mt-6"
+        figure="people"
+        title="Mã mời không dùng được"
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/groups">Nhập mã khác</Link>
+          </Button>
+        }
+      >
+        Mã “{code}” không đúng hoặc chủ nhóm đã đổi mã mới. Hãy hỏi lại người mời bạn.
+      </EmptyState>
     );
   }
 
@@ -47,31 +49,26 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
   }
 
   return (
-    <div className="notebook-card mt-6 px-6 py-8 sm:px-8">
-      <p className="flex items-center gap-2 text-sm text-ink-soft">
-        <Users className="size-4" aria-hidden />
-        {group.owner_name} mời bạn vào nhóm
-      </p>
-      <h1 className="mt-2 text-xl break-words text-ink">{group.name}</h1>
+    <div className="mt-8 max-w-md">
+      <GroupAvatar id={group.id} name={group.name} className="size-16 text-3xl" />
+      <p className="mt-4 text-sm text-ink-soft">{group.owner_name} mời bạn vào nhóm</p>
+      <h1 className="mt-1 text-xl break-words sm:text-2xl">{group.name}</h1>
       {group.description && <p className="mt-2 text-[0.9375rem] text-ink">{group.description}</p>}
       <p className="mt-2 text-sm text-ink-soft">{group.member_count} thành viên</p>
 
-      <ul className="mt-5 space-y-1.5 text-[0.9375rem] text-ink-soft">
-        <li>· Học chung các bộ từ của nhóm, mỗi người một tiến độ riêng.</li>
-        <li>· Thi đua XP trên bảng xếp hạng tuần.</li>
-        <li>· Bộ từ riêng tư của bạn vẫn chỉ mình bạn thấy.</li>
+      <ul className="mt-5 list-disc space-y-1.5 pl-5 text-[0.9375rem] text-ink-soft marker:text-ink-faint">
+        <li>Học chung các bộ từ của nhóm, mỗi người một tiến độ riêng.</li>
+        <li>So điểm XP trên bảng xếp hạng tuần.</li>
+        <li>Bộ từ riêng tư của bạn vẫn chỉ mình bạn thấy.</li>
       </ul>
 
       <div className="mt-6">
         {me ? (
           <JoinButton code={code} />
         ) : (
-          <Link
-            href={`/login?next=${encodeURIComponent(path)}`}
-            className="inline-flex min-h-12 w-full items-center justify-center rounded-btn bg-primary px-6 text-base font-medium text-primary-foreground sm:w-auto"
-          >
-            Đăng nhập để vào nhóm
-          </Link>
+          <Button asChild size="lg" className="w-full sm:w-auto sm:px-8">
+            <Link href={`/login?next=${encodeURIComponent(path)}`}>Đăng nhập để vào nhóm</Link>
+          </Button>
         )}
       </div>
     </div>

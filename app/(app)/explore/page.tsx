@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, Search } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { DeckCover } from "@/components/deck/deck-cover";
-import { LangFlag } from "@/components/lang-flag";
+import { SubscribeButton } from "@/components/deck/subscribe-button";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { SegmentedNav } from "@/components/ui/segmented";
 import { LANGUAGES } from "@/lib/lang/registry";
 import { EXPLORE_PAGE_SIZE, getPublicDecks, type ExploreSort } from "@/lib/data/explore";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Khám phá" };
 
@@ -39,122 +42,107 @@ export default async function ExplorePage({ searchParams }: PageProps<"/explore"
 
   return (
     <div>
-      <h1 className="text-xl text-ink">Khám phá</h1>
-      <p className="mt-1 text-sm text-ink-soft">Bộ từ công khai do mọi người chia sẻ. Học trực tiếp hoặc sao chép về.</p>
+      <h1 className="text-xl">Khám phá</h1>
+      <p className="mt-1 text-ink-soft">Bộ từ công khai do mọi người chia sẻ. Học trực tiếp hoặc sao chép về.</p>
 
-      <form action="/explore" role="search" className="mt-4 flex gap-2">
+      <form action="/explore" role="search" className="mt-5 flex max-w-xl gap-2">
         {lang && <input type="hidden" name="lang" value={lang} />}
         {sort !== "popular" && <input type="hidden" name="sort" value={sort} />}
         <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-soft" aria-hidden />
-          <input
-            type="search"
-            name="q"
-            defaultValue={q}
-            placeholder="Tìm theo tên bộ từ"
-            aria-label="Tìm theo tên bộ từ"
-            className="h-11 w-full rounded-btn border-2 border-rule bg-surface pr-3 pl-9 text-base text-ink placeholder:text-ink-soft focus:border-ink-blue"
-          />
+          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-[1.125rem] -translate-y-1/2 text-ink-soft" strokeWidth={1.75} aria-hidden />
+          <Input type="search" name="q" defaultValue={q} placeholder="Tìm theo tên bộ từ" aria-label="Tìm theo tên bộ từ" className="pl-10" />
         </div>
-        <button type="submit" className="btn-3d h-11 shrink-0 rounded-btn bg-primary px-4 text-sm font-bold text-primary-foreground [--edge-color:var(--ink-blue-shade)]">
+        <Button type="submit" variant="outline">
           Tìm
-        </button>
+        </Button>
       </form>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <nav aria-label="Lọc theo ngôn ngữ" className="flex gap-2 overflow-x-auto pb-1">
-          {LANG_FILTERS.map((f) => {
-            const active = f.value === lang;
-            return (
-              <Link
-                key={f.label}
-                href={href({ lang: f.value })}
-                aria-current={active ? "true" : undefined}
-                className={cn(
-                  "inline-flex min-h-11 shrink-0 items-center rounded-full border-2 px-4 text-sm font-semibold transition-colors",
-                  active ? "border-ink-blue bg-ink-blue text-primary-foreground" : "border-rule bg-surface text-ink-soft hover:text-ink",
-                )}
-              >
-                {f.value && <LangFlag lang={f.value} className="mr-1.5" />}
-                {f.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <nav aria-label="Sắp xếp" className="flex gap-1">
-          {SORTS.map((s) => (
-            <Link
-              key={s.value}
-              href={href({ sort: s.value === "popular" ? null : s.value })}
-              aria-current={s.value === sort ? "true" : undefined}
-              className={cn(
-                "inline-flex min-h-11 items-center rounded-btn px-3 text-sm",
-                s.value === sort ? "font-bold text-ink-blue underline decoration-2 underline-offset-8" : "text-ink-soft hover:text-ink",
-              )}
-            >
-              {s.label}
-            </Link>
-          ))}
-        </nav>
+      <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <SegmentedNav
+          label="Lọc theo ngôn ngữ"
+          scroll
+          items={LANG_FILTERS.map((f) => ({ label: f.label, href: href({ lang: f.value }), active: f.value === lang }))}
+        />
+        <SegmentedNav
+          label="Sắp xếp"
+          scroll
+          items={SORTS.map((s) => ({ label: s.label, href: href({ sort: s.value === "popular" ? null : s.value }), active: s.value === sort }))}
+        />
       </div>
 
       {decks.length ? (
-        <ul className="mt-4 grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
-          {decks.map((d) => {
-            return (
-              <li key={d.id} className="min-w-0">
-                <Link
-                  href={`/decks/${d.id}`}
-                  className="group flex h-full items-center gap-4 rounded-card border border-rule bg-surface p-4 shadow-card transition-transform hover:-translate-y-0.5"
-                >
-                  <DeckCover id={d.id} language={d.language} className="transition-transform group-hover:-rotate-6" />
-                  <span className="min-w-0 flex-1">
-                    <span className="line-clamp-2 font-bold leading-snug text-ink">{d.name}</span>
-                    {d.description && <span className="block truncate text-sm text-ink">{d.description}</span>}
-                    <span className="block truncate text-sm text-ink-soft">
-                      {LANGUAGES[d.language].label} · {d.word_count} từ · {d.learner_count} người học · {d.isMine ? "của bạn" : d.owner?.display_name}
-                      {d.isSubscribed && (
-                        <>
-                          {" · "}
-                          <span className="text-jade-text">đang học</span>
-                        </>
-                      )}
-                    </span>
+        <ul className="mt-6 grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+          {decks.map((d) => (
+            <li
+              key={d.id}
+              className="group flex min-w-0 flex-col gap-3 rounded-card border border-rule bg-surface p-4 transition-colors duration-[var(--dur-fast)] hover:border-rule-strong sm:flex-row sm:items-center sm:gap-4"
+            >
+              <Link href={`/decks/${d.id}`} className="flex min-w-0 flex-1 items-center gap-4">
+                <DeckCover id={d.id} language={d.language} name={d.name} className="transition-transform duration-[var(--dur-fast)] group-hover:-translate-x-0.5" />
+                <span className="min-w-0 flex-1">
+                  <span className="line-clamp-2 leading-snug font-semibold text-ink">{d.name}</span>
+                  {d.description && <span className="mt-0.5 line-clamp-1 block text-sm text-ink">{d.description}</span>}
+                  <span className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-ink-soft">
+                    <span>{LANGUAGES[d.language].label}</span>
+                    <span>{d.word_count} từ</span>
+                    <span>{d.isMine ? "của bạn" : d.owner?.display_name}</span>
                   </span>
-                  <ChevronRight className="size-5 shrink-0 text-ink-soft" aria-hidden />
-                </Link>
-              </li>
-            );
-          })}
+                </span>
+                <ChevronRight className="hidden size-4 shrink-0 text-ink-faint sm:block" aria-hidden />
+              </Link>
+              <div className="flex shrink-0 items-center justify-between gap-3 sm:flex-col sm:items-end sm:gap-2">
+                <span className="text-sm text-ink-soft tabular-nums">{d.learner_count} người học</span>
+                {d.isSubscribed ? (
+                  <span className="inline-flex items-center gap-1 text-sm text-leaf-text">
+                    <Check className="size-4" aria-hidden />
+                    Đang theo học
+                  </span>
+                ) : !d.isMine ? (
+                  <SubscribeButton deckId={d.id} subscribed={false} variant="secondary" size="sm" />
+                ) : null}
+              </div>
+            </li>
+          ))}
         </ul>
       ) : (
-        <div className="notebook-card mt-6 flex flex-col items-center px-6 py-10 text-center">
-          <span aria-hidden className="animate-float text-6xl">
-            🔭
-          </span>
-          <p className="mt-4 font-heading text-xl font-black text-ink">{q ? `Không có bộ từ nào tên có “${q}”.` : "Chưa có bộ từ công khai nào."}</p>
-          <p className="mt-1 text-sm text-ink-soft">
-            Đặt một bộ từ của bạn ở chế độ “Công khai” trong cài đặt bộ từ để mọi người cùng học.
-          </p>
-        </div>
+        <EmptyState
+          className="mt-6"
+          figure="notebook"
+          title={q ? `Không có bộ từ nào khớp “${q}”.` : "Chưa có bộ từ công khai nào."}
+          actions={
+            q || lang ? (
+              <Button asChild variant="outline">
+                <Link href="/explore">Xóa bộ lọc</Link>
+              </Button>
+            ) : undefined
+          }
+        >
+          Đặt một bộ từ của bạn ở chế độ “Công khai” trong cài đặt bộ từ để mọi người cùng học.
+        </EmptyState>
       )}
 
       {pages > 1 && (
-        <nav aria-label="Trang" className="mt-4 flex items-center justify-between gap-2">
+        <nav aria-label="Trang" className="mt-6 flex items-center justify-between gap-2">
           {page > 1 ? (
-            <Link href={href({ page: String(page - 1) })} className="inline-flex min-h-11 items-center rounded-btn px-3 text-sm font-medium text-ink-blue">
-              ← Trang trước
-            </Link>
+            <Button asChild variant="ghost">
+              <Link href={href({ page: String(page - 1) })}>
+                <ChevronLeft aria-hidden />
+                Trang trước
+              </Link>
+            </Button>
           ) : (
             <span />
           )}
-          <span className="text-sm text-ink-soft">
+          <span className="text-sm text-ink-soft tabular-nums">
             Trang {page}/{pages}
           </span>
           {page < pages ? (
-            <Link href={href({ page: String(page + 1) })} className="inline-flex min-h-11 items-center rounded-btn px-3 text-sm font-medium text-ink-blue">
-              Trang sau →
-            </Link>
+            <Button asChild variant="ghost">
+              <Link href={href({ page: String(page + 1) })}>
+                Trang sau
+                <ChevronRight aria-hidden />
+              </Link>
+            </Button>
           ) : (
             <span />
           )}

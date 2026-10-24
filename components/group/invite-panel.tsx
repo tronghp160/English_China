@@ -16,13 +16,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { regenerateInviteCode } from "@/lib/actions/groups";
 
 const noop = () => () => {};
-
-const BTN =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-btn border border-rule bg-surface px-3.5 text-sm font-medium text-ink hover:bg-muted";
 
 export function InvitePanel({
   groupId,
@@ -74,62 +73,52 @@ export function InvitePanel({
   }
 
   return (
-    <section aria-labelledby="invite-title" className="rounded-card border border-rule bg-surface p-4">
-      <h2 id="invite-title" className="text-sm font-medium text-ink-soft">
+    <section aria-labelledby="invite-title">
+      <h2 id="invite-title" className="text-lg">
         Mời bạn bè
       </h2>
-      <p className="mt-1 font-mono text-2xl font-semibold tracking-[0.2em] text-ink" aria-label={`Mã mời ${current.split("").join(" ")}`}>
+      <p className="mt-2 font-display text-[1.75rem] leading-none font-semibold tracking-[0.12em] text-ink" aria-label={`Mã mời ${current.split("").join(" ")}`}>
         {current}
       </p>
-      <input
-        readOnly
-        value={url}
-        aria-label="Link mời"
-        onFocus={(e) => e.currentTarget.select()}
-        className="mt-2 h-10 w-full min-w-0 rounded-btn border border-rule bg-muted px-3 text-sm text-ink-soft"
-      />
+      <Input readOnly value={url} aria-label="Link mời" onFocus={(e) => e.currentTarget.select()} className="mt-3 bg-surface-sunk text-sm text-ink-soft" />
       <div className="mt-3 flex flex-wrap gap-2">
-        <button type="button" onClick={copy} className={BTN}>
-          {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4 text-ink-soft" aria-hidden />}
+        <Button type="button" variant="outline" onClick={copy}>
+          {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
           Sao chép link
-        </button>
+        </Button>
         {canShare && (
-          <button type="button" onClick={share} className={BTN}>
-            <Share2 className="size-4 text-ink-soft" aria-hidden />
+          <Button type="button" variant="outline" onClick={share}>
+            <Share2 aria-hidden />
             Gửi
-          </button>
+          </Button>
         )}
         <Dialog>
-          <DialogTrigger className={BTN}>
-            <QrCode className="size-4 text-ink-soft" aria-hidden />
-            Mã QR
+          <DialogTrigger asChild>
+            <Button type="button" variant="outline">
+              <QrCode aria-hidden />
+              Mã QR
+            </Button>
           </DialogTrigger>
-          <DialogContent className="rounded-sheet sm:max-w-sm">
+          <DialogContent className="sm:max-w-sm">
             <DialogHeader>
               <DialogTitle>Quét để vào nhóm</DialogTitle>
               <DialogDescription>{groupName}</DialogDescription>
             </DialogHeader>
             <div className="qr-paper mx-auto rounded-card p-4">
-              <QRCodeSVG
-                value={url}
-                size={232}
-                fgColor="currentColor"
-                bgColor="transparent"
-                level="M"
-                role="img"
-                aria-label={`Mã QR của link ${url}`}
-              />
+              <QRCodeSVG value={url} size={232} fgColor="currentColor" bgColor="transparent" level="M" role="img" aria-label={`Mã QR của link ${url}`} />
             </div>
-            <p className="text-center font-mono text-lg tracking-[0.2em] text-ink">{current}</p>
+            <p className="text-center font-display text-lg font-semibold tracking-[0.12em] text-ink">{current}</p>
           </DialogContent>
         </Dialog>
         {isOwner && (
           <AlertDialog>
-            <AlertDialogTrigger className={BTN} disabled={pending}>
-              <RefreshCw className="size-4 text-ink-soft" aria-hidden />
-              Đổi mã
+            <AlertDialogTrigger asChild>
+              <Button type="button" variant="outline" disabled={pending}>
+                <RefreshCw aria-hidden />
+                Đổi mã
+              </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="rounded-sheet">
+            <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Tạo mã mời mới?</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -137,10 +126,8 @@ export function InvitePanel({
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="min-h-11 rounded-btn">Giữ mã cũ</AlertDialogCancel>
-                <AlertDialogAction className="min-h-11 rounded-btn" onClick={regenerate}>
-                  Tạo mã mới
-                </AlertDialogAction>
+                <AlertDialogCancel>Giữ mã cũ</AlertDialogCancel>
+                <AlertDialogAction onClick={regenerate}>Tạo mã mới</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

@@ -25,8 +25,8 @@ export function inline(text: string, key = "i"): ReactNode {
   return text.split(INLINE).map((tok, i) => {
     const k = `${key}-${i}`;
     if (i % 2 === 0) return <Fragment key={k}>{hanzi(tok, k)}</Fragment>;
-    if (tok.startsWith("**")) return <strong key={k} className="font-bold text-ink">{hanzi(tok.slice(2, -2), k)}</strong>;
-    if (tok.startsWith("`")) return <code key={k} className="rounded bg-muted px-1 text-[0.9em]">{tok.slice(1, -1)}</code>;
+    if (tok.startsWith("**")) return <strong key={k} className="font-semibold">{hanzi(tok.slice(2, -2), k)}</strong>;
+    if (tok.startsWith("`")) return <code key={k} className="rounded-sm bg-surface-sunk px-1 text-[0.9em]">{tok.slice(1, -1)}</code>;
     return <em key={k}>{hanzi(tok.slice(1, -1), k)}</em>;
   });
 }
@@ -54,7 +54,7 @@ export function toBlocks(text: string): Block[] {
 
 export function MessageText({ text }: { text: string }) {
   return (
-    <div className="space-y-2 leading-relaxed break-words">
+    <div className="space-y-3 leading-relaxed break-words">
       {toBlocks(text).map((b, bi) => {
         if (b.kind === "p")
           return (
@@ -69,7 +69,7 @@ export function MessageText({ text }: { text: string }) {
           );
         const List = b.kind === "ul" ? "ul" : "ol";
         return (
-          <List key={bi} className={b.kind === "ul" ? "list-disc space-y-1 pl-5" : "list-decimal space-y-1 pl-5"}>
+          <List key={bi} className={b.kind === "ul" ? "list-disc space-y-1 pl-5 marker:text-ink-soft" : "list-decimal space-y-1 pl-5 marker:text-ink-soft"}>
             {b.lines.map((l, li) => (
               <li key={li}>{inline(l, `${bi}-${li}`)}</li>
             ))}

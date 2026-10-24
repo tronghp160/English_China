@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flame, PenLine, UserPlus, Users } from "lucide-react";
+import { Flame } from "lucide-react";
 import type { FeedItem } from "@/lib/data/groups";
 import { formatAgo } from "@/lib/format";
 
@@ -9,8 +9,8 @@ function Line({ item }: { item: FeedItem }) {
     case "words":
       return (
         <>
-          {name} vừa thêm {item.n} từ vào{" "}
-          <Link href={`/decks/${item.deckId}`} className="font-medium text-ink-blue underline-offset-4 hover:underline">
+          {name} thêm {item.n} từ vào{" "}
+          <Link href={`/decks/${item.deckId}`} className="font-medium text-ink-violet underline-offset-4 hover:underline">
             {item.deckName}
           </Link>
         </>
@@ -22,40 +22,34 @@ function Line({ item }: { item: FeedItem }) {
     case "streak":
       return (
         <>
-          {name} đang giữ chuỗi <span className="highlighter text-ink">{item.n} ngày</span>
+          {name} đang giữ chuỗi {item.n} ngày
         </>
       );
   }
 }
 
-const ICONS = { words: PenLine, joined: UserPlus, created: Users, streak: Flame } as const;
-
+/** Recent activity as a vertical timeline: a small dot per line, the time under it. */
 export function ActivityFeed({ items }: { items: FeedItem[] }) {
   return (
-    <section aria-labelledby="feed-title" className="rounded-card border border-rule bg-surface">
-      <h2 id="feed-title" className="px-4 pt-4 pb-2 text-ink">
+    <section aria-labelledby="feed-title">
+      <h2 id="feed-title" className="mb-3 text-lg">
         Hoạt động gần đây
       </h2>
       {items.length ? (
-        <ul className="ruled-list">
-          {items.map((item) => {
-            const Icon = ICONS[item.kind];
-            return (
-              <li key={item.key} className="flex items-start gap-3 px-4 py-3 text-[0.9375rem] text-ink-soft">
-                <Icon
-                  className={item.kind === "streak" ? "mt-0.5 size-4 shrink-0 text-margin-red" : "mt-0.5 size-4 shrink-0"}
-                  aria-hidden
-                />
-                <p className="min-w-0 flex-1">
-                  <Line item={item} />
-                  {"at" in item && <span className="block text-xs">{formatAgo(item.at)}</span>}
-                </p>
-              </li>
-            );
-          })}
-        </ul>
+        <ol className="relative ml-1.5 border-l border-rule-strong">
+          {items.map((item) => (
+            <li key={item.key} className="relative pb-4 pl-5 text-[0.9375rem] text-ink-soft last:pb-0">
+              <span aria-hidden className="absolute top-2 -left-[3.5px] size-1.5 rounded-full bg-rule-strong" />
+              <p>
+                {item.kind === "streak" && <Flame className="mr-1 inline size-3.5 text-turmeric" aria-hidden />}
+                <Line item={item} />
+              </p>
+              {"at" in item && <p className="text-xs">{formatAgo(item.at)}</p>}
+            </li>
+          ))}
+        </ol>
       ) : (
-        <p className="px-4 pb-4 text-sm text-ink-soft">Chưa có hoạt động nào trong 14 ngày qua.</p>
+        <p className="text-sm text-ink-soft">Chưa có hoạt động nào trong 14 ngày qua.</p>
       )}
     </section>
   );

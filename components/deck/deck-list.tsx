@@ -3,6 +3,7 @@ import { Check, Globe2, Link2, Lock, Plus, Users } from "lucide-react";
 import { DeckCover } from "@/components/deck/deck-cover";
 import { SampleDecksButton } from "@/components/deck/sample-decks-button";
 import { Button } from "@/components/ui/button";
+import { EndPup } from "@/components/mascot/end-pup";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedNav } from "@/components/ui/segmented";
 import { deckTone } from "@/lib/deck-colors";
@@ -100,7 +101,7 @@ export function DeckList({ decks, langFilter }: { decks: DeckRow[]; langFilter: 
       {!shown.length && (
         <EmptyState
           className="mt-6"
-          figure="notebook"
+          figure={<EndPup mood="wave" figure="notebook" size={96} />}
           title="Chưa có bộ từ nào."
           actions={
             <>

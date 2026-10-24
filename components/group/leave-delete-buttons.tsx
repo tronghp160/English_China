@@ -14,19 +14,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { deleteGroup, removeMember } from "@/lib/actions/groups";
 
-const DANGER_BTN = "min-h-11 rounded-btn bg-wash-red px-4 text-sm font-medium text-danger";
-const CONFIRM_BTN = "min-h-11 rounded-btn bg-danger text-paper hover:bg-danger/90";
+const CONFIRM_BTN = "bg-seal text-on-seal hover:bg-seal/90";
 
 export function LeaveGroupButton({ groupId, userId, name }: { groupId: string; userId: string; name: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   return (
     <AlertDialog>
-      <AlertDialogTrigger className={DANGER_BTN}>Rời nhóm</AlertDialogTrigger>
-      <AlertDialogContent className="rounded-sheet">
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive">Rời nhóm</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Rời nhóm “{name}”?</AlertDialogTitle>
           <AlertDialogDescription>
@@ -35,7 +37,7 @@ export function LeaveGroupButton({ groupId, userId, name }: { groupId: string; u
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="min-h-11 rounded-btn">Ở lại</AlertDialogCancel>
+          <AlertDialogCancel>Ở lại</AlertDialogCancel>
           <AlertDialogAction
             disabled={pending}
             className={CONFIRM_BTN}
@@ -63,8 +65,10 @@ export function DeleteGroupButton({ groupId, name }: { groupId: string; name: st
   const [pending, start] = useTransition();
   return (
     <AlertDialog onOpenChange={() => setConfirm("")}>
-      <AlertDialogTrigger className={DANGER_BTN}>Xóa nhóm</AlertDialogTrigger>
-      <AlertDialogContent className="rounded-sheet">
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive">Xóa nhóm</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa nhóm “{name}”?</AlertDialogTitle>
           <AlertDialogDescription>
@@ -72,14 +76,9 @@ export function DeleteGroupButton({ groupId, name }: { groupId: string; name: st
             nhận.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <Input
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          aria-label="Tên nhóm"
-          className="h-11 rounded-btn"
-        />
+        <Input value={confirm} onChange={(e) => setConfirm(e.target.value)} aria-label="Tên nhóm" />
         <AlertDialogFooter>
-          <AlertDialogCancel className="min-h-11 rounded-btn">Giữ lại</AlertDialogCancel>
+          <AlertDialogCancel>Giữ lại</AlertDialogCancel>
           <AlertDialogAction
             disabled={confirm.trim() !== name.trim() || pending}
             className={CONFIRM_BTN}

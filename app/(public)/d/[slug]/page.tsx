@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ShareActions } from "@/components/deck/share-actions";
-import { LangFlag } from "@/components/lang-flag";
+import { DeckCover } from "@/components/deck/deck-cover";
+import { Button } from "@/components/ui/button";
+import { WordSpecimen } from "@/components/word/word-specimen";
 import { getMe } from "@/lib/auth";
 import { getSharedDeck, SHARE_PREVIEW_LIMIT } from "@/lib/data/share";
 import { LANGUAGES } from "@/lib/lang/registry";
@@ -41,83 +43,89 @@ export default async function SharedDeckPage({ params }: PageProps<"/d/[slug]">)
     subscribed = Boolean(data);
   }
 
+  const preview = words.slice(0, 5);
+  const rest = words.slice(5);
+
   return (
     <div className="pt-2">
-      <header className="flex items-start gap-3">
-        <LangFlag lang={deck.language} label className="mt-2 text-2xl" />
+      <header className="flex items-start gap-4">
+        <DeckCover id={deck.id} language={deck.language} name={deck.name} size="lg" />
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl break-words text-ink">{deck.name}</h1>
-          <p className="text-sm text-ink-soft">
-            {deck.word_count} từ · của {deck.owner?.display_name}
-            {deck.learner_count > 0 && ` · ${deck.learner_count} người đang học`}
+          <h1 className="text-xl break-words sm:text-2xl">{deck.name}</h1>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-soft">
+            <span>{def.label}</span>
+            <span>{deck.word_count} từ</span>
+            <span>của {deck.owner?.display_name}</span>
+            {deck.learner_count > 0 && <span>{deck.learner_count} người đang học</span>}
           </p>
-          {deck.description && <p className="mt-2 text-[0.9375rem] text-ink">{deck.description}</p>}
+          {deck.description && <p className="mt-3 text-[0.9375rem] text-ink">{deck.description}</p>}
         </div>
       </header>
 
-      <div className="mt-5">
+      <div className="mt-6">
         {!me ? (
           <div>
-            <Link
-              href={`/login?next=${encodeURIComponent(path)}`}
-              className="inline-flex min-h-12 w-full items-center justify-center rounded-btn bg-primary px-6 text-base font-medium text-primary-foreground sm:w-auto"
-            >
-              Đăng nhập để học bộ này
-            </Link>
-            <p className="mt-2 text-sm text-ink-soft">Miễn phí. Lần đầu đăng nhập sẽ tự tạo tài khoản.</p>
+            <Button asChild size="lg" className="w-full sm:w-auto">
+              <Link href={`/login?next=${encodeURIComponent(path)}`}>Đăng nhập để học bộ này</Link>
+            </Button>
+            <p className="mt-2 text-sm text-ink-soft">Miễn phí. Chưa có tài khoản thì đăng ký chỉ mất một phút.</p>
           </div>
         ) : subscribed ? (
           <div className="flex flex-col gap-3">
-            <Link
-              href={`/decks/${deck.id}`}
-              className="inline-flex min-h-12 w-full items-center justify-center rounded-btn bg-primary px-6 text-base font-medium text-primary-foreground sm:w-auto"
-            >
-              Bạn đang học bộ này · Mở bộ từ
-            </Link>
+            <Button asChild size="lg" className="w-full sm:w-auto">
+              <Link href={`/decks/${deck.id}`}>Bạn đang học bộ này, mở bộ từ</Link>
+            </Button>
             <ShareActions deckRef={{ slug }} showSubscribe={false} />
           </div>
         ) : (
           <>
             <ShareActions deckRef={{ slug }} />
-            <p className="mt-2 text-sm text-ink-soft">
-              “Học bộ này” tự cập nhật khi {deck.owner?.display_name} thêm từ. “Sao chép” tạo bản riêng, bạn sửa thoải
-              mái.
+            <p className="mt-2 max-w-[62ch] text-sm text-ink-soft">
+              “Lưu vào sổ của tôi” tự cập nhật khi {deck.owner?.display_name} thêm từ. “Sao chép” tạo bản riêng, bạn sửa thoải mái.
             </p>
           </>
         )}
       </div>
 
-      <section aria-labelledby="words-title" className="mt-8">
-        <h2 id="words-title" className="mb-2 text-sm font-medium text-ink-soft">
+      <section aria-labelledby="words-title" className="mt-10">
+        <h2 id="words-title" className="mb-3 text-lg">
           Danh sách từ
         </h2>
         {words.length ? (
-          <ul className="ruled-list overflow-hidden rounded-card border border-rule bg-surface">
-            {words.map((w) => (
-              <li key={w.id} className="flex items-baseline gap-3 px-4 py-3">
-                {w.emoji && (
-                  <span className="shrink-0 text-lg" aria-hidden>
-                    {w.emoji}
-                  </span>
-                )}
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-baseline gap-x-2">
-                    <span className={cn("text-lg font-medium text-ink", def.termFontClass)} lang={def.ttsLang}>
-                      {w.term}
+          <>
+            <ul className="grid gap-4 sm:grid-cols-2">
+              {preview.map((w) => (
+                <li key={w.id} className="min-w-0">
+                  <WordSpecimen lang={deck.language} term={w.term} reading={w.reading} size="sm" className={deck.language === "zh" ? "sheet p-4" : undefined}>
+                    <p className="flex min-h-[var(--line)] items-end pb-1 text-[0.9375rem] text-ink">{w.meaning_vi}</p>
+                  </WordSpecimen>
+                </li>
+              ))}
+            </ul>
+            {rest.length > 0 && (
+              <ul className="ruled-list mt-4 border-y border-rule">
+                {rest.map((w) => (
+                  <li key={w.id} className="flex items-baseline gap-3 px-1 py-3">
+                    <span className="min-w-0 flex-1">
+                      <span className="flex flex-wrap items-baseline gap-x-2">
+                        <span className={cn("text-lg font-medium text-ink", deck.language === "zh" ? "font-hanzi" : "font-display")} lang={def.ttsLang}>
+                          {w.term}
+                        </span>
+                        {w.reading && <span className="font-ipa text-sm text-ink-soft">{w.reading}</span>}
+                      </span>
+                      <span className="block text-[0.9375rem] text-ink">{w.meaning_vi}</span>
                     </span>
-                    {w.reading && <span className="font-ipa text-sm text-ink-soft">{w.reading}</span>}
-                  </span>
-                  <span className="block text-[0.9375rem] text-ink">{w.meaning_vi}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         ) : (
           <p className="text-sm text-ink-soft">Bộ từ này chưa có từ nào.</p>
         )}
         {deck.word_count > SHARE_PREVIEW_LIMIT && (
-          <p className="mt-2 text-sm text-ink-soft">
-            Đang hiện {SHARE_PREVIEW_LIMIT} từ đầu tiên. Học hoặc sao chép để xem đủ {deck.word_count} từ.
+          <p className="mt-3 text-sm text-ink-soft">
+            Đang hiện {SHARE_PREVIEW_LIMIT} từ đầu tiên. Lưu hoặc sao chép để xem đủ {deck.word_count} từ.
           </p>
         )}
       </section>

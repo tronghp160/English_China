@@ -2,6 +2,7 @@
 
 import { RotateCw } from "lucide-react";
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 /** Reloads the page the user was trying to open; also reloads by itself once back online. */
 export function RetryButton() {
@@ -12,13 +13,9 @@ export function RetryButton() {
   }, []);
 
   return (
-    <button
-      type="button"
-      onClick={() => window.location.reload()}
-      className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-btn bg-primary px-5 text-base font-medium text-primary-foreground"
-    >
-      <RotateCw className="size-5" aria-hidden />
+    <Button type="button" size="lg" className="mt-6" onClick={() => window.location.reload()}>
+      <RotateCw aria-hidden />
       Thử lại
-    </button>
+    </Button>
   );
 }

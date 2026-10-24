@@ -2,26 +2,27 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { ArrowUp, BookOpenCheck, RotateCcw, Square } from "lucide-react";
+import { ArrowUp, BookOpenCheck, Drama, PenLine, RotateCcw, Search, Square, Zap, type LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { CHAT_MAX_CHARS } from "@/lib/ai/chat-prompt";
 import type { ChatMessage } from "@/lib/ai/chat-tools";
 import { LANGUAGES } from "@/lib/lang/registry";
 import type { LangCode } from "@/lib/lang/types";
-import { cn } from "@/lib/utils";
 import { MessageText } from "./message-text";
 import { SuggestWordCard } from "./suggest-word-card";
 
-type Starter = { label: string; emoji: string; text: string; send: boolean };
+type Starter = { label: string; icon: LucideIcon; text: string; send: boolean };
 
 function starters(language: LangCode): Starter[] {
   const label = LANGUAGES[language].label.toLowerCase();
   return [
-    { emoji: "🎭", label: "Luyện hội thoại với từ hay quên", text: "Mình muốn luyện một đoạn hội thoại ngắn dùng các từ mình hay quên.", send: true },
-    { emoji: "⚡", label: "Kiểm tra nhanh 5 từ đến hạn", text: "Kiểm tra nhanh mình 5 từ đến hạn ôn nhé, hỏi từng câu một.", send: true },
-    { emoji: "✍️", label: "Sửa câu giúp mình", text: `Sửa giúp mình câu ${label} này: `, send: false },
-    { emoji: "🔍", label: "Phân biệt hai từ hay nhầm", text: "Phân biệt giúp mình hai từ: ", send: false },
+    { icon: Drama, label: "Luyện hội thoại với từ hay quên", text: "Mình muốn luyện một đoạn hội thoại ngắn dùng các từ mình hay quên.", send: true },
+    { icon: Zap, label: "Kiểm tra nhanh 5 từ đến hạn", text: "Kiểm tra nhanh mình 5 từ đến hạn ôn nhé, hỏi từng câu một.", send: true },
+    { icon: PenLine, label: "Sửa câu giúp mình", text: `Sửa giúp mình câu ${label} này: `, send: false },
+    { icon: Search, label: "Phân biệt hai từ hay nhầm", text: "Phân biệt giúp mình hai từ: ", send: false },
   ];
 }
 
@@ -128,50 +129,44 @@ export function ChatView({
   return (
     <div className="flex flex-col">
       {messages.length === 0 && (
-        <div className="notebook-card flex flex-col items-center px-5 py-8 text-center">
-          <span aria-hidden className="animate-float text-5xl">
-            🧑‍🏫
-          </span>
-          <p className="mt-3 font-heading text-lg font-black text-ink">Hôm nay mình học gì nhỉ?</p>
-          <p className="mt-1 max-w-sm text-sm text-ink-soft">
-            Hỏi về một từ, nhờ sửa câu, hay luyện hội thoại với chính những từ trong sổ của bạn.
-          </p>
-          {aiEnabled ? (
-            <ul className="mt-5 grid w-full gap-2 sm:grid-cols-2">
-              {starters(language).map((s) => (
-                <li key={s.label}>
-                  <button
-                    type="button"
-                    onClick={() => pickStarter(s)}
-                    className="flex min-h-12 w-full items-center gap-2 rounded-btn border border-rule bg-surface px-3 text-left text-sm font-semibold text-ink transition-colors hover:bg-muted"
-                  >
-                    <span aria-hidden>{s.emoji}</span>
-                    {s.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-4 text-sm text-danger">Gia sư chưa được bật (thiếu khóa AI trên máy chủ).</p>
-          )}
-        </div>
+        <EmptyState figure="chat" title="Hôm nay mình học gì nhỉ?" className="py-6">
+          Hỏi về một từ, nhờ sửa câu, hay luyện hội thoại với chính những từ trong sổ của bạn.
+        </EmptyState>
       )}
+      {messages.length === 0 &&
+        (aiEnabled ? (
+          <ul className="grid w-full gap-2 sm:grid-cols-2">
+            {starters(language).map((s) => (
+              <li key={s.label}>
+                <Button type="button" variant="outline" onClick={() => pickStarter(s)} className="h-auto min-h-12 w-full justify-start py-2.5 whitespace-normal">
+                  <s.icon className="text-ink-soft" aria-hidden />
+                  {s.label}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-center text-sm text-seal-text">Gia sư chưa được bật (thiếu khóa AI trên máy chủ).</p>
+        ))}
 
-      <ol className="space-y-4" aria-label="Tin nhắn" aria-live="polite">
-        {messages.map((m) =>
+      <ol className="space-y-5" aria-label="Tin nhắn" aria-live="polite">
+        {messages.map((m, mi) =>
           m.role === "user" ? (
             <li key={m.id} className="flex justify-end">
-              <div className="max-w-[85%] rounded-card rounded-br-md bg-primary px-4 py-2.5 whitespace-pre-wrap text-primary-foreground">
+              <div className="max-w-[85%] rounded-xl rounded-br-sm bg-tint-violet px-4 py-2.5 whitespace-pre-wrap text-ink">
                 {m.parts.map((p, i) => (p.type === "text" ? <span key={i}>{p.text}</span> : null))}
               </div>
             </li>
           ) : (
-            <li key={m.id} className="flex items-start gap-2">
-              <span aria-hidden className="icon-tile mt-0.5 size-9 shrink-0 bg-wash-grape text-lg">
-                🧑‍🏫
-              </span>
-              <div className="min-w-0 max-w-[85%] rounded-card rounded-tl-md border border-rule bg-surface px-4 py-2.5 text-ink shadow-card">
-                <span className="sr-only">Gia sư: </span>
+            // The tutor writes like a teacher in the margin of your notebook: no bubble, a thin red line on the left.
+            <li key={m.id} className="border-l-2 border-margin pl-4">
+              <span className="sr-only">Gia sư: </span>
+              {messages[mi - 1]?.role !== "assistant" && (
+                <span aria-hidden className="mb-1 block text-xs text-ink-soft">
+                  Gia sư
+                </span>
+              )}
+              <div className="min-w-0 text-ink">
                 {/* Text first, word cards last: models often call the tool before writing. */}
                 {[...m.parts].sort((a, b) => Number(a.type === "tool-suggestWord") - Number(b.type === "tool-suggestWord")).map((p, i) => {
                   if (p.type === "text") return <MessageText key={i} text={p.text} />;
@@ -180,7 +175,7 @@ export function ChatView({
                   if (p.type in TOOL_BUSY && "state" in p && (p.state === "input-streaming" || p.state === "input-available"))
                     return (
                       <p key={i} className="flex items-center gap-1.5 py-1 text-sm text-ink-soft">
-                        <BookOpenCheck className="size-4 animate-pulse" aria-hidden />
+                        <BookOpenCheck className="size-4" strokeWidth={1.75} aria-hidden />
                         {TOOL_BUSY[p.type]}
                       </p>
                     );
@@ -191,30 +186,23 @@ export function ChatView({
           ),
         )}
         {status === "submitted" && (
-          <li className="flex items-center gap-2" aria-label="Gia sư đang trả lời">
-            <span aria-hidden className="icon-tile size-9 bg-wash-grape text-lg">
-              🧑‍🏫
-            </span>
-            <span className="flex gap-1 rounded-card border border-rule bg-surface px-4 py-3.5 shadow-card" aria-hidden>
-              <span className="size-2 animate-bounce rounded-full bg-ink-soft [animation-delay:-0.3s]" />
-              <span className="size-2 animate-bounce rounded-full bg-ink-soft [animation-delay:-0.15s]" />
-              <span className="size-2 animate-bounce rounded-full bg-ink-soft" />
+          <li className="border-l-2 border-margin pl-4" aria-label="Gia sư đang trả lời">
+            <span className="flex gap-1.5 py-2" aria-hidden>
+              <span className="size-1.5 animate-pulse rounded-full bg-ink-soft [animation-duration:1.4s] [animation-delay:-0.4s]" />
+              <span className="size-1.5 animate-pulse rounded-full bg-ink-soft [animation-duration:1.4s] [animation-delay:-0.2s]" />
+              <span className="size-1.5 animate-pulse rounded-full bg-ink-soft [animation-duration:1.4s]" />
             </span>
           </li>
         )}
       </ol>
 
       {error && (
-        <div role="alert" className="mt-4 flex flex-wrap items-center gap-3 rounded-card bg-wash-red px-4 py-3 text-sm text-danger">
+        <div role="alert" className="mt-4 flex flex-wrap items-center gap-3 rounded-btn border-l-[3px] border-seal bg-tint-seal px-4 py-3 text-sm text-seal-text">
           <span className="flex-1">{errorText(error)}</span>
-          <button
-            type="button"
-            onClick={() => void regenerate()}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-btn bg-surface px-3 font-bold text-ink"
-          >
-            <RotateCcw className="size-4" aria-hidden />
+          <Button type="button" variant="outline" size="sm" onClick={() => void regenerate()}>
+            <RotateCcw aria-hidden />
             Thử lại
-          </button>
+          </Button>
         </div>
       )}
       <div ref={endRef} />
@@ -224,7 +212,7 @@ export function ChatView({
           onSubmit={onSubmit}
           className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-5 lg:bottom-4"
         >
-          <div className="flex items-end gap-2 rounded-sheet border border-rule bg-surface p-2 shadow-pop">
+          <div className="sheet-lift flex items-end gap-2 rounded-sheet border border-rule bg-surface p-2">
             <label htmlFor="chat-input" className="sr-only">
               Tin nhắn cho gia sư
             </label>
@@ -237,29 +225,16 @@ export function ChatView({
               rows={1}
               maxLength={CHAT_MAX_CHARS}
               placeholder="Hỏi gia sư…"
-              className="field-sizing-content max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3 py-2.5 text-base text-ink outline-none placeholder:text-ink-soft"
+              className="field-sizing-content max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3 py-2.5 text-base text-ink outline-none placeholder:text-ink-faint"
             />
             {busy ? (
-              <button
-                type="button"
-                onClick={() => void stop()}
-                aria-label="Dừng trả lời"
-                className="grid size-11 shrink-0 place-items-center rounded-full bg-muted text-ink"
-              >
+              <Button type="button" variant="secondary" size="icon" onClick={() => void stop()} aria-label="Dừng trả lời" className="size-10 shrink-0 rounded-full">
                 <Square className="size-4 fill-current" aria-hidden />
-              </button>
+              </Button>
             ) : (
-              <button
-                type="submit"
-                aria-label="Gửi"
-                disabled={!input.trim()}
-                className={cn(
-                  "btn-3d grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground [--edge-color:var(--ink-blue-shade)]",
-                  "disabled:opacity-40",
-                )}
-              >
-                <ArrowUp className="size-5" strokeWidth={2.5} aria-hidden />
-              </button>
+              <Button type="submit" size="icon" aria-label="Gửi" disabled={!input.trim()} className="size-10 shrink-0 rounded-full">
+                <ArrowUp strokeWidth={2.25} aria-hidden />
+              </Button>
             )}
           </div>
           {input.length > CHAT_MAX_CHARS - 200 && (
