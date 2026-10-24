@@ -87,3 +87,20 @@ export function computeStreak(activeDays: Iterable<string>, today: string): Stre
     restDays,
   };
 }
+
+/**
+ * The longest run of consecutive study days in the history (no rest days counted). Used for the outfits that
+ * unlock by streak: a streak that was reached once keeps the reward even after it broke.
+ */
+export function longestStreak(activeDays: Iterable<string>): number {
+  const days = [...new Set(activeDays)].sort();
+  let best = 0;
+  let run = 0;
+  let prev: string | null = null;
+  for (const day of days) {
+    run = prev && addDays(prev, 1) === day ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = day;
+  }
+  return best;
+}

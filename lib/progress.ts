@@ -1,0 +1,148 @@
+/**
+ * Levels, quests, bones and unlocks of the game layer (REDESIGN_V3 §3.5). Pure: the numbers come from
+ * `daily_stats` and the prefs (lib/data/progress.ts); nothing here touches the database.
+ */
+
+// ---- Levels ----------------------------------------------------------------
+
+/** Total XP needed to reach level L: 25·L·(L-1) → L1 0, L2 50, L3 150, L4 300, L5 500, L10 2250, L20 9500. */
+export function xpForLevel(level: number): number {
+  return 25 * level * (level - 1);
+}
+
+export type LevelInfo = {
+  level: number;
+  /** XP earned inside the current level. */
+  xpInLevel: number;
+  /** XP the current level takes in total (50·level). */
+  xpForNext: number;
+  /** 0..1 */
+  progress: number;
+};
+
+export function levelFromXp(totalXp: number): LevelInfo {
+  const xp = Math.max(0, Math.floor(totalXp));
+  let level = Math.max(1, Math.floor((1 + Math.sqrt(1 + (4 * xp) / 25)) / 2));
+  // The closed form can be off by one at the boundaries because of rounding.
+  while (xpForLevel(level + 1) <= xp) level++;
+  while (level > 1 && xpForLevel(level) > xp) level--;
+  const xpInLevel = xp - xpForLevel(level);
+  const xpForNext = xpForLevel(level + 1) - xpForLevel(level);
+  return { level, xpInLevel, xpForNext, progress: xpInLevel / xpForNext };
+}
+
+// ---- Bones -----------------------------------------------------------------
+
+/** One bone per 10 right answers, two per quest reward taken, minus what Bin has eaten. */
+export function bonesAvailable(input: { totalCorrect: number; questsClaimedTotal: number; treatsFed: number }): number {
+  const earned = Math.floor(Math.max(0, input.totalCorrect) / 10) + 2 * Math.max(0, input.questsClaimedTotal);
+  return Math.max(0, earned - Math.max(0, input.treatsFed));
+}
+
+// ---- Daily quests ----------------------------------------------------------
+
+export type QuestId = "due" | "correct20" | "new5";
+
+export type Quest = { id: QuestId; title: string; progress: number; target: number; done: boolean };
+
+export const QUEST_IDS: readonly QuestId[] = ["due", "correct20", "new5"];
+
+export function isQuestId(id: string): id is QuestId {
+  return (QUEST_IDS as readonly string[]).includes(id);
+}
+
+/** The three quests of a study day from today's counts (`dueLeft` = cards still due now). */
+export function dailyQuests(today: { reviews: number; correct: number; new_learned: number; dueLeft: number }): Quest[] {
+  const reviews = Math.max(0, today.reviews);
+  const dueTarget = Math.max(1, reviews + Math.max(0, today.dueLeft));
+  return [
+    {
+      id: "due",
+      title: "Ôn hết từ đến hạn",
+      progress: reviews,
+      target: dueTarget,
+      done: today.dueLeft <= 0 && reviews > 0,
+    },
+    {
+      id: "correct20",
+      title: "Trả lời đúng 20 câu",
+      progress: Math.min(today.correct, 20),
+      target: 20,
+      done: today.correct >= 20,
+    },
+    {
+      id: "new5",
+      title: "Học 5 từ mới",
+      progress: Math.min(today.new_learned, 5),
+      target: 5,
+      done: today.new_learned >= 5,
+    },
+  ];
+}
+
+export type ClaimedByDay = Record<string, string[]>;
+
+/** Quest rewards already taken on `day`. */
+export function claimedOn(claimed: ClaimedByDay, day: string): QuestId[] {
+  return (claimed[day] ?? []).filter(isQuestId);
+}
+
+/** Keeps the newest `keep` days so the pref stays small; the lifetime count lives in `quests_total`. */
+export function pruneClaimed(claimed: ClaimedByDay, keep = 7): ClaimedByDay {
+  const days = Object.keys(claimed).sort().slice(-keep);
+  return Object.fromEntries(days.map((d) => [d, claimed[d]]));
+}
+
+// ---- Outfits and tricks ----------------------------------------------------
+
+export type OutfitId = "none" | "scarf" | "bow" | "glasses" | "cap" | "party" | "wizard" | "crown";
+
+export type Outfit = {
+  id: OutfitId;
+  name: string;
+  /** null = always available. */
+  unlock: { kind: "streak" | "level"; value: number } | null;
+};
+
+export const OUTFITS: readonly Outfit[] = [
+  { id: "none", name: "Không mặc", unlock: null },
+  { id: "scarf", name: "Khăn quàng", unlock: { kind: "streak", value: 3 } },
+  { id: "bow", name: "Nơ hồng", unlock: { kind: "level", value: 3 } },
+  { id: "glasses", name: "Kính râm", unlock: { kind: "streak", value: 7 } },
+  { id: "cap", name: "Mũ lưỡi trai", unlock: { kind: "level", value: 5 } },
+  { id: "party", name: "Mũ tiệc", unlock: { kind: "streak", value: 14 } },
+  { id: "wizard", name: "Mũ phù thủy", unlock: { kind: "level", value: 10 } },
+  { id: "crown", name: "Vương miện", unlock: { kind: "streak", value: 30 } },
+];
+
+export function isOutfitId(id: string): id is OutfitId {
+  return OUTFITS.some((o) => o.id === id);
+}
+
+/** Ids of the outfits the person has earned: the best streak ever and the current level decide. */
+export function unlockedOutfits(input: { longestStreak: number; level: number }): OutfitId[] {
+  return OUTFITS.filter((o) => {
+    if (!o.unlock) return true;
+    return (o.unlock.kind === "streak" ? input.longestStreak : input.level) >= o.unlock.value;
+  }).map((o) => o.id);
+}
+
+/** What still stands between the person and an outfit, e.g. "Chuỗi 7 ngày" or "Cấp 5" (null when open). */
+export function outfitCondition(outfit: Outfit): string | null {
+  if (!outfit.unlock) return null;
+  return outfit.unlock.kind === "streak" ? `Chuỗi ${outfit.unlock.value} ngày` : `Cấp ${outfit.unlock.value}`;
+}
+
+export type TrickId = "sit" | "spin" | "rollOver" | "dance" | "highFive";
+
+export const TRICKS: readonly { id: TrickId; name: string; level: number }[] = [
+  { id: "sit", name: "Ngồi", level: 1 },
+  { id: "spin", name: "Xoay vòng", level: 2 },
+  { id: "rollOver", name: "Lăn tròn", level: 4 },
+  { id: "dance", name: "Nhảy múa", level: 6 },
+  { id: "highFive", name: "Đập tay", level: 8 },
+];
+
+export function unlockedTricks(level: number): TrickId[] {
+  return TRICKS.filter((t) => level >= t.level).map((t) => t.id);
+}

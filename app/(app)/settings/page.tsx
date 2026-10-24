@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bell, Download, GraduationCap, KeyRound, MessageSquareHeart, PawPrint, Palette, Smartphone, Trash2, User, Volume2, type LucideIcon } from "lucide-react";
+import { AudioLines, Bell, Download, GraduationCap, KeyRound, MessageSquareHeart, PawPrint, Palette, Smartphone, Trash2, User, Volume2, type LucideIcon } from "lucide-react";
 import { IconTile } from "@/components/ui/icon-tile";
 import type { Tone } from "@/lib/tone";
 import { SettingsForm } from "@/components/settings/settings-form";
@@ -7,6 +7,7 @@ import { SettingsNav } from "@/components/settings/settings-nav";
 import { VoiceSettings } from "@/components/settings/voice-settings";
 import { StudyPrefs } from "@/components/settings/study-prefs";
 import { MascotPrefs } from "@/components/settings/mascot-prefs";
+import { SoundPrefs } from "@/components/settings/sound-prefs";
 import { AvatarUpload } from "@/components/settings/avatar-upload";
 import { DeleteAccount, ExportData } from "@/components/settings/account-data";
 import { ContactLinks } from "@/components/contact/contact-links";
@@ -26,6 +27,7 @@ const SECTIONS = [
   { id: "mat-khau", label: "Mật khẩu" },
   { id: "on-tap", label: "Ôn tập" },
   { id: "linh-vat", label: "Linh vật" },
+  { id: "am-thanh", label: "Âm thanh & rung" },
   { id: "thong-bao", label: "Thông báo" },
   { id: "phat-am", label: "Phát âm" },
   { id: "giao-dien", label: "Giao diện" },
@@ -40,6 +42,7 @@ const LOOK: Record<(typeof SECTIONS)[number]["id"], { icon: LucideIcon; tone: To
   "mat-khau": { icon: KeyRound, tone: "teal" },
   "on-tap": { icon: GraduationCap, tone: "mint" },
   "linh-vat": { icon: PawPrint, tone: "sun" },
+  "am-thanh": { icon: AudioLines, tone: "pink" },
   "thong-bao": { icon: Bell, tone: "orange" },
   "phat-am": { icon: Volume2, tone: "coral" },
   "giao-dien": { icon: Palette, tone: "grape" },
@@ -109,6 +112,9 @@ export default async function SettingsPage() {
           </Section>
           <Section id="linh-vat" title="Linh vật">
             <MascotPrefs prefs={prefs} />
+          </Section>
+          <Section id="am-thanh" title="Âm thanh & rung">
+            <SoundPrefs prefs={prefs} />
           </Section>
           <Section id="thong-bao" title="Thông báo">
             <ReminderSettings publicKey={vapidPublicKey()} />

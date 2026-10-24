@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { BookOpen, Compass, Pencil, Plus } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
+import { FxDemo } from "@/components/fx/fx-demo";
 import { LangMark } from "@/components/lang-mark";
 import { MascotSay } from "@/components/mascot/mascot-say";
 import { Pup } from "@/components/mascot/pup";
@@ -142,6 +143,11 @@ export default function DevUiPage() {
           <EmptyState figure="notebook" title="Chưa có bộ từ nào">Tạo bộ từ đầu tiên hoặc thêm bộ từ mẫu.</EmptyState>
           <EmptyState figure="check" title="Hôm nay ôn xong rồi" actions={<Button size="sm"><BookOpen />Luyện thêm</Button>} />
         </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg">Hiệu ứng (V3)</h2>
+        <FxDemo />
       </section>
     </div>
   );

@@ -7,7 +7,7 @@ import { SampleDecksButton } from "@/components/deck/sample-decks-button";
 import { LangMark } from "@/components/lang-mark";
 import { MascotSay } from "@/components/mascot/mascot-say";
 import { Pup } from "@/components/mascot/pup";
-import { CountUp } from "@/components/stats/count-up";
+import { CountUp } from "@/components/fx/count-up";
 import { Heatmap } from "@/components/stats/heatmap";
 import { ProgressRing } from "@/components/stats/progress-ring";
 import { StreakWeek } from "@/components/stats/streak-week";

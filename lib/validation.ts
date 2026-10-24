@@ -52,6 +52,20 @@ export const prefsSchema = z.object({
   /** Puppy mascot on Today, in sessions and on end screens. */
   mascot: z.boolean().optional(),
   mascot_name: z.string().trim().min(1).max(20).optional(),
+  /** Synthesized sounds in sessions and on Bin (lib/sfx.ts). */
+  sound: z.boolean().optional(),
+  /** Short vibrations on answers where the device has them (lib/haptics.ts). */
+  haptics: z.boolean().optional(),
+  /** Outfit id of Bin, one of OUTFITS in lib/progress.ts; "none" = no outfit. */
+  bin_outfit: z.string().max(20).optional(),
+  /** Bones fed to Bin so far; bones in hand = earned (lib/progress.ts) minus this. */
+  bin_treats_fed: z.number().int().min(0).optional(),
+  /** Study day (YYYY-MM-DD) of the last feeding, "" = never. */
+  bin_last_fed: z.string().max(10).optional(),
+  /** Quest rewards taken since the start; `quests_claimed` only keeps the last 7 days, this keeps the count. */
+  quests_total: z.number().int().min(0).optional(),
+  /** Quests whose reward was taken, by study day: { "2026-10-24": ["due", "correct20"] }. */
+  quests_claimed: z.record(z.string().max(10), z.array(z.string().max(20))).optional(),
 });
 export type Prefs = z.infer<typeof prefsSchema>;
 
@@ -66,6 +80,13 @@ export const DEFAULT_PREFS: Required<Prefs> = {
   ai_autofill: true,
   mascot: true,
   mascot_name: "Bin",
+  sound: true,
+  haptics: true,
+  bin_outfit: "none",
+  bin_treats_fed: 0,
+  bin_last_fed: "",
+  quests_total: 0,
+  quests_claimed: {},
 };
 
 export function readPrefs(raw: unknown): Required<Prefs> {

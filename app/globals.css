@@ -82,6 +82,8 @@
   --c-sun: #ffc23d;
   --c-sun-soft: #fff2cc;
   --c-sun-fg: #855400;
+  /* Text on the solid sun (combo banner, medals), not on the pale one */
+  --c-sun-on: #4d3200;
   --c-grape: #8e5cff;
   --c-grape-soft: #efe7ff;
   --c-grape-fg: #5b2fcc;
@@ -296,6 +298,7 @@
   --color-c-sun: var(--c-sun);
   --color-c-sun-soft: var(--c-sun-soft);
   --color-c-sun-fg: var(--c-sun-fg);
+  --color-c-sun-on: var(--c-sun-on);
   --color-c-grape: var(--c-grape);
   --color-c-grape-soft: var(--c-grape-soft);
   --color-c-grape-fg: var(--c-grape-fg);
@@ -366,28 +369,6 @@
   --font-hanzi-sans: "Noto Sans SC", "Hero Hanzi", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono: ui-monospace, monospace;
 
-  /* Type scale (REDESIGN_V2 §3.1) */
-  --text-xs: 0.8125rem;
-  --text-xs--line-height: 1.4;
-  --text-sm: 0.9375rem;
-  --text-sm--line-height: 1.5;
-  --text-base: 1rem;
-  --text-base--line-height: 1.6;
-  --text-lg: 1.1875rem;
-  --text-lg--line-height: 1.4;
-  --text-xl: 1.5rem;
-  --text-xl--line-height: 1.25;
-  --text-2xl: 2rem;
-  --text-2xl--line-height: 1.15;
-  --text-3xl: 2.75rem;
-  --text-3xl--line-height: 1.05;
-  --text-display: clamp(2.25rem, 5.5vw, 4rem);
-  --text-display--line-height: 1.05;
-  --text-word: clamp(2.5rem, 8vw, 3.75rem);
-  --text-word--line-height: 1.1;
-  --text-hanzi: clamp(3.5rem, 13vw, 5.5rem);
-  --text-hanzi--line-height: 1.1;
-
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -431,6 +412,43 @@
   --animate-shake: shake 240ms ease-in-out both;
   --animate-pop: pop 320ms var(--ease-spring) both;
   --animate-fade-up: fade-up 260ms var(--ease-out) both;
+}
+
+/* Type scale (REDESIGN_V2 §3.1). A plain @theme, not inline: utilities keep var(--text-*) so the wide-screen
+   scale below (REDESIGN_V3 §3.7) can change them. */
+@theme {
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.4;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1rem;
+  --text-base--line-height: 1.6;
+  --text-lg: 1.1875rem;
+  --text-lg--line-height: 1.4;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 1.25;
+  --text-2xl: 2rem;
+  --text-2xl--line-height: 1.15;
+  --text-3xl: 2.75rem;
+  --text-3xl--line-height: 1.05;
+  --text-display: clamp(2.25rem, 5.5vw, 4rem);
+  --text-display--line-height: 1.05;
+  --text-word: clamp(2.5rem, 8vw, 3.75rem);
+  --text-word--line-height: 1.1;
+  --text-hanzi: clamp(3.5rem, 13vw, 5.5rem);
+  --text-hanzi--line-height: 1.1;
+}
+
+/* From lg the secondary text grows a step: nothing the user has to read is under 14px on a laptop. */
+@media (min-width: 64rem) {
+  :root {
+    --text-xs: 0.875rem;
+    --text-sm: 1rem;
+    --text-base: 1.0625rem;
+    --text-lg: 1.25rem;
+    --text-xl: 1.625rem;
+    --text-2xl: 2.25rem;
+  }
 }
 
 @layer base {
@@ -653,7 +671,70 @@
   transform: rotateY(180deg);
 }
 
+/* Reveal (components/fx/reveal.tsx): children fade up one after another */
+.reveal > * {
+  animation: fade-up 320ms var(--ease-out) both;
+}
+.reveal > :nth-child(1) {
+  animation-delay: 0ms;
+}
+.reveal > :nth-child(2) {
+  animation-delay: 50ms;
+}
+.reveal > :nth-child(3) {
+  animation-delay: 100ms;
+}
+.reveal > :nth-child(4) {
+  animation-delay: 150ms;
+}
+.reveal > :nth-child(5) {
+  animation-delay: 200ms;
+}
+.reveal > :nth-child(6) {
+  animation-delay: 250ms;
+}
+.reveal > :nth-child(7) {
+  animation-delay: 300ms;
+}
+.reveal > :nth-child(8) {
+  animation-delay: 350ms;
+}
+.reveal > :nth-child(9) {
+  animation-delay: 400ms;
+}
+.reveal > :nth-child(10) {
+  animation-delay: 450ms;
+}
+.reveal > :nth-child(11) {
+  animation-delay: 500ms;
+}
+.reveal > :nth-child(12) {
+  animation-delay: 550ms;
+}
+
+/* Burst (components/fx/burst.tsx): dots fly out from the middle and fade */
+@keyframes burst {
+  from {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--bx), var(--by)) scale(0.4);
+    opacity: 0;
+  }
+}
+.burst-dot {
+  animation: burst 500ms var(--ease-out) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .reveal > *,
+  .burst-dot {
+    animation: none;
+  }
+  .burst-dot {
+    display: none;
+  }
   .flip-card {
     transition: none;
   }
