@@ -1662,3 +1662,33 @@
 .lang-flag-zh {
   background-image: url("/flags/zh.svg");
 }
+
+/* Match game (REDESIGN_V3 §8.5): tiles rise in one after another, "+1s" floats off the timer. */
+.match-tile-in {
+  animation: match-tile-in 320ms var(--ease-spring) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+@keyframes match-tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+}
+.match-float {
+  pointer-events: none;
+  animation: match-float 900ms var(--ease-out) both;
+}
+@keyframes match-float {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  20% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-22px);
+  }
+}
+

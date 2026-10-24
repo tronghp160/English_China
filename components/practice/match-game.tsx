@@ -1,22 +1,49 @@
 "use client";
 
-import { Clock, X } from "lucide-react";
+import { Flame, Medal, Timer, Trophy, X } from "lucide-react";
+import { useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
+import { Burst } from "@/components/fx/burst";
+import { Confetti } from "@/components/fx/confetti";
+import { Pup } from "@/components/mascot/pup";
+import { useBinAction } from "@/components/mascot/use-bin";
 import { Celebration } from "@/components/review/celebration";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { haptic } from "@/lib/haptics";
 import { formatMs, isPair, MATCH_PENALTY_MS, type MatchTile } from "@/lib/practice/match";
 import { getMatchRecord, saveMatchTime, type MatchRecord } from "@/lib/practice/match-records";
+import { playSfx } from "@/lib/sfx";
 import { cn } from "@/lib/utils";
 
 // Event handlers only; a module helper keeps the React compiler purity rule quiet.
 const clock = () => performance.now();
 
+/** A run of this many right pairs in a row flashes the timer green. */
+const RUN_FOR_FLASH = 3;
+/** Within this much of the old record the result is a silver medal. */
+const SILVER_WITHIN = 1.2;
+const COUNT_STEP_MS = 700;
+
 type Result = { ms: number; misses: number; previous: MatchRecord | null; isBest: boolean | null };
+type Medal = "gold" | "silver" | "bronze";
+
+function medalFor(result: Result): Medal {
+  if (result.isBest) return "gold";
+  if (result.previous && result.ms <= result.previous.ms * SILVER_WITHIN) return "silver";
+  return "bronze";
+}
+
+const MEDAL_LOOK: Record<Medal, { label: string; tile: string }> = {
+  gold: { label: "Huy chương vàng", tile: "bg-c-sun-soft text-c-sun-fg shadow-[0_6px_0_0_var(--c-sun)]" },
+  silver: { label: "Huy chương bạc", tile: "bg-surface-3 text-fg-muted shadow-[0_6px_0_0_var(--border-strong)]" },
+  bronze: { label: "Huy chương đồng", tile: "bg-c-orange-soft text-c-orange-fg shadow-[0_6px_0_0_var(--c-orange)]" },
+};
 
 function tileText(t: MatchTile) {
-  // words are set in the serif, meanings in the sans
+  // words are set in the display face, meanings in the sans
   if (t.side === "term" && t.lang === "zh") return "font-hanzi text-2xl";
   const len = t.label.length;
   const face = t.side === "term" ? "font-display" : "";
@@ -33,7 +60,7 @@ function TopBar({ exitHref, children }: { exitHref: string; children?: React.Rea
           aria-label="Thoát"
           className="-ml-2 grid size-11 shrink-0 place-items-center rounded-md text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
         >
-          <X className="size-5" strokeWidth={1.75} aria-hidden />
+          <X className="size-5" strokeWidth={2} aria-hidden />
         </Link>
         {children}
       </div>
@@ -41,7 +68,29 @@ function TopBar({ exitHref, children }: { exitHref: string; children?: React.Rea
   );
 }
 
-/** Match game (docs/PLAN-study-games.md §3): tap a term and its meaning, against the clock. */
+/** Bin holding up a stopwatch, with a line in a bubble. */
+function StopwatchBin({ line, mood, action, size }: { line: string; mood: Parameters<typeof Pup>[0]["mood"]; action?: Parameters<typeof Pup>[0]["action"]; size: number }) {
+  const { prefs } = useMe();
+  if (!prefs.mascot) return null;
+  return (
+    <div className="flex items-end justify-center gap-2">
+      <div className="relative shrink-0">
+        <Pup mood={mood} action={action} size={size} />
+        <span
+          aria-hidden
+          className="absolute -right-2 bottom-1 grid size-8 place-items-center rounded-full bg-c-sun-soft text-c-sun-fg shadow-sm dark:border dark:border-border"
+        >
+          <Timer className="size-[1.125rem]" strokeWidth={2} />
+        </span>
+      </div>
+      <p className="mb-3 max-w-[15rem] rounded-lg rounded-bl-[4px] bg-surface px-3.5 py-2 text-[0.9375rem] font-semibold shadow-sm dark:border dark:border-border">
+        {line}
+      </p>
+    </div>
+  );
+}
+
+/** Match game (docs/PLAN-study-games.md §3, REDESIGN_V3 §8.5): tap a term and its meaning, against the clock. */
 export function MatchGame({
   boards,
   deckKey,
@@ -56,11 +105,17 @@ export function MatchGame({
   learnHref?: string;
 }) {
   const { userId } = useMe();
+  const reduced = useReducedMotion() ?? false;
+  const bin = useBinAction("happy");
   const pairs = boards.reduce((n, b) => n + b.length / 2, 0);
-  const [phase, setPhase] = useState<"ready" | "playing" | "done">("ready");
+  const [phase, setPhase] = useState<"ready" | "countdown" | "playing" | "done">("ready");
+  const [count, setCount] = useState(3);
   const [record, setRecord] = useState<MatchRecord | null>(null);
   const [boardIndex, setBoardIndex] = useState(0);
   const [matched, setMatched] = useState<Set<string>>(() => new Set());
+  const [rights, setRights] = useState(0);
+  const [run, setRun] = useState(0);
+  const [flash, setFlash] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [wrong, setWrong] = useState<string[]>([]);
   const [startAt, setStartAt] = useState(0);
@@ -101,17 +156,32 @@ export function MatchGame({
     timers.current.push(setTimeout(fn, ms));
   };
 
-  function start() {
+  const begin = useCallback(() => {
     const t = clock();
     setStartAt(t);
     setNow(t);
     setPhase("playing");
+  }, []);
+
+  // 3 - 2 - 1, then the board appears. Reduced motion (and the E2E) go straight in.
+  useEffect(() => {
+    if (phase !== "countdown") return;
+    playSfx("tick");
+    const id = setTimeout(() => (count <= 1 ? begin() : setCount(count - 1)), COUNT_STEP_MS);
+    return () => clearTimeout(id);
+  }, [begin, count, phase]);
+
+  function start() {
+    if (reduced) return begin();
+    setCount(3);
+    setPhase("countdown");
   }
 
   const finish = useCallback(
     (ms: number, missCount: number) => {
       setResult({ ms, misses: missCount, previous: record, isBest: null });
       setPhase("done");
+      playSfx("complete");
       void saveMatchTime(userId, deckKey, pairs, ms).then((r) =>
         setResult((cur) => (cur ? { ...cur, ...r } : cur)),
       );
@@ -122,7 +192,10 @@ export function MatchGame({
   function pick(tile: MatchTile) {
     if (phase !== "playing" || matched.has(tile.id)) return;
     if (wrong.length) setWrong([]);
-    if (!selected) return setSelected(tile.id);
+    if (!selected) {
+      playSfx("pop");
+      return setSelected(tile.id);
+    }
     if (selected === tile.id) return setSelected(null);
     const first = board.find((t) => t.id === selected)!;
     setSelected(null);
@@ -130,6 +203,17 @@ export function MatchGame({
     if (isPair(first, tile)) {
       const next = new Set(matched).add(first.id).add(tile.id);
       setMatched(next);
+      setRights((n) => n + 1);
+      const streak = run + 1;
+      setRun(streak);
+      if (streak % RUN_FOR_FLASH === 0) {
+        setFlash((f) => f + 1);
+        playSfx("combo");
+        bin.play("jump");
+      } else {
+        playSfx("correct");
+        haptic("light");
+      }
       setLive(`Đúng: ${first.side === "term" ? first.label : tile.label}`);
       if (next.size === board.length) {
         const elapsed = clock() - startAt + penalty;
@@ -148,7 +232,11 @@ export function MatchGame({
       setPenalty((p) => p + MATCH_PENALTY_MS);
       setMisses((m) => m + 1);
       setPenaltyFlash((f) => f + 1);
+      setRun(0);
       setLive("Sai, cộng 1 giây");
+      playSfx("wrong");
+      haptic("error");
+      bin.play("shakeHead");
       later(() => setWrong([]), 400);
     }
   }
@@ -157,13 +245,23 @@ export function MatchGame({
     return (
       <div className="flex flex-1 flex-col">
         <TopBar exitHref={exitHref} />
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-          <h1 className="text-xl">Ghép thẻ</h1>
-          <p className="max-w-sm text-fg-muted">
-            Ghép {pairs} từ với nghĩa của chúng nhanh nhất có thể. Mỗi lần ghép sai bị cộng 1 giây.
-          </p>
-          {record && <p className="text-fg">Kỷ lục của bạn: <span className="font-display tabular-nums">{formatMs(record.ms)}</span></p>}
-          <Button type="button" size="lg" onClick={start} autoFocus className="mt-2 w-full max-w-xs">
+        <div className="flex flex-1 flex-col items-center justify-center gap-5 text-center">
+          <StopwatchBin mood="happy" size={104} line="Sẵn sàng chưa? Mình bấm giờ nhé!" />
+          <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-xl bg-surface px-5 py-6 shadow-md dark:border dark:border-border">
+            <h1 className="text-xl">Ghép thẻ</h1>
+            <p className="text-fg-muted">
+              Ghép {pairs} từ với nghĩa của chúng nhanh nhất có thể. Mỗi lần ghép sai bị cộng 1 giây.
+            </p>
+            {record ? (
+              <Badge variant="soft" tone="sun" className="gap-1.5 px-3 py-1.5 text-sm">
+                <Trophy className="size-4" strokeWidth={2} aria-hidden />
+                Kỷ lục của bạn: <span className="font-display tabular-nums">{formatMs(record.ms)}</span>
+              </Badge>
+            ) : (
+              <p className="text-sm text-fg-muted">Chưa có kỷ lục. Lần đầu nào cũng là kỷ lục.</p>
+            )}
+          </div>
+          <Button type="button" variant="pressable" size="xl" onClick={start} autoFocus className="w-full max-w-sm">
             Bắt đầu
           </Button>
         </div>
@@ -171,7 +269,22 @@ export function MatchGame({
     );
   }
 
+  if (phase === "countdown") {
+    return (
+      <div className="flex flex-1 flex-col">
+        <TopBar exitHref={exitHref} />
+        <div role="status" aria-live="assertive" className="grid flex-1 place-items-center">
+          <span key={count} aria-label={`Bắt đầu sau ${count}`} className="animate-pop font-display text-[8rem] leading-none font-extrabold text-primary tabular-nums">
+            {count}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   if (phase === "done" && result) {
+    const medal = medalFor(result);
+    const look = MEDAL_LOOK[medal];
     const title =
       result.isBest === null
         ? "Xong rồi!"
@@ -182,28 +295,37 @@ export function MatchGame({
           : "Xong rồi!";
     return (
       <div className="flex flex-1 flex-col py-6">
-        <Celebration mood={result.isBest ? "cheer" : "happy"} confetti={Boolean(result.isBest)} />
+        {result.isBest && <Confetti preset="record" />}
+        <Celebration mood={result.isBest ? "cheer" : "happy"} confetti={false} className="pr-12">
+          <span
+            role="img"
+            aria-label={look.label}
+            className={cn("grid size-24 animate-pop place-items-center rounded-full", look.tile)}
+          >
+            <Medal className="size-11" strokeWidth={2} aria-hidden />
+          </span>
+        </Celebration>
         <h1 className="mt-6 text-center text-xl">{title}</h1>
-        <p className="mt-2 text-center font-display text-5xl font-semibold text-fg tabular-nums">{formatMs(result.ms)}</p>
-        <dl className="mt-6 border-t border-border">
-          <div className="flex items-baseline justify-between gap-4 border-b border-border py-3">
+        <p className="mt-2 text-center font-display text-5xl font-extrabold text-fg tabular-nums">{formatMs(result.ms)}</p>
+        <dl className="mt-6 divide-y divide-border rounded-xl bg-surface px-4 shadow-sm dark:border dark:border-border">
+          <div className="flex items-baseline justify-between gap-4 py-3">
             <dt className="text-fg-muted">Thời gian</dt>
-            <dd className="font-display text-xl font-semibold tabular-nums">{formatMs(result.ms)}</dd>
+            <dd className="font-display text-xl font-extrabold tabular-nums">{formatMs(result.ms)}</dd>
           </div>
-          <div className="flex items-baseline justify-between gap-4 border-b border-border py-3">
+          <div className="flex items-baseline justify-between gap-4 py-3">
             <dt className="text-fg-muted">Kỷ lục trước</dt>
-            <dd className="font-display text-xl font-semibold tabular-nums">{result.previous ? formatMs(result.previous.ms) : "—"}</dd>
+            <dd className="font-display text-xl font-extrabold tabular-nums">{result.previous ? formatMs(result.previous.ms) : "—"}</dd>
           </div>
-          <div className="flex items-baseline justify-between gap-4 border-b border-border py-3">
+          <div className="flex items-baseline justify-between gap-4 py-3">
             <dt className="text-fg-muted">Số lần ghép sai</dt>
-            <dd className="font-display text-xl font-semibold tabular-nums">
+            <dd className="font-display text-xl font-extrabold tabular-nums">
               {result.misses}
               {result.misses > 0 && <span className="ml-1.5 font-sans text-sm font-normal text-fg-muted">(+{result.misses} giây)</span>}
             </dd>
           </div>
         </dl>
         <div className="mt-auto flex flex-col gap-2 pt-8 sm:flex-row">
-          <Button asChild size="lg" className="flex-1">
+          <Button asChild variant="pressable" size="lg" className="flex-1">
             <a href={againHref}>Chơi lại</a>
           </Button>
           {learnHref && (
@@ -220,55 +342,101 @@ export function MatchGame({
   }
 
   const elapsed = Math.max(0, now - startAt) + penalty;
+  const nearRecord = record !== null && elapsed > record.ms * 0.7 && elapsed < record.ms;
+  const line = nearRecord
+    ? "Nhanh lên, sắp phá kỷ lục rồi!"
+    : run >= RUN_FOR_FLASH
+      ? "Liền tay quá!"
+      : misses > 0 && run === 0
+        ? "Bình tĩnh, ghép tiếp nào."
+        : "Chọn một từ rồi chọn nghĩa của nó.";
+  const seconds = formatMs(elapsed).replace(" giây", "");
   return (
     <div className="flex flex-1 flex-col">
       <TopBar exitHref={exitHref}>
-        <span role="timer" aria-label="Thời gian" className="inline-flex items-center gap-1.5 text-lg font-semibold text-fg tabular-nums">
-          <Clock className="size-4 text-fg-muted" strokeWidth={1.75} aria-hidden />
-          {formatMs(elapsed)}
-        </span>
-        {penaltyFlash > 0 && wrong.length > 0 && (
-          <span key={penaltyFlash} className="animate-in fade-in-0 slide-in-from-bottom-2 text-sm font-semibold text-danger-fg duration-200">
-            +1 giây
+        <h1 className="text-lg leading-none font-extrabold tracking-[-0.02em]">Ghép thẻ</h1>
+        <span className="ml-auto flex items-center gap-2">
+          {record && (
+            <Badge variant="soft" tone="sun" className="gap-1 tabular-nums">
+              <Trophy className="size-3.5" strokeWidth={2} aria-hidden />
+              Kỷ lục {formatMs(record.ms).replace(" giây", "s")}
+            </Badge>
+          )}
+          <span className="text-sm font-semibold text-fg-muted tabular-nums">
+            Bảng {boardIndex + 1}/{boards.length}
           </span>
-        )}
-        <span className="ml-auto text-sm font-medium text-fg-muted tabular-nums">
-          Bảng {boardIndex + 1}/{boards.length}
         </span>
       </TopBar>
+
+      <div className="flex flex-col items-center gap-2 pt-1">
+        <div className="relative">
+          <span
+            key={flash}
+            role="timer"
+            aria-label="Thời gian"
+            className={cn(
+              "block font-display text-[3.25rem] leading-none font-extrabold tracking-[-0.03em] tabular-nums transition-colors",
+              flash > 0 && run > 0 && run % RUN_FOR_FLASH === 0 ? "animate-pop text-success-fg" : "text-fg",
+            )}
+          >
+            {seconds}
+            <span className="ml-0.5 text-xl font-extrabold text-fg-muted">s</span>
+          </span>
+          {penaltyFlash > 0 && wrong.length > 0 && (
+            <span key={penaltyFlash} aria-hidden className="match-float absolute -top-1 -right-12 text-lg font-extrabold text-danger-fg">
+              +1s
+            </span>
+          )}
+        </div>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Badge variant="soft" tone="mint" className="gap-1 tabular-nums">
+            {run >= 2 && <Flame className="size-3.5" strokeWidth={2} aria-hidden />}
+            Ghép đúng ×{rights}
+          </Badge>
+          {misses > 0 && (
+            <Badge variant="soft" tone="red" className="tabular-nums">
+              {misses} lần ghép sai
+            </Badge>
+          )}
+        </div>
+      </div>
+
       <p aria-live="polite" className="sr-only">
         {live}
       </p>
-      <div
-        ref={gridRef}
-        className="grid flex-1 grid-cols-3 content-center gap-2.5 py-3 sm:grid-cols-4 sm:gap-3"
-      >
-        {board.map((t) => {
+      <div ref={gridRef} className="grid flex-1 grid-cols-3 content-center gap-2.5 py-4 sm:grid-cols-4 sm:gap-3">
+        {board.map((t, i) => {
           const gone = matched.has(t.id);
           const isSelected = selected === t.id;
           const isWrong = wrong.includes(t.id);
           return (
-            <button
-              key={t.id}
-              type="button"
-              disabled={gone}
-              aria-pressed={isSelected}
-              aria-hidden={gone || undefined}
-              onClick={() => pick(t)}
-              lang={t.side === "term" ? (t.lang === "zh" ? "zh-CN" : "en") : "vi"}
-              className={cn(
-                "flex min-h-20 items-center justify-center rounded-md border border-border-strong bg-surface p-2 text-center font-medium break-words hyphens-auto text-fg transition-colors duration-[var(--dur-fast)] sm:min-h-24",
-                isSelected ? "border-primary bg-primary-soft ring-1 ring-primary" : "hover:border-fg-muted/60",
-                isWrong && "animate-shake border-danger bg-danger-soft",
-                gone && "tile-gone",
-                tileText(t),
-              )}
-            >
-              <span className="line-clamp-3 min-w-0">{t.label}</span>
-            </button>
+            <div key={t.id} style={{ "--i": i } as React.CSSProperties} className="match-tile-in">
+              <button
+                type="button"
+                disabled={gone}
+                aria-pressed={isSelected}
+                aria-hidden={gone || undefined}
+                onClick={() => pick(t)}
+                lang={t.side === "term" ? (t.lang === "zh" ? "zh-CN" : "en") : "vi"}
+                className={cn(
+                  "relative flex min-h-[5.75rem] w-full items-center justify-center rounded-[1.125rem] border-2 border-border-strong bg-surface p-2 text-center font-semibold break-words hyphens-auto text-fg shadow-[0_3px_0_0_var(--border-strong)] transition-[transform,box-shadow,background-color,border-color] duration-[var(--dur-fast)] sm:min-h-24",
+                  isSelected
+                    ? "-translate-y-1 border-primary bg-primary-soft text-primary-fg shadow-[0_6px_0_0_var(--primary-press)]"
+                    : "hover:border-fg-muted/60 active:translate-y-0.5 active:shadow-[0_1px_0_0_var(--border-strong)]",
+                  isWrong && "animate-shake border-danger bg-danger-soft shadow-[0_3px_0_0_var(--danger)]",
+                  gone && "tile-gone",
+                  tileText(t),
+                )}
+              >
+                <span className="line-clamp-3 min-w-0">{t.label}</span>
+                {gone && <Burst trigger={1} palette="success" radius={34} />}
+              </button>
+            </div>
           );
         })}
       </div>
+
+      <StopwatchBin line={line} mood={bin.mood} action={bin.action} size={72} />
     </div>
   );
 }
