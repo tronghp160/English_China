@@ -94,11 +94,21 @@ export function model(p: AiProvider, name = p.model) {
 
 // Haiku 5.5 rejects non-default sampling values, so the plan's temperature 0.2–0.3
 // is replaced by low effort (short thinking keeps the ≤ 5 s target).
-// Gemini: low thinking keeps answers quick on the free tier.
+// Gemini: @ai-sdk/google types thinkingLevel "minimal" | "low" | "medium" | "high"
+// (and thinkingBudget). "minimal" is the fastest and spends the least of the
+// free-tier token budget; a model that rejects it is called again without any
+// thinking config (the provider then uses that model's default) and remembered.
 const PROVIDER_OPTIONS = {
   anthropic: { effort: "low" as const, structuredOutputMode: "outputFormat" as const },
-  google: { thinkingConfig: { thinkingLevel: "low" as const } },
+  google: { thinkingConfig: { thinkingLevel: "minimal" as const } },
 };
+const PROVIDER_OPTIONS_PLAIN = { anthropic: PROVIDER_OPTIONS.anthropic };
+const noThinkingConfig = new Set<string>();
+
+/** A 400 from Google about the thinking settings (model does not support that level). */
+function rejectsThinkingConfig(e: unknown) {
+  return APICallError.isInstance(e) && e.statusCode === 400 && /thinking/i.test(`${e.message} ${e.responseBody ?? ""}`);
+}
 
 export function finalize(lang: LangCode, raw: EnrichEN | EnrichZH): EnrichResult {
   if (lang === "zh") {
@@ -202,6 +212,7 @@ export async function callModel<T>(
   let lastError: unknown;
   for (const name of [p.model, ...p.fallbacks]) {
     for (let attempt = 0; attempt < 2; attempt++) {
+      const plain = p.provider !== "google" || noThinkingConfig.has(name);
       try {
         const res = await generateText({
           model: model(p, name),
@@ -211,7 +222,7 @@ export async function callModel<T>(
           maxOutputTokens,
           maxRetries: 0,
           timeout: 25_000,
-          providerOptions: PROVIDER_OPTIONS,
+          providerOptions: plain ? PROVIDER_OPTIONS_PLAIN : PROVIDER_OPTIONS,
         });
         console.info(
           `[ai] ${p.provider}/${name} input=${res.usage.inputTokens ?? "?"} output=${res.usage.outputTokens ?? "?"} attempt=${attempt + 1}`,
@@ -219,6 +230,12 @@ export async function callModel<T>(
         return { output: res.output, model: name };
       } catch (e) {
         lastError = e;
+        if (!plain && rejectsThinkingConfig(e)) {
+          console.warn(`[ai] model=${name} rejects thinkingConfig, retrying without it`);
+          noThinkingConfig.add(name);
+          attempt--;
+          continue;
+        }
         const limit = isRateLimited(e);
         if (limit.limited) {
           console.warn(`[ai] rate-limited model=${name} retryAfter=${limit.retryAfter}`);
@@ -291,7 +308,7 @@ async function enrichFresh(
     schemaFor(language) as z.ZodType<EnrichEN | EnrichZH>,
     systemPrompt(language),
     userPrompt(language, term, context),
-    6000,
+    3500,
   );
   recordUsage(userId);
   const result = finalize(language, output);

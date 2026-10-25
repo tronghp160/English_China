@@ -90,7 +90,7 @@ export type EnrichChecks = {
 };
 
 const LIMITS = {
-  senses: 6,
+  senses: 4,
   examples: 3,
   synonyms: 6,
   antonyms: 4,

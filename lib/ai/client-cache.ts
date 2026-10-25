@@ -9,7 +9,7 @@ export type CacheSource = "ai" | "cache" | "dict";
 export type CacheEntry = { result: EnrichResult; source: CacheSource; at: number };
 
 /** Bump together with PROMPT_VERSION so old answers are dropped. */
-export const CLIENT_CACHE_KEY = "sotu:lookup:v1";
+export const CLIENT_CACHE_KEY = "sotu:lookup:v2";
 const MAX = 300;
 
 const mem = new Map<string, CacheEntry>();

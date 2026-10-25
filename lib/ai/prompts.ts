@@ -3,15 +3,15 @@ import { POS_CODES } from "@/lib/pos";
 import { STANDARD_TOPICS } from "@/lib/topics";
 
 /** Bump whenever prompts or schemas change: old dictionary_cache rows stop being used. */
-export const PROMPT_VERSION = 2;
+export const PROMPT_VERSION = 3;
 
 const COMMON = `Bạn là từ điển song ngữ cho người Việt học ngoại ngữ. Trả về đúng một mục từ theo schema.
 
 Quy tắc chung:
 - Nghĩa tiếng Việt (meaning_vi) tự nhiên, phổ biến, ngắn gọn: 1–6 từ, nhiều nghĩa gần nhau thì cách nhau bằng dấu phẩy. Không dịch máy móc.
 - meaning_en: giải nghĩa một câu tiếng Anh đơn giản.
-- senses: liệt kê ĐẦY ĐỦ các nghĩa thông dụng mà người học hay gặp, tối đa 6, nghĩa phổ biến nhất đứng đầu. Tách thành nghĩa riêng khi khác loại từ hoặc khác hẳn ý (ví dụ "bank": ngân hàng / bờ sông; "run": chạy / điều hành). Không bịa nghĩa hiếm, không tách hai cách nói của cùng một ý. Nếu người dùng cho ngữ cảnh hoặc ghi sẵn nghĩa, đặt nghĩa khớp lên đầu.
-- Mỗi nghĩa có 2–3 câu ví dụ ngắn, đời thường, đúng trình độ của từ (từ dễ dùng câu dễ), dùng đúng nghĩa đó, kèm bản dịch tiếng Việt tự nhiên. Không dùng nội dung nhạy cảm, bạo lực, chính trị.
+- senses: liệt kê ĐẦY ĐỦ các nghĩa thông dụng mà người học hay gặp, tối đa 4, nghĩa phổ biến nhất đứng đầu. Tách thành nghĩa riêng khi khác loại từ hoặc khác hẳn ý (ví dụ "bank": ngân hàng / bờ sông; "run": chạy / điều hành). Không bịa nghĩa hiếm, không tách hai cách nói của cùng một ý. Nếu người dùng cho ngữ cảnh hoặc ghi sẵn nghĩa, đặt nghĩa khớp lên đầu.
+- Mỗi nghĩa có 2 câu ví dụ ngắn, đời thường, đúng trình độ của từ (từ dễ dùng câu dễ), dùng đúng nghĩa đó, kèm bản dịch tiếng Việt tự nhiên. Không dùng nội dung nhạy cảm, bạo lực, chính trị.
 - senses[].image_query: 2–4 từ tiếng Anh tả một bức ảnh thật minh họa ĐÚNG nghĩa đó, đủ cụ thể để không ra ảnh của nghĩa khác (ví dụ "bank" nghĩa bờ sông → "grassy river bank", nghĩa ngân hàng → "bank building entrance"). Từ trừu tượng thì tả một cảnh minh họa (ví dụ "resilient" → "tree growing through rock").
 - pos dùng mã: ${POS_CODES.join(", ")}.
 - topic_vi chọn một trong: ${STANDARD_TOPICS.join(", ")}.
@@ -27,10 +27,10 @@ Tiếng Anh:
 - lemma: dạng gốc ("running" → "run").
 - ipa_us bắt buộc, ipa_uk nếu khác đáng kể; dạng /…/ có trọng âm ˈ ˌ.
 - cefr: mức CEFR phổ biến của từ, hoặc null.
-- collocations: tối đa 5 cụm từ thường gặp, có nghĩa tiếng Việt.
-- word_family: tối đa 6 từ cùng họ (danh/động/tính/trạng từ) kèm pos và nghĩa.
+- collocations: tối đa 4 cụm từ thường gặp, có nghĩa tiếng Việt.
+- word_family: tối đa 4 từ cùng họ (danh/động/tính/trạng từ) kèm pos và nghĩa.
 - verb_forms chỉ khi từ là động từ; plural chỉ khi là danh từ đếm được.
-- synonyms tối đa 6, antonyms tối đa 4.`;
+- synonyms tối đa 5, antonyms tối đa 4.`;
 
 const ZH = `${COMMON}
 

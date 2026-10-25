@@ -71,6 +71,17 @@ describe("callModel fallbacks", () => {
     expect(generateText).toHaveBeenCalledTimes(2);
   });
 
+  it("calls again without thinkingConfig when the model rejects it", async () => {
+    generateText
+      .mockRejectedValueOnce(apiError(400, { responseBody: "thinking_level is not supported by this model" }))
+      .mockResolvedValueOnce({ output: { ok: true }, usage });
+    const r = await callModel(schema, "s", "p", 100);
+    expect(r.model).toBe("main");
+    const opts = (call: number) => (generateText.mock.calls[call][0] as { providerOptions: Record<string, unknown> }).providerOptions;
+    expect(opts(0).google).toEqual({ thinkingConfig: { thinkingLevel: "minimal" } });
+    expect(opts(1).google).toBeUndefined();
+  });
+
   it("fails at once on other errors", async () => {
     generateText.mockRejectedValueOnce(apiError(400));
     const err = await callModel(schema, "s", "p", 100).catch((e) => e);

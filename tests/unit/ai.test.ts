@@ -39,7 +39,8 @@ describe("AI schemas", () => {
 
   it("caps arrays and cleans empty strings", () => {
     const c = capEnrichResult(en);
-    expect(c.senses).toHaveLength(6);
+    expect(c.senses).toHaveLength(4);
+    expect(capEnrichResult(en, { senses: 8 }).senses.length).toBeGreaterThan(4);
     expect(c.senses[0].image_query).toBe("tree growing through rock");
     expect(c.senses[0].examples).toHaveLength(3);
     expect(c.senses[0].pos).toEqual(["adj"]);
@@ -135,7 +136,7 @@ describe("enrichToWord", () => {
   });
 
   it("merges senses", () => {
-    const r = { language: "en" as const, ...capEnrichResult(en), checks: {} };
+    const r = { language: "en" as const, ...capEnrichResult(en, { senses: 6 }), checks: {} };
     expect(enrichToWord(r, "merge").meaning_vi).toBe("kiên cường; đàn hồi, co giãn; a; b; x0; x1");
   });
 
@@ -170,7 +171,7 @@ describe("enrichToWord", () => {
 });
 
 describe("imageSuggestions", () => {
-  const r = { language: "en" as const, ...capEnrichResult(en), checks: {} };
+  const r = { language: "en" as const, ...capEnrichResult(en, { senses: 6 }), checks: {} };
 
   it("gives one search per sense, chosen senses first, without duplicates", () => {
     const list = imageSuggestions(r, [1]);

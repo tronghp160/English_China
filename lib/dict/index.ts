@@ -13,7 +13,7 @@ export async function lookupFree(language: LangCode, term: string): Promise<Enri
   if (language === "zh") {
     const raw = await lookupChinese(term);
     if (!raw) return null;
-    const { result, checks } = verifyChinese(capEnrichResult(raw));
+    const { result, checks } = verifyChinese(capEnrichResult(raw, { senses: 6 }));
     return { language: "zh", ...result, checks };
   }
   const raw = await lookupEnglish(term);
