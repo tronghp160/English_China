@@ -88,7 +88,6 @@ export function AdminWordTable({
                   {showDeck && row.deck && (
                     <Link
                       href={`/admin/decks/${row.deck.id}`}
-                      onClick={(e) => e.stopPropagation()}
                       className="inline-flex items-center gap-1 font-medium text-fg hover:underline"
                     >
                       {row.deck.visibility === "public" ? (
@@ -121,7 +120,6 @@ export function AdminWordTable({
                   {showCreator && row.created_by && (
                     <Link
                       href={`/admin/users/${row.created_by}`}
-                      onClick={(e) => e.stopPropagation()}
                       className="max-w-[120px] truncate text-fg-muted hover:underline"
                     >
                       {row.creatorName || "Người dùng"}
