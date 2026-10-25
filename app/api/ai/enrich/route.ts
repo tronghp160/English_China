@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { AiError, enrichTerm, remainingQuota } from "@/lib/ai/enrich";
+import { AiError, enrichTerm } from "@/lib/ai/enrich";
+import { aiErrorResponse } from "@/lib/ai/http";
 import { getUser } from "@/lib/auth";
 
 export const maxDuration = 60;
@@ -11,14 +12,6 @@ const bodySchema = z.object({
   context: z.string().trim().max(300).optional().nullable(),
 });
 
-const STATUS: Record<AiError["code"], number> = {
-  not_configured: 503,
-  quota_user: 429,
-  quota_global: 429,
-  failed: 502,
-  invalid: 400,
-};
-
 export async function POST(request: Request) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Bạn cần đăng nhập." }, { status: 401 });
@@ -26,11 +19,10 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Từ không hợp lệ." }, { status: 400 });
 
   try {
-    const { result, cached } = await enrichTerm({ userId: user.id, ...parsed.data });
-    return NextResponse.json({ result, cached, remaining: await remainingQuota(user.id) });
+    return NextResponse.json(await enrichTerm({ userId: user.id, ...parsed.data }));
   } catch (e) {
-    if (e instanceof AiError) return NextResponse.json({ error: e.message, code: e.code }, { status: STATUS[e.code] });
+    if (e instanceof AiError) return aiErrorResponse(e);
     console.error("[api/ai/enrich]", e);
-    return NextResponse.json({ error: "Không lấy được gợi ý lúc này. Thử lại hoặc tự nhập." }, { status: 500 });
+    return NextResponse.json({ error: "Không lấy được gợi ý lúc này. Thử lại hoặc tự nhập.", code: "failed" }, { status: 500 });
   }
 }

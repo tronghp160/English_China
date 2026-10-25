@@ -11,8 +11,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { CHAT_HISTORY_LIMIT, CHAT_MAX_CHARS, threadTitle, tutorInstructions } from "@/lib/ai/chat-prompt";
 import { chatTools, type ChatMessage } from "@/lib/ai/chat-tools";
-import { AiError, chargeQuota, model, requireProvider } from "@/lib/ai/enrich";
+import { AiError, checkQuota, model, recordUsage, requireProvider } from "@/lib/ai/enrich";
+import { AI_ERROR_STATUS } from "@/lib/ai/http";
 import { getMe } from "@/lib/auth";
+import { serverEnv } from "@/lib/env";
 import { hitRateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/database.types";
@@ -30,14 +32,6 @@ const bodySchema = z.object({
       .length(1),
   }),
 });
-
-const STATUS: Record<AiError["code"], number> = {
-  not_configured: 503,
-  quota_user: 429,
-  quota_global: 429,
-  failed: 502,
-  invalid: 400,
-};
 
 // Short answers matter more than deep thinking for a chat turn.
 const PROVIDER_OPTIONS = {
@@ -69,9 +63,10 @@ export async function POST(request: Request) {
   let provider;
   try {
     provider = requireProvider();
-    await chargeQuota(me.user.id);
+    await checkQuota(me.user.id);
+    recordUsage(me.user.id); // one unit per message, answered or not
   } catch (e) {
-    if (e instanceof AiError) return fail(e.message, STATUS[e.code]);
+    if (e instanceof AiError) return fail(e.message, AI_ERROR_STATUS[e.code]);
     throw e;
   }
 
@@ -108,7 +103,8 @@ export async function POST(request: Request) {
   }
 
   const result = streamText({
-    model: model(provider),
+    // A separate Gemini model keeps the tutor off the word-suggestion per-model limit.
+    model: model(provider, (provider.provider === "google" && serverEnv().AI_MODEL_CHAT_GOOGLE) || provider.model),
     instructions: tutorInstructions({
       language: thread.language,
       learnerName: me.profile.display_name,

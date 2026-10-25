@@ -40,7 +40,8 @@ Secret key và mật khẩu database từng bị dán vào chat, nên coi như �
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | lấy từ `.env.local` (hoặc tạo mới bằng `pnpm exec web-push generate-vapid-keys`; đổi khóa thì mọi máy phải bật lại nhắc ôn) |
 | `VAPID_SUBJECT` | `mailto:` + email liên hệ của bạn |
 | `CRON_SECRET` | một chuỗi ngẫu nhiên dài; Vercel tự gửi nó khi chạy lịch nhắc ôn 19:00 (`vercel.json`) |
-| `AI_DAILY_LIMIT_PER_USER`, `AI_GLOBAL_DAILY_LIMIT`, `SIGNUP_LIMIT_PER_HOUR` | có thể bỏ trống để dùng mặc định (100 / 3000 / 8) |
+| `AI_DAILY_LIMIT_PER_USER`, `AI_GLOBAL_DAILY_LIMIT`, `SIGNUP_LIMIT_PER_HOUR`, `AI_RPM_LIMIT` | có thể bỏ trống để dùng mặc định (100 / 3000 / 8 / 10) |
+| `AI_MODEL_GOOGLE`, `AI_MODEL_CHAT_GOOGLE` | xem mục "Tối ưu gói miễn phí" bên dưới |
 
 Không thêm `SUPABASE_DB_URL` lên Vercel; biến này chỉ dùng cho `pnpm db:push` trên máy bạn.
 
@@ -60,7 +61,11 @@ Link đặt lại mật khẩu được gửi qua SMTP mặc định của Supab
 ### Tối ưu gói miễn phí (Gemini + Vercel Hobby + Supabase Free)
 1. Vercel → **Settings → Functions → Function Region** = **Singapore (sin1)**, cùng vùng với Supabase (mỗi lượt hỏi database từ vùng khác tốn thêm vài trăm ms).
 2. Vào https://aistudio.google.com → xem bảng **Rate limits** của key. Chọn model "flash-lite" mới nhất cho gợi ý từ: thường có hạn mức/phút cao hơn và trả lời nhanh hơn. Ghi **tên model chính xác** vào `AI_MODEL_GOOGLE`.
-3. Tên model và hạn mức của Google đổi theo thời gian, nên code không ghi cứng chúng (ngoài giá trị mặc định trong `lib/env.ts`). Khi thấy log `[ai] rate-limited` nhiều, xem lại bảng Rate limits.
+3. `AI_MODEL_GOOGLE` nhận **danh sách cách nhau bằng dấu phẩy**: `model-chinh,model-du-phong`. Gói miễn phí của Gemini tính hạn mức **riêng cho từng model**, nên thêm model dự phòng là tăng sức chứa miễn phí: khi model chính báo hết hạn mức phút (429), app tự chuyển sang model kế. Tự kiểm tra tên và hạn mức từng model trong AI Studio.
+4. `AI_RPM_LIMIT` (mặc định 10): số lần gọi AI mỗi phút cho **cả app**. Đặt thấp hơn hạn mức/phút của model chính một chút; vượt quá thì app báo "AI đang bận", vẫn điền từ từ điển và tự thử lại sau vài giây thay vì để Google trả lỗi.
+5. `AI_MODEL_CHAT_GOOGLE` (tùy chọn): model riêng cho Gia sư, để chat không ăn hạn mức của gợi ý từ. Bỏ trống thì Gia sư dùng model chính.
+6. Gợi ý từ giờ hỏi từ điển miễn phí và cache chung trước (`/api/lookup`, không tốn lượt), rồi mới gom các từ thành lô ≤ 10 từ gửi AI trong nền. Trong Vercel → Logs, dòng `[ai] google/<model> …` là một lần gọi AI; `[ai] rate-limited model=…` là lúc model bị giới hạn và app chuyển model.
+7. Tên model và hạn mức của Google đổi theo thời gian, nên code không ghi cứng chúng (ngoài giá trị mặc định trong `lib/env.ts`). Khi thấy log `[ai] rate-limited` nhiều, xem lại bảng Rate limits.
 
 ## 6. Kiểm tra sau khi deploy
 Trên domain Vercel, thử bằng điện thoại:

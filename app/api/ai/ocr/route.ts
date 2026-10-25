@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AiError, chargeQuota, requireAnthropicKeyOrThrow } from "@/lib/ai/enrich";
+import { AiError, checkQuota, recordUsage, requireAnthropicKeyOrThrow } from "@/lib/ai/enrich";
 import { readNotebookPhoto } from "@/lib/ai/ocr";
 import { getUser } from "@/lib/auth";
 
@@ -21,8 +21,9 @@ export async function POST(request: Request) {
   }
   try {
     requireAnthropicKeyOrThrow();
-    await chargeQuota(user.id, 3); // a vision call costs more than a single lookup
+    await checkQuota(user.id, 3); // a vision call costs more than a single lookup
     const lines = await readNotebookPhoto(new Uint8Array(await file.arrayBuffer()), file.type, language);
+    recordUsage(user.id, 3);
     return NextResponse.json({ lines });
   } catch (e) {
     if (e instanceof AiError) {

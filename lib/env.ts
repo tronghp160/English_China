@@ -16,7 +16,12 @@ const serverSchema = z.object({
   AI_MODEL: z.string().default("claude-haiku-5-5"),
   /** Free tier option for word suggestions (Google AI Studio key). */
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
+  /** Comma-separated: main model first, then fallbacks (Gemini's free tier limits each model separately). */
   AI_MODEL_GOOGLE: z.string().default("gemini-3.8-flash"),
+  /** Optional model for the AI tutor chat, so it does not use the word-suggestion quota. */
+  AI_MODEL_CHAT_GOOGLE: z.string().optional(),
+  /** Requests per minute the app lets through to the AI provider (stay under the free-tier limit). */
+  AI_RPM_LIMIT: z.coerce.number().int().positive().default(10),
   /** Which provider word suggestions use when both keys are set (default: anthropic). */
   AI_PROVIDER: z.enum(["anthropic", "google"]).optional(),
   AI_VISION_MODEL: z.string().default("claude-sonnet-5-5"),
@@ -76,16 +81,25 @@ export function serverEnv() {
   return cachedServer;
 }
 
-export type AiProvider = { provider: "anthropic" | "google"; apiKey: string; model: string };
+export type AiProvider = { provider: "anthropic" | "google"; apiKey: string; model: string; fallbacks: string[] };
+
+/** "main, fallback" → ["main", "fallback"]. */
+export function modelList(raw: string): string[] {
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 /** Provider for word suggestions: the one named in AI_PROVIDER, else whichever key is set. */
 export function aiProvider(): AiProvider | null {
   const env = serverEnv();
   const anthropic = env.ANTHROPIC_API_KEY
-    ? { provider: "anthropic" as const, apiKey: env.ANTHROPIC_API_KEY, model: env.AI_MODEL }
+    ? { provider: "anthropic" as const, apiKey: env.ANTHROPIC_API_KEY, model: env.AI_MODEL, fallbacks: [] }
     : null;
+  const [main = "gemini-3.8-flash", ...fallbacks] = modelList(env.AI_MODEL_GOOGLE);
   const google = env.GOOGLE_GENERATIVE_AI_API_KEY
-    ? { provider: "google" as const, apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY, model: env.AI_MODEL_GOOGLE }
+    ? { provider: "google" as const, apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY, model: main, fallbacks }
     : null;
   if (env.AI_PROVIDER === "google") return google ?? anthropic;
   return anthropic ?? google;

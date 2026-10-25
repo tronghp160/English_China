@@ -40,3 +40,18 @@ export async function hitIpRateLimit(ip: string, bucket: string, max: number, wi
   }
   return Boolean(data);
 }
+
+/** App-wide limiter (not per user). Fails open: an outage must not block suggestions. */
+export async function hitGlobalLimit(bucket: string, max: number, windowSeconds: number) {
+  const { data, error } = await createAdminClient().rpc("hit_ip_rate_limit", {
+    p_key_hash: "global",
+    p_bucket: bucket,
+    p_window_seconds: windowSeconds,
+    p_max: max,
+  });
+  if (error) {
+    console.error("[rate-limit:global]", error.message);
+    return true;
+  }
+  return Boolean(data);
+}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { AiError, enrichBatch } from "@/lib/ai/enrich";
+import { aiErrorResponse } from "@/lib/ai/http";
 import { getUser } from "@/lib/auth";
 
 export const maxDuration = 60;
@@ -22,11 +23,8 @@ export async function POST(request: Request) {
     const outcomes = await enrichBatch(user.id, parsed.data.language, parsed.data.items);
     return NextResponse.json({ outcomes });
   } catch (e) {
-    if (e instanceof AiError) {
-      const status = e.code === "quota_user" || e.code === "quota_global" ? 429 : e.code === "not_configured" ? 503 : 502;
-      return NextResponse.json({ error: e.message, code: e.code }, { status });
-    }
+    if (e instanceof AiError) return aiErrorResponse(e);
     console.error("[api/ai/enrich-batch]", e);
-    return NextResponse.json({ error: "Không lấy được gợi ý lúc này." }, { status: 500 });
+    return NextResponse.json({ error: "Không lấy được gợi ý lúc này.", code: "failed" }, { status: 500 });
   }
 }
