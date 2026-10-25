@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, PenLine, Play, Plus } from "lucide-react";
+import { Check, MessageCircle, PenLine, Play, Plus } from "lucide-react";
 import { ContactLinks } from "@/components/contact/contact-links";
 import { DeckCard } from "@/components/deck/deck-card";
 import { SampleDecksButton } from "@/components/deck/sample-decks-button";
@@ -97,6 +97,27 @@ export default async function TodayPage() {
 
   return (
     <Reveal className="flex flex-col gap-6 lg:gap-7">
+      {/* Banner Hỗ trợ & Góp ý */}
+      <section
+        aria-labelledby="today-contact"
+        className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-surface p-3.5 shadow-xs transition-colors sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:py-2.5 dark:border-border"
+      >
+        <div className="flex items-center gap-3">
+          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-c-blue-soft text-c-blue-fg">
+            <MessageCircle className="size-5" aria-hidden />
+          </div>
+          <div className="min-w-0">
+            <p id="today-contact" className="text-sm font-bold text-fg">
+              Gặp lỗi hay có góp ý?
+            </p>
+            <p className="text-xs text-fg-muted">
+              Nhắn trực tiếp cho <span className="font-semibold text-fg">{CONTACT.nickname}</span> qua Facebook hoặc Zalo
+            </p>
+          </div>
+        </div>
+        <ContactLinks compact />
+      </section>
+
       <header>
         <p className="text-sm font-medium text-fg-muted">{dateLine(s.today)}</p>
         <h1 data-check-overflow className="mt-0.5 text-[1.6875rem] leading-tight sm:text-[2.125rem]">
@@ -331,17 +352,6 @@ export default async function TodayPage() {
           />
         </div>
       )}
-
-      {/* Row 5: Liên hệ (12 cols) */}
-      <section
-        aria-labelledby="today-contact"
-        className="flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <p id="today-contact" className="text-sm text-fg-muted">
-          Gặp lỗi hay có góp ý? Nhắn {CONTACT.nickname}
-        </p>
-        <ContactLinks compact />
-      </section>
     </Reveal>
   );
 }

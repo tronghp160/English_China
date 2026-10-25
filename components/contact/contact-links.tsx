@@ -33,19 +33,21 @@ export function ContactLinks({ compact = false, className }: { compact?: boolean
       label: "Facebook",
       detail: "Nhắn tin qua Messenger",
       tint: "bg-c-blue-soft text-c-blue-fg",
-      icon: <FacebookIcon className="size-5" />,
+      hover: "hover:border-c-blue-soft hover:bg-c-blue-soft/30 hover:text-c-blue-fg",
+      icon: <FacebookIcon className={compact ? "size-4" : "size-5"} />,
     },
     {
       href: zaloUrl(CONTACT.zaloPhone),
       label: "Zalo",
       detail: phone,
       tint: "bg-c-teal-soft text-c-teal-fg",
-      icon: <ZaloIcon className="h-5 w-7" />,
+      hover: "hover:border-c-teal-soft hover:bg-c-teal-soft/30 hover:text-c-teal-fg",
+      icon: <ZaloIcon className={compact ? "h-3.5 w-5" : "h-5 w-7"} />,
     },
   ];
 
   return (
-    <ul className={cn(compact ? "flex flex-wrap gap-2" : "grid gap-3 sm:grid-cols-2", className)}>
+    <ul className={cn(compact ? "flex flex-wrap items-center gap-2 shrink-0" : "grid gap-3 sm:grid-cols-2", className)}>
       {items.map((it) => (
         <li key={it.label}>
           <a
@@ -54,13 +56,29 @@ export function ContactLinks({ compact = false, className }: { compact?: boolean
             rel="noopener noreferrer"
             aria-label={`${it.label}: ${it.detail} (mở trong tab mới)`}
             className={cn(
-              "flex items-center gap-3 rounded-lg border border-border/60 bg-surface text-fg shadow-sm transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md dark:border-border",
-              compact ? "min-h-11 px-3 py-1.5 text-sm" : "min-h-16 px-4 py-3",
+              "flex items-center text-fg transition-all active:translate-y-0",
+              compact
+                ? cn(
+                    "min-h-10 gap-2.5 rounded-full border border-border/70 bg-surface px-3.5 py-1.5 text-xs font-semibold shadow-xs hover:-translate-y-0.5 hover:shadow-sm dark:border-border",
+                    it.hover,
+                  )
+                : "min-h-16 gap-3 rounded-xl border border-border/60 bg-surface px-4 py-3 shadow-sm hover:-translate-y-0.5 hover:shadow-md dark:border-border",
             )}
           >
-            <span className={cn("grid shrink-0 place-items-center rounded-md", it.tint, compact ? "size-8" : "size-10")}>{it.icon}</span>
+            <span
+              className={cn(
+                "grid shrink-0 place-items-center",
+                it.tint,
+                compact ? "size-7 rounded-full" : "size-10 rounded-md",
+              )}
+            >
+              {it.icon}
+            </span>
             <span className="min-w-0 flex-1">
-              <span className="block font-semibold">{it.label}</span>
+              <span className="flex items-center gap-1 font-semibold">
+                {it.label}
+                {compact && <ExternalLink className="size-3 opacity-60" aria-hidden />}
+              </span>
               {!compact && <span className="block truncate text-sm text-fg-muted">{it.detail}</span>}
             </span>
             {!compact && <ExternalLink className="size-4 shrink-0 text-fg-muted" aria-hidden />}
