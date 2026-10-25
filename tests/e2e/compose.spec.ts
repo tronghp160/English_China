@@ -79,7 +79,7 @@ test.beforeAll(async ({ browser }) => {
   // Mock third-party AI, dictionary, and image endpoints
   await page.route("**/api/ai/enrich", (route) => route.fulfill({ json: ENRICH_RESILIENT }));
   await page.route("**/api/ai/enrich-batch", async (route) => {
-    const body = (await route.request().postDataJSON().catch(() => null)) as {
+    const body = (route.request().postDataJSON() ?? null) as {
       language: string;
       items: { term: string; meaning_vi?: string }[];
     } | null;
@@ -98,7 +98,7 @@ test.beforeAll(async ({ browser }) => {
             ipa_us: "/ˈæp.əl/",
             ipa_uk: null,
             cefr: "A1",
-            senses: [{ pos: ["noun"], meaning_vi: "trái táo", examples: [] }],
+            senses: [{ pos: ["noun"], meaning_vi: "trái táo", meaning_en: "A round fruit.", examples: [], image_query: "apple fruit" }],
             synonyms: [],
             antonyms: [],
             collocations: [],
@@ -125,7 +125,7 @@ test.beforeAll(async ({ browser }) => {
             ipa_us: "/ˈbɑːr.oʊ/",
             ipa_uk: null,
             cefr: "A2",
-            senses: [{ pos: ["verb"], meaning_vi: "vay, mượn", examples: [] }],
+            senses: [{ pos: ["verb"], meaning_vi: "vay, mượn", meaning_en: "To take something for a while.", examples: [], image_query: "borrow book" }],
             synonyms: [],
             antonyms: [],
             collocations: [],
@@ -170,8 +170,8 @@ test("gõ từ thẻ 1, gõ nghĩa, nhấn Tab -> focus ô Từ 2", async () => 
   await expect(page).toHaveURL(/\/decks\/[0-9a-f-]{36}\/add/);
 
   await page.getByLabel("Từ", { exact: true }).fill("serendipity");
-  await page.getByLabel("Nghĩa tiếng Việt").fill("sự tình cờ may mắn");
-  await page.getByLabel("Nghĩa tiếng Việt").press("Tab");
+  await page.getByLabel("Nghĩa tiếng Việt", { exact: true }).fill("sự tình cờ may mắn");
+  await page.getByLabel("Nghĩa tiếng Việt", { exact: true }).press("Tab");
 
   await expect(page.getByLabel("Từ 2")).toBeFocused();
 });
@@ -198,7 +198,7 @@ test("dán 3 dòng vào ô Từ -> có 3 thẻ; thẻ 1 giữ nghĩa sau khi đi
   await expect(page.getByLabel("Từ 3")).toHaveValue("resilient");
 
   // Verify card 1 keeps "quả táo", card 2 keeps "mượn", card 3 gets AI meaning
-  await expect(page.getByLabel("Nghĩa tiếng Việt")).toHaveValue("quả táo");
+  await expect(page.getByLabel("Nghĩa tiếng Việt", { exact: true })).toHaveValue("quả táo");
   await expect(page.getByLabel("Nghĩa tiếng Việt 2")).toHaveValue("mượn");
   await expect(page.getByLabel("Nghĩa tiếng Việt 3")).toHaveValue(/kiên cường/);
 });
@@ -220,7 +220,7 @@ test("thêm từ đã có trong bộ -> sau khi lưu thẻ còn lại với ch�
   await expect(page).toHaveURL(/\/decks\/[0-9a-f-]{36}\/add/);
 
   await page.getByLabel("Từ", { exact: true }).fill("resilient");
-  await page.getByLabel("Nghĩa tiếng Việt").fill("kiên cường");
+  await page.getByLabel("Nghĩa tiếng Việt", { exact: true }).fill("kiên cường");
 
   await page.getByRole("button", { name: "Lưu từ" }).click();
   await expect(page.getByText("Đã có trong bộ này")).toBeVisible();
@@ -228,7 +228,7 @@ test("thêm từ đã có trong bộ -> sau khi lưu thẻ còn lại với ch�
 
 test("gõ dở 1 thẻ, tải lại trang -> thấy Đã khôi phục 1 thẻ chưa lưu.", async () => {
   await page.getByLabel("Từ", { exact: true }).fill("wanderlust");
-  await page.getByLabel("Nghĩa tiếng Việt").fill("thích du ngoạn");
+  await page.getByLabel("Nghĩa tiếng Việt", { exact: true }).fill("thích du ngoạn");
 
   // Wait for draft auto-save debounce (800ms)
   await page.waitForTimeout(1000);
@@ -236,7 +236,7 @@ test("gõ dở 1 thẻ, tải lại trang -> thấy Đã khôi phục 1 thẻ ch
   await page.reload();
   await expect(page.getByText("Đã khôi phục 1 thẻ chưa lưu.")).toBeVisible();
   await expect(page.getByLabel("Từ", { exact: true })).toHaveValue("wanderlust");
-  await expect(page.getByLabel("Nghĩa tiếng Việt")).toHaveValue("thích du ngoạn");
+  await expect(page.getByLabel("Nghĩa tiếng Việt", { exact: true })).toHaveValue("thích du ngoạn");
 
   // Clean up draft
   await page.getByRole("button", { name: "Xóa nháp" }).click();
@@ -245,7 +245,7 @@ test("gõ dở 1 thẻ, tải lại trang -> thấy Đã khôi phục 1 thẻ ch
 
 test("mở Chi tiết thẻ 1, tab Ví dụ, thêm một câu, bấm Xong, lưu -> trang chi tiết từ có câu ví dụ", async () => {
   await page.getByLabel("Từ", { exact: true }).fill("tenacious");
-  await page.getByLabel("Nghĩa tiếng Việt").fill("ngoan cường, kiên trì");
+  await page.getByLabel("Nghĩa tiếng Việt", { exact: true }).fill("ngoan cường, kiên trì");
 
   // Open Sheet details
   await page.getByRole("button", { name: /Chi tiết/ }).click();
@@ -281,10 +281,10 @@ test("ảnh gợi ý tự hiện trên thẻ: chạm ảnh -> chọn và lưu th
     await clearBtn.click();
   }
 
-  // Type term and click Gợi ý
-  await page.getByLabel("Từ", { exact: true }).fill("resilient");
+  // Type a word not saved yet (earlier tests saved "resilient"); the batch mock answers with the resilient entry
+  await page.getByLabel("Từ", { exact: true }).fill("steadfast");
   await page.getByRole("button", { name: /Gợi ý/ }).click();
-  await expect(page.getByLabel("Nghĩa tiếng Việt")).toHaveValue(/kiên cường/);
+  await expect(page.getByLabel("Nghĩa tiếng Việt", { exact: true })).toHaveValue(/kiên cường/);
 
   // Group "Ảnh gợi ý cho thẻ 1" should appear with 6 buttons without clicking anything
   const strip = page.getByRole("group", { name: "Ảnh gợi ý cho thẻ 1" });
@@ -294,11 +294,13 @@ test("ảnh gợi ý tự hiện trên thẻ: chạm ảnh -> chọn và lưu th
 
   // Tap 2nd image
   await imageButtons.nth(1).click();
-  await expect(imageButtons.nth(1)).toHaveAttribute("aria-pressed", "true");
+  // Picking a photo collapses the strip into its credit line.
+  await expect(page.getByRole("button", { name: "Chọn ảnh khác" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "John Smith" })).toBeVisible();
 
   // Save word
   await page.getByRole("button", { name: "Lưu từ" }).click();
-  await expect(page.getByText("Đã lưu resilient")).toBeVisible();
+  await expect(page.getByText("Đã lưu steadfast")).toBeVisible();
 
   // Click "Xem" to go to word detail page
   await page.getByRole("button", { name: "Xem", exact: true }).click();
