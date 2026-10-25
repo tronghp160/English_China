@@ -29,6 +29,8 @@ import {
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { createWordsBulk } from "@/lib/actions/words";
+import { enqueueEnrich } from "@/lib/ai/enrich-queue";
+import { lookupWord } from "@/lib/ai/lookup-client";
 import type { EnrichResult } from "@/lib/ai/schemas";
 import { enrichToWord, imageSuggestions } from "@/lib/ai/to-word";
 import {
@@ -318,119 +320,62 @@ export function WordComposer({
   const runBatchEnrich = useCallback(
     async (startIndex: number, items: WordInput[]) => {
       if (items.length <= 0) return;
-      const BATCH = 10;
-      const chunks: { offset: number; items: { term: string; meaning_vi?: string }[] }[] = [];
-      for (let i = 0; i < items.length; i += BATCH) {
-        chunks.push({
-          offset: startIndex + i,
-          items: items.slice(i, i + BATCH).map((c) => ({
-            term: c.term?.trim() ?? "",
-            meaning_vi: c.meaning_vi?.trim() || undefined,
-          })),
-        });
-      }
-
       setBatchProgress({ current: 0, total: items.length });
       let completed = 0;
+      let warned = false;
 
-      const queue = [...chunks];
-      async function worker() {
-        while (queue.length > 0) {
-          const chunk = queue.shift()!;
-          if (aiEnabled) {
-            try {
-              const res = await fetch("/api/ai/enrich-batch", {
-                method: "POST",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({ language, items: chunk.items }),
-              });
-              if (res.status === 429) {
-                const body = await res.json().catch(() => null);
-                toast.error(body?.error || "Hết lượt AI hôm nay.");
-                return;
+      const fill = (cardIdx: number, result: EnrichResult, source: "ai" | "dict") => {
+        const filled = enrichToWord(result, 0);
+        const currentMeaning = form.getValues(`cards.${cardIdx}.meaning_vi`)?.trim();
+        const currentReading = form.getValues(`cards.${cardIdx}.reading`)?.trim();
+        for (const [k, v] of Object.entries(filled)) {
+          if (v === undefined) continue;
+          if (k === "meaning_vi" && currentMeaning) continue;
+          if (k === "reading" && currentReading) continue;
+          form.setValue(`cards.${cardIdx}.${k as keyof WordInput}` as never, v as never, { shouldDirty: true });
+        }
+        if (source === "ai") form.setValue(`cards.${cardIdx}.ai_generated` as never, true as never);
+        const cardKey = fieldsRef.current[cardIdx]?.key;
+        if (cardKey) updateMeta(cardKey, { images: imageSuggestions(result, [0]), source });
+      };
+      const step = () => {
+        completed++;
+        setBatchProgress({ current: Math.min(completed, items.length), total: items.length });
+      };
+
+      if (aiEnabled) {
+        // Every word goes through the page-wide AI queue: batches of 10, shared
+        // with the single cards, same handling of repeats, "busy" and quota.
+        await Promise.all(
+          items.map(async (c, i) => {
+            const term = c.term?.trim() ?? "";
+            if (term) {
+              const r = await enqueueEnrich({ language, term, meaning_vi: c.meaning_vi?.trim() || null, urgent: true });
+              if (r.ok) fill(startIndex + i, r.result, "ai");
+              else if (!warned && r.code !== "aborted") {
+                warned = true;
+                toast.error(r.error || "Lỗi khi điền gợi ý.");
               }
-              if (!res.ok) {
-                const body = await res.json().catch(() => null);
-                toast.error(body?.error || "Lỗi khi điền gợi ý.");
-                continue;
-              }
-              const data = await res.json();
-              const outcomes = (data.outcomes ?? []) as (
-                | { ok: true; result: EnrichResult }
-                | { ok: false; error: string }
-              )[];
-
-              outcomes.forEach((outcome, idx) => {
-                const cardIdx = chunk.offset + idx;
-                if (outcome.ok) {
-                  const filled = enrichToWord(outcome.result, 0);
-                  const currentMeaning = form.getValues(`cards.${cardIdx}.meaning_vi`)?.trim();
-                  const currentReading = form.getValues(`cards.${cardIdx}.reading`)?.trim();
-                  const imgs = imageSuggestions(outcome.result, [0]);
-
-                  for (const [k, v] of Object.entries(filled)) {
-                    if (v === undefined) continue;
-                    if (k === "meaning_vi" && currentMeaning) continue;
-                    if (k === "reading" && currentReading) continue;
-                    form.setValue(`cards.${cardIdx}.${k as keyof WordInput}` as never, v as never, {
-                      shouldDirty: true,
-                    });
-                  }
-                  form.setValue(`cards.${cardIdx}.ai_generated` as never, true as never);
-                  const cardKey = fieldsRef.current[cardIdx]?.key;
-                  if (cardKey) {
-                    updateMeta(cardKey, { images: imgs, source: "ai" });
-                  }
-                }
-              });
-            } catch {}
-          } else {
-            for (let idx = 0; idx < chunk.items.length; idx++) {
-              const cardIdx = chunk.offset + idx;
-              const term = chunk.items[idx].term;
-              if (!term) continue;
+            }
+            step();
+          }),
+        );
+      } else {
+        // No AI: the free lookup (browser memory, shared AI cache, dictionary), three at a time.
+        const queue = items.map((c, i) => ({ term: c.term?.trim() ?? "", cardIdx: startIndex + i }));
+        const worker = async () => {
+          for (let job = queue.shift(); job; job = queue.shift()) {
+            if (job.term) {
               try {
-                const res = await fetch("/api/dict", {
-                  method: "POST",
-                  headers: { "content-type": "application/json" },
-                  body: JSON.stringify({ language, term }),
-                });
-                if (res.ok) {
-                  const b = await res.json();
-                  if (b.result) {
-                    const filled = enrichToWord(b.result, 0);
-                    const currentMeaning = form.getValues(`cards.${cardIdx}.meaning_vi`)?.trim();
-                    const currentReading = form.getValues(`cards.${cardIdx}.reading`)?.trim();
-
-                    for (const [k, v] of Object.entries(filled)) {
-                      if (v === undefined) continue;
-                      if (k === "meaning_vi" && currentMeaning) continue;
-                      if (k === "reading" && currentReading) continue;
-                      form.setValue(`cards.${cardIdx}.${k as keyof WordInput}` as never, v as never, {
-                        shouldDirty: true,
-                      });
-                    }
-                    const cardKey = fieldsRef.current[cardIdx]?.key;
-                    if (cardKey) {
-                      updateMeta(cardKey, {
-                        images: imageSuggestions(b.result, [0]),
-                        source: "dict",
-                      });
-                    }
-                  }
-                }
+                const found = await lookupWord(language, job.term);
+                if (found.result) fill(job.cardIdx, found.result, found.source === "dict" ? "dict" : "ai");
               } catch {}
             }
+            step();
           }
-          completed += chunk.items.length;
-          setBatchProgress({
-            current: Math.min(completed, items.length),
-            total: items.length,
-          });
-        }
+        };
+        await Promise.all([worker(), worker(), worker()]);
       }
-
-      await Promise.all([worker(), worker(), worker()]);
       setBatchProgress(null);
     },
     [aiEnabled, form, language, updateMeta],

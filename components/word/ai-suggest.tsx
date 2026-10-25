@@ -1,9 +1,13 @@
 "use client";
 
-import { Lightbulb, Loader2, MessageSquareText } from "lucide-react";
+import { Lightbulb, Loader2, MessageSquareText, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useOptionalMe } from "@/components/app-shell/me-provider";
 import { Button } from "@/components/ui/button";
+import { getCached } from "@/lib/ai/client-cache";
+import { enqueueEnrich, subscribe } from "@/lib/ai/enrich-queue";
+import { lookupWord } from "@/lib/ai/lookup-client";
+import { decideNextStep } from "@/lib/ai/suggest-policy";
 import { enrichToWord, imageSuggestions, type ImageSuggestion } from "@/lib/ai/to-word";
 import type { EnrichResult } from "@/lib/ai/schemas";
 import type { LangCode } from "@/lib/lang/types";
@@ -48,11 +52,25 @@ async function postJson(url: string, body: unknown, signal: AbortSignal) {
   return json;
 }
 
+/** Seconds left on the AI queue's "busy" wait, or null. */
+function useBusySeconds() {
+  const [seconds, setSeconds] = useState<number | null>(null);
+  useEffect(
+    () =>
+      subscribe(({ busyUntil }) =>
+        setSeconds(busyUntil ? Math.max(1, Math.ceil((busyUntil - Date.now()) / 1000)) : null),
+      ),
+    [],
+  );
+  return seconds;
+}
+
 /**
  * Hook that owns the suggestion requests; the form renders the button and panel.
- * The free dictionary and the AI are asked together: the dictionary fills the
- * form within a second, the AI answer (richer, with photo searches per meaning)
- * replaces it when it arrives. Without AI or quota the dictionary answer stays.
+ * Dictionary first: the tab's memory, then /api/lookup (an AI answer someone
+ * already paid for, else the free dictionary) fills the form within a second.
+ * The AI is only asked when that had no AI answer, through the page-wide batch
+ * queue (lib/ai/enrich-queue.ts), and its answer replaces the dictionary one.
  */
 export function useAiSuggest({
   language,
@@ -77,6 +95,9 @@ export function useAiSuggest({
   const lastTerm = useRef<string>("");
   const abort = useRef<AbortController | null>(null);
   const inflight = useRef<string | null>(null);
+  const busySeconds = useBusySeconds();
+  // Suggest on its own once typing pauses (setting "Tự gợi ý khi ngừng gõ", on by default).
+  const auto = autoEnabled && (me?.prefs.ai_autofill ?? true);
 
   const apply = useCallback(
     (result: EnrichResult, chosen: number[], focus: number | null) => {
@@ -91,8 +112,30 @@ export function useAiSuggest({
     [onApply],
   );
 
+  const showAi = useCallback(
+    (result: EnrichResult, cached: boolean, remaining: number | null) => {
+      setState({ status: "done", result, source: "ai", cached, remaining, chosen: [0], aiPending: false, aiNote: null });
+      if (result.is_valid_word || !result.did_you_mean) apply(result, [0], 0);
+    },
+    [apply],
+  );
+
+  /** AI answer from the batch queue; the dictionary answer (if shown) stays until it arrives. */
+  const askQueue = useCallback(
+    async (t: string, ctrl: AbortController, urgent: boolean, shown: boolean) => {
+      const r = await enqueueEnrich({ language, term: t, urgent, signal: ctrl.signal });
+      if (ctrl.signal.aborted || lastTerm.current !== t || (!r.ok && r.code === "aborted")) return;
+      if (r.ok) return showAi(r.result, r.cached, null);
+      const quota = r.code === "quota_user" || r.code === "quota_global";
+      const note = quota ? r.error : `${r.error} Đang dùng gợi ý từ từ điển miễn phí.`;
+      if (shown) setState((s) => (s.status === "done" ? { ...s, aiPending: false, aiNote: note } : s));
+      else setState({ status: "error", message: r.error });
+    },
+    [language, showAi],
+  );
+
   const suggest = useCallback(
-    async (override?: string) => {
+    async (override?: string, urgent = true) => {
       const t = (override ?? getTerm()).trim();
       // Blur and a click on "Gợi ý" can both ask for the same word: send it once.
       if (!t || t === inflight.current) return;
@@ -101,67 +144,51 @@ export function useAiSuggest({
       const ctrl = new AbortController();
       abort.current = ctrl;
       lastTerm.current = t;
-      setState({ status: "loading" });
-      // With a context sentence the user wants the AI to pick the sense; skip the dictionary then.
-      const useDict = !context.trim() || !aiAvailable;
-      const dict: Promise<EnrichResult | null> = useDict
-        ? postJson("/api/dict", { language, term: t }, ctrl.signal).then(
-            (b) => (b.result as EnrichResult | null) ?? null,
-            () => null,
-          )
-        : Promise.resolve(null);
-      let aiDone = false;
-      let dictShown = false;
-      const showDict = (result: EnrichResult, aiPending: boolean, aiNote: string | null) => {
-        setState({ status: "done", result, source: "dict", cached: false, remaining: null, chosen: [0], aiPending, aiNote });
-        apply(result, [0], 0);
-        dictShown = true;
-      };
-      void dict.then((r) => {
-        if (r && !aiDone && !ctrl.signal.aborted) showDict(r, aiAvailable, null);
-      });
-
+      const ctx = context.trim();
       try {
-        if (!aiAvailable) {
-          const r = await dict;
-          if (!r && !ctrl.signal.aborted) {
-            setState({ status: "error", message: "Từ điển miễn phí chưa có từ này. Bạn tự nhập nhé." });
-          }
+        // With a context sentence the user wants the AI to pick the sense: one direct
+        // call, kept out of the batches and the caches (the answer depends on the sentence).
+        if (decideNextStep(null, { aiAvailable, auto, urgent, hasContext: Boolean(ctx) }).kind === "direct") {
+          setState({ status: "loading" });
+          const body = await postJson("/api/ai/enrich", { language, term: t, context: ctx }, ctrl.signal);
+          showAi(body.result as EnrichResult, Boolean(body.cached), body.remaining ?? null);
           return;
         }
-        const body = await postJson("/api/ai/enrich", { language, term: t, context: context.trim() || null }, ctrl.signal);
-        aiDone = true;
-        const result = body.result as EnrichResult;
-        setState({
-          status: "done",
-          result,
-          source: "ai",
-          cached: Boolean(body.cached),
-          remaining: body.remaining ?? null,
-          chosen: [0],
-          aiPending: false,
-          aiNote: null,
-        });
-        if (result.is_valid_word || !result.did_you_mean) apply(result, [0], 0);
-      } catch (e) {
-        aiDone = true;
-        if ((e as Error).name === "AbortError" || ctrl.signal.aborted) return;
-        const r = await dict;
+
+        if (!getCached(language, t)) setState({ status: "loading" });
+        const found = await lookupWord(language, t, ctrl.signal);
         if (ctrl.signal.aborted) return;
-        const note = `${(e as Error).message} Đang dùng gợi ý từ từ điển miễn phí.`;
-        if (!r) setState({ status: "error", message: (e as Error).message });
-        else if (dictShown) setState((s) => (s.status === "done" ? { ...s, aiPending: false, aiNote: note } : s));
-        else showDict(r, false, note);
+        const step = decideNextStep(found.source, { aiAvailable, auto, urgent, hasContext: false });
+        const result = found.result;
+        if (result && found.source !== "dict") {
+          showAi(result, true, null);
+        } else if (result) {
+          setState({
+            status: "done",
+            result,
+            source: "dict",
+            cached: false,
+            remaining: null,
+            chosen: [0],
+            aiPending: step.kind === "queue",
+            aiNote: null,
+          });
+          apply(result, [0], 0);
+        } else if (step.kind === "error") {
+          setState({ status: "error", message: step.message });
+        }
+        if (step.kind === "queue") void askQueue(t, ctrl, step.urgent, Boolean(result));
+      } catch (e) {
+        if ((e as Error).name === "AbortError" || ctrl.signal.aborted) return;
+        setState({ status: "error", message: (e as Error).message });
       } finally {
         if (inflight.current === t) inflight.current = null;
       }
     },
-    [aiAvailable, apply, context, getTerm, language],
+    [aiAvailable, apply, askQueue, auto, context, getTerm, language, showAi],
   );
 
-  // Suggest on its own once typing pauses (setting "Tự gợi ý khi ngừng gõ", on by default).
   // Chinese words can be a single character; English needs 2 letters.
-  const auto = autoEnabled && (me?.prefs.ai_autofill ?? true);
   const minLength = language === "zh" ? 1 : 2;
   // `suggest` changes identity on most renders (getTerm is inline), so the timer
   // reads it from a ref; otherwise every re-render would restart the pause.
@@ -173,7 +200,8 @@ export function useAiSuggest({
     if (!auto) return;
     const t = term.trim();
     if (t.length < minLength || t === lastTerm.current) return;
-    const timer = setTimeout(() => void suggestRef.current(t), 900);
+    // A typing pause is not urgent: the AI part waits to join a batch.
+    const timer = setTimeout(() => void suggestRef.current(t, false), 900);
     return () => clearTimeout(timer);
   }, [auto, minLength, term]);
 
@@ -182,6 +210,16 @@ export function useAiSuggest({
     const t = getTerm().trim();
     if (auto && t.length >= minLength && t !== lastTerm.current) void suggest(t);
   }, [auto, getTerm, minLength, suggest]);
+
+  /** "Dùng AI ngay": ask the AI now for the word whose dictionary answer is shown. */
+  const aiNow = useCallback(() => {
+    if (state.status !== "done" || state.source !== "dict" || !aiAvailable) return;
+    const t = lastTerm.current;
+    const ctrl = abort.current && !abort.current.signal.aborted ? abort.current : new AbortController();
+    abort.current = ctrl;
+    setState({ ...state, aiPending: true, aiNote: null });
+    void askQueue(t, ctrl, true, true);
+  }, [aiAvailable, askQueue, state]);
 
   /** Tick or untick a sense; at least one stays chosen. */
   const toggle = (i: number) => {
@@ -201,6 +239,7 @@ export function useAiSuggest({
   };
 
   const reset = () => {
+    // Also drops this card's word from the AI queue if it has not been sent yet.
     abort.current?.abort();
     inflight.current = null;
     lastTerm.current = "";
@@ -208,7 +247,13 @@ export function useAiSuggest({
     setContext("");
   };
 
-  return { state, suggest, suggestIfNew, toggle, chooseAll, context, setContext, reset, aiAvailable };
+  // While the queue waits out a "busy" answer, say so under the dictionary result.
+  const shown: State =
+    state.status === "done" && state.aiPending && busySeconds && !state.aiNote
+      ? { ...state, aiNote: `AI đang bận, sẽ tự bổ sung sau ${busySeconds} giây.` }
+      : state;
+
+  return { state: shown, suggest, suggestIfNew, toggle, chooseAll, context, setContext, reset, aiAvailable, aiNow };
 }
 
 export function AiSuggestButton({ loading, onClick }: { loading: boolean; onClick: () => void }) {
@@ -306,6 +351,16 @@ export function AiSuggestPanel({
               {state.remaining !== null && ` Còn ${state.remaining} lượt AI hôm nay.`}
             </span>
           </p>
+          {state.source === "dict" && ai.aiAvailable && !state.aiPending && (
+            <button
+              type="button"
+              onClick={ai.aiNow}
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-md bg-primary-soft px-3 text-sm font-medium text-primary-fg hover:bg-primary-soft/80"
+            >
+              <Sparkles className="size-4" aria-hidden />
+              Dùng AI ngay
+            </button>
+          )}
         </>
       )}
 

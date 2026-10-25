@@ -41,6 +41,11 @@ test("thêm từ bằng AI", async () => {
   if (process.env.E2E_REAL_AI !== "1") {
     await page.route("**/api/ai/enrich", (route) => route.fulfill({ json: ENRICH_RESILIENT }));
     await page.route("**/api/dict", (route) => route.fulfill({ json: { result: null } }));
+    // Dictionary and shared cache have nothing, so the word goes to the AI batch queue.
+    await page.route("**/api/lookup", (route) => route.fulfill({ json: { result: null, source: null } }));
+    await page.route("**/api/ai/enrich-batch", (route) =>
+      route.fulfill({ json: { outcomes: [{ term: "resilient", ok: true, result: ENRICH_RESILIENT.result, cached: false }] } }),
+    );
     await page.route("**/api/images/search**", (route) => route.fulfill({ json: { results: [] } }));
   }
   await page.goto("/decks");

@@ -149,6 +149,7 @@ test.beforeAll(async ({ browser }) => {
     return route.fulfill({ json: { outcomes } });
   });
   await page.route("**/api/dict", (route) => route.fulfill({ json: { result: null } }));
+  await page.route("**/api/lookup", (route) => route.fulfill({ json: { result: null, source: null } }));
   await page.route("**/api/images/search**", (route) =>
     route.fulfill({ json: { results: MOCK_IMAGES, hasMore: false } }),
   );
