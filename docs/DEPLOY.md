@@ -57,6 +57,11 @@ Link đặt lại mật khẩu được gửi qua SMTP mặc định của Supab
 - Anthropic Console → **Settings → Limits**: đặt spend limit hằng tháng.
 - Gemini gói miễn phí không tính tiền; vượt hạn mức thì app tự dùng gợi ý từ điển.
 
+### Tối ưu gói miễn phí (Gemini + Vercel Hobby + Supabase Free)
+1. Vercel → **Settings → Functions → Function Region** = **Singapore (sin1)**, cùng vùng với Supabase (mỗi lượt hỏi database từ vùng khác tốn thêm vài trăm ms).
+2. Vào https://aistudio.google.com → xem bảng **Rate limits** của key. Chọn model "flash-lite" mới nhất cho gợi ý từ: thường có hạn mức/phút cao hơn và trả lời nhanh hơn. Ghi **tên model chính xác** vào `AI_MODEL_GOOGLE`.
+3. Tên model và hạn mức của Google đổi theo thời gian, nên code không ghi cứng chúng (ngoài giá trị mặc định trong `lib/env.ts`). Khi thấy log `[ai] rate-limited` nhiều, xem lại bảng Rate limits.
+
 ## 6. Kiểm tra sau khi deploy
 Trên domain Vercel, thử bằng điện thoại:
 1. Đăng ký tài khoản mới, vào thẳng app không cần email.
