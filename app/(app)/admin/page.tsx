@@ -12,6 +12,7 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminAction, GrantAdminForm } from "@/components/admin/admin-actions";
+import { AdminWordTable } from "@/components/admin/admin-word-table";
 import { LangMark } from "@/components/lang-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,8 +32,10 @@ import {
   getAdminOverview,
   listAdmins,
   listAdminUsers,
+  listAdminWords,
   listGroups,
   listPublicDecks,
+  resolveUserParam,
   USERS_PER_PAGE,
 } from "@/lib/data/admin";
 import type { Tone } from "@/lib/tone";
@@ -42,6 +45,7 @@ export const metadata: Metadata = { title: "Quản trị", robots: { index: fals
 const TABS = [
   { value: "overview", label: "Tổng quan" },
   { value: "users", label: "Người dùng" },
+  { value: "words", label: "Từ vựng" },
   { value: "decks", label: "Bộ từ công khai" },
   { value: "groups", label: "Nhóm" },
   { value: "admins", label: "Quản trị viên" },
@@ -61,6 +65,8 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const tab: Tab = TABS.some((t) => t.value === sp.tab) ? (sp.tab as Tab) : "overview";
   const q = typeof sp.q === "string" ? sp.q.slice(0, 100) : "";
   const page = Math.max(1, Number(typeof sp.page === "string" ? sp.page : 1) || 1);
+  const lang = sp.lang === "en" || sp.lang === "zh" ? sp.lang : undefined;
+  const user = typeof sp.user === "string" ? sp.user.slice(0, 100) : undefined;
 
   return (
     <div className="max-w-4xl">
@@ -86,6 +92,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       <div className="mt-6">
         {tab === "overview" && <Overview />}
         {tab === "users" && <UsersTab meId={me.id} q={q} page={page} />}
+        {tab === "words" && <WordsTab q={q} lang={lang} user={user} page={page} />}
         {tab === "decks" && <DecksTab />}
         {tab === "groups" && <GroupsTab />}
         {tab === "admins" && <AdminsTab meId={me.id} />}
@@ -267,6 +274,87 @@ async function UsersTab({ meId, q, page }: { meId: string; q: string; page: numb
   );
 }
 
+async function WordsTab({
+  q,
+  lang,
+  user,
+  page,
+}: {
+  q: string;
+  lang?: "en" | "zh";
+  user?: string;
+  page: number;
+}) {
+  let creatorId: string | undefined;
+  if (user) {
+    const resolved = await resolveUserParam(user);
+    creatorId = resolved ?? "00000000-0000-0000-0000-000000000000";
+  }
+
+  const { rows, total } = await listAdminWords({ q, lang, creatorId, page });
+
+  const queryParams = new URLSearchParams();
+  queryParams.set("tab", "words");
+  if (q) queryParams.set("q", q);
+  if (lang) queryParams.set("lang", lang);
+  if (user) queryParams.set("user", user);
+
+  return (
+    <section aria-label="Từ vựng">
+      <form action="/admin" className="flex flex-col gap-2 sm:flex-row sm:items-center mb-4">
+        <input type="hidden" name="tab" value="words" />
+        <div className="flex-1">
+          <label htmlFor="words-q" className="sr-only">
+            Tìm từ vựng
+          </label>
+          <Input
+            id="words-q"
+            name="q"
+            defaultValue={q}
+            placeholder="Tìm theo từ hoặc nghĩa..."
+          />
+        </div>
+        <div className="w-full sm:w-40">
+          <label htmlFor="words-lang" className="sr-only">
+            Ngôn ngữ
+          </label>
+          <select
+            id="words-lang"
+            name="lang"
+            defaultValue={lang ?? ""}
+            className="w-full h-10 rounded-md border border-input bg-surface px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="">Tất cả ngôn ngữ</option>
+            <option value="en">Tiếng Anh</option>
+            <option value="zh">Tiếng Trung</option>
+          </select>
+        </div>
+        <div className="w-full sm:w-56">
+          <label htmlFor="words-user" className="sr-only">
+            Người tạo
+          </label>
+          <Input
+            id="words-user"
+            name="user"
+            defaultValue={user ?? ""}
+            placeholder="Email hoặc @username"
+          />
+        </div>
+        <Button type="submit">Lọc</Button>
+      </form>
+
+      <AdminWordTable
+        rows={rows}
+        total={total}
+        page={page}
+        baseHref={`/admin?${queryParams.toString()}`}
+        showCreator={true}
+        showDeck={true}
+      />
+    </section>
+  );
+}
+
 async function DecksTab() {
   const decks = await listPublicDecks();
   if (!decks.length) return <p className="text-fg-muted">Chưa có bộ từ công khai nào.</p>;
@@ -284,7 +372,7 @@ async function DecksTab() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <LangMark lang={d.language} />
-                <Link href={`/decks/${d.id}`} className="truncate font-bold hover:underline">
+                <Link href={`/admin/decks/${d.id}`} className="truncate font-bold hover:underline">
                   {d.name}
                 </Link>
               </div>

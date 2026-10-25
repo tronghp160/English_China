@@ -201,6 +201,26 @@ export async function findUserByEmail(email: string) {
   return (await allAuthUsers()).find((u) => u.email?.toLowerCase() === needle) ?? null;
 }
 
+/** Resolves an email or @username string to user ID */
+export async function resolveUserParam(input: string): Promise<string | null> {
+  const clean = input.trim();
+  if (!clean) return null;
+  if (clean.includes("@") && !clean.startsWith("@")) {
+    const u = await findUserByEmail(clean);
+    return u?.id ?? null;
+  }
+  const uname = clean.replace(/^@/, "");
+  const sb = createAdminClient();
+  const { data: prof } = await sb
+    .from("profiles")
+    .select("id")
+    .ilike("username", uname)
+    .maybeSingle();
+  if (prof) return prof.id;
+  const u = await findUserByEmail(clean);
+  return u?.id ?? null;
+}
+
 export type AdminUserDetail = {
   id: string;
   email: string;
@@ -378,6 +398,11 @@ export type AdminWordRow = {
   creatorName?: string | null;
   status?: string | null;
   lapseCount?: number | null;
+  card?: {
+    state: "new" | "learning" | "review" | "relearning";
+    lapses: number;
+    suspended: boolean;
+  } | null;
 };
 
 export type AdminDeckDetail = {
@@ -603,6 +628,13 @@ export async function listUserWords(
       const uc = cardMap.get(r.id);
       r.status = uc ? (uc.suspended ? "suspended" : uc.state) : "new";
       r.lapseCount = uc?.lapses ?? 0;
+      r.card = uc
+        ? {
+            state: uc.state,
+            lapses: uc.lapses,
+            suspended: uc.suspended,
+          }
+        : { state: "new", lapses: 0, suspended: false };
       if (r.created_by) r.creatorName = profileMap.get(r.created_by) ?? null;
     });
   }
@@ -668,6 +700,19 @@ export async function listDeckWords(
   f: { q?: string; page: number },
 ): Promise<{ rows: AdminWordRow[]; total: number }> {
   return listAdminWords({ ...f, deckId });
+}
+
+/** 30-day daily stats of a user */
+export async function getUserDailyStats30(userId: string) {
+  const sb = createAdminClient();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+  const { data } = await sb
+    .from("daily_stats")
+    .select("day, reviews, correct, new_learned, words_added, xp")
+    .eq("user_id", userId)
+    .gte("day", thirtyDaysAgo)
+    .order("day", { ascending: false });
+  return data ?? [];
 }
 
 /** Latest 200 review logs for a user */
