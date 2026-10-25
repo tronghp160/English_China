@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardsToSave, findInnerDuplicates, isBlank, pasteToCards, saveLabel } from "@/lib/compose";
+import { cardsToSave, findInnerDuplicates, imageQueryFor, isBlank, pasteToCards, saveLabel } from "@/lib/compose";
 import { emptyWord, type WordInput } from "@/lib/word-schema";
 
 describe("compose helpers", () => {
@@ -51,5 +51,28 @@ describe("compose helpers", () => {
     expect(saveLabel(1)).toBe("Lưu từ");
     expect(saveLabel(3)).toBe("Lưu 3 từ");
     expect(saveLabel(10)).toBe("Lưu 10 từ");
+  });
+
+  it("imageQueryFor extracts correct query based on images and language", () => {
+    // 1. Has AI images suggestions
+    expect(
+      imageQueryFor(
+        { term: "resilient" },
+        [{ query: "tree growing through rock", label: "kiên cường" }],
+        "en",
+      ),
+    ).toBe("tree growing through rock");
+
+    // 2. English without AI images -> uses term if length >= 2
+    expect(imageQueryFor({ term: "apple" }, [], "en")).toBe("apple");
+    expect(imageQueryFor({ term: "a" }, [], "en")).toBe(null);
+    expect(imageQueryFor({ term: "  " }, [], "en")).toBe(null);
+
+    // 3. Chinese without AI images -> uses meaning_en if length >= 2, otherwise null
+    expect(
+      imageQueryFor({ term: "苹果", meaning_en: "apple fruit" }, [], "zh"),
+    ).toBe("apple fruit");
+    expect(imageQueryFor({ term: "苹果", meaning_en: "a" }, [], "zh")).toBe(null);
+    expect(imageQueryFor({ term: "苹果" }, [], "zh")).toBe(null);
   });
 });

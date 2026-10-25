@@ -20,12 +20,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { findDuplicates, type DuplicateHit } from "@/lib/actions/words";
 import type { ImageSuggestion } from "@/lib/ai/to-word";
+import { imageQueryFor } from "@/lib/compose";
 import { LANGUAGES } from "@/lib/lang/registry";
 import type { LangCode } from "@/lib/lang/types";
 import { cn } from "@/lib/utils";
 import type { WordInput } from "@/lib/word-schema";
 import { detailSummary, type DetailTab } from "@/lib/word-summary";
 import { useAiSuggest, type AiFillResult } from "./ai-suggest";
+import { ImageStrip } from "./image-strip";
 import { SenseChips } from "./sense-chips";
 
 export type CardMeta = {
@@ -85,7 +87,9 @@ export function ComposeCard({
   const cardTerm = useWatch({ control, name: `cards.${index}.term` }) ?? "";
   const cardMeaning = useWatch({ control, name: `cards.${index}.meaning_vi` }) ?? "";
   const cardReading = useWatch({ control, name: `cards.${index}.reading` }) ?? "";
-  const cardImageUrl = useWatch({ control, name: `cards.${index}.image_url` }) ?? "";
+  const cardImageUrl = useWatch({ control, name: `cards.${index}.image_url` });
+  const cardImageSource = useWatch({ control, name: `cards.${index}.image_source` });
+  const cardMeaningEn = useWatch({ control, name: `cards.${index}.meaning_en` });
 
   const applyAi = useCallback(
     (r: AiFillResult) => {
@@ -137,6 +141,12 @@ export function ComposeCard({
     const hits = await findDuplicates(t, language);
     onMeta({ duplicates: hits });
   }, [language, onMeta]);
+
+  const imageQuery = imageQueryFor(
+    { term: cardTerm, meaning_en: cardMeaningEn },
+    meta.images,
+    language,
+  );
 
   const isValid =
     Boolean(cardTerm.trim()) &&
@@ -224,8 +234,8 @@ export function ComposeCard({
         </div>
       </div>
 
-      {/* Inputs Grid: Term on left, Meaning on right */}
-      <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+      {/* Inputs Grid: Term on left, Meaning in middle, Image box on right (desktop) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_96px] sm:gap-5">
         {/* Term side */}
         <div className="flex flex-col gap-1.5">
           <div className="relative">
@@ -402,7 +412,55 @@ export function ComposeCard({
             </p>
           )}
         </div>
+
+        {/* Image Box (96x72) */}
+        <div className="flex flex-col sm:items-end">
+          {cardImageUrl ? (
+            <button
+              type="button"
+              aria-label={`Ảnh cho thẻ ${index + 1}`}
+              onClick={() => onOpenDetail(index, "image")}
+              disabled={disabled}
+              className="group relative h-[72px] w-24 shrink-0 overflow-hidden rounded-lg border border-border sm:self-start"
+            >
+              <Image
+                src={cardImageUrl}
+                alt="Ảnh của từ"
+                fill
+                sizes="96px"
+                className="object-cover transition-transform group-hover:scale-105"
+              />
+              <span className="absolute inset-x-0 bottom-0 bg-black/60 py-0.5 text-center text-[0.625rem] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+                Đổi
+              </span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              aria-label={`Ảnh cho thẻ ${index + 1}`}
+              onClick={() => onOpenDetail(index, "image")}
+              disabled={disabled}
+              className="group flex h-[72px] w-24 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border-strong bg-transparent text-xs text-fg-muted transition-colors hover:border-primary hover:text-primary sm:self-start"
+            >
+              <ImageIcon className="size-5" aria-hidden />
+              <span className="text-[0.6875rem] font-medium">Ảnh</span>
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Auto image suggestion strip */}
+      <ImageStrip
+        query={imageQuery}
+        selectedUrl={cardImageUrl}
+        selectedSource={cardImageSource}
+        onPick={(val) => {
+          setValue(`cards.${index}.image_url`, val?.image_url ?? null, { shouldDirty: true });
+          setValue(`cards.${index}.image_source`, val?.image_source ?? null, { shouldDirty: true });
+        }}
+        onOpenFull={() => onOpenDetail(index, "image")}
+        index={index}
+      />
 
       {/* Summary line */}
       {summary && <p className="truncate pt-1 text-xs text-fg-muted">{summary}</p>}

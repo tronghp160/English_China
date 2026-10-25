@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, AlertTriangle, Loader2, Wand2 } from "lucide-react";
+import { AlertCircle, AlertTriangle, ImageIcon, Loader2, Wand2 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
@@ -13,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { findDuplicates, updateWord, type DuplicateHit } from "@/lib/actions/words";
 import type { ImageSuggestion } from "@/lib/ai/to-word";
+import { imageQueryFor } from "@/lib/compose";
 import { LANGUAGES } from "@/lib/lang/registry";
 import type { LangCode } from "@/lib/lang/types";
 import { cn } from "@/lib/utils";
@@ -20,6 +22,7 @@ import { cleanWordInput } from "@/lib/word-clean";
 import { emptyWord, wordInputSchema, type WordData, type WordInput } from "@/lib/word-schema";
 import type { DetailTab } from "@/lib/word-summary";
 import { AiSuggestButton, AiSuggestPanel, useAiSuggest, type AiFillResult } from "./ai-suggest";
+import { ImageStrip } from "./image-strip";
 import { PronounceButton } from "./pronounce-button";
 import { Field, WordDetails } from "./word-details";
 import { WordHero } from "./word-hero";
@@ -76,6 +79,9 @@ export function WordForm({
 
   const term = useWatch({ control, name: "term" }) ?? "";
   const reading = useWatch({ control, name: "reading" }) ?? "";
+  const imageUrl = useWatch({ control, name: "image_url" });
+  const imageSource = useWatch({ control, name: "image_source" });
+  const meaningEn = useWatch({ control, name: "meaning_en" });
 
   // Check duplicates
   useEffect(() => {
@@ -194,14 +200,60 @@ export function WordForm({
       </div>
 
       {term.trim() && (
-        <WordHero
-          lang={language}
-          term={term.trim()}
-          reading={reading?.trim() || null}
-          size="sm"
-          toneColors
-          actions={<PronounceButton text={term} lang={language} />}
-        />
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <WordHero
+                lang={language}
+                term={term.trim()}
+                reading={reading?.trim() || null}
+                size="sm"
+                toneColors
+                actions={<PronounceButton text={term} lang={language} />}
+              />
+            </div>
+            {imageUrl ? (
+              <button
+                type="button"
+                aria-label="Ảnh của từ"
+                onClick={() => setDetailTab("image")}
+                className="group relative h-[72px] w-24 shrink-0 overflow-hidden rounded-lg border border-border"
+              >
+                <Image
+                  src={imageUrl}
+                  alt="Ảnh của từ"
+                  fill
+                  sizes="96px"
+                  className="object-cover transition-transform group-hover:scale-105"
+                />
+                <span className="absolute inset-x-0 bottom-0 bg-black/60 py-0.5 text-center text-[0.625rem] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+                  Đổi
+                </span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                aria-label="Ảnh của từ"
+                onClick={() => setDetailTab("image")}
+                className="group flex h-[72px] w-24 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border-strong bg-transparent text-xs text-fg-muted transition-colors hover:border-primary hover:text-primary"
+              >
+                <ImageIcon className="size-5" aria-hidden />
+                <span className="text-[0.6875rem] font-medium">Ảnh</span>
+              </button>
+            )}
+          </div>
+
+          <ImageStrip
+            query={imageQueryFor({ term, meaning_en: meaningEn }, imageSuggestions, language)}
+            selectedUrl={imageUrl}
+            selectedSource={imageSource}
+            onPick={(val) => {
+              setValue("image_url", val?.image_url ?? null, { shouldDirty: true });
+              setValue("image_source", val?.image_source ?? null, { shouldDirty: true });
+            }}
+            onOpenFull={() => setDetailTab("image")}
+          />
+        </div>
       )}
 
       <div className="rounded-lg border border-border/60 bg-surface shadow-sm space-y-4 p-4">

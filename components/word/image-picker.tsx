@@ -2,16 +2,18 @@
 
 import { Camera, Check, ImageOff, ImagePlus, Loader2, Search } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ImageSuggestion } from "@/lib/ai/to-word";
 import { compressImage, extensionFor } from "@/lib/image-compress";
+import { toImageValue, trackPick } from "@/lib/images/pick";
 import { providerLabel, type ImageResult } from "@/lib/images/types";
 import { cn } from "@/lib/utils";
 import type { ImageSource } from "@/lib/word-schema";
+import { useImageSearch } from "./use-image-search";
 
 export type ImageValue = { image_url: string | null; image_source: ImageSource | null };
 
@@ -59,78 +61,43 @@ export function ImagePicker({
   autoSearchKey?: string | number;
 }) {
   const [query, setQuery] = useState(suggestedQuery);
-  const [results, setResults] = useState<ImageResult[] | null>(null);
-  const [searched, setSearched] = useState<{ q: string; page: number; hasMore: boolean } | null>(null);
-  const [loading, setLoading] = useState<"new" | "more" | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [currentQuery, setCurrentQuery] = useState(suggestedQuery);
+  const [page, setPage] = useState(1);
   const [uploading, setUploading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
-  // Pages already fetched in this form, so switching between meanings is instant and free.
-  const cache = useRef(new Map<string, { results: ImageResult[]; hasMore: boolean }>());
-  const latest = useRef("");
 
-  const search = useCallback(async (q: string, page = 1) => {
-    const term = q.trim();
-    if (!term) return;
-    const key = `${term.toLowerCase()}|${page}`;
-    latest.current = key;
-    setError(null);
-    let hit = cache.current.get(key);
-    if (!hit) {
-      setLoading(page > 1 ? "more" : "new");
-      try {
-        const res = await fetch(`/api/images/search?q=${encodeURIComponent(term)}&page=${page}`);
-        const body = (await res.json()) as { results?: ImageResult[]; hasMore?: boolean; error?: string };
-        if (!res.ok) throw new Error(body.error || "Không tìm được ảnh.");
-        hit = { results: body.results ?? [], hasMore: Boolean(body.hasMore) };
-        cache.current.set(key, hit);
-      } catch (e) {
-        if (latest.current === key) {
-          setError((e as Error).message);
-          if (page === 1) setResults([]);
-          setLoading(null);
-        }
-        return;
-      }
+  const { results, loading, error, hasMore, search } = useImageSearch();
+
+  // Auto search on mount if suggestedQuery is present
+  useEffect(() => {
+    if (suggestedQuery?.trim() && !results) {
+      void search(suggestedQuery.trim(), 1);
     }
-    if (latest.current !== key) return; // a newer search won
-    const found = hit.results;
-    setResults((prev) => {
-      if (page === 1 || !prev) return found;
-      const ids = new Set(prev.map((r) => `${r.provider}-${r.id}`));
-      return [...prev, ...found.filter((r) => !ids.has(`${r.provider}-${r.id}`))];
-    });
-    setSearched({ q: term.toLowerCase(), page, hasMore: hit.hasMore });
-    setLoading(null);
-  }, []);
+  }, [suggestedQuery, results, search]);
 
-  // New AI suggestion: adopt its query (state adjusted during render, not in an effect).
+  // When autoSearchKey changes (e.g. AI fill)
   const [seenKey, setSeenKey] = useState(autoSearchKey);
   if (autoSearchKey !== seenKey) {
     setSeenKey(autoSearchKey);
-    if (autoSearchKey !== undefined && suggestedQuery) setQuery(suggestedQuery);
+    if (autoSearchKey !== undefined && suggestedQuery) {
+      setQuery(suggestedQuery);
+      setCurrentQuery(suggestedQuery);
+    }
   }
+
   useEffect(() => {
     if (autoSearchKey === undefined || !suggestedQuery) return;
-    const timer = setTimeout(() => void search(suggestedQuery), 0);
+    const timer = setTimeout(() => {
+      setPage(1);
+      void search(suggestedQuery, 1);
+    }, 0);
     return () => clearTimeout(timer);
-    // Only re-run when a new suggestion arrives.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSearchKey]);
 
   function pick(r: ImageResult) {
-    onChange({
-      image_url: r.url,
-      image_source: { provider: r.provider, author: r.author, author_url: r.author_url, page_url: r.page_url },
-    });
-    if (r.download_location) {
-      // Required by the Unsplash API terms when a photo is used.
-      void fetch("/api/images/track", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ download_location: r.download_location }),
-      });
-    }
+    onChange(toImageValue(r));
+    void trackPick(r);
   }
 
   async function upload(file: File | undefined) {
@@ -140,7 +107,7 @@ export function ImagePicker({
     try {
       const blob = await compressImage(file, { maxSize: 800, maxBytes: 300 * 1024 });
       const path = `${userId}/${crypto.randomUUID()}.${extensionFor(blob)}`;
-      const { createClient } = await import("@/lib/supabase/client"); // ~65 KB gzip, load on demand
+      const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
       const { error } = await supabase.storage.from("word-images").upload(path, blob, { contentType: blob.type });
       if (error) throw error;
@@ -155,7 +122,8 @@ export function ImagePicker({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Current selection and upload */}
       <div className="flex items-start gap-3">
         <div className="relative grid size-24 shrink-0 place-items-center overflow-hidden rounded-lg border border-border bg-surface-2">
           {value.image_url ? (
@@ -195,36 +163,13 @@ export function ImagePicker({
         </div>
       </div>
 
-      {/* Not a <form>: this picker lives inside the word form. */}
-      <div className="flex gap-2" role="search">
-        <label htmlFor="image-query" className="sr-only">
-          Từ khóa tìm ảnh (tiếng Anh)
-        </label>
-        <Input
-          id="image-query"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Từ khóa tiếng Anh, ví dụ: tree in rock"
-          className="min-w-0 flex-1"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              void search(query);
-            }
-          }}
-        />
-        <Button type="button" variant="outline" onClick={() => void search(query)}>
-          <Search aria-hidden />
-          Tìm ảnh
-        </Button>
-      </div>
-
+      {/* Meaning-based suggestion chips above grid */}
       {suggestions.length > 0 && (
         <div className="space-y-1.5">
           <p className="text-sm text-fg-muted">Ảnh theo từng nghĩa:</p>
           <div className="flex flex-wrap gap-2">
             {suggestions.map((s) => {
-              const active = searched?.q === s.query.toLowerCase();
+              const active = currentQuery.toLowerCase() === s.query.toLowerCase();
               return (
                 <button
                   key={s.query}
@@ -233,11 +178,15 @@ export function ImagePicker({
                   title={s.query}
                   onClick={() => {
                     setQuery(s.query);
-                    void search(s.query);
+                    setCurrentQuery(s.query);
+                    setPage(1);
+                    void search(s.query, 1);
                   }}
                   className={cn(
                     "inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-full border px-3 text-sm transition-colors",
-                    active ? "border-primary bg-primary font-medium text-on-primary" : "border-border-strong bg-surface text-fg-muted hover:text-fg",
+                    active
+                      ? "border-primary bg-primary font-medium text-on-primary"
+                      : "border-border-strong bg-surface text-fg-muted hover:text-fg",
                   )}
                 >
                   <span className="truncate">{s.label}</span>
@@ -248,6 +197,7 @@ export function ImagePicker({
         </div>
       )}
 
+      {/* Grid of images */}
       {loading === "new" ? (
         <div className="grid grid-cols-4 gap-2">
           {Array.from({ length: 12 }, (_, i) => (
@@ -260,40 +210,86 @@ export function ImagePicker({
         <p className="text-sm text-fg-muted">Không có ảnh phù hợp. Thử từ khóa cụ thể hơn.</p>
       ) : results ? (
         <>
-        <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4" aria-label="Ảnh gợi ý">
-          {results.map((r) => {
-            const active = value.image_url === r.url;
-            return (
-              <li key={`${r.provider}-${r.id}`}>
-                <button
-                  type="button"
-                  onClick={() => pick(r)}
-                  aria-pressed={active}
-                  aria-label={`Chọn ảnh của ${r.author} (${providerLabel(r.provider)})`}
-                  className={cn(
-                    "relative block aspect-square w-full overflow-hidden rounded-lg border-2",
-                    active ? "border-primary" : "border-transparent",
-                  )}
-                >
-                  <Image src={r.thumb_url} alt={r.alt ?? ""} fill sizes="25vw" className="object-cover" />
-                  {active && (
-                    <span className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-primary text-primary-foreground">
-                      <Check className="size-3" strokeWidth={3} aria-hidden />
-                    </span>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-        {searched?.hasMore && (
-          <Button type="button" variant="outline" className="w-full" disabled={loading === "more"} onClick={() => void search(searched.q, searched.page + 1)}>
-            {loading === "more" ? <Loader2 className="animate-spin" aria-hidden /> : <ImagePlus aria-hidden />}
-            Xem thêm ảnh
-          </Button>
-        )}
+          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4" aria-label="Ảnh gợi ý">
+            {results.map((r) => {
+              const active = value.image_url === r.url;
+              return (
+                <li key={`${r.provider}-${r.id}`}>
+                  <button
+                    type="button"
+                    onClick={() => pick(r)}
+                    aria-pressed={active}
+                    aria-label={`Chọn ảnh của ${r.author} (${providerLabel(r.provider)})`}
+                    className={cn(
+                      "relative block aspect-square w-full overflow-hidden rounded-lg border-2",
+                      active ? "border-primary" : "border-transparent",
+                    )}
+                  >
+                    <Image src={r.thumb_url} alt={r.alt ?? ""} fill sizes="25vw" className="object-cover" />
+                    {active && (
+                      <span className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-primary text-primary-foreground">
+                        <Check className="size-3" strokeWidth={3} aria-hidden />
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {hasMore && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={loading === "more"}
+              onClick={() => {
+                const nextPage = page + 1;
+                setPage(nextPage);
+                void search(currentQuery, nextPage);
+              }}
+            >
+              {loading === "more" ? <Loader2 className="animate-spin" aria-hidden /> : <ImagePlus aria-hidden />}
+              Xem thêm ảnh
+            </Button>
+          )}
         </>
       ) : null}
+
+      {/* Search box moved below the grid */}
+      <div className="space-y-1.5 pt-2 border-t border-border" role="search">
+        <label htmlFor="image-query" className="block text-sm font-medium text-fg-muted">
+          Không ưng? Tìm bằng từ khóa khác
+        </label>
+        <div className="flex gap-2">
+          <Input
+            id="image-query"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Từ khóa tiếng Anh, ví dụ: tree in rock"
+            className="min-w-0 flex-1"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                setCurrentQuery(query);
+                setPage(1);
+                void search(query, 1);
+              }
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setCurrentQuery(query);
+              setPage(1);
+              void search(query, 1);
+            }}
+          >
+            <Search aria-hidden />
+            Tìm ảnh
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

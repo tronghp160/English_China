@@ -9,6 +9,69 @@ const email = testEmail();
 let page: Page;
 let errors: string[];
 
+const MOCK_IMAGES = [
+  {
+    id: "img1",
+    provider: "pexels" as const,
+    thumb_url: "https://images.example.com/1-thumb.jpg",
+    url: "https://images.example.com/1-full.jpg",
+    author: "Jane Doe",
+    author_url: "https://pexels.com/@janedoe",
+    page_url: "https://pexels.com/photo/1",
+    alt: "Image 1",
+  },
+  {
+    id: "img2",
+    provider: "pexels" as const,
+    thumb_url: "https://images.example.com/2-thumb.jpg",
+    url: "https://images.example.com/2-full.jpg",
+    author: "John Smith",
+    author_url: "https://pexels.com/@johnsmith",
+    page_url: "https://pexels.com/photo/2",
+    alt: "Image 2",
+  },
+  {
+    id: "img3",
+    provider: "pexels" as const,
+    thumb_url: "https://images.example.com/3-thumb.jpg",
+    url: "https://images.example.com/3-full.jpg",
+    author: "Alex Green",
+    author_url: "https://pexels.com/@alexgreen",
+    page_url: "https://pexels.com/photo/3",
+    alt: "Image 3",
+  },
+  {
+    id: "img4",
+    provider: "pexels" as const,
+    thumb_url: "https://images.example.com/4-thumb.jpg",
+    url: "https://images.example.com/4-full.jpg",
+    author: "Sam Wilson",
+    author_url: "https://pexels.com/@samwilson",
+    page_url: "https://pexels.com/photo/4",
+    alt: "Image 4",
+  },
+  {
+    id: "img5",
+    provider: "pexels" as const,
+    thumb_url: "https://images.example.com/5-thumb.jpg",
+    url: "https://images.example.com/5-full.jpg",
+    author: "Lisa Ray",
+    author_url: "https://pexels.com/@lisaray",
+    page_url: "https://pexels.com/photo/5",
+    alt: "Image 5",
+  },
+  {
+    id: "img6",
+    provider: "pexels" as const,
+    thumb_url: "https://images.example.com/6-thumb.jpg",
+    url: "https://images.example.com/6-full.jpg",
+    author: "Tom Clark",
+    author_url: "https://pexels.com/@tomclark",
+    page_url: "https://pexels.com/photo/6",
+    alt: "Image 6",
+  },
+];
+
 test.beforeAll(async ({ browser }) => {
   page = await browser.newPage({ locale: "vi-VN", timezoneId: "Asia/Ho_Chi_Minh", reducedMotion: "reduce" });
   errors = watchErrors(page);
@@ -86,7 +149,9 @@ test.beforeAll(async ({ browser }) => {
     return route.fulfill({ json: { outcomes } });
   });
   await page.route("**/api/dict", (route) => route.fulfill({ json: { result: null } }));
-  await page.route("**/api/images/search**", (route) => route.fulfill({ json: { results: [] } }));
+  await page.route("**/api/images/search**", (route) =>
+    route.fulfill({ json: { results: MOCK_IMAGES, hasMore: false } }),
+  );
 
   await signUp(page, email, "Người Thử", { samples: false });
 });
@@ -203,6 +268,43 @@ test("mở Chi tiết thẻ 1, tab Ví dụ, thêm một câu, bấm Xong, lưu 
   // Check example sentence is displayed
   await expect(page.getByText("She is tenacious in pursuing her goals.")).toBeVisible();
   await expect(page.getByText("Cô ấy kiên trì theo đuổi mục tiêu của mình.")).toBeVisible();
+});
+
+test("ảnh gợi ý tự hiện trên thẻ: chạm ảnh -> chọn và lưu thành công", async () => {
+  await page.goto("/decks");
+  await page.getByRole("link", { name: /Từ vựng tiếng Anh của tôi/ }).click();
+  await page.getByRole("link", { name: "Thêm từ" }).first().click();
+
+  const clearBtn = page.getByRole("button", { name: "Xóa nháp" });
+  if (await clearBtn.isVisible()) {
+    await clearBtn.click();
+  }
+
+  // Type term and click Gợi ý
+  await page.getByLabel("Từ", { exact: true }).fill("resilient");
+  await page.getByRole("button", { name: /Gợi ý/ }).click();
+  await expect(page.getByLabel("Nghĩa tiếng Việt")).toHaveValue(/kiên cường/);
+
+  // Group "Ảnh gợi ý cho thẻ 1" should appear with 6 buttons without clicking anything
+  const strip = page.getByRole("group", { name: "Ảnh gợi ý cho thẻ 1" });
+  await expect(strip).toBeVisible();
+  const imageButtons = strip.getByRole("button", { name: /Chọn ảnh của/ });
+  await expect(imageButtons).toHaveCount(6);
+
+  // Tap 2nd image
+  await imageButtons.nth(1).click();
+  await expect(imageButtons.nth(1)).toHaveAttribute("aria-pressed", "true");
+
+  // Save word
+  await page.getByRole("button", { name: "Lưu từ" }).click();
+  await expect(page.getByText("Đã lưu resilient")).toBeVisible();
+
+  // Click "Xem" to go to word detail page
+  await page.getByRole("button", { name: "Xem", exact: true }).click();
+  await expect(page).toHaveURL(/\/words\/[0-9a-f-]{36}$/);
+
+  // Word detail page has the author credit
+  await expect(page.getByText(/John Smith/)).toBeVisible();
 
   expect(errors).toEqual([]);
 });
