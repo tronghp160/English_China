@@ -17,7 +17,7 @@ export const emailSchema = z
   .trim()
   .toLowerCase()
   .max(254, "Email quá dài")
-  .email("Email chưa đúng định dạng, ví dụ: ban@gmail.com");
+  .email("Email chưa đúng định dạng, ví dụ: xeudungdung@gmail.com");
 
 /** 8–72 characters (bcrypt only uses the first 72 bytes), at least one letter and one digit. */
 export const passwordSchema = z

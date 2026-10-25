@@ -142,7 +142,7 @@ export function EmailField({
       autoComplete="email"
       autoCapitalize="none"
       spellCheck={false}
-      placeholder="ban@gmail.com"
+      placeholder="xeudungdung@gmail.com"
       value={value}
       valid={valid}
       error={error}
@@ -183,7 +183,7 @@ export function NameField({
       label="Tên của bạn"
       icon={User}
       autoComplete="name"
-      placeholder="Ví dụ: Minh Anh"
+      placeholder="Ví dụ: Phú Trọng"
       value={value}
       valid={valid}
       error={error}
