@@ -30,6 +30,8 @@ async function newContext(browser, width, height, name) {
     colorScheme: dark ? "dark" : "light",
     locale: "vi-VN",
   });
+  // Light is the default look; --dark saves the explicit choice the app reads.
+  if (dark) await context.addInitScript(() => localStorage.setItem("sotu-theme", "dark"));
   if (cookie) await context.addCookies(JSON.parse(cookie));
   const page = await context.newPage();
   page.on("pageerror", (e) => console.error("pageerror:", e.message));

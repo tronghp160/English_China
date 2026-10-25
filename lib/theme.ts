@@ -7,9 +7,10 @@ export function readThemePreference(): ThemePreference {
     const value = localStorage.getItem(THEME_STORAGE_KEY);
     if (value === "light" || value === "dark" || value === "system") return value;
   } catch {
-    // Storage can be unavailable (private mode); fall back to system.
+    // Storage can be unavailable (private mode); fall back to the default.
   }
-  return "system";
+  // Light by default; "system" only when the user picked "Theo hệ thống".
+  return "light";
 }
 
 export function applyThemePreference(pref: ThemePreference) {

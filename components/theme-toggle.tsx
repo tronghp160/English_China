@@ -26,7 +26,7 @@ function Page({ theme, className }: { theme: "light" | "dark"; className?: strin
 }
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const current = useSyncExternalStore(subscribe, readThemePreference, () => "system" as const);
+  const current = useSyncExternalStore(subscribe, readThemePreference, () => "light" as const);
 
   return (
     <div role="radiogroup" aria-label="Giao diện" className={cn("grid grid-cols-3 gap-2", className)}>
