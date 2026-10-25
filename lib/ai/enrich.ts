@@ -99,7 +99,8 @@ export async function remainingQuota(userId: string) {
   return Math.max(serverEnv().AI_DAILY_LIMIT_PER_USER - (data?.requests ?? 0), 0);
 }
 
-async function readCache(lang: LangCode, normalized: string): Promise<EnrichResult | null> {
+/** Shared AI answer from dictionary_cache, or null. The hit count is bumped in the background. */
+export async function readCachedEnrich(lang: LangCode, normalized: string): Promise<EnrichResult | null> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("dictionary_cache")
@@ -111,6 +112,10 @@ async function readCache(lang: LangCode, normalized: string): Promise<EnrichResu
   if (!data) return null;
   void admin.rpc("cache_hit", { p_language: lang, p_normalized: normalized, p_prompt_version: PROMPT_VERSION });
   return data.payload as unknown as EnrichResult;
+}
+
+function readCache(lang: LangCode, normalized: string) {
+  return readCachedEnrich(lang, normalized);
 }
 
 async function writeCache(lang: LangCode, normalized: string, result: EnrichResult) {
