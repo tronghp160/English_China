@@ -134,3 +134,30 @@ export async function revokeAdmin(input: { userId: string }): Promise<ActionResu
   revalidatePath("/admin");
   return ok();
 }
+
+export async function deleteWordAsAdmin(input: { wordId: string }): Promise<ActionResult> {
+  if (!(await guard())) return fail("Bạn không có quyền quản trị.");
+  const parsed = z.object({ wordId: id }).safeParse(input);
+  if (!parsed.success) return fail("Dữ liệu không hợp lệ.");
+
+  const sb = createAdminClient();
+  const { data, error } = await sb
+    .from("words")
+    .delete()
+    .eq("id", parsed.data.wordId)
+    .select("id, image_source");
+
+  if (error || !data?.length) return fail("Chưa xóa được từ.");
+
+  const imgSource = data[0].image_source as { provider?: string; storage_path?: string } | null;
+  if (imgSource?.provider === "upload" && imgSource.storage_path) {
+    try {
+      await sb.storage.from("word-images").remove([imgSource.storage_path]);
+    } catch (e) {
+      console.error("[admin] image storage cleanup failed", e);
+    }
+  }
+
+  revalidatePath("/admin");
+  return ok();
+}
