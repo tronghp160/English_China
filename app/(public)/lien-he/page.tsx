@@ -1,5 +1,6 @@
 import { Bug, Check, Lightbulb, MessageCircle, Sparkles, type LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { FacebookIcon, ZaloIcon } from "@/components/contact/contact-links";
 import { CopyPhone } from "@/components/contact/copy-phone";
 import { Pup } from "@/components/mascot/pup";
@@ -132,6 +133,18 @@ export default function ContactPage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section aria-labelledby="privacy-note" className="rounded-lg bg-surface p-5 shadow-sm text-sm dark:border dark:border-border">
+        <h2 id="privacy-note" className="text-base font-bold text-fg mb-1">
+          Quyền riêng tư & Quản lý dữ liệu
+        </h2>
+        <p className="text-fg-muted">
+          Quản trị viên Sổ Từ có thể xem dữ liệu học tập của bạn (bộ từ, ghi chú, lịch sử ôn, trò chuyện với gia sư) để hỗ trợ và quản lý. Bạn có thể tải hoặc xóa toàn bộ dữ liệu trong Cài đặt.
+        </p>
+        <Link href="/quyen-rieng-tu" className="inline-block mt-2 font-medium text-primary hover:underline">
+          Xem chính sách quyền riêng tư chi tiết →
+        </Link>
       </section>
     </div>
   );

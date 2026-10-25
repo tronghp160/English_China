@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Shake } from "@/components/fx/shake";
@@ -132,6 +133,13 @@ export function SignupForm({ next }: { next: string }) {
         <SubmitButton busy={busy} done={done} busyLabel="Đang tạo tài khoản…">
           Tạo tài khoản
         </SubmitButton>
+        <p className="text-center text-xs text-fg-subtle pt-1">
+          Bằng việc đăng ký, bạn đồng ý với{" "}
+          <Link href="/quyen-rieng-tu" className="underline underline-offset-2 hover:text-fg">
+            quyền riêng tư
+          </Link>{" "}
+          của Sổ Từ.
+        </p>
       </form>
     </Shake>
   );
