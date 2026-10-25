@@ -28,7 +28,7 @@ Keep these texts. Emoji next to them may go. If one must change, edit the test i
 - Typing: buttons "Gợi ý" / "Gợi ý thêm" (hint line in the aria-live paragraph, "Gợi ý: b_____"), after a miss "Bạn gõ" / "Đáp án". Listening: "Nghe lại", "Nghe chậm".
 - End of a session (tests/e2e/session-gifts.spec.ts): stars as role img "3 sao", group "Phần thưởng của phiên" with a progressbar "Kinh nghiệm trong cấp này", dialog "Lên cấp N!" with button "Tuyệt vời!"; /review with nothing due: "Bạn đã ôn xong hôm nay.", "Nhiệm vụ còn lại hôm nay", region "Gợi ý cho bạn".
 
-## Added in V4 (tests/e2e/today-v4.spec.ts, compose.spec.ts)
+## Added in V4 (tests/e2e/today-v4.spec.ts, compose.spec.ts, admin.spec.ts)
 - Today page:
   - QuickAdd: label "Từ muốn thêm", button "Thêm", text "Thêm từ nhanh".
   - Hero zero-due: "Hôm nay ôn xong rồi", "Luyện thêm", "Học từ mới", review summary "Bạn đã ôn … lượt, nhớ đúng …%".
@@ -38,3 +38,12 @@ Keep these texts. Emoji next to them may go. If one must change, edit the test i
   - Buttons: "Thêm thẻ", "Tách thành thẻ", "Xong" (in Sheet), "Lưu từ" (1 word), "Lưu N từ" (N > 1 words), "Xóa nháp", "Thêm câu ví dụ".
   - Dialog / Sheet: title "Bỏ thay đổi chi tiết?", buttons "Bỏ thay đổi" / "Tiếp tục sửa".
   - Toast & status: "Đã tách thành N thẻ", "Đã lưu <term>" (with action "Xem"), "Đã lưu N từ" (with action "Xem bộ"), "Đã khôi phục N thẻ chưa lưu.", "Đã có trong bộ này".
+- Auto Image Suggestions (Phase 7):
+  - Group `Ảnh gợi ý cho thẻ <n>` and `Ảnh gợi ý cho từ`: image select buttons with `aria-pressed`, credit text `Ảnh: <author> / <provider>`.
+  - Image box: `Ảnh cho thẻ <n>`, button "Chọn ảnh khác".
+- Admin & Privacy Policy (Phases 8-10):
+  - Navigation tabs: "Tổng quan", "Người dùng", "Từ vựng", "Bộ từ công khai", "Nhóm", "Quản trị viên".
+  - User detail 6 tabs: "Tổng quan", "Từ vựng", "Bộ từ", "Ôn tập", "Gia sư", "Tài khoản".
+  - Admin deck view (`/admin/decks/[id]`): "Danh sách từ vựng", "Người đang theo học", button "Xem từ", button "Chuyển về riêng tư", button "Xóa bộ từ".
+  - Admin word actions: button "Xóa từ", alertdialog "Xóa từ".
+  - Privacy policy: page `/quyen-rieng-tu` (heading "Quyền riêng tư"), signup notice "Bằng việc đăng ký, bạn đồng ý với quyền riêng tư của Sổ Từ.".

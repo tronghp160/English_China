@@ -119,9 +119,19 @@ UI and client logic only: no DB migration, no change to FSRS or existing server 
   - Bulk insertion note: words inserted in the same chunk share identical `created_at` timestamps; default order is stable via `w.id`.
 - **Edit Word Page (`/words/[id]/edit`)**:
   - Refactored `WordForm` to consume `WordDetails` directly, auto-switching tabs on validation errors. Duplicate create-mode code removed.
-- **E2E Tests**: `today-v4.spec.ts` (QuickAdd navigation, 26-week Heatmap at 1280px, zero-due review summary); `compose.spec.ts` (card tab navigation, multi-line paste with meaning retention, bulk save, duplicate card handling, draft restore, and Sheet details).
+- **Auto Image Suggestions (Phase 7, B.13)**:
+  - Query generation: pure `imageQueryFor(values, images, language)` in `lib/compose.ts`.
+  - Reusable hook `useImageSearch()` with module-level query cache; shared `toImageValue()` and `trackPick()` in `lib/images/pick.ts`.
+  - `ImageStrip`: 64x64 square thumbnails, viewport lazy-fetch via `IntersectionObserver` (200px margin) and 400ms debounce. Touch selection, selection collapse with `ImageCredit`, and "Chọn ảnh khác".
+  - Integrated into flashcard composer (`ComposeCard`), word edit form (`WordForm`), and standalone `ImagePicker`.
+- **Admin System V2 & Privacy Policy (Phases 8-10)**:
+  - Tab "Từ vựng" (`/admin?tab=words`): full-app words search (`q`, `lang`, `user`), 50/page pagination, expandable row with full word details and "Xóa từ" button.
+  - User detail tabs (`/admin/users/[id]`): 6 tabs: Tổng quan (overview with privacy note removed), Từ vựng (words with status dots, lapses, filters), Bộ từ (owned, subscribed, groups with `/admin/decks/[id]` links), Ôn tập (30-day `daily_stats` and 200 `review_logs`), Gia sư (AI tutor threads and messages with `MessageText` and collapsible tool JSON), Tài khoản (auth data, `user_settings`, push devices count, 30-day AI requests, ban/delete, JSON export via `/api/admin/users/[id]/export`).
+  - Admin Deck View (`/admin/decks/[id]`): full deck details, private/public/unlisted share link, "Chuyển về riêng tư", "Xóa bộ từ", words table with search and delete, and learners list.
+  - Privacy Policy page (`/quyen-rieng-tu` in `PUBLIC_PATHS`): explains admin access for support/moderation, lack of password/IP tracking, data autonomy (download/delete anytime), referenced in signup form and contact page.
+- **E2E Tests**: `today-v4.spec.ts` (QuickAdd navigation, 26-week Heatmap at 1280px, zero-due review summary); `compose.spec.ts` (card tab navigation, multi-line paste with meaning retention, bulk save, duplicate card handling, draft restore, Sheet details, auto image suggestions); `admin.spec.ts` (admin private deck word view/delete, user chat review, and export route 404 for non-admins).
 
 ## Admin (`/admin`, migration 000011)
 - Who: `ADMIN_EMAILS` (comma separated, can only be changed in the env) or a row in `app_admins` (service role only, no client policies), granted in /admin → "Quản trị viên" or with `pnpm admin:grant <email>`. `lib/admin.ts` (`isAdmin`, `requireAdmin` → 404 for everyone else). The avatar menu shows "Quản trị" to admins.
-- What: overview counts, users (search, lock/unlock via Supabase `ban_duration`, delete with Storage cleanup from `lib/account-files.ts`), public decks (hide = make private, delete), groups (delete), admins (grant by email, revoke). Reads in `lib/data/admin.ts` and actions in `lib/actions/admin.ts` use the service role, and every action re-checks the caller; nobody can act on their own account or on another admin (revoke first).
+- What: overview counts, users (search, lock/unlock via Supabase `ban_duration`, delete with Storage cleanup from `lib/account-files.ts`), words (app-wide search, language/user filter, detailed view, deletion), public decks (hide = make private, delete), admin deck views (`/admin/decks/[id]`), user details (6 tabs: overview, words, decks, reviews, tutor chat, account), account data export (`/api/admin/users/[id]/export`), groups (delete), admins (grant by email, revoke). Reads in `lib/data/admin.ts` and actions in `lib/actions/admin.ts` use the service role, and every action re-checks the caller; nobody can act on their own account or on another admin (revoke first).
 - A locked user keeps a valid session until the JWT expires (about an hour). E2E: `tests/e2e/admin.spec.ts`.
