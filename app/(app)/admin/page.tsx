@@ -13,6 +13,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminAction, GrantAdminForm } from "@/components/admin/admin-actions";
 import { AdminWordTable } from "@/components/admin/admin-word-table";
+import { WarmCacheCard } from "@/components/admin/warm-cache";
 import { LangMark } from "@/components/lang-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ import {
   resolveUserParam,
   USERS_PER_PAGE,
 } from "@/lib/data/admin";
+import { serverEnv } from "@/lib/env";
 import type { Tone } from "@/lib/tone";
 
 export const metadata: Metadata = { title: "Quản trị", robots: { index: false } };
@@ -129,26 +131,29 @@ function Stat({
 async function Overview() {
   const o = await getAdminOverview();
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <Stat icon={Users} tone="blue" value={String(o.users)} label="Người dùng" />
-      <Stat icon={UserPlus} tone="mint" value={String(o.newUsers7d)} label="Đăng ký trong 7 ngày" />
-      <Stat icon={Sparkles} tone="sun" value={String(o.activeToday)} label="Người học hôm nay" />
-      <Stat icon={BookOpen} tone="coral" value={String(o.reviewsToday)} label="Lượt ôn hôm nay" />
-      <Stat
-        icon={Bot}
-        tone="grape"
-        value={`${o.aiToday}/${o.aiLimit}`}
-        label="Lượt AI hôm nay"
-        hint="Giới hạn chung mỗi ngày (AI_GLOBAL_DAILY_LIMIT)"
-      />
-      <Stat
-        icon={Globe}
-        tone="teal"
-        value={`${o.publicDecks}/${o.decks}`}
-        label="Bộ từ công khai / tất cả"
-      />
-      <Stat icon={UsersRound} tone="orange" value={String(o.groups)} label="Nhóm" />
-    </div>
+    <>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Stat icon={Users} tone="blue" value={String(o.users)} label="Người dùng" />
+        <Stat icon={UserPlus} tone="mint" value={String(o.newUsers7d)} label="Đăng ký trong 7 ngày" />
+        <Stat icon={Sparkles} tone="sun" value={String(o.activeToday)} label="Người học hôm nay" />
+        <Stat icon={BookOpen} tone="coral" value={String(o.reviewsToday)} label="Lượt ôn hôm nay" />
+        <Stat
+          icon={Bot}
+          tone="grape"
+          value={`${o.aiToday}/${o.aiLimit}`}
+          label="Lượt AI hôm nay"
+          hint="Giới hạn chung mỗi ngày (AI_GLOBAL_DAILY_LIMIT)"
+        />
+        <Stat
+          icon={Globe}
+          tone="teal"
+          value={`${o.publicDecks}/${o.decks}`}
+          label="Bộ từ công khai / tất cả"
+        />
+        <Stat icon={UsersRound} tone="orange" value={String(o.groups)} label="Nhóm" />
+      </div>
+      <WarmCacheCard rpmLimit={serverEnv().AI_RPM_LIMIT} />
+    </>
   );
 }
 
