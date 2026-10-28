@@ -25,6 +25,7 @@ import { OnlineDot } from "@/components/admin/online-dot";
 import { PetChip } from "@/components/admin/pet-chip";
 import { PetPanel } from "@/components/admin/pet-panel";
 import { PlaceLine } from "@/components/admin/place-line";
+import { UserNoteForm } from "@/components/admin/user-note-form";
 import { UserAvatar } from "@/components/app-shell/user-menu";
 import { LangMark } from "@/components/lang-mark";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,7 @@ import { SegmentedNav } from "@/components/ui/segmented";
 import { deleteUserAccount, setUserBanned } from "@/lib/actions/admin";
 import { ago, dateTime } from "@/lib/admin-format";
 import { requireAdmin } from "@/lib/admin";
+import { getUserNote, logAdminAction } from "@/lib/data/admin-audit";
 import {
   getAdminUserDetail,
   getUserAccount,
@@ -116,15 +118,32 @@ export default async function AdminUserPage({
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   if (!UUID.test(id)) notFound();
 
-  const [u, presenceMap, pet, loginHistory] = await Promise.all([
+  const [u, presenceMap, pet, loginHistory, note] = await Promise.all([
     getAdminUserDetail(id),
     getPresenceMap([id]),
     getPetSummaryFor(id),
     getUserLoginHistory(id, 50),
+    getUserNote(id),
   ]);
   if (!u) notFound();
 
   const tab: Tab = TABS.some((t) => t.value === sp.tab) ? (sp.tab as Tab) : "overview";
+
+  if (tab === "login") {
+    await logAdminAction({
+      admin: me,
+      action: "view_login_history",
+      target: { userId: id, label: u.displayName },
+      dedupeMinutes: 10,
+    });
+  } else if (tab === "chat") {
+    await logAdminAction({
+      admin: me,
+      action: "view_chat",
+      target: { userId: id, label: u.displayName },
+      dedupeMinutes: 10,
+    });
+  }
   const self = u.id === me.id;
   const presence = presenceMap.get(id);
   const pStatus = presenceStatus(presence?.last_seen_at);
@@ -233,7 +252,14 @@ export default async function AdminUserPage({
       />
 
       <div className="mt-2">
-        {tab === "overview" && <OverviewTab u={u} presence={presence} placesCount={loginHistory.places.length} />}
+        {tab === "overview" && (
+          <OverviewTab
+            u={u}
+            presence={presence}
+            placesCount={loginHistory.places.length}
+            note={note}
+          />
+        )}
         {tab === "pet" && <PetPanel pet={pet} />}
         {tab === "login" && <UserLoginTab presence={presence} loginHistory={loginHistory} />}
         {tab === "words" && <UserWordsTab userId={u.id} decks={u.decks} sp={sp} />}
@@ -250,10 +276,12 @@ function OverviewTab({
   u,
   presence,
   placesCount,
+  note,
 }: {
   u: NonNullable<Awaited<ReturnType<typeof getAdminUserDetail>>>;
   presence?: PresenceRow;
   placesCount: number;
+  note: string | null;
 }) {
   const s = u.study;
   const accuracy = s.reviews ? Math.round((s.correct / s.reviews) * 100) : 0;
@@ -371,6 +399,13 @@ function OverviewTab({
         ) : (
           <p className="text-fg-muted">Chưa ôn lần nào.</p>
         )}
+      </Section>
+
+      <Section title="Ghi chú của quản trị viên">
+        <p className="mb-3 text-sm text-fg-muted">
+          Chỉ quản trị viên thấy, người dùng không thấy.
+        </p>
+        <UserNoteForm userId={u.id} initialNote={note} />
       </Section>
     </div>
   );

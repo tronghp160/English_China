@@ -6,6 +6,70 @@ export type Database = {
   __InternalSupabase: { PostgrestVersion: "13.0.5" };
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string;
+          admin_email: string | null;
+          admin_id: string | null;
+          created_at: string;
+          id: number;
+          meta: Json;
+          target_label: string | null;
+          target_user_id: string | null;
+        };
+        Insert: {
+          action: string;
+          admin_email?: string | null;
+          admin_id?: string | null;
+          created_at?: string;
+          id?: number;
+          meta?: Json;
+          target_label?: string | null;
+          target_user_id?: string | null;
+        };
+        Update: {
+          action?: string;
+          admin_email?: string | null;
+          admin_id?: string | null;
+          created_at?: string;
+          id?: number;
+          meta?: Json;
+          target_label?: string | null;
+          target_user_id?: string | null;
+        };
+        Relationships: [
+
+        ];
+      };
+      admin_user_notes: {
+        Row: {
+          note: string;
+          updated_at: string;
+          updated_by: string | null;
+          user_id: string;
+        };
+        Insert: {
+          note: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          user_id: string;
+        };
+        Update: {
+          note?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admin_user_notes_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ai_usage: {
         Row: {
           day: string;

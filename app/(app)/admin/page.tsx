@@ -22,6 +22,7 @@ import { OnlineDot } from "@/components/admin/online-dot";
 import { PetChip } from "@/components/admin/pet-chip";
 import { StatCard } from "@/components/admin/stat-card";
 import { AttentionTab } from "@/components/admin/tabs/attention-tab";
+import { AuditTab } from "@/components/admin/tabs/audit-tab";
 import { OnlineTab } from "@/components/admin/tabs/online-tab";
 import { WarmCacheCard } from "@/components/admin/warm-cache";
 import { LangMark } from "@/components/lang-mark";
@@ -84,6 +85,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const sort = typeof sp.sort === "string" ? sp.sort : "created";
   const lang = sp.lang === "en" || sp.lang === "zh" ? sp.lang : undefined;
   const user = typeof sp.user === "string" ? sp.user.slice(0, 100) : undefined;
+  const action = typeof sp.action === "string" ? sp.action : undefined;
 
   return (
     <div className="max-w-4xl">
@@ -114,7 +116,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         {tab === "words" && <WordsTab q={q} lang={lang} user={user} page={page} />}
         {tab === "decks" && <DecksTab />}
         {tab === "groups" && <GroupsTab />}
-        {tab === "audit" && <p className="text-fg-muted">Sắp có.</p>}
+        {tab === "audit" && <AuditTab action={action} page={page} />}
         {tab === "admins" && <AdminsTab meId={me.id} />}
       </div>
     </div>

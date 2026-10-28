@@ -5,6 +5,7 @@ import { z } from "zod";
 import { removeUserFiles } from "@/lib/account-files";
 import { envAdminEmails, isAdminUser } from "@/lib/admin";
 import { getUser } from "@/lib/auth";
+import { logAdminAction } from "@/lib/data/admin-audit";
 import { findUserByEmail } from "@/lib/data/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fail, ok, type ActionResult } from "./result";
@@ -42,6 +43,11 @@ export async function setUserBanned(input: { userId: string; banned: boolean }):
     ban_duration: parsed.data.banned ? BAN_FOREVER : "none",
   });
   if (error) return fail("Chưa đổi được trạng thái tài khoản.");
+  await logAdminAction({
+    admin: me,
+    action: parsed.data.banned ? "ban" : "unban",
+    target: { userId: parsed.data.userId },
+  });
   revalidatePath("/admin");
   return ok();
 }
@@ -53,6 +59,8 @@ export async function deleteUserAccount(input: { userId: string }): Promise<Acti
   if (!parsed.success) return fail("Dữ liệu không hợp lệ.");
   const why = await ordinaryTarget(me.id, parsed.data.userId);
   if (why) return fail(why);
+  const { data: targetUser } = await createAdminClient().auth.admin.getUserById(parsed.data.userId);
+  const targetEmail = targetUser?.user?.email ?? undefined;
   try {
     await removeUserFiles(parsed.data.userId);
   } catch (e) {
@@ -61,13 +69,19 @@ export async function deleteUserAccount(input: { userId: string }): Promise<Acti
   }
   const { error } = await createAdminClient().auth.admin.deleteUser(parsed.data.userId);
   if (error) return fail("Chưa xóa được tài khoản.");
+  await logAdminAction({
+    admin: me,
+    action: "delete_user",
+    target: { userId: parsed.data.userId, label: targetEmail },
+  });
   revalidatePath("/admin");
   return ok();
 }
 
 /** Takes a deck off Khám phá: it becomes a private deck of its owner (nothing is deleted). */
 export async function hidePublicDeck(input: { deckId: string }): Promise<ActionResult> {
-  if (!(await guard())) return fail("Bạn không có quyền quản trị.");
+  const me = await guard();
+  if (!me) return fail("Bạn không có quyền quản trị.");
   const parsed = z.object({ deckId: id }).safeParse(input);
   if (!parsed.success) return fail("Dữ liệu không hợp lệ.");
   const { data, error } = await createAdminClient()
@@ -77,17 +91,28 @@ export async function hidePublicDeck(input: { deckId: string }): Promise<ActionR
     .eq("visibility", "public")
     .select("id");
   if (error || !data?.length) return fail("Chưa ẩn được bộ từ.");
+  await logAdminAction({
+    admin: me,
+    action: "hide_deck",
+    target: { label: `deck:${parsed.data.deckId}` },
+  });
   revalidatePath("/admin");
   revalidatePath("/explore");
   return ok();
 }
 
 export async function deleteDeckAsAdmin(input: { deckId: string }): Promise<ActionResult> {
-  if (!(await guard())) return fail("Bạn không có quyền quản trị.");
+  const me = await guard();
+  if (!me) return fail("Bạn không có quyền quản trị.");
   const parsed = z.object({ deckId: id }).safeParse(input);
   if (!parsed.success) return fail("Dữ liệu không hợp lệ.");
   const { data, error } = await createAdminClient().from("decks").delete().eq("id", parsed.data.deckId).select("id");
   if (error || !data?.length) return fail("Chưa xóa được bộ từ.");
+  await logAdminAction({
+    admin: me,
+    action: "delete_deck",
+    target: { label: `deck:${parsed.data.deckId}` },
+  });
   revalidatePath("/admin");
   revalidatePath("/explore");
   return ok();
@@ -95,11 +120,17 @@ export async function deleteDeckAsAdmin(input: { deckId: string }): Promise<Acti
 
 /** Deleting a group turns its group decks back into private decks of their owners (database trigger, migration 000007). */
 export async function deleteGroupAsAdmin(input: { groupId: string }): Promise<ActionResult> {
-  if (!(await guard())) return fail("Bạn không có quyền quản trị.");
+  const me = await guard();
+  if (!me) return fail("Bạn không có quyền quản trị.");
   const parsed = z.object({ groupId: id }).safeParse(input);
   if (!parsed.success) return fail("Dữ liệu không hợp lệ.");
   const { data, error } = await createAdminClient().from("groups").delete().eq("id", parsed.data.groupId).select("id");
   if (error || !data?.length) return fail("Chưa xóa được nhóm.");
+  await logAdminAction({
+    admin: me,
+    action: "delete_group",
+    target: { label: `group:${parsed.data.groupId}` },
+  });
   revalidatePath("/admin");
   return ok();
 }
@@ -115,6 +146,11 @@ export async function grantAdmin(input: { email: string }): Promise<ActionResult
     .from("app_admins")
     .upsert({ user_id: user.id, granted_by: me.id }, { onConflict: "user_id", ignoreDuplicates: true });
   if (error) return fail("Chưa cấp được quyền.");
+  await logAdminAction({
+    admin: me,
+    action: "grant_admin",
+    target: { userId: user.id, label: parsed.data.email },
+  });
   revalidatePath("/admin");
   return ok();
 }
@@ -131,12 +167,18 @@ export async function revokeAdmin(input: { userId: string }): Promise<ActionResu
   }
   const { error } = await createAdminClient().from("app_admins").delete().eq("user_id", parsed.data.userId);
   if (error) return fail("Chưa gỡ được quyền.");
+  await logAdminAction({
+    admin: me,
+    action: "revoke_admin",
+    target: { userId: parsed.data.userId, label: data.user?.email ?? undefined },
+  });
   revalidatePath("/admin");
   return ok();
 }
 
 export async function deleteWordAsAdmin(input: { wordId: string }): Promise<ActionResult> {
-  if (!(await guard())) return fail("Bạn không có quyền quản trị.");
+  const me = await guard();
+  if (!me) return fail("Bạn không có quyền quản trị.");
   const parsed = z.object({ wordId: id }).safeParse(input);
   if (!parsed.success) return fail("Dữ liệu không hợp lệ.");
 
@@ -158,6 +200,42 @@ export async function deleteWordAsAdmin(input: { wordId: string }): Promise<Acti
     }
   }
 
+  await logAdminAction({
+    admin: me,
+    action: "delete_word",
+    target: { label: `word:${parsed.data.wordId}` },
+  });
+
   revalidatePath("/admin");
+  return ok();
+}
+
+export async function saveUserNote(input: { userId: string; note: string }): Promise<ActionResult> {
+  const me = await guard();
+  if (!me) return fail("Bạn không có quyền quản trị.");
+  const parsed = z.object({ userId: id, note: z.string().max(2000) }).safeParse(input);
+  if (!parsed.success) return fail("Ghi chú không hợp lệ (tối đa 2000 ký tự).");
+
+  const sb = createAdminClient();
+  const trimmed = parsed.data.note.trim();
+  if (trimmed.length === 0) {
+    await sb.from("admin_user_notes").delete().eq("user_id", parsed.data.userId);
+  } else {
+    await sb.from("admin_user_notes").upsert({
+      user_id: parsed.data.userId,
+      note: trimmed,
+      updated_by: me.id,
+      updated_at: new Date().toISOString(),
+    });
+  }
+
+  await logAdminAction({
+    admin: me,
+    action: "save_note",
+    target: { userId: parsed.data.userId },
+    meta: { length: trimmed.length },
+  });
+
+  revalidatePath(`/admin/users/${parsed.data.userId}`);
   return ok();
 }
