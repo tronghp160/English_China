@@ -13,6 +13,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminAction, GrantAdminForm } from "@/components/admin/admin-actions";
 import { AdminWordTable } from "@/components/admin/admin-word-table";
+import { OnlineDot } from "@/components/admin/online-dot";
+import { PetChip } from "@/components/admin/pet-chip";
+import { OnlineTab } from "@/components/admin/tabs/online-tab";
 import { WarmCacheCard } from "@/components/admin/warm-cache";
 import { LangMark } from "@/components/lang-mark";
 import { Badge } from "@/components/ui/badge";
@@ -28,17 +31,17 @@ import {
   revokeAdmin,
   setUserBanned,
 } from "@/lib/actions/admin";
+import { ago, dateTime } from "@/lib/admin-format";
 import { requireAdmin } from "@/lib/admin";
 import {
   getAdminOverview,
   listAdmins,
-  listAdminUsers,
   listAdminWords,
   listGroups,
   listPublicDecks,
   resolveUserParam,
-  USERS_PER_PAGE,
 } from "@/lib/data/admin";
+import { listUsersForAdmin } from "@/lib/data/admin-monitor";
 import { serverEnv } from "@/lib/env";
 import type { Tone } from "@/lib/tone";
 
@@ -46,10 +49,13 @@ export const metadata: Metadata = { title: "Quản trị", robots: { index: fals
 
 const TABS = [
   { value: "overview", label: "Tổng quan" },
+  { value: "online", label: "Đang online" },
   { value: "users", label: "Người dùng" },
+  { value: "attention", label: "Cần chú ý" },
   { value: "words", label: "Từ vựng" },
   { value: "decks", label: "Bộ từ công khai" },
   { value: "groups", label: "Nhóm" },
+  { value: "audit", label: "Nhật ký" },
   { value: "admins", label: "Quản trị viên" },
 ] as const;
 type Tab = (typeof TABS)[number]["value"];
@@ -67,6 +73,8 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const tab: Tab = TABS.some((t) => t.value === sp.tab) ? (sp.tab as Tab) : "overview";
   const q = typeof sp.q === "string" ? sp.q.slice(0, 100) : "";
   const page = Math.max(1, Number(typeof sp.page === "string" ? sp.page : 1) || 1);
+  const status = typeof sp.status === "string" ? sp.status : "all";
+  const sort = typeof sp.sort === "string" ? sp.sort : "created";
   const lang = sp.lang === "en" || sp.lang === "zh" ? sp.lang : undefined;
   const user = typeof sp.user === "string" ? sp.user.slice(0, 100) : undefined;
 
@@ -93,10 +101,13 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       />
       <div className="mt-6">
         {tab === "overview" && <Overview />}
-        {tab === "users" && <UsersTab meId={me.id} q={q} page={page} />}
+        {tab === "online" && <OnlineTab meId={me.id} />}
+        {tab === "users" && <UsersTab meId={me.id} q={q} page={page} status={status} sort={sort} />}
+        {tab === "attention" && <p className="text-fg-muted">Sắp có.</p>}
         {tab === "words" && <WordsTab q={q} lang={lang} user={user} page={page} />}
         {tab === "decks" && <DecksTab />}
         {tab === "groups" && <GroupsTab />}
+        {tab === "audit" && <p className="text-fg-muted">Sắp có.</p>}
         {tab === "admins" && <AdminsTab meId={me.id} />}
       </div>
     </div>
@@ -157,13 +168,31 @@ async function Overview() {
   );
 }
 
-async function UsersTab({ meId, q, page }: { meId: string; q: string; page: number }) {
-  const { users, total } = await listAdminUsers({ q, page });
-  const pages = Math.max(1, Math.ceil(total / USERS_PER_PAGE));
-  const link = (p: number) => `/admin?tab=users&page=${p}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
+async function UsersTab({
+  meId,
+  q,
+  page,
+  status,
+  sort,
+}: {
+  meId: string;
+  q: string;
+  page: number;
+  status: string;
+  sort: string;
+}) {
+  const { users, total, totalPages } = await listUsersForAdmin({ q, page, status, sort });
+  const link = (p: number) => {
+    const params = new URLSearchParams({ tab: "users", page: String(p) });
+    if (q) params.set("q", q);
+    if (status && status !== "all") params.set("status", status);
+    if (sort && sort !== "created") params.set("sort", sort);
+    return `/admin?${params.toString()}`;
+  };
+
   return (
     <section aria-label="Người dùng">
-      <form action="/admin" className="flex gap-2">
+      <form action="/admin" className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input type="hidden" name="tab" value="users" />
         <label htmlFor="admin-q" className="sr-only">
           Tìm người dùng
@@ -175,6 +204,43 @@ async function UsersTab({ meId, q, page }: { meId: string; q: string; page: numb
           placeholder="Tìm theo email, tên hoặc @username"
           className="flex-1"
         />
+        <div className="w-full sm:w-44">
+          <label htmlFor="user-status" className="sr-only">
+            Trạng thái
+          </label>
+          <select
+            id="user-status"
+            name="status"
+            defaultValue={status}
+            className="h-10 w-full rounded-md border border-input bg-surface px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="all">Tất cả trạng thái</option>
+            <option value="online">Đang online</option>
+            <option value="away">Vừa rời đi</option>
+            <option value="offline">Offline</option>
+            <option value="never">Chưa ghi nhận</option>
+            <option value="inactive7">Không học 7 ngày+</option>
+            <option value="unstudied">Chưa học bài nào</option>
+            <option value="banned">Bị khóa</option>
+            <option value="admin">Quản trị</option>
+          </select>
+        </div>
+        <div className="w-full sm:w-44">
+          <label htmlFor="user-sort" className="sr-only">
+            Sắp xếp
+          </label>
+          <select
+            id="user-sort"
+            name="sort"
+            defaultValue={sort}
+            className="h-10 w-full rounded-md border border-input bg-surface px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="created">Mới tạo</option>
+            <option value="lastSeen">Online gần nhất</option>
+            <option value="level">Cấp cao nhất</option>
+            <option value="lastActive">Học gần nhất</option>
+          </select>
+        </div>
         <Button type="submit">Tìm</Button>
       </form>
       <p className="mt-3 text-sm text-fg-muted">
@@ -190,6 +256,7 @@ async function UsersTab({ meId, q, page }: { meId: string; q: string; page: numb
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
+                  <OnlineDot status={u.status} />
                   <Link href={`/admin/users/${u.id}`} className="font-bold hover:underline">
                     {u.displayName}
                   </Link>
@@ -212,9 +279,18 @@ async function UsersTab({ meId, q, page }: { meId: string; q: string; page: numb
                 </div>
                 <p className="truncate text-sm text-fg">{u.email}</p>
                 <p className="text-sm text-fg-muted">
-                  Tạo {date(u.createdAt)} · Đăng nhập gần nhất {date(u.lastSignInAt)} · {u.decks} bộ
-                  từ
+                  Tạo {dateTime(u.createdAt)} · Online {ago(u.lastSeenAt)} · {u.place} · {u.decks} bộ từ
                 </p>
+                {u.pet && (
+                  <div className="mt-1.5">
+                    <PetChip
+                      level={u.pet.level}
+                      outfit={u.pet.outfit}
+                      outfitName={u.pet.outfitName}
+                      streak={u.pet.streak}
+                    />
+                  </div>
+                )}
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
                 <Button asChild size="sm" variant="soft" tone="blue">
@@ -254,7 +330,7 @@ async function UsersTab({ meId, q, page }: { meId: string; q: string; page: numb
           );
         })}
       </ul>
-      {pages > 1 && (
+      {totalPages > 1 && (
         <nav aria-label="Trang" className="mt-4 flex items-center justify-between gap-3">
           {page > 1 ? (
             <Button asChild variant="outline">
@@ -264,9 +340,9 @@ async function UsersTab({ meId, q, page }: { meId: string; q: string; page: numb
             <span />
           )}
           <span className="text-sm text-fg-muted tabular-nums">
-            Trang {page}/{pages}
+            Trang {page}/{totalPages}
           </span>
-          {page < pages ? (
+          {page < totalPages ? (
             <Button asChild variant="outline">
               <Link href={link(page + 1)}>Trang sau</Link>
             </Button>
