@@ -77,3 +77,12 @@ Trên domain Vercel, thử bằng điện thoại:
 6. Chạy Lighthouse (Chrome DevTools → Lighthouse → Mobile) trên `/today`: mục tiêu Performance ≥ 85, Accessibility ≥ 95.
 
 Chạy E2E với AI thật trên máy (tốn vài lượt AI): `E2E_REAL_AI=1 pnpm test:e2e`.
+
+## 7. Giám sát người dùng (Admin Monitoring)
+- **Vị trí và địa lý (Geo IP):**
+  - Vị trí người dùng (thành phố, quốc gia, tọa độ) được tự động nhận diện từ các header của Vercel (`x-vercel-ip-city`, `x-vercel-ip-country`, `x-vercel-ip-latitude`, `x-vercel-ip-longitude`).
+  - Khi chạy local hoặc máy chủ không có Vercel Geo headers, hệ thống sẽ hiển thị "Máy local (không có vị trí)".
+- **Database migrations:**
+  - Chạy `pnpm db:push` để đẩy các migration mới (`20261028000012_presence.sql`, `20261028000013_admin_audit.sql`) lên Supabase production.
+- **Quyền riêng tư:**
+  - Chính sách quyền riêng tư (`/quyen-rieng-tu`) và tính năng xuất dữ liệu người dùng (`/cai-dat`) đã tự động cập nhật công khai việc thu thập thông tin phiên đăng nhập (lưu tối đa 90 ngày) và minh bạch nhật ký quản trị viên.

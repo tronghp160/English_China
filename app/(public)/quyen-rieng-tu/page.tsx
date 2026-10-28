@@ -37,7 +37,7 @@ export default function PrivacyPage() {
           <div className="rounded-lg bg-teal-soft/40 p-4 border border-teal-subtle text-teal-fg">
             <p className="font-medium">
               Quản trị viên Sổ Từ có thể xem dữ liệu học tập của bạn (bộ từ, ghi chú, lịch sử ôn,
-              trò chuyện với gia sư) để hỗ trợ kỹ thuật và quản lý hệ thống. Bạn có thể tải hoặc xóa
+              trò chuyện với gia sư, vị trí và thiết bị đăng nhập) để hỗ trợ kỹ thuật và quản lý hệ thống. Bạn có thể tải hoặc xóa
               toàn bộ dữ liệu bất cứ lúc nào trong mục Cài đặt.
             </p>
           </div>
@@ -56,6 +56,9 @@ export default function PrivacyPage() {
               <li>Bộ từ và từ vựng: Các từ bạn tạo, nghĩa, ví dụ, ảnh minh họa và ghi chú cá nhân.</li>
               <li>Lịch sử ôn tập: Thời gian ôn, đánh giá độ nhớ, chế độ luyện tập và chuỗi ngày học.</li>
               <li>Cuộc trò chuyện với Gia sư AI: Nội dung câu hỏi và phản hồi để hỗ trợ bạn học tập.</li>
+              <li>
+                Hoạt động và vị trí đăng nhập: thời điểm bạn đang dùng ứng dụng, mục bạn đang xem, địa chỉ IP, vị trí ước tính theo IP (thành phố, quốc gia), loại thiết bị và trình duyệt. Lịch sử đăng nhập được giữ tối đa 90 ngày.
+              </li>
             </ul>
           </div>
 
@@ -70,7 +73,10 @@ export default function PrivacyPage() {
                 và bảo mật bởi hạ tầng Supabase Auth, quản trị viên hoàn toàn không thể biết.
               </li>
               <li>
-                <strong>Không thu thập IP:</strong> Sổ Từ không lưu vết địa chỉ IP hay vị trí địa lý của bạn.
+                <strong>Vị trí chỉ là ước tính:</strong> Sổ Từ không xin quyền GPS của thiết bị. Vị trí chỉ suy ra từ địa chỉ IP, thường chỉ chính xác tới cấp thành phố, và chỉ quản trị viên xem được.
+              </li>
+              <li>
+                <strong>Minh bạch thao tác quản trị:</strong> Quản trị viên xem dữ liệu nhạy cảm (lịch sử đăng nhập, trò chuyện gia sư) đều được ghi nhật ký.
               </li>
               <li>
                 <strong>Bảo mật thông báo:</strong> Thông tin thiết bị nhận nhắc nhở học tập chỉ lưu số lượng,
@@ -94,7 +100,7 @@ export default function PrivacyPage() {
                   Xuất dữ liệu (JSON)
                 </h3>
                 <p className="text-xs text-fg-muted">
-                  Bạn có thể tải về file sao lưu đầy đủ mọi bộ từ, tiến độ và tin nhắn gia sư trong phần Cài đặt tài khoản.
+                  Bạn có thể tải về file sao lưu đầy đủ mọi bộ từ, tiến độ, lịch sử đăng nhập và tin nhắn gia sư trong phần Cài đặt tài khoản.
                 </p>
               </div>
               <div className="rounded-lg bg-surface-2 p-4 border border-border">

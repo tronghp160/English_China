@@ -71,7 +71,7 @@ export async function buildAccountExport(supabase: Client, userId: string) {
     supabase.from("group_members").select("role, joined_at, group:groups(id, name)").eq("user_id", userId),
   ]);
   const ownDecks = decks ?? [];
-  const [words, cards, reviews, daily, chatThreads, chatMessages] = await Promise.all([
+  const [words, cards, reviews, daily, chatThreads, chatMessages, loginEvents] = await Promise.all([
     deckWords(supabase, ownDecks.map((d) => d.id)),
     fetchAll<Tables<"user_cards">>((f, t) => supabase.from("user_cards").select("*").eq("user_id", userId).order("word_id").range(f, t)),
     fetchAll<Tables<"review_logs">>((f, t) => supabase.from("review_logs").select("*").eq("user_id", userId).order("id").range(f, t)),
@@ -79,6 +79,9 @@ export async function buildAccountExport(supabase: Client, userId: string) {
     fetchAll<Tables<"chat_threads">>((f, t) => supabase.from("chat_threads").select("*").eq("user_id", userId).order("created_at").range(f, t)),
     fetchAll<Tables<"chat_messages">>((f, t) =>
       supabase.from("chat_messages").select("*").eq("user_id", userId).order("thread_id").order("created_at").range(f, t),
+    ),
+    fetchAll<Tables<"login_events">>((f, t) =>
+      supabase.from("login_events").select("*").eq("user_id", userId).order("id").range(f, t),
     ),
   ]);
   const messagesByThread = new Map<string, Tables<"chat_messages">[]>();
@@ -99,6 +102,7 @@ export async function buildAccountExport(supabase: Client, userId: string) {
     progress: cards,
     review_logs: reviews,
     daily_stats: daily,
+    login_history: loginEvents,
     chats: chatThreads.map((t) => ({
       ...t,
       messages: (messagesByThread.get(t.id) ?? []).map((m) => ({ id: m.id, role: m.role, parts: m.parts, created_at: m.created_at })),
