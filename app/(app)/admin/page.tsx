@@ -21,6 +21,7 @@ import { AutoRefresh } from "@/components/admin/auto-refresh";
 import { OnlineDot } from "@/components/admin/online-dot";
 import { PetChip } from "@/components/admin/pet-chip";
 import { StatCard } from "@/components/admin/stat-card";
+import { AttentionTab } from "@/components/admin/tabs/attention-tab";
 import { OnlineTab } from "@/components/admin/tabs/online-tab";
 import { WarmCacheCard } from "@/components/admin/warm-cache";
 import { LangMark } from "@/components/lang-mark";
@@ -109,7 +110,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         {tab === "overview" && <Overview />}
         {tab === "online" && <OnlineTab meId={me.id} />}
         {tab === "users" && <UsersTab meId={me.id} q={q} page={page} status={status} sort={sort} />}
-        {tab === "attention" && <p className="text-fg-muted">Sắp có.</p>}
+        {tab === "attention" && <AttentionTab />}
         {tab === "words" && <WordsTab q={q} lang={lang} user={user} page={page} />}
         {tab === "decks" && <DecksTab />}
         {tab === "groups" && <GroupsTab />}

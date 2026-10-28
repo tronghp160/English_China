@@ -1,6 +1,7 @@
 import "server-only";
 
 import { allAuthUsers, USERS_PER_PAGE } from "@/lib/data/admin";
+import { computeAttention, type AttentionGroups } from "@/lib/admin-attention";
 import {
   aggregatePlaces,
   bucketLevels,
@@ -21,6 +22,7 @@ import {
 import { levelFromXp, type OutfitId } from "@/lib/progress";
 import { addDays, studyDay } from "@/lib/srs/streak";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { serverEnv } from "@/lib/env";
 import type { Tables } from "@/lib/supabase/database.types";
 
 export type PresenceRow = Tables<"user_presence">;
@@ -61,6 +63,8 @@ export type AdminUserMonitoring = {
   username: string;
   createdAt: string;
   lastSignInAt: string | null;
+  banned: boolean;
+  admin: boolean;
   isBanned: boolean;
   isAdmin: boolean;
   envAdmin: boolean;
@@ -352,6 +356,8 @@ export async function listUsersForAdmin({
       username: u.username,
       createdAt: u.createdAt,
       lastSignInAt: u.lastSignInAt,
+      banned: u.isBanned,
+      admin: u.isAdmin,
       isBanned: u.isBanned,
       isAdmin: u.isAdmin,
       envAdmin: u.envAdmin,
@@ -510,4 +516,58 @@ export async function getActivitySummary(): Promise<ActivitySummary> {
     levelBuckets,
     topXp,
   };
+}
+
+export async function getAttention(): Promise<AttentionGroups> {
+  const sb = createAdminClient();
+  const today = studyDay(new Date(), "Asia/Ho_Chi_Minh");
+  const now = Date.now();
+  const twentyFourHoursAgo = new Date(now - 24 * 3_600_000).toISOString();
+  const aiLimit = serverEnv().AI_DAILY_LIMIT_PER_USER;
+
+  const [authUsers, { data: profiles }, rollupMap, { data: logins24h }, { data: aiUsage }] =
+    await Promise.all([
+      allAuthUsers(),
+      sb.from("profiles").select("id, display_name, username"),
+      getRollupMap(),
+      sb.from("login_events").select("user_id, country, city, created_at").gte("created_at", twentyFourHoursAgo),
+      sb.from("ai_usage").select("user_id, requests").eq("day", today),
+    ]);
+
+  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+  const users = authUsers.map((u) => {
+    const prof = profileMap.get(u.id);
+    const rollup = rollupMap.get(u.id);
+    return {
+      id: u.id,
+      displayName: prof?.display_name || prof?.username || "Người dùng",
+      username: prof?.username || "",
+      email: u.email ?? null,
+      createdAt: u.created_at,
+      activeDays: rollup?.active_days ?? 0,
+      lastActiveDay: rollup?.last_active_day ?? null,
+    };
+  });
+
+  const recentLogins24h = (logins24h ?? []).map((l) => ({
+    userId: l.user_id,
+    country: l.country,
+    city: l.city,
+    created_at: l.created_at,
+  }));
+
+  const aiUsageToday = (aiUsage ?? []).map((a) => ({
+    userId: a.user_id,
+    requests: a.requests,
+  }));
+
+  return computeAttention({
+    today,
+    now,
+    aiLimit,
+    users,
+    recentLogins24h,
+    aiUsageToday,
+  });
 }
