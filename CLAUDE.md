@@ -141,3 +141,28 @@ UI and client logic only: no DB migration, no change to FSRS or existing server 
 - Who: `ADMIN_EMAILS` (comma separated, can only be changed in the env) or a row in `app_admins` (service role only, no client policies), granted in /admin → "Quản trị viên" or with `pnpm admin:grant <email>`. `lib/admin.ts` (`isAdmin`, `requireAdmin` → 404 for everyone else). The avatar menu shows "Quản trị" to admins.
 - What: overview counts, users (search, lock/unlock via Supabase `ban_duration`, delete with Storage cleanup from `lib/account-files.ts`), words (app-wide search, language/user filter, detailed view, deletion), public decks (hide = make private, delete), admin deck views (`/admin/decks/[id]`), user details (6 tabs: overview, words, decks, reviews, tutor chat, account), account data export (`/api/admin/users/[id]/export`), groups (delete), admins (grant by email, revoke). Reads in `lib/data/admin.ts` and actions in `lib/actions/admin.ts` use the service role, and every action re-checks the caller; nobody can act on their own account or on another admin (revoke first).
 - A locked user keeps a valid session until the JWT expires (about an hour). E2E: `tests/e2e/admin.spec.ts`.
+
+### Admin V3 — Giám sát người dùng & thú cưng (PLAN-admin-monitoring.md)
+- **Database & Migration** (`20261028000012_presence.sql`, `20261028000013_admin_audit.sql`):
+  - Bảng `user_presence`: lưu nhịp tim gần nhất (1 dòng/người dùng), IP, vị trí geo, thiết bị, đường dẫn đang mở.
+  - Bảng `login_events`: lưu lịch sử từng phiên đăng nhập (tối đa 200 dòng/người dùng, retention 90 ngày).
+  - Bảng `admin_audit_log`: lưu thao tác quản trị nhạy cảm (khóa, xóa, cấp quyền, xem dữ liệu nhạy cảm).
+  - Bảng `admin_user_notes`: ghi chú nội bộ của quản trị viên về người dùng (riêng tư, tự động xóa khi tài khoản bị xóa).
+  - RPC `record_presence()`: cập nhật `user_presence` và chèn `login_events` (tự động dọn dẹp giữ <= 200 dòng/người).
+  - RPC `admin_user_rollup()`: tổng hợp nhanh cấp độ, XP, ngày học gần nhất cho bảng người dùng admin.
+- **Heartbeat & Thu thập dữ liệu**:
+  - Endpoint `POST /api/presence`: nhận heartbeat từ client, trích xuất IP và geo từ Vercel headers (`x-vercel-ip-*`), giới hạn tần suất 5s.
+  - Component `<PresenceBeacon />`: nhịp tim định kỳ 45s, tự động dừng khi tab bị ẩn (`visibilitychange`), gắn trong `(app)` và `(study)` layout.
+- **Quy tắc & Ngưỡng**:
+  - Trạng thái online: "Đang online" (≤ 2 phút), "Vừa rời đi" (2–15 phút), "Offline" (> 15 phút).
+  - Chấm trạng thái online (`OnlineDot`): nghiêm cấm animation (không ping/pulse) theo quy chuẩn thiết kế; hỗ trợ nhãn ẩn cho screen reader.
+- **Hỗ trợ & Thư viện**:
+  - `lib/presence.ts`: phân tích User-Agent, đọc geo headers, tạo link bản đồ Google Maps/OpenStreetMap, nhãn đường dẫn tiếng Việt.
+  - `lib/admin-pet.ts`: tính toán trạng thái thú cưng Bin (cấp độ, trang phục, tủ đồ, xương, tâm trạng, nhiệm vụ).
+  - `lib/data/admin-monitor.ts`: tầng truy vấn dữ liệu giám sát, online, rollup và tổng quan hệ thống.
+  - `lib/data/admin-audit.ts`: ghi và tra cứu nhật ký thao tác quản trị viên.
+- **Chính sách riêng tư**:
+  - Trang `/quyen-rieng-tu` và file xuất dữ liệu tài khoản (`/api/export`) đã cập nhật công khai thu thập thông tin phiên đăng nhập (IP/geo ước tính) và minh bạch lịch sử truy cập của quản trị viên.
+- **Xem thử & Kiểm thử**:
+  - Seed dữ liệu mẫu: `pnpm admin:seed-presence` (tạo dữ liệu online, away, offline và thú cưng cho demo, minh, lan).
+  - E2E testing: `tests/e2e/admin-monitoring.spec.ts` (mô phỏng geo headers Vercel, kiểm tra nhịp tim, các tab admin và quyền truy cập).

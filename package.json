@@ -19,6 +19,7 @@
     "admin:grant": "node scripts/admin.mjs grant",
     "admin:revoke": "node scripts/admin.mjs revoke",
     "admin:list": "node scripts/admin.mjs list",
+    "admin:seed-presence": "node scripts/seed-presence.mjs",
     "dev:clean": "node -e \"require('fs').rmSync('.next/dev',{recursive:true,force:true,maxRetries:5,retryDelay:300})\" && next dev"
   },
   "dependencies": {
