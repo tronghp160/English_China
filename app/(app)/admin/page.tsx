@@ -1,9 +1,13 @@
 import {
   BookOpen,
   Bot,
+  Flame,
   Globe,
+  MapPin,
+  Radio,
   ShieldCheck,
   Sparkles,
+  Trophy,
   UserPlus,
   Users,
   UsersRound,
@@ -13,8 +17,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminAction, GrantAdminForm } from "@/components/admin/admin-actions";
 import { AdminWordTable } from "@/components/admin/admin-word-table";
+import { AutoRefresh } from "@/components/admin/auto-refresh";
 import { OnlineDot } from "@/components/admin/online-dot";
 import { PetChip } from "@/components/admin/pet-chip";
+import { StatCard } from "@/components/admin/stat-card";
 import { OnlineTab } from "@/components/admin/tabs/online-tab";
 import { WarmCacheCard } from "@/components/admin/warm-cache";
 import { LangMark } from "@/components/lang-mark";
@@ -41,7 +47,7 @@ import {
   listPublicDecks,
   resolveUserParam,
 } from "@/lib/data/admin";
-import { listUsersForAdmin } from "@/lib/data/admin-monitor";
+import { getActivitySummary, listUsersForAdmin } from "@/lib/data/admin-monitor";
 import { serverEnv } from "@/lib/env";
 import type { Tone } from "@/lib/tone";
 
@@ -140,31 +146,212 @@ function Stat({
 }
 
 async function Overview() {
-  const o = await getAdminOverview();
+  const [o, act] = await Promise.all([getAdminOverview(), getActivitySummary()]);
+
+  const maxActive = Math.max(1, ...act.activeByDay.map((d) => d.active), ...act.newByDay.map((d) => d.count));
+  const maxBucket = Math.max(
+    1,
+    act.levelBuckets["1-2"],
+    act.levelBuckets["3-4"],
+    act.levelBuckets["5-9"],
+    act.levelBuckets["10+"],
+  );
+
   return (
-    <>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Stat icon={Users} tone="blue" value={String(o.users)} label="Người dùng" />
-        <Stat icon={UserPlus} tone="mint" value={String(o.newUsers7d)} label="Đăng ký trong 7 ngày" />
-        <Stat icon={Sparkles} tone="sun" value={String(o.activeToday)} label="Người học hôm nay" />
-        <Stat icon={BookOpen} tone="coral" value={String(o.reviewsToday)} label="Lượt ôn hôm nay" />
-        <Stat
-          icon={Bot}
-          tone="grape"
-          value={`${o.aiToday}/${o.aiLimit}`}
-          label="Lượt AI hôm nay"
-          hint="Giới hạn chung mỗi ngày (AI_GLOBAL_DAILY_LIMIT)"
-        />
-        <Stat
-          icon={Globe}
-          tone="teal"
-          value={`${o.publicDecks}/${o.decks}`}
-          label="Bộ từ công khai / tất cả"
-        />
-        <Stat icon={UsersRound} tone="orange" value={String(o.groups)} label="Nhóm" />
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-bold">Hoạt động & Tương tác</h2>
+        <AutoRefresh seconds={60} />
       </div>
+
+      {/* Row of 4 cards: Online now, DAU, WAU, MAU */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={Radio} tone="mint" value={act.onlineNow} label="Đang online" />
+        <StatCard
+          icon={Sparkles}
+          tone="sun"
+          value={act.dau}
+          label="Hoạt động hôm nay (DAU)"
+          hint="Người có ít nhất 1 lượt ôn"
+        />
+        <StatCard icon={Flame} tone="blue" value={act.wau} label="7 ngày (WAU)" />
+        <StatCard icon={Trophy} tone="grape" value={act.mau} label="30 ngày (MAU)" />
+      </div>
+
+      {/* 14-day activity chart */}
+      <section className="rounded-lg bg-surface p-5 shadow-sm dark:border dark:border-border">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-base font-bold">Người học mỗi ngày (14 ngày qua)</h3>
+          <div className="flex items-center gap-4 text-xs text-fg-muted">
+            <span className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-sm bg-primary" />
+              Người học
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-sm bg-c-mint" />
+              Đăng ký mới
+            </span>
+          </div>
+        </div>
+
+        <div
+          role="img"
+          aria-label={`Biểu đồ người học và đăng ký mới 14 ngày qua, cao nhất ${maxActive}`}
+          className="mt-4 flex h-36 items-end gap-2"
+        >
+          {act.activeByDay.map((d, i) => {
+            const newCount = act.newByDay[i]?.count ?? 0;
+            const activeHeight = Math.max(3, (d.active / maxActive) * 100);
+            const newHeight = Math.max(3, (newCount / maxActive) * 100);
+
+            return (
+              <div key={d.day} className="flex flex-1 flex-col items-center gap-1">
+                <div className="flex h-28 w-full items-end justify-center gap-1">
+                  <div
+                    title={`${d.day}: ${d.active} người học`}
+                    className="w-full max-w-4 rounded-t bg-primary transition-all"
+                    style={{ height: d.active > 0 ? `${activeHeight}%` : "3px" }}
+                  />
+                  <div
+                    title={`${d.day}: ${newCount} đăng ký mới`}
+                    className="w-full max-w-4 rounded-t bg-c-mint transition-all"
+                    style={{ height: newCount > 0 ? `${newHeight}%` : "3px" }}
+                  />
+                </div>
+                <span className="text-[10px] text-fg-subtle truncate">{d.day.slice(5)}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-2 flex justify-between text-xs text-fg-muted tabular-nums">
+          <span>{act.activeByDay[0]?.day}</span>
+          <span>Hôm nay ({act.activeByDay[act.activeByDay.length - 1]?.day})</span>
+        </div>
+      </section>
+
+      {/* Middle row: Top Cities & Level Distribution */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Top Cities */}
+        <section className="rounded-lg bg-surface p-5 shadow-sm dark:border dark:border-border">
+          <div className="mb-3 flex items-center gap-2">
+            <MapPin className="size-5 text-c-teal" aria-hidden="true" />
+            <h3 className="text-base font-bold">Nơi đăng nhập nhiều nhất (30 ngày)</h3>
+          </div>
+          {act.topCities.length === 0 ? (
+            <p className="text-sm text-fg-muted">Chưa ghi nhận dữ liệu vị trí.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {act.topCities.map((c, i) => (
+                <li key={i} className="flex items-center justify-between py-2 text-sm">
+                  <span>
+                    {c.city}
+                    {c.country && <span className="text-xs text-fg-muted"> ({c.country})</span>}
+                  </span>
+                  <span className="font-semibold tabular-nums text-fg">
+                    {c.users} người
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* Level Distribution of Bin */}
+        <section className="rounded-lg bg-surface p-5 shadow-sm dark:border dark:border-border">
+          <div className="mb-3 flex items-center gap-2">
+            <Sparkles className="size-5 text-c-sun" aria-hidden="true" />
+            <h3 className="text-base font-bold">Cấp của chú cún Bin</h3>
+          </div>
+          <div className="space-y-3">
+            {(
+              [
+                { label: "Cấp 1 – 2", key: "1-2" as const, tone: "bg-surface-3 text-fg" },
+                { label: "Cấp 3 – 4", key: "3-4" as const, tone: "bg-c-blue" },
+                { label: "Cấp 5 – 9", key: "5-9" as const, tone: "bg-c-grape" },
+                { label: "Cấp 10+", key: "10+" as const, tone: "bg-c-sun" },
+              ] as const
+            ).map((b) => {
+              const count = act.levelBuckets[b.key];
+              const pct = Math.round((count / maxBucket) * 100);
+
+              return (
+                <div key={b.key} className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="font-medium text-fg">{b.label}</span>
+                    <span className="text-fg-muted tabular-nums">{count} người</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2">
+                    <div
+                      className={`h-full rounded-full ${b.tone}`}
+                      style={{ width: `${count > 0 ? Math.max(5, pct) : 0}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+
+      {/* Top XP Users */}
+      {act.topXp.length > 0 && (
+        <section className="rounded-lg bg-surface p-5 shadow-sm dark:border dark:border-border">
+          <div className="mb-3 flex items-center gap-2">
+            <Trophy className="size-5 text-c-sun" aria-hidden="true" />
+            <h3 className="text-base font-bold">Người dùng có điểm kinh nghiệm (XP) cao nhất</h3>
+          </div>
+          <ul className="divide-y divide-border">
+            {act.topXp.map((u, i) => (
+              <li key={u.userId} className="flex items-center justify-between py-2.5 text-sm">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-bold tabular-nums">
+                    {i + 1}
+                  </span>
+                  <Link
+                    href={`/admin/users/${u.userId}`}
+                    className="font-medium truncate hover:underline text-fg"
+                  >
+                    {u.displayName}
+                  </Link>
+                  {u.username && <span className="text-xs text-fg-muted">@{u.username}</span>}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <PetChip level={u.level} outfit="none" streak={0} />
+                  <span className="font-bold tabular-nums text-fg">{u.totalXp} XP</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Existing overview stats */}
+      <div>
+        <h3 className="mb-3 text-base font-bold">Thống kê tài nguyên & AI</h3>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <Stat icon={Users} tone="blue" value={String(o.users)} label="Người dùng" />
+          <Stat icon={UserPlus} tone="mint" value={String(o.newUsers7d)} label="Đăng ký trong 7 ngày" />
+          <Stat icon={Sparkles} tone="sun" value={String(o.activeToday)} label="Người học hôm nay" />
+          <Stat icon={BookOpen} tone="coral" value={String(o.reviewsToday)} label="Lượt ôn hôm nay" />
+          <Stat
+            icon={Bot}
+            tone="grape"
+            value={`${o.aiToday}/${o.aiLimit}`}
+            label="Lượt AI hôm nay"
+            hint="Giới hạn chung mỗi ngày (AI_GLOBAL_DAILY_LIMIT)"
+          />
+          <Stat
+            icon={Globe}
+            tone="teal"
+            value={`${o.publicDecks}/${o.decks}`}
+            label="Bộ từ công khai / tất cả"
+          />
+          <Stat icon={UsersRound} tone="orange" value={String(o.groups)} label="Nhóm" />
+        </div>
+      </div>
+
       <WarmCacheCard rpmLimit={serverEnv().AI_RPM_LIMIT} />
-    </>
+    </div>
   );
 }
 
