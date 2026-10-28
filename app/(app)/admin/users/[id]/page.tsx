@@ -5,7 +5,9 @@ import {
   CalendarDays,
   Download,
   Flame,
+  MapPin,
   MessageCircle,
+  Radio,
   Sparkles,
   Target,
   Trophy,
@@ -17,6 +19,12 @@ import { notFound } from "next/navigation";
 import { AdminAction } from "@/components/admin/admin-actions";
 import { AdminChatViewer } from "@/components/admin/admin-chat-viewer";
 import { AdminWordTable } from "@/components/admin/admin-word-table";
+import { DeviceChip } from "@/components/admin/device-chip";
+import { LoginHistory } from "@/components/admin/login-history";
+import { OnlineDot } from "@/components/admin/online-dot";
+import { PetChip } from "@/components/admin/pet-chip";
+import { PetPanel } from "@/components/admin/pet-panel";
+import { PlaceLine } from "@/components/admin/place-line";
 import { UserAvatar } from "@/components/app-shell/user-menu";
 import { LangMark } from "@/components/lang-mark";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +33,7 @@ import { IconTile } from "@/components/ui/icon-tile";
 import { Input } from "@/components/ui/input";
 import { SegmentedNav } from "@/components/ui/segmented";
 import { deleteUserAccount, setUserBanned } from "@/lib/actions/admin";
+import { ago, dateTime } from "@/lib/admin-format";
 import { requireAdmin } from "@/lib/admin";
 import {
   getAdminUserDetail,
@@ -35,8 +44,17 @@ import {
   listUserReviews,
   listUserWords,
 } from "@/lib/data/admin";
+import {
+  getPetSummaryFor,
+  getPresenceMap,
+  getUserLoginHistory,
+  type LoginEventRow,
+  type PresenceRow,
+} from "@/lib/data/admin-monitor";
+import type { FlaggedLoginEvent, PlaceSummary } from "@/lib/admin-monitor-utils";
 import type { PracticeMode } from "@/lib/lang/registry";
 import { MODE_INFO } from "@/lib/practice/questions";
+import { describePath, presenceStatus } from "@/lib/presence";
 import type { Tone } from "@/lib/tone";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +77,8 @@ const VISIBILITY: Record<string, string> = {
 
 const TABS = [
   { value: "overview", label: "Tổng quan" },
+  { value: "pet", label: "Thú cưng" },
+  { value: "login", label: "Đăng nhập & vị trí" },
   { value: "words", label: "Từ vựng" },
   { value: "decks", label: "Bộ từ" },
   { value: "reviews", label: "Ôn tập" },
@@ -66,15 +86,6 @@ const TABS = [
   { value: "account", label: "Tài khoản" },
 ] as const;
 type Tab = (typeof TABS)[number]["value"];
-
-const dateTime = (iso: string | null, withTime = false) =>
-  iso
-    ? new Intl.DateTimeFormat("vi-VN", {
-        timeZone: "Asia/Ho_Chi_Minh",
-        dateStyle: "short",
-        ...(withTime ? { timeStyle: "short" } : {}),
-      }).format(new Date(iso))
-    : "chưa";
 
 function Figure({ icon, tone, value, label }: { icon: LucideIcon; tone: Tone; value: string; label: string }) {
   return (
@@ -104,11 +115,19 @@ export default async function AdminUserPage({
   const me = await requireAdmin();
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   if (!UUID.test(id)) notFound();
-  const u = await getAdminUserDetail(id);
+
+  const [u, presenceMap, pet, loginHistory] = await Promise.all([
+    getAdminUserDetail(id),
+    getPresenceMap([id]),
+    getPetSummaryFor(id),
+    getUserLoginHistory(id, 50),
+  ]);
   if (!u) notFound();
 
   const tab: Tab = TABS.some((t) => t.value === sp.tab) ? (sp.tab as Tab) : "overview";
   const self = u.id === me.id;
+  const presence = presenceMap.get(id);
+  const pStatus = presenceStatus(presence?.last_seen_at);
 
   return (
     <div className="flex max-w-4xl flex-col gap-5">
@@ -142,6 +161,34 @@ export default async function AdminUserPage({
             Tạo {dateTime(u.createdAt)} · Đăng nhập gần nhất {dateTime(u.lastSignInAt, true)} · Học gần nhất{" "}
             {u.study.lastActiveDay ?? "chưa"}
           </p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <OnlineDot status={pStatus} withLabel />
+            <span className="text-xs text-fg-muted">
+              · Online gần nhất {ago(presence?.last_seen_at)}
+              {pStatus === "online" && ` · ${describePath(presence?.path ?? null)}`}
+            </span>
+          </div>
+          <div className="mt-1">
+            <PlaceLine
+              city={presence?.city}
+              region={presence?.region}
+              country={presence?.country}
+              ip={presence?.ip}
+              latitude={presence?.latitude}
+              longitude={presence?.longitude}
+              showMap
+            />
+          </div>
+          {pet && (
+            <div className="mt-2">
+              <PetChip
+                level={pet.level.level}
+                outfit={pet.outfit}
+                outfitName={pet.outfitName}
+                streak={pet.streak}
+              />
+            </div>
+          )}
         </div>
         {!self && !u.admin && (
           <div className="flex shrink-0 flex-wrap gap-2">
@@ -186,7 +233,9 @@ export default async function AdminUserPage({
       />
 
       <div className="mt-2">
-        {tab === "overview" && <OverviewTab u={u} />}
+        {tab === "overview" && <OverviewTab u={u} presence={presence} placesCount={loginHistory.places.length} />}
+        {tab === "pet" && <PetPanel pet={pet} />}
+        {tab === "login" && <UserLoginTab presence={presence} loginHistory={loginHistory} />}
         {tab === "words" && <UserWordsTab userId={u.id} decks={u.decks} sp={sp} />}
         {tab === "decks" && <UserDecksTab u={u} />}
         {tab === "reviews" && <UserReviewsTab userId={u.id} sp={sp} />}
@@ -197,7 +246,15 @@ export default async function AdminUserPage({
   );
 }
 
-function OverviewTab({ u }: { u: NonNullable<Awaited<ReturnType<typeof getAdminUserDetail>>> }) {
+function OverviewTab({
+  u,
+  presence,
+  placesCount,
+}: {
+  u: NonNullable<Awaited<ReturnType<typeof getAdminUserDetail>>>;
+  presence?: PresenceRow;
+  placesCount: number;
+}) {
   const s = u.study;
   const accuracy = s.reviews ? Math.round((s.correct / s.reviews) * 100) : 0;
   const maxDay = Math.max(1, ...s.last30.map((d) => d.reviews));
@@ -205,6 +262,8 @@ function OverviewTab({ u }: { u: NonNullable<Awaited<ReturnType<typeof getAdminU
   return (
     <div className="flex flex-col gap-5">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Figure icon={Radio} tone="mint" value={ago(presence?.last_seen_at)} label="Online gần nhất" />
+        <Figure icon={MapPin} tone="teal" value={`${placesCount} nơi`} label="Số nơi đăng nhập" />
         <Figure icon={Trophy} tone="grape" value={`Cấp ${s.level}`} label={`${s.totalXp} XP`} />
         <Figure icon={BookOpen} tone="blue" value={String(s.reviews)} label={`Lượt ôn · đúng ${accuracy}%`} />
         <Figure icon={Flame} tone="sun" value={`${s.streak} ngày`} label={`Chuỗi hiện tại · dài nhất ${s.longestStreak}`} />
@@ -313,6 +372,85 @@ function OverviewTab({ u }: { u: NonNullable<Awaited<ReturnType<typeof getAdminU
           <p className="text-fg-muted">Chưa ôn lần nào.</p>
         )}
       </Section>
+    </div>
+  );
+}
+
+function UserLoginTab({
+  presence,
+  loginHistory,
+}: {
+  presence?: PresenceRow;
+  loginHistory: {
+    events: FlaggedLoginEvent<LoginEventRow>[];
+    places: PlaceSummary[];
+  };
+}) {
+  const pStatus = presenceStatus(presence?.last_seen_at);
+  const coords =
+    presence?.latitude != null && presence?.longitude != null
+      ? `${presence.latitude.toFixed(2)}, ${presence.longitude.toFixed(2)}`
+      : "Chưa có";
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Current / latest presence */}
+      <Section title="Hiện tại / gần nhất">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <p className="text-xs text-fg-muted">Trạng thái & Lần cuối</p>
+            <div className="mt-1 flex items-center gap-2">
+              <OnlineDot status={pStatus} withLabel />
+              <span className="text-xs text-fg-muted">
+                ({dateTime(presence?.last_seen_at, true)})
+              </span>
+            </div>
+            <div className="mt-3">
+              <p className="text-xs text-fg-muted">Vị trí ước tính</p>
+              <div className="mt-1">
+                <PlaceLine
+                  city={presence?.city}
+                  region={presence?.region}
+                  country={presence?.country}
+                  ip={presence?.ip}
+                  latitude={presence?.latitude}
+                  longitude={presence?.longitude}
+                  showMap
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3 text-sm">
+            <div>
+              <p className="text-xs text-fg-muted">Thiết bị & Trình duyệt</p>
+              <div className="mt-1">
+                <DeviceChip
+                  deviceType={presence?.device_type}
+                  browser={presence?.browser}
+                  os={presence?.os}
+                />
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-fg-muted">Múi giờ</p>
+              <p className="mt-0.5 text-fg">{presence?.timezone ?? "Chưa rõ"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-fg-muted">Tọa độ xấp xỉ</p>
+              <p className="mt-0.5 font-mono text-xs text-fg">{coords}</p>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* History and places */}
+      <LoginHistory events={loginHistory.events} places={loginHistory.places} />
+
+      <p className="text-xs text-fg-muted">
+        Ghi nhận từ lúc bật tính năng. Phiên mở từ trước được ghi khi người dùng mở lại ứng dụng.
+        Cột &apos;Đăng nhập gần nhất&apos; ở tab Tài khoản là số liệu của Supabase.
+      </p>
     </div>
   );
 }
