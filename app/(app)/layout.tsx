@@ -4,6 +4,7 @@ import { BottomNav, SideNav } from "@/components/app-shell/app-nav";
 import { UserMenu } from "@/components/app-shell/user-menu";
 import { Logo } from "@/components/brand/logo";
 import { MeProvider } from "@/components/app-shell/me-provider";
+import { PresenceBeacon } from "@/components/presence/presence-beacon";
 import { BinHomeProvider } from "@/components/mascot/bin-home-provider";
 import { ChatWidget } from "@/components/contact/chat-widget";
 import { QuickSearch } from "@/components/app-shell/quick-search";
@@ -32,6 +33,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         dueCount,
       }}
     >
+      <PresenceBeacon />
       <BinHomeProvider>
       <SideNav />
       <div className={`${cjkFontVariables} relative flex min-h-dvh flex-1 flex-col lg:pl-62`}>

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { MeProvider } from "@/components/app-shell/me-provider";
+import { PresenceBeacon } from "@/components/presence/presence-beacon";
 import { requireMe } from "@/lib/auth";
 import { cjkFontVariables } from "@/lib/fonts";
 import { readPrefs } from "@/lib/validation";
@@ -20,6 +21,7 @@ export default async function StudyLayout({ children }: LayoutProps<"/">) {
         dueCount: 0,
       }}
     >
+      <PresenceBeacon />
       <main className={`${cjkFontVariables} mx-auto flex min-h-dvh w-full max-w-2xl flex-1 flex-col px-4 pt-3 pb-4`}>
         {children}
       </main>
