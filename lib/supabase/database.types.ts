@@ -415,6 +415,68 @@ export type Database = {
 
         ];
       };
+      login_events: {
+        Row: {
+          browser: string | null;
+          city: string | null;
+          country: string | null;
+          created_at: string;
+          device_type: string | null;
+          id: number;
+          ip: string | null;
+          latitude: number | null;
+          longitude: number | null;
+          os: string | null;
+          region: string | null;
+          session_id: string | null;
+          timezone: string | null;
+          user_agent: string | null;
+          user_id: string;
+        };
+        Insert: {
+          browser?: string | null;
+          city?: string | null;
+          country?: string | null;
+          created_at?: string;
+          device_type?: string | null;
+          id?: number;
+          ip?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
+          os?: string | null;
+          region?: string | null;
+          session_id?: string | null;
+          timezone?: string | null;
+          user_agent?: string | null;
+          user_id: string;
+        };
+        Update: {
+          browser?: string | null;
+          city?: string | null;
+          country?: string | null;
+          created_at?: string;
+          device_type?: string | null;
+          id?: number;
+          ip?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
+          os?: string | null;
+          region?: string | null;
+          session_id?: string | null;
+          timezone?: string | null;
+          user_agent?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "login_events_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -628,6 +690,68 @@ export type Database = {
           },
         ];
       };
+      user_presence: {
+        Row: {
+          browser: string | null;
+          city: string | null;
+          country: string | null;
+          device_type: string | null;
+          ip: string | null;
+          last_seen_at: string;
+          latitude: number | null;
+          longitude: number | null;
+          os: string | null;
+          path: string | null;
+          region: string | null;
+          session_id: string | null;
+          timezone: string | null;
+          user_agent: string | null;
+          user_id: string;
+        };
+        Insert: {
+          browser?: string | null;
+          city?: string | null;
+          country?: string | null;
+          device_type?: string | null;
+          ip?: string | null;
+          last_seen_at?: string;
+          latitude?: number | null;
+          longitude?: number | null;
+          os?: string | null;
+          path?: string | null;
+          region?: string | null;
+          session_id?: string | null;
+          timezone?: string | null;
+          user_agent?: string | null;
+          user_id: string;
+        };
+        Update: {
+          browser?: string | null;
+          city?: string | null;
+          country?: string | null;
+          device_type?: string | null;
+          ip?: string | null;
+          last_seen_at?: string;
+          latitude?: number | null;
+          longitude?: number | null;
+          os?: string | null;
+          path?: string | null;
+          region?: string | null;
+          session_id?: string | null;
+          timezone?: string | null;
+          user_agent?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_presence_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_settings: {
         Row: {
           daily_goal: number;
@@ -777,6 +901,17 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      admin_user_rollup: {
+        Args: never;
+        Returns: {
+            user_id: string;
+            total_xp: number;
+            total_reviews: number;
+            total_correct: number;
+            active_days: number;
+            last_active_day: string;
+          }[];
+      };
       ai_usage_total: {
         Args: {
           p_day: string;
@@ -987,6 +1122,25 @@ export type Database = {
             lapses: number;
             card_state: Database["public"]["Enums"]["card_state"];
           }[];
+      };
+      record_presence: {
+        Args: {
+          p_user_id: string;
+          p_path?: string;
+          p_session_id?: string;
+          p_ip?: string;
+          p_country?: string;
+          p_region?: string;
+          p_city?: string;
+          p_latitude?: number;
+          p_longitude?: number;
+          p_timezone?: string;
+          p_device_type?: string;
+          p_browser?: string;
+          p_os?: string;
+          p_user_agent?: string;
+        };
+        Returns: boolean;
       };
       record_review: {
         Args: {
