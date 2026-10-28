@@ -72,7 +72,7 @@ export type AdminUser = {
 };
 
 /** Every auth user (up to 5000, enough for this app), newest first. */
-async function allAuthUsers() {
+export async function allAuthUsers() {
   const sb = createAdminClient();
   const out = [];
   for (let page = 1; page <= 5; page++) {
