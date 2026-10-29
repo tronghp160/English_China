@@ -26,6 +26,8 @@ export const ChatComposer = forwardRef<
     className?: string;
     size?: "page" | "panel";
     inputId?: string;
+    /** Screen-reader label; defaults by size ("Tin nhắn cho gia sư" / "… (khung nổi)"). */
+    label?: string;
   }
 >(function ChatComposer(
   {
@@ -40,14 +42,16 @@ export const ChatComposer = forwardRef<
     className,
     size = "page",
     inputId = "chat-input",
+    label,
   },
   ref,
 ) {
   const isPanel = size === "panel";
   const labelText =
-    isPanel || inputId === "tutor-panel-input"
+    label ??
+    (isPanel || inputId === "tutor-panel-input"
       ? "Tin nhắn cho gia sư (khung nổi)"
-      : "Tin nhắn cho gia sư";
+      : "Tin nhắn cho gia sư");
 
   return (
     <div className={className}>
