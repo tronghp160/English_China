@@ -22,6 +22,12 @@ let started = false;
 export function setupPwa() {
   if (typeof window === "undefined" || started) return;
   started = true;
+  // Fired before hydration: caught by the inline script in app/layout.tsx.
+  const early = (window as Window & { __sotuInstallPrompt?: BeforeInstallPromptEvent }).__sotuInstallPrompt;
+  if (early) {
+    deferred = early;
+    emit();
+  }
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferred = e as BeforeInstallPromptEvent;
@@ -71,6 +77,24 @@ export function getInstallState(): InstallState {
     snapshot = next;
   }
   return snapshot;
+}
+
+/** A computer (not a phone or tablet): mouse/trackpad and not a mobile OS. */
+export function isDesktop() {
+  if (typeof window === "undefined") return false;
+  const mobileOs = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || isIos();
+  return !mobileOs && window.matchMedia("(pointer: fine)").matches;
+}
+
+export type DesktopBrowser = "edge" | "chrome" | "safari" | "firefox" | "other";
+
+/** Which desktop browser, to show the right install steps when it gives no install prompt. */
+export function desktopBrowser(ua = navigator.userAgent): DesktopBrowser {
+  if (/Edg\//.test(ua)) return "edge";
+  if (/Firefox\//.test(ua)) return "firefox";
+  if (/(Chrome|Chromium|CriOS)\//.test(ua) && !/OPR\//.test(ua)) return "chrome";
+  if (/Safari\//.test(ua) && /Macintosh/.test(ua)) return "safari";
+  return "other";
 }
 
 export const SERVER_INSTALL_STATE: InstallState = { kind: "manual" };
