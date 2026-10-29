@@ -2,9 +2,11 @@ import { expect, test } from "@playwright/test";
 import { admin, deleteUserByEmail, signUp, testEmail, userIdByEmail, watchErrors } from "./helpers";
 
 const email = testEmail();
+const email2 = testEmail();
 
 test.afterAll(async () => {
   await deleteUserByEmail(email);
+  await deleteUserByEmail(email2);
 });
 
 /** A tutor answer in the AI SDK UI message stream format (SSE): text + one suggestWord card. */
@@ -27,7 +29,7 @@ function tutorStream(deck: { id: string; name: string }) {
   return chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join("") + "data: [DONE]\n\n";
 }
 
-test("gia sư: bắt đầu trò chuyện, nhận câu trả lời và mở form thêm từ được gợi ý", async ({ page }) => {
+test("gia sư: hỏi từ ô chat, nhận câu trả lời và mở form thêm từ được gợi ý", async ({ page }) => {
   const errors = watchErrors(page);
   await signUp(page, email);
   const userId = await userIdByEmail(email);
@@ -46,10 +48,9 @@ test("gia sư: bắt đầu trò chuyện, nhận câu trả lời và mở form
 
   await page.getByRole("link", { name: "Gia sư" }).first().click();
   await expect(page).toHaveURL(/\/chat$/);
-  await page.getByRole("button", { name: "Bắt đầu trò chuyện" }).click();
-  await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}$/);
-
+  // One box: a suggestion chip opens a new conversation with the question already sent.
   await page.getByRole("button", { name: /Kiểm tra nhanh 5 từ đến hạn/ }).click();
+  await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}$/);
   await expect(page.getByText("Kiểm tra nhanh mình 5 từ đến hạn ôn nhé")).toBeVisible();
 
   if (process.env.E2E_REAL_AI === "1") {
@@ -71,5 +72,27 @@ test("gia sư: bắt đầu trò chuyện, nhận câu trả lời và mở form
   await expect(page.getByText("Đã xóa cuộc trò chuyện")).toBeVisible();
   await expect(row).toHaveCount(0);
 
+  expect(errors).toEqual([]);
+});
+
+test("gia sư: gõ câu hỏi ở trang Gia sư, câu trả lời rỗng hiện nút Thử lại", async ({ page }) => {
+  const errors = watchErrors(page);
+  await signUp(page, email2);
+  // An answer stream with no text at all (what Gemini sometimes sent): the bubble must not stay blank.
+  const empty = [{ type: "start", messageId: "msg_e2e_empty" }, { type: "start-step" }, { type: "finish-step" }, { type: "finish" }];
+  await page.route("**/api/chat", (route) =>
+    route.fulfill({
+      status: 200,
+      headers: { "content-type": "text/event-stream", "x-vercel-ai-ui-message-stream": "v1" },
+      body: empty.map((c) => `data: ${JSON.stringify(c)}\n\n`).join("") + "data: [DONE]\n\n",
+    }),
+  );
+  await page.goto("/chat");
+  await page.getByLabel("Tin nhắn cho gia sư").fill("phân biệt dog và cat");
+  await page.getByRole("button", { name: "Gửi" }).click();
+  await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}$/);
+  await expect(page.getByText("phân biệt dog và cat")).toBeVisible();
+  await expect(page.getByText(/chưa trả lời được tin này/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Thử lại" })).toBeVisible();
   expect(errors).toEqual([]);
 });

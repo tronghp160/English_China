@@ -1,23 +1,19 @@
-import {
-  convertToModelMessages,
-  createIdGenerator,
-  createUIMessageStreamResponse,
-  isStepCount,
-  streamText,
-  toUIMessageStream,
-  validateUIMessages,
-} from "ai";
+import { convertToModelMessages, createIdGenerator, createUIMessageStream, createUIMessageStreamResponse, validateUIMessages } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { CHAT_HISTORY_LIMIT, CHAT_MAX_CHARS, threadTitle, tutorInstructions } from "@/lib/ai/chat-prompt";
 import { chatTools, type ChatMessage } from "@/lib/ai/chat-tools";
-import { AiError, checkQuota, model, recordUsage, requireProvider } from "@/lib/ai/enrich";
-import { AI_ERROR_STATUS } from "@/lib/ai/http";
+import { AiError, checkQuota, recordUsage, requireProvider } from "@/lib/ai/enrich";
+import { writeTutorAnswer, type AnswerOutcome } from "@/lib/ai/tutor/answer";
+import { classifyTutorError, tutorErrorMessage } from "@/lib/ai/tutor/errors";
+import { learnerSnapshot } from "@/lib/ai/tutor/learner";
+import { tutorModel } from "@/lib/ai/tutor/model";
 import { getMe } from "@/lib/auth";
-import { serverEnv } from "@/lib/env";
 import { hitRateLimit } from "@/lib/rate-limit";
+import { studyDay } from "@/lib/srs/streak";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/database.types";
+import { readPrefs } from "@/lib/validation";
 
 export const maxDuration = 60;
 
@@ -33,13 +29,21 @@ const bodySchema = z.object({
   }),
 });
 
-// Short answers matter more than deep thinking for a chat turn.
+// Some thinking makes answers smarter; "low" keeps it quick. The retry after an empty turn thinks less.
 const PROVIDER_OPTIONS = {
   anthropic: { effort: "low" as const },
   google: { thinkingConfig: { thinkingLevel: "low" as const } },
 };
+const RETRY_PROVIDER_OPTIONS = {
+  anthropic: { effort: "low" as const },
+  google: { thinkingConfig: { thinkingLevel: "minimal" as const } },
+};
 
-const fail = (error: string, status: number) => NextResponse.json({ error }, { status });
+const fail = (error: string, status: number, extra?: { kind: string; retryAfter?: number }) =>
+  NextResponse.json(
+    { error, ...extra },
+    { status, headers: extra?.retryAfter ? { "Retry-After": String(Math.ceil(extra.retryAfter)) } : undefined },
+  );
 
 export async function POST(request: Request) {
   const me = await getMe();
@@ -52,30 +56,34 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: thread } = await supabase
     .from("chat_threads")
-    .select("id, language, deck_id, title, deck:decks(name)")
+    .select("id, language, deck_id, title, deck:decks(name, language)")
     .eq("id", threadId)
     .maybeSingle();
   if (!thread) return fail("Không tìm thấy cuộc trò chuyện.", 404);
 
   if (!(await hitRateLimit(me.user.id, "chat", 12, 60)))
-    return fail("Bạn gửi nhanh quá. Đợi một chút rồi gửi tiếp nhé.", 429);
+    return fail("Bạn gửi nhanh quá. Đợi một chút rồi gửi tiếp nhé.", 429, { kind: "rate", retryAfter: 20 });
 
   let provider;
   try {
     provider = requireProvider();
-    await checkQuota(me.user.id);
-    recordUsage(me.user.id); // one unit per message, answered or not
+    await checkQuota(me.user.id); // the unit is recorded only once an answer was written (onEnd)
   } catch (e) {
-    if (e instanceof AiError) return fail(e.message, AI_ERROR_STATUS[e.code]);
+    const err = classifyTutorError(e);
+    if (err.kind === "no_key") console.error("[tutor] no AI key on the server");
+    if (e instanceof AiError || err.kind !== "unknown") return fail(tutorErrorMessage(err), err.kind === "quota" ? 429 : 503, err);
     throw e;
   }
 
-  const { data: rows } = await supabase
-    .from("chat_messages")
-    .select("id, role, parts")
-    .eq("thread_id", threadId)
-    .order("created_at", { ascending: false })
-    .limit(CHAT_HISTORY_LIMIT);
+  const [{ data: rows }, snapshot] = await Promise.all([
+    supabase
+      .from("chat_messages")
+      .select("id, role, parts")
+      .eq("thread_id", threadId)
+      .order("created_at", { ascending: false })
+      .limit(CHAT_HISTORY_LIMIT),
+    learnerSnapshot(supabase, me.settings.study_langs),
+  ]);
   const history = (rows ?? [])
     .reverse()
     .filter((r) => r.id !== message.id)
@@ -92,55 +100,77 @@ export async function POST(request: Request) {
     .update({ updated_at: new Date().toISOString(), ...(thread.title ? {} : { title: threadTitle(text) }) })
     .eq("id", threadId);
 
-  const tools = chatTools(supabase, { language: thread.language, deckId: thread.deck_id });
+  const tools = chatTools(supabase, { language: thread.language, deckId: thread.deck_id, deckLanguage: thread.deck?.language });
   let messages: ChatMessage[];
   try {
     messages = await validateUIMessages<ChatMessage>({ messages: [...history, userMessage], tools });
   } catch (e) {
     // Stored history no longer matches the tool schemas: answer from this message alone.
-    console.error("[api/chat] history", e);
+    console.error("[tutor] history", e);
     messages = [userMessage];
   }
+  // Empty assistant turns from before this fix carry nothing for the model.
+  messages = messages.filter((m) => m.role !== "assistant" || m.parts.some((p) => p.type === "text" && p.text.trim()));
 
-  const result = streamText({
-    // A separate Gemini model keeps the tutor off the word-suggestion per-model limit.
-    model: model(provider, (provider.provider === "google" && serverEnv().AI_MODEL_CHAT_GOOGLE) || provider.model),
-    instructions: tutorInstructions({
-      language: thread.language,
-      learnerName: me.profile.display_name,
-      deckName: thread.deck?.name,
-    }),
-    messages: await convertToModelMessages(messages),
-    tools,
-    stopWhen: isStepCount(4),
-    maxOutputTokens: 1500,
-    providerOptions: PROVIDER_OPTIONS,
+  const prefs = readPrefs(me.settings.prefs);
+  const instructions = tutorInstructions({
+    language: thread.language,
+    learnerName: me.profile.display_name,
+    deckName: thread.deck?.name,
+    tutorName: prefs.mascot ? prefs.mascot_name : null,
+    snapshot,
+    firstTurn: history.length === 0,
+    today: studyDay(new Date(), me.settings.timezone),
   });
-  // Keep generating (and saving) when the user leaves the page mid-answer.
-  void result.consumeStream();
+  const modelMessages = await convertToModelMessages(messages);
+  const onError = (e: unknown) => {
+    const err = classifyTutorError(e);
+    console.error("[tutor]", { userId: me.user.id, threadId, kind: err.kind }, e);
+    return tutorErrorMessage(err);
+  };
+  let outcome: AnswerOutcome = { status: "failed" };
+
+  const stream = createUIMessageStream<ChatMessage>({
+    originalMessages: messages,
+    generateId: createIdGenerator({ prefix: "msg", size: 16 }),
+    onError,
+    execute: async ({ writer }) => {
+      outcome = await writeTutorAnswer({
+        writer,
+        model: tutorModel(provider),
+        instructions,
+        messages: modelMessages,
+        tools,
+        providerOptions: PROVIDER_OPTIONS,
+        retryProviderOptions: RETRY_PROVIDER_OPTIONS,
+        onError,
+      });
+    },
+    onEnd: async ({ responseMessage }) => {
+      const hasText = responseMessage.parts.some((p) => p.type === "text" && p.text.trim());
+      if (!hasText) return; // failed turns are not stored (the question is; "Thử lại" answers it)
+      if (outcome.status === "answered") recordUsage(me.user.id);
+      await supabase.from("chat_messages").upsert(
+        {
+          thread_id: threadId,
+          id: responseMessage.id,
+          user_id: me.user.id,
+          role: "assistant",
+          parts: responseMessage.parts as unknown as Json,
+        },
+        { onConflict: "thread_id,id" },
+      );
+    },
+  });
 
   return createUIMessageStreamResponse({
-    stream: toUIMessageStream({
-      stream: result.stream,
-      originalMessages: messages,
-      generateMessageId: createIdGenerator({ prefix: "msg", size: 16 }),
-      onError: (e) => {
-        console.error("[api/chat]", e);
-        return "Gia sư đang bận. Thử gửi lại sau ít phút nhé.";
-      },
-      onEnd: async ({ responseMessage }) => {
-        if (!responseMessage.parts.length) return;
-        await supabase.from("chat_messages").upsert(
-          {
-            thread_id: threadId,
-            id: responseMessage.id,
-            user_id: me.user.id,
-            role: "assistant",
-            parts: responseMessage.parts as unknown as Json,
-          },
-          { onConflict: "thread_id,id" },
-        );
-      },
-    }),
+    stream,
+    // Read a copy to the end, so the answer is still generated and saved when the user leaves the page.
+    consumeSseStream: async ({ stream: copy }) => {
+      const reader = copy.getReader();
+      while (!(await reader.read()).done) {
+        // drain
+      }
+    },
   });
 }

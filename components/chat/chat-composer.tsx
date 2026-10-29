@@ -1,0 +1,75 @@
+"use client";
+
+import { ArrowUp, Square } from "lucide-react";
+import { forwardRef, type KeyboardEvent } from "react";
+import { Button } from "@/components/ui/button";
+import { CHAT_MAX_CHARS } from "@/lib/ai/chat-prompt";
+import { cn } from "@/lib/utils";
+
+/** Enter sends on devices with a keyboard; never while an IME (Telex, pinyin) is composing. */
+export function enterSends(e: KeyboardEvent<HTMLTextAreaElement>) {
+  return e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && window.matchMedia("(pointer: fine)").matches;
+}
+
+/** The message box shared by the tutor home and a thread: auto-growing textarea + round send/stop button. */
+export const ChatComposer = forwardRef<
+  HTMLTextAreaElement,
+  {
+    value: string;
+    onChange: (v: string) => void;
+    onSend: () => void;
+    onStop?: () => void;
+    busy?: boolean;
+    disabled?: boolean;
+    name?: string;
+    placeholder?: string;
+    className?: string;
+  }
+>(function ChatComposer({ value, onChange, onSend, onStop, busy, disabled, name, placeholder, className }, ref) {
+  return (
+    <div className={className}>
+      <div className="flex items-end gap-2 rounded-3xl border border-border/60 bg-surface p-2 shadow-lg focus-within:border-primary dark:border-border">
+        <label htmlFor="chat-input" className="sr-only">
+          Tin nhắn cho gia sư
+        </label>
+        <textarea
+          id="chat-input"
+          ref={ref}
+          name={name}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (enterSends(e)) {
+              e.preventDefault();
+              onSend();
+            }
+          }}
+          rows={1}
+          maxLength={CHAT_MAX_CHARS}
+          placeholder={placeholder ?? "Hỏi gia sư bất cứ điều gì…"}
+          className="field-sizing-content max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3 py-2.5 text-base text-fg outline-none placeholder:text-fg-subtle"
+        />
+        {busy && onStop ? (
+          <Button type="button" variant="secondary" size="icon" onClick={onStop} aria-label="Dừng trả lời" className="size-11 shrink-0 rounded-full">
+            <Square className="size-4 fill-current" aria-hidden />
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            size="icon"
+            aria-label="Gửi"
+            disabled={disabled || busy || !value.trim()}
+            className={cn("size-11 shrink-0 rounded-full")}
+          >
+            <ArrowUp strokeWidth={2.25} aria-hidden />
+          </Button>
+        )}
+      </div>
+      {value.length > CHAT_MAX_CHARS - 200 && (
+        <p className="mt-1 px-3 text-right text-xs text-fg-muted">
+          {value.length}/{CHAT_MAX_CHARS}
+        </p>
+      )}
+    </div>
+  );
+});

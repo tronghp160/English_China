@@ -6,6 +6,7 @@ import type { LangCode } from "@/lib/lang/types";
 import { cn } from "@/lib/utils";
 
 export type SuggestedWord = {
+  language?: LangCode;
   term: string;
   reading?: string;
   meaning_vi: string;

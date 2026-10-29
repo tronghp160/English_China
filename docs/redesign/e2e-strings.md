@@ -5,7 +5,7 @@ Keep these texts. Emoji next to them may go. If one must change, edit the test i
 
 ## Text
 - Input labels: Email · Mật khẩu · Mật khẩu mới · Nhập lại mật khẩu mới · Tên của bạn · Tên hiển thị · Tên người dùng · Từ · Nghĩa tiếng Việt · Gõ từ tiếng Anh · "...để xác nhận" (delete account)
-- Buttons: Đăng nhập (exact) · Tạo tài khoản · Hiện mật khẩu · Gửi link đặt lại mật khẩu · Lưu mật khẩu · Tiếp tục (onboarding steps 1 and 2; V3 added step 3, the summary, so the flow clicks it twice) · /Bắt đầu học/ · Bắt đầu · Bắt đầu trò chuyện · /Gợi ý/ · Lưu từ · /Lật thẻ/ · /Nhớ/ (inside group "Bạn nhớ từ này thế nào?") · /^Tiếp tục/ (practice feedback) · Làm tiếp · Học tiếp · Nộp bài · Làm lại câu sai (2) · Thử lại · Xóa tài khoản · Xóa vĩnh viễn · /Xóa cuộc trò chuyện/ · /Kiểm tra nhanh 5 từ đến hạn/ · Đúng · Sai (exact)
+- Buttons: Đăng nhập (exact) · Tạo tài khoản · Hiện mật khẩu · Gửi link đặt lại mật khẩu · Lưu mật khẩu · Tiếp tục (onboarding steps 1 and 2; V3 added step 3, the summary, so the flow clicks it twice) · /Bắt đầu học/ · Bắt đầu · /Gợi ý/ · Lưu từ · /Lật thẻ/ · /Nhớ/ (inside group "Bạn nhớ từ này thế nào?") · /^Tiếp tục/ (practice feedback) · Làm tiếp · Học tiếp · Nộp bài · Làm lại câu sai (2) · Thử lại · Xóa tài khoản · Xóa vĩnh viễn · /Xóa cuộc trò chuyện/ · /Kiểm tra nhanh 5 từ đến hạn/ · Đúng · Sai (exact)
 - Links: Gia sư · Thêm từ · Quên mật khẩu? · /Bắt đầu ôn/ · `Thêm vào <deck name>` · /Từ vựng tiếng Anh của tôi/ (deck card link) · /resilient/ (word row link)
 - Groups / switch / radio: group "Bạn nhớ từ này thế nào?" · group "Các đáp án" · group "Đúng hay sai?" · switch "Thêm bộ từ mẫu" · radio /Tiếng Anh/
 - Headings / text: /Chào buổi .+, <name>!/ · Chuỗi ngày · "1" (streak number, `getByText(/^1$/)`) · Xong phiên rồi! · Đúng rồi! · 80% · Câu 1: · Đã làm x/y · Đúng 8/10 · Bảng 1/1 · lần ghép sai · Kỷ lục đầu tiên! · Tiếp tục học? · /Hết vòng/ · /Bạn đã thuộc hết 3 từ/ · Bạn đang offline · Link đã hết hạn · Đặt mật khẩu mới · Đã lưu resilient · Đã lưu mật khẩu mới · Đã xóa cuộc trò chuyện · "Còn 2 câu chưa làm" (alertdialog)
@@ -15,7 +15,7 @@ Keep these texts. Emoji next to them may go. If one must change, edit the test i
 ## Structure the tests rely on
 - Test mode: each question is a `section[aria-labelledby]` containing a group "Các đáp án" or "Đúng hay sai?".
 - Learn mode reads `main` textContent to find the current word.
-- Chat: a list item whose text contains "Gia sư:" (the tutor message prefix, can be `sr-only`); a `listitem` containing the delete button for each thread.
+- Chat: the box "Tin nhắn cho gia sư" (label) + button "Gửi"; "chưa trả lời được tin này" on an empty answer; a list item whose text contains "Gia sư:" (the tutor message prefix, can be `sr-only`); a `listitem` containing the delete button for each thread.
 - Review: after flipping, the back face shows the Vietnamese meaning; the rating buttons are inside group "Bạn nhớ từ này thế nào?".
 - Mascot unit test (`tests/unit/mascot.test.ts`) locks the mood names and `say()` behavior.
 

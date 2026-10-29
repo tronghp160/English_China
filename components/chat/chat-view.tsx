@@ -2,49 +2,54 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { ArrowUp, BookOpenCheck, Drama, PenLine, RotateCcw, Search, Square, Zap, type LucideIcon } from "lucide-react";
+import { BookOpenCheck, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useOptionalMe } from "@/components/app-shell/me-provider";
 import { Pup } from "@/components/mascot/pup";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CHAT_MAX_CHARS } from "@/lib/ai/chat-prompt";
 import type { ChatMessage } from "@/lib/ai/chat-tools";
-import { LANGUAGES } from "@/lib/lang/registry";
-import { TONES } from "@/lib/tone";
+import type { ChatStarter } from "@/lib/ai/tutor/starters";
 import type { LangCode } from "@/lib/lang/types";
+import { ChatComposer } from "./chat-composer";
+import { ChatStarters } from "./chat-starters";
 import { MessageText } from "./message-text";
 import { SuggestWordCard } from "./suggest-word-card";
 
-type Starter = { label: string; icon: LucideIcon; text: string; send: boolean };
-
-function starters(language: LangCode): Starter[] {
-  const label = LANGUAGES[language].label.toLowerCase();
-  return [
-    { icon: Drama, label: "Luyện hội thoại với từ hay quên", text: "Mình muốn luyện một đoạn hội thoại ngắn dùng các từ mình hay quên.", send: true },
-    { icon: Zap, label: "Kiểm tra nhanh 5 từ đến hạn", text: "Kiểm tra nhanh mình 5 từ đến hạn ôn nhé, hỏi từng câu một.", send: true },
-    { icon: PenLine, label: "Sửa câu giúp mình", text: `Sửa giúp mình câu ${label} này: `, send: false },
-    { icon: Search, label: "Phân biệt hai từ hay nhầm", text: "Phân biệt giúp mình hai từ: ", send: false },
-  ];
-}
-
 /** Server errors arrive as the JSON body ({ error }) or as the stream's error text. */
-function errorText(error: Error) {
+export function errorText(error: Error) {
   try {
     const body = JSON.parse(error.message) as { error?: string };
     if (body.error) return body.error;
   } catch {
-    if (error.message && error.message.length < 200) return error.message;
+    if (error.message && error.message.length < 300) return error.message;
   }
   return "Không gửi được tin nhắn. Kiểm tra mạng rồi thử lại.";
 }
 
 const TOOL_BUSY: Record<string, string> = {
+  "tool-lookupWord": "Đang tra từ điển…",
   "tool-searchMyWords": "Đang xem sổ từ của bạn…",
   "tool-getStudyFocus": "Đang chọn từ cho bạn luyện…",
   "tool-suggestWord": "Đang chuẩn bị thẻ từ…",
 };
+
+const hasText = (m: ChatMessage) => m.parts.some((p) => p.type === "text" && p.text.trim());
+
+function Thinking({ label }: { label?: string }) {
+  return (
+    <span className="flex items-center gap-2 py-0.5 text-sm text-fg-muted" role="status">
+      <span className="flex gap-1.5" aria-hidden>
+        <span className="size-1.5 animate-pulse rounded-full bg-fg-muted [animation-delay:-0.4s] [animation-duration:1.4s]" />
+        <span className="size-1.5 animate-pulse rounded-full bg-fg-muted [animation-delay:-0.2s] [animation-duration:1.4s]" />
+        <span className="size-1.5 animate-pulse rounded-full bg-fg-muted [animation-duration:1.4s]" />
+      </span>
+      {label ?? <span className="sr-only">Gia sư đang trả lời</span>}
+    </span>
+  );
+}
 
 export function ChatView({
   threadId,
@@ -52,14 +57,18 @@ export function ChatView({
   initialMessages,
   initialPrompt,
   aiEnabled,
+  starters,
 }: {
   threadId: string;
   language: LangCode;
   initialMessages: ChatMessage[];
   initialPrompt?: string;
   aiEnabled: boolean;
+  starters: ChatStarter[];
 }) {
-  const mascot = useOptionalMe()?.prefs.mascot !== false;
+  const prefs = useOptionalMe()?.prefs;
+  const mascot = prefs?.mascot !== false;
+  const tutorName = mascot ? (prefs?.mascot_name ?? "Bin") : "Gia sư";
   const router = useRouter();
   const titled = useRef(false);
   const [transport] = useState(
@@ -87,7 +96,7 @@ export function ChatView({
   const endRef = useRef<HTMLDivElement>(null);
   const busy = status === "submitted" || status === "streaming";
 
-  // "Hỏi gia sư" buttons open a new thread with ?q=…: send it once, then drop it from the URL.
+  // "Hỏi gia sư" buttons and the tutor home open a thread with ?q=…: send it once, then drop it from the URL.
   const sentInitial = useRef(false);
   useEffect(() => {
     if (sentInitial.current || !initialPrompt || initialMessages.length || !aiEnabled) return;
@@ -108,19 +117,17 @@ export function ChatView({
     if (error) clearError();
     void sendMessage({ text: t });
     setInput("");
+    inputRef.current?.focus();
+  };
+  const retry = () => {
+    if (error) clearError();
+    void regenerate();
   };
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     send(input);
   };
-  const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Enter sends on devices with a keyboard; never while an IME (Telex, pinyin) is composing.
-    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && window.matchMedia("(pointer: fine)").matches) {
-      e.preventDefault();
-      send(input);
-    }
-  };
-  const pickStarter = (s: Starter) => {
+  const pickStarter = (s: ChatStarter) => {
     if (s.send) return send(s.text);
     setInput(s.text);
     requestAnimationFrame(() => {
@@ -130,77 +137,102 @@ export function ChatView({
     });
   };
 
+  const last = messages.at(-1);
+  // While the answer has no text yet (thinking, looking words up), the bubble shows what is going on.
+  const waiting = busy && (last?.role === "user" || (last?.role === "assistant" && !hasText(last)));
+
   return (
     <div className="flex flex-col">
       {messages.length === 0 && (
-        <EmptyState figure="chat" title="Hôm nay mình học gì nhỉ?" className="py-6">
-          Hỏi về một từ, nhờ sửa câu, hay luyện hội thoại với chính những từ trong sổ của bạn.
-        </EmptyState>
+        <div className="mb-6 space-y-4">
+          <EmptyState figure="chat" title="Hôm nay mình học gì nhỉ?" className="py-4">
+            Hỏi bất cứ điều gì về tiếng Anh hay tiếng Trung. {tutorName} biết những từ trong sổ của bạn.
+          </EmptyState>
+          {aiEnabled ? (
+            <ChatStarters starters={starters} onPick={pickStarter} disabled={busy} />
+          ) : (
+            <p className="text-center text-sm text-danger-fg">Gia sư chưa được bật (thiếu khóa AI trên máy chủ).</p>
+          )}
+        </div>
       )}
-      {messages.length === 0 &&
-        (aiEnabled ? (
-          <ul className="grid w-full gap-2 sm:grid-cols-2">
-            {starters(language).map((s, i) => (
-              <li key={s.label}>
-                <Button type="button" variant="soft" tone={TONES[(i * 2) % 8]} onClick={() => pickStarter(s)} className="h-auto min-h-12 w-full justify-start rounded-lg py-2.5 whitespace-normal">
-                  <s.icon aria-hidden />
-                  {s.label}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-center text-sm text-danger-fg">Gia sư chưa được bật (thiếu khóa AI trên máy chủ).</p>
-        ))}
 
       <ol className="space-y-5" aria-label="Tin nhắn" aria-live="polite">
-        {messages.map((m) =>
-          m.role === "user" ? (
-            <li key={m.id} className="flex justify-end">
-              <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 whitespace-pre-wrap text-on-primary">
-                {m.parts.map((p, i) => (p.type === "text" ? <span key={i}>{p.text}</span> : null))}
-              </div>
-            </li>
-          ) : (
+        {messages.map((m, mi) => {
+          if (m.role === "user")
+            return (
+              <li key={m.id} className="flex justify-end">
+                <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 break-words whitespace-pre-wrap text-on-primary">
+                  {m.parts.map((p, i) => (p.type === "text" ? <span key={i}>{p.text}</span> : null))}
+                </div>
+              </li>
+            );
+          const isLast = mi === messages.length - 1;
+          const streaming = isLast && busy;
+          const running = m.parts.find(
+            (p) => p.type in TOOL_BUSY && "state" in p && (p.state === "input-streaming" || p.state === "input-available"),
+          );
+          return (
             // The tutor answers in a white bubble beside Bin.
             <li key={m.id} className="flex items-start gap-2.5">
-              {mascot ? <Pup mood="happy" size={32} className="mt-1" /> : <span aria-hidden className="size-8 shrink-0" />}
-              <span className="sr-only">Gia sư: </span>
-              <div className="min-w-0 flex-1 rounded-2xl rounded-bl-md bg-surface px-4 py-3 text-fg shadow-sm dark:border dark:border-border">
-                {/* Text first, word cards last: models often call the tool before writing. */}
-                {[...m.parts].sort((a, b) => Number(a.type === "tool-suggestWord") - Number(b.type === "tool-suggestWord")).map((p, i) => {
-                  if (p.type === "text") return <MessageText key={i} text={p.text} />;
-                  if (p.type === "tool-suggestWord" && p.state === "output-available")
-                    return <SuggestWordCard key={i} word={p.output} language={language} />;
-                  if (p.type in TOOL_BUSY && "state" in p && (p.state === "input-streaming" || p.state === "input-available"))
-                    return (
-                      <p key={i} className="flex items-center gap-1.5 py-1 text-sm text-fg-muted">
-                        <BookOpenCheck className="size-4" strokeWidth={1.75} aria-hidden />
-                        {TOOL_BUSY[p.type]}
+              {mascot ? <Pup mood={streaming ? "think" : "happy"} size={32} className="mt-5" /> : <span aria-hidden className="size-8 shrink-0" />}
+              <div className="min-w-0 flex-1">
+                <span className="sr-only">Gia sư: </span>
+                <p aria-hidden className="mb-1 text-xs font-semibold text-fg-muted">
+                  {tutorName}
+                </p>
+                <div className="rounded-2xl rounded-tl-md bg-surface px-4 py-3 text-fg shadow-sm dark:border dark:border-border">
+                  {/* Text first, word cards last: models often call the tool before writing. */}
+                  {[...m.parts]
+                    .sort((a, b) => Number(a.type === "tool-suggestWord") - Number(b.type === "tool-suggestWord"))
+                    .map((p, i) => {
+                      if (p.type === "text") return <MessageText key={i} text={p.text} />;
+                      if (p.type === "tool-suggestWord" && p.state === "output-available")
+                        return <SuggestWordCard key={i} word={p.output} language={p.output.language ?? language} />;
+                      return null;
+                    })}
+                  {!hasText(m) &&
+                    (streaming ? (
+                      <Thinking label={running ? TOOL_BUSY[running.type] : undefined} />
+                    ) : (
+                      // An answer that never came (an old empty turn, or the page closed mid-answer).
+                      <p className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
+                        {tutorName} chưa trả lời được tin này.
+                        {isLast && aiEnabled && (
+                          <Button type="button" variant="outline" size="sm" onClick={retry}>
+                            <RotateCcw aria-hidden />
+                            Thử lại
+                          </Button>
+                        )}
                       </p>
-                    );
-                  return null;
-                })}
+                    ))}
+                  {hasText(m) && streaming && running && (
+                    <p className="mt-2 flex items-center gap-1.5 text-sm text-fg-muted">
+                      <BookOpenCheck className="size-4" strokeWidth={1.75} aria-hidden />
+                      {TOOL_BUSY[running.type]}
+                    </p>
+                  )}
+                </div>
               </div>
             </li>
-          ),
-        )}
-        {status === "submitted" && (
-          <li className="flex items-center gap-2.5" aria-label="Gia sư đang trả lời">
-            {mascot ? <Pup mood="think" size={32} /> : <span aria-hidden className="size-8 shrink-0" />}
-            <span className="flex gap-1.5 rounded-2xl rounded-bl-md bg-surface px-4 py-3.5 shadow-sm" aria-hidden>
-              <span className="size-1.5 animate-pulse rounded-full bg-fg-muted [animation-duration:1.4s] [animation-delay:-0.4s]" />
-              <span className="size-1.5 animate-pulse rounded-full bg-fg-muted [animation-duration:1.4s] [animation-delay:-0.2s]" />
-              <span className="size-1.5 animate-pulse rounded-full bg-fg-muted [animation-duration:1.4s]" />
-            </span>
+          );
+        })}
+        {waiting && last?.role === "user" && (
+          <li className="flex items-start gap-2.5" aria-label="Gia sư đang trả lời">
+            {mascot ? <Pup mood="think" size={32} className="mt-5" /> : <span aria-hidden className="size-8 shrink-0" />}
+            <div>
+              <p className="mb-1 text-xs font-semibold text-fg-muted">{tutorName}</p>
+              <div className="rounded-2xl rounded-tl-md bg-surface px-4 py-3 shadow-sm dark:border dark:border-border">
+                <Thinking />
+              </div>
+            </div>
           </li>
         )}
       </ol>
 
       {error && (
         <div role="alert" className="mt-4 flex flex-wrap items-center gap-3 rounded-md border-l-[3px] border-danger bg-danger-soft px-4 py-3 text-sm text-danger-fg">
-          <span className="flex-1">{errorText(error)}</span>
-          <Button type="button" variant="outline" size="sm" onClick={() => void regenerate()}>
+          <span className="min-w-0 flex-1">{errorText(error)}</span>
+          <Button type="button" variant="outline" size="sm" onClick={retry}>
             <RotateCcw aria-hidden />
             Thử lại
           </Button>
@@ -209,40 +241,15 @@ export function ChatView({
       <div ref={endRef} />
 
       {aiEnabled && (
-        <form
-          onSubmit={onSubmit}
-          className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-5 lg:bottom-4"
-        >
-          <div className="flex items-end gap-2 rounded-3xl border border-border/60 bg-surface p-2 shadow-lg dark:border-border">
-            <label htmlFor="chat-input" className="sr-only">
-              Tin nhắn cho gia sư
-            </label>
-            <textarea
-              id="chat-input"
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={onKeyDown}
-              rows={1}
-              maxLength={CHAT_MAX_CHARS}
-              placeholder="Hỏi gia sư…"
-              className="field-sizing-content max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3 py-2.5 text-base text-fg outline-none placeholder:text-fg-subtle"
-            />
-            {busy ? (
-              <Button type="button" variant="secondary" size="icon" onClick={() => void stop()} aria-label="Dừng trả lời" className="size-10 shrink-0 rounded-full">
-                <Square className="size-4 fill-current" aria-hidden />
-              </Button>
-            ) : (
-              <Button type="submit" size="icon" aria-label="Gửi" disabled={!input.trim()} className="size-10 shrink-0 rounded-full">
-                <ArrowUp strokeWidth={2.25} aria-hidden />
-              </Button>
-            )}
-          </div>
-          {input.length > CHAT_MAX_CHARS - 200 && (
-            <p className="mt-1 px-3 text-right text-xs text-fg-muted">
-              {input.length}/{CHAT_MAX_CHARS}
-            </p>
-          )}
+        <form onSubmit={onSubmit} className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-5 lg:bottom-4">
+          <ChatComposer
+            ref={inputRef}
+            value={input}
+            onChange={setInput}
+            onSend={() => send(input)}
+            onStop={() => void stop()}
+            busy={busy}
+          />
         </form>
       )}
     </div>
