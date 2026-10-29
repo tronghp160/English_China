@@ -58,7 +58,7 @@ export default async function ChatThreadPage({ params, searchParams }: PageProps
       <div className="my-4 flex items-center gap-3 rounded-lg border border-border/60 bg-surface p-3 shadow-xs dark:border-border">
         <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary-soft text-primary-fg">
           {prefs.mascot ? (
-            <Pup mood="happy" size={36} className="translate-y-[3px]" />
+            <Pup mood="happy" size={40} crop="head" />
           ) : (
             <BotMessageSquare className="size-5" />
           )}

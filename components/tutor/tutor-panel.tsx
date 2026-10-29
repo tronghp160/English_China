@@ -226,7 +226,7 @@ export function TutorPanel({
         <div className="flex items-center gap-3 min-w-0">
           <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-full bg-surface ring-2 ring-white/30">
             {mascot ? (
-              <Pup mood={busy ? "think" : "happy"} size={40} className="translate-y-[4px]" />
+              <Pup mood={busy ? "think" : "happy"} size={44} crop="head" />
             ) : (
               <BotMessageSquare className="size-6 text-primary" strokeWidth={2} aria-hidden />
             )}

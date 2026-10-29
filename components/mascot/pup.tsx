@@ -268,6 +268,7 @@ export function Pup({
   look,
   follow = false,
   onActionEnd,
+  crop = "full",
   className,
 }: {
   mood?: PupMood;
@@ -284,6 +285,8 @@ export function Pup({
   follow?: boolean;
   /** The action's animation finished. */
   onActionEnd?: () => void;
+  /** Crop mode: "full" puppy (120x120) or "head" portrait (96x96 centered on head/collar). */
+  crop?: "full" | "head";
   className?: string;
 }) {
   const ref = useRef<SVGSVGElement>(null);
@@ -304,7 +307,7 @@ export function Pup({
   return (
     <svg
       ref={ref}
-      viewBox="0 0 120 120"
+      viewBox={crop === "head" ? "12 10 96 96" : "0 0 120 120"}
       width={size}
       height={size}
       aria-hidden

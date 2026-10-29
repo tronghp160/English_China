@@ -67,7 +67,7 @@ export function TutorLauncher({
       >
         {mascot ? (
           <span className="grid size-[46px] place-items-center overflow-hidden rounded-full bg-surface ring-2 ring-white/40">
-            <Pup mood={mood} size={58} className="translate-y-[6px]" />
+            <Pup mood={mood} size={46} crop="head" />
           </span>
         ) : (
           <BotMessageSquare className="size-[26px] text-on-primary" strokeWidth={2} aria-hidden />
