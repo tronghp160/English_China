@@ -7,6 +7,8 @@ import { LangMark } from "@/components/lang-mark";
 import { MascotSay } from "@/components/mascot/mascot-say";
 import { Pup } from "@/components/mascot/pup";
 import { ProgressRing } from "@/components/stats/progress-ring";
+import { TutorLauncher } from "@/components/tutor/tutor-launcher";
+import { TutorNudge } from "@/components/tutor/tutor-nudge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -142,6 +144,37 @@ export default function DevUiPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <EmptyState figure="notebook" title="Chưa có bộ từ nào">Tạo bộ từ đầu tiên hoặc thêm bộ từ mẫu.</EmptyState>
           <EmptyState figure="check" title="Hôm nay ôn xong rồi" actions={<Button size="sm"><BookOpen />Luyện thêm</Button>} />
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg">Tutor launcher</h2>
+        <div className="flex flex-wrap items-center gap-8 rounded-xl bg-surface p-6 border border-border">
+          <div className="flex flex-col items-center gap-2">
+            <TutorLauncher open={false} busy={false} unread={false} onToggle={() => {}} name="Bin" />
+            <span className="text-xs text-fg-muted">Đóng (mặc định)</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <TutorLauncher open={true} busy={false} unread={false} onToggle={() => {}} name="Bin" />
+            <span className="text-xs text-fg-muted">Mở</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <TutorLauncher open={false} busy={true} unread={false} onToggle={() => {}} name="Bin" />
+            <span className="text-xs text-fg-muted">Đang trả lời</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <TutorLauncher open={false} busy={false} unread={true} onToggle={() => {}} name="Bin" />
+            <span className="text-xs text-fg-muted">Có câu trả lời mới</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <TutorLauncher open={false} busy={false} unread={false} onToggle={() => {}} mascot={false} name="Bin" />
+            <span className="text-xs text-fg-muted">Tắt linh vật</span>
+          </div>
+          <div className="relative flex flex-col items-center gap-2 pt-16">
+            <TutorNudge show={true} name="Bin" />
+            <TutorLauncher open={false} busy={false} unread={false} onToggle={() => {}} name="Bin" />
+            <span className="text-xs text-fg-muted">Kèm gợi ý (Nudge)</span>
+          </div>
         </div>
       </section>
 

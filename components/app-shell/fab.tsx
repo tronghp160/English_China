@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useKeyboardOpen } from "@/lib/use-keyboard-open";
 import { cn } from "@/lib/utils";
 
 /**
@@ -12,15 +13,7 @@ import { cn } from "@/lib/utils";
  */
 export function AddWordFab({ href, label = "Thêm từ" }: { href: string; label?: string }) {
   const [compact, setCompact] = useState(false);
-  const [keyboard, setKeyboard] = useState(false);
-
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const onResize = () => setKeyboard(window.innerHeight - vv.height > 150);
-    vv.addEventListener("resize", onResize);
-    return () => vv.removeEventListener("resize", onResize);
-  }, []);
+  const keyboard = useKeyboardOpen();
 
   useEffect(() => {
     let last = window.scrollY;
