@@ -6,7 +6,8 @@ import { STARTER_ICONS } from "@/components/chat/starter-icons";
 import { Pup } from "@/components/mascot/pup";
 import { Button } from "@/components/ui/button";
 import { IconTile } from "@/components/ui/icon-tile";
-import { chatStarters } from "@/lib/ai/tutor/starters";
+import { parsePagePath } from "@/lib/ai/tutor/page-context";
+import { chatStarters, type ChatStarter } from "@/lib/ai/tutor/starters";
 import type { LangCode } from "@/lib/lang/types";
 
 export function TutorPanelEmpty({
@@ -26,7 +27,21 @@ export function TutorPanelEmpty({
   studyLangs: LangCode[];
   onClose: () => void;
 }) {
-  const starters = chatStarters(studyLangs);
+  const baseStarters = chatStarters(studyLangs);
+  const isWordPage = typeof window !== "undefined" && parsePagePath(window.location.pathname).kind === "word";
+
+  const starters: ChatStarter[] = isWordPage
+    ? [
+        {
+          label: "Giải thích kỹ từ đang xem",
+          text: "Giải thích kỹ từ mình đang xem giúp mình nhé: cách dùng, ví dụ và các từ hay đi cùng.",
+          send: true,
+          icon: "explain",
+          tone: "teal",
+        },
+        ...baseStarters,
+      ]
+    : baseStarters;
 
   return (
     <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain p-4">

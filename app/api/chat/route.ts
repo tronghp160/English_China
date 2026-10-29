@@ -8,6 +8,7 @@ import { writeTutorAnswer, type AnswerOutcome } from "@/lib/ai/tutor/answer";
 import { classifyTutorError, tutorErrorMessage } from "@/lib/ai/tutor/errors";
 import { learnerSnapshot } from "@/lib/ai/tutor/learner";
 import { tutorModel } from "@/lib/ai/tutor/model";
+import { pageContextLine } from "@/lib/ai/tutor/page-context";
 import { getMe } from "@/lib/auth";
 import { hitRateLimit } from "@/lib/rate-limit";
 import { studyDay } from "@/lib/srs/streak";
@@ -19,7 +20,7 @@ export const maxDuration = 60;
 
 /** The client sends only the new user message (useChat prepareSendMessagesRequest); history is loaded here. */
 const bodySchema = z.object({
-  id: z.uuid(),
+  id: z.string().uuid(),
   message: z.object({
     id: z.string().min(1).max(64),
     role: z.literal("user"),
@@ -27,6 +28,7 @@ const bodySchema = z.object({
       .array(z.object({ type: z.literal("text"), text: z.string().trim().min(1).max(CHAT_MAX_CHARS) }))
       .length(1),
   }),
+  context: z.object({ path: z.string().max(200) }).optional(),
 });
 
 // Some thinking makes answers smarter; "low" keeps it quick. The retry after an empty turn thinks less.
@@ -50,7 +52,7 @@ export async function POST(request: Request) {
   if (!me) return fail("Bạn cần đăng nhập.", 401);
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return fail(`Tin nhắn trống hoặc dài quá ${CHAT_MAX_CHARS} ký tự.`, 400);
-  const { id: threadId, message } = parsed.data;
+  const { id: threadId, message, context } = parsed.data;
   const text = message.parts[0].text;
 
   const supabase = await createClient();
@@ -75,7 +77,7 @@ export async function POST(request: Request) {
     throw e;
   }
 
-  const [{ data: rows }, snapshot] = await Promise.all([
+  const [{ data: rows }, snapshot, pageContext] = await Promise.all([
     supabase
       .from("chat_messages")
       .select("id, role, parts")
@@ -83,6 +85,7 @@ export async function POST(request: Request) {
       .order("created_at", { ascending: false })
       .limit(CHAT_HISTORY_LIMIT),
     learnerSnapshot(supabase, me.settings.study_langs),
+    context?.path ? pageContextLine(supabase, context.path) : Promise.resolve(null),
   ]);
   const history = (rows ?? [])
     .reverse()
@@ -121,6 +124,7 @@ export async function POST(request: Request) {
     snapshot,
     firstTurn: history.length === 0,
     today: studyDay(new Date(), me.settings.timezone),
+    pageContext,
   });
   const modelMessages = await convertToModelMessages(messages);
   const onError = (e: unknown) => {

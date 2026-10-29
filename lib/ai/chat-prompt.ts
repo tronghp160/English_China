@@ -20,6 +20,8 @@ export type TutorContext = {
   firstTurn?: boolean;
   /** Today in the learner's time zone, e.g. "2026-10-29". */
   today?: string;
+  /** Current page context line (if any), from pageContextLine. */
+  pageContext?: string | null;
 };
 
 const wordLine = (w: SnapshotWord) =>
@@ -50,6 +52,7 @@ export function tutorInstructions(ctx: TutorContext) {
     `${who}: một gia sư tiếng Anh và tiếng Trung giỏi, kiên nhẫn, nói chuyện tự nhiên với người Việt (xưng "mình", gọi "bạn").`,
     `Người học: ${ctx.learnerName}. Cuộc trò chuyện này mặc định về ${main.label.toLowerCase()}${ctx.today ? `; hôm nay là ${ctx.today}` : ""}.`,
     ctx.deckName ? `Cuộc trò chuyện gắn với bộ từ "${ctx.deckName}"; khi cần ví dụ hay luyện tập, ưu tiên từ trong bộ đó.` : null,
+    ctx.pageContext ? `\n<trang_hien_tai>\n${ctx.pageContext}\n</trang_hien_tai>` : null,
     "",
     "<du_lieu_nguoi_hoc>",
     learnerBlock(ctx.snapshot),
