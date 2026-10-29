@@ -4,18 +4,32 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { CHAT_MAX_CHARS } from "@/lib/ai/chat-prompt";
+import type { ChatMessage } from "@/lib/ai/chat-tools";
 import { guessLanguage } from "@/lib/ai/tutor/starters";
 import { requireMe, requireUser } from "@/lib/auth";
+import type { LangCode } from "@/lib/lang/types";
 import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "./result";
 
 const startSchema = z.object({
   /** Optional: guessed from the first message, else the learner's first study language. */
   language: z.enum(["en", "zh"]).optional(),
-  deck_id: z.uuid().optional(),
+  deck_id: z.string().uuid().optional(),
   /** First message, sent by the chat page once it opens. */
   prompt: z.string().trim().min(1).max(CHAT_MAX_CHARS).optional(),
 });
+
+async function insertThread(
+  userId: string,
+  opts: { language: LangCode; deckId?: string },
+) {
+  const supabase = await createClient();
+  return supabase
+    .from("chat_threads")
+    .insert({ user_id: userId, language: opts.language, deck_id: opts.deckId ?? null })
+    .select("id")
+    .single();
+}
 
 /** Creates a tutor thread and opens it. Called from plain forms, so it reads FormData. */
 export async function startChat(formData: FormData) {
@@ -27,23 +41,76 @@ export async function startChat(formData: FormData) {
   });
   if (!parsed.success) redirect("/chat");
   const { deck_id, prompt } = parsed.data;
-  const fallback = me.settings.study_langs[0] ?? "en";
-  const language = parsed.data.language ?? (prompt ? guessLanguage(prompt, fallback) : fallback);
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("chat_threads")
-    .insert({ user_id: me.user.id, language, deck_id: deck_id ?? null })
-    .select("id")
-    .single();
+  // If there's no prompt, focus the question box on the chat page instead of creating an empty thread
+  if (!prompt) {
+    redirect("/chat#hoi");
+  }
+
+  const fallback = me.settings.study_langs[0] ?? "en";
+  const language = (parsed.data.language ?? guessLanguage(prompt, fallback)) as LangCode;
+
+  const { data } = await insertThread(me.user.id, { language, deckId: deck_id });
   if (!data) redirect("/chat?error=1");
   revalidatePath("/chat");
-  redirect(prompt ? `/chat/${data.id}?q=${encodeURIComponent(prompt)}` : `/chat/${data.id}`);
+  redirect(`/chat/${data.id}?q=${encodeURIComponent(prompt)}`);
+}
+
+/** The panel's conversation: thread + last 60 messages, or null when it was deleted. */
+export async function loadTutorThread(
+  threadId: string,
+): Promise<{ id: string; title: string | null; language: LangCode; messages: ChatMessage[] } | null> {
+  const user = await requireUser();
+  if (!user || !z.string().uuid().safeParse(threadId).success) return null;
+
+  const supabase = await createClient();
+  const [{ data: thread }, { data: rows }] = await Promise.all([
+    supabase
+      .from("chat_threads")
+      .select("id, title, language")
+      .eq("id", threadId)
+      .maybeSingle(),
+    supabase
+      .from("chat_messages")
+      .select("id, role, parts")
+      .eq("thread_id", threadId)
+      .order("created_at", { ascending: false })
+      .limit(60),
+  ]);
+
+  if (!thread) return null;
+
+  const messages = (rows ?? [])
+    .reverse()
+    .map((r) => ({ id: r.id, role: r.role, parts: r.parts }) as unknown as ChatMessage);
+
+  return {
+    id: thread.id,
+    title: thread.title,
+    language: thread.language as LangCode,
+    messages,
+  };
+}
+
+/** Creates a thread for the panel's first question (no redirect). Language: guessLanguage(prompt, study_langs[0]). */
+export async function createTutorThread(prompt: string): Promise<ActionResult<{ id: string }>> {
+  const me = await requireMe();
+  const parsed = z.string().trim().min(1).max(CHAT_MAX_CHARS).safeParse(prompt);
+  if (!parsed.success) return fail("Câu hỏi không hợp lệ.");
+
+  const fallback = me.settings.study_langs[0] ?? "en";
+  const language = guessLanguage(parsed.data, fallback) as LangCode;
+
+  const { data, error } = await insertThread(me.user.id, { language });
+  if (error || !data) return fail("Không tạo được cuộc trò chuyện.");
+
+  revalidatePath("/chat");
+  return ok({ id: data.id });
 }
 
 export async function deleteChat(threadId: string): Promise<ActionResult> {
   await requireUser();
-  if (!z.uuid().safeParse(threadId).success) return fail("Cuộc trò chuyện không hợp lệ.");
+  if (!z.string().uuid().safeParse(threadId).success) return fail("Cuộc trò chuyện không hợp lệ.");
   const supabase = await createClient();
   const { data, error } = await supabase.from("chat_threads").delete().eq("id", threadId).select("id");
   if (error || !data?.length) return fail("Không xóa được. Thử lại.");

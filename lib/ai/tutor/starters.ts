@@ -25,6 +25,12 @@ export function chatStarters(langs: LangCode[]): ChatStarter[] {
   ];
 }
 
+export const FOLLOW_UPS = [
+  "Cho mình thêm ví dụ",
+  "Giải thích đơn giản hơn",
+  "Đố mình một câu",
+] as const;
+
 const HAN = /[㐀-鿿]/;
 
 /** Language a new thread defaults to: Chinese characters or "tiếng Trung" → zh, "tiếng Anh" → en, else the fallback. Pure. */

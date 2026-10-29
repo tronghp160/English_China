@@ -6,13 +6,14 @@ import { Logo } from "@/components/brand/logo";
 import { MeProvider } from "@/components/app-shell/me-provider";
 import { PresenceBeacon } from "@/components/presence/presence-beacon";
 import { BinHomeProvider } from "@/components/mascot/bin-home-provider";
-import { ChatWidget } from "@/components/contact/chat-widget";
+import { TutorWidget } from "@/components/tutor/tutor-widget";
 import { QuickSearch } from "@/components/app-shell/quick-search";
 import { ThemeSwitch } from "@/components/app-shell/theme-switch";
 import { TopBar } from "@/components/app-shell/top-bar";
 import { isAdmin } from "@/lib/admin";
 import { requireMe } from "@/lib/auth";
 import { getStudySummary } from "@/lib/data/study";
+import { aiProvider } from "@/lib/env";
 import { cjkFontVariables } from "@/lib/fonts";
 import { readPrefs } from "@/lib/validation";
 
@@ -56,7 +57,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-4 pb-32 lg:px-8 lg:pb-12">{children}</main>
       </div>
       <BottomNav />
-      <ChatWidget tutor aboveNav />
+      <TutorWidget aiEnabled={aiProvider() !== null} />
       </BinHomeProvider>
     </MeProvider>
   );
