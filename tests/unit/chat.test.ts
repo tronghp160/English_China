@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { learnerBlock, threadTitle, tutorInstructions } from "@/lib/ai/chat-prompt";
+import { groupThreadsByDay } from "@/lib/ai/tutor/history";
 import { chatStarters, guessLanguage } from "@/lib/ai/tutor/starters";
 import { rankByTerm, sanitizeSearch } from "@/lib/search";
 import { toBlocks } from "@/components/chat/message-text";
@@ -100,11 +101,27 @@ describe("tutor instructions v2 (one free chat)", () => {
 });
 
 describe("chat starters and language guess", () => {
-  it("offers practice on the learner's words plus one example per language", () => {
-    const s = chatStarters(["en", "zh"]);
-    expect(s).toHaveLength(4);
-    expect(s.map((x) => x.label)).toContain("Phân biệt 想 và 要");
-    expect(chatStarters([]).length).toBe(4);
+  it("provides starters with valid icon and tone", () => {
+    const s = chatStarters(["en"]);
+    expect(s.length).toBeGreaterThanOrEqual(4);
+    for (const item of s) {
+      expect(item.icon).toBeDefined();
+      expect(item.tone).toBeDefined();
+      expect(item.label).toBeTruthy();
+      expect(item.text).toBeTruthy();
+    }
+  });
+
+  it("includes explain chip only when hardWord is provided", () => {
+    const withoutHard = chatStarters(["zh"]);
+    expect(withoutHard.some((x) => x.icon === "explain")).toBe(false);
+
+    const withHard = chatStarters(["zh"], { hardWord: { term: "坚强" } });
+    const explainChip = withHard.find((x) => x.icon === "explain");
+    expect(explainChip).toBeDefined();
+    expect(explainChip?.label).toBe("Giải thích lại «坚强»");
+    expect(explainChip?.text).toContain("坚强");
+    expect(explainChip?.tone).toBe("teal");
   });
 
   it("guesses the thread language from the first message", () => {
@@ -112,5 +129,33 @@ describe("chat starters and language guess", () => {
     expect(guessLanguage("dạy mình tiếng Trung chủ đề ăn uống", "en")).toBe("zh");
     expect(guessLanguage("phân biệt dog và cat", "zh")).toBe("zh");
     expect(guessLanguage("luyện IELTS speaking", "zh")).toBe("en");
+  });
+});
+
+describe("groupThreadsByDay", () => {
+  const tz = "Asia/Ho_Chi_Minh";
+  const now = new Date("2026-10-29T14:00:00+07:00");
+
+  it("groups threads into today, yesterday, last 7 days and older", () => {
+    const threads = [
+      { id: "1", title: "Hôm nay", updated_at: "2026-10-29T10:00:00+07:00" },
+      { id: "2", title: "Hôm qua", updated_at: "2026-10-28T15:00:00+07:00" },
+      { id: "3", title: "3 ngày trước", updated_at: "2026-10-26T12:00:00+07:00" },
+      { id: "4", title: "10 ngày trước", updated_at: "2026-10-19T10:00:00+07:00" },
+    ];
+
+    const groups = groupThreadsByDay(threads, now, tz);
+    expect(groups.map((g) => g.label)).toEqual(["Hôm nay", "Hôm qua", "7 ngày qua", "Cũ hơn"]);
+    expect(groups[0].threads[0].title).toBe("Hôm nay");
+    expect(groups[1].threads[0].title).toBe("Hôm qua");
+    expect(groups[2].threads[0].title).toBe("3 ngày trước");
+    expect(groups[3].threads[0].title).toBe("10 ngày trước");
+  });
+
+  it("skips empty groups", () => {
+    const threads = [{ id: "1", title: "Chỉ hôm nay", updated_at: "2026-10-29T11:00:00+07:00" }];
+    const groups = groupThreadsByDay(threads, now, tz);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].label).toBe("Hôm nay");
   });
 });

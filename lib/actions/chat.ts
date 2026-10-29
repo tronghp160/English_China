@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { CHAT_MAX_CHARS } from "@/lib/ai/chat-prompt";
+import { CHAT_MAX_CHARS, threadTitle } from "@/lib/ai/chat-prompt";
 import type { ChatMessage } from "@/lib/ai/chat-tools";
 import { guessLanguage } from "@/lib/ai/tutor/starters";
 import { requireMe, requireUser } from "@/lib/auth";
@@ -21,12 +21,17 @@ const startSchema = z.object({
 
 async function insertThread(
   userId: string,
-  opts: { language: LangCode; deckId?: string },
+  opts: { language: LangCode; deckId?: string; title?: string | null },
 ) {
   const supabase = await createClient();
   return supabase
     .from("chat_threads")
-    .insert({ user_id: userId, language: opts.language, deck_id: opts.deckId ?? null })
+    .insert({
+      user_id: userId,
+      language: opts.language,
+      deck_id: opts.deckId ?? null,
+      title: opts.title ?? null,
+    })
     .select("id")
     .single();
 }
@@ -49,8 +54,9 @@ export async function startChat(formData: FormData) {
 
   const fallback = me.settings.study_langs[0] ?? "en";
   const language = (parsed.data.language ?? guessLanguage(prompt, fallback)) as LangCode;
+  const title = threadTitle(prompt);
 
-  const { data } = await insertThread(me.user.id, { language, deckId: deck_id });
+  const { data } = await insertThread(me.user.id, { language, deckId: deck_id, title });
   if (!data) redirect("/chat?error=1");
   revalidatePath("/chat");
   redirect(`/chat/${data.id}?q=${encodeURIComponent(prompt)}`);
@@ -100,8 +106,9 @@ export async function createTutorThread(prompt: string): Promise<ActionResult<{ 
 
   const fallback = me.settings.study_langs[0] ?? "en";
   const language = guessLanguage(parsed.data, fallback) as LangCode;
+  const title = threadTitle(parsed.data);
 
-  const { data, error } = await insertThread(me.user.id, { language });
+  const { data, error } = await insertThread(me.user.id, { language, title });
   if (error || !data) return fail("Không tạo được cuộc trò chuyện.");
 
   revalidatePath("/chat");

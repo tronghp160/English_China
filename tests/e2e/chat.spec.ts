@@ -51,7 +51,7 @@ test("gia sư: hỏi từ ô chat, nhận câu trả lời và mở form thêm t
   // One box: a suggestion chip opens a new conversation with the question already sent.
   await page.getByRole("button", { name: /Kiểm tra nhanh 5 từ đến hạn/ }).click();
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}$/);
-  await expect(page.getByText("Kiểm tra nhanh mình 5 từ đến hạn ôn nhé")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Tin nhắn" }).getByText("Kiểm tra nhanh mình 5 từ đến hạn ôn nhé")).toBeVisible();
 
   if (process.env.E2E_REAL_AI === "1") {
     await expect(page.locator("li", { hasText: "Gia sư:" }).first()).toBeVisible({ timeout: 45_000 });
@@ -91,7 +91,7 @@ test("gia sư: gõ câu hỏi ở trang Gia sư, câu trả lời rỗng hiện 
   await page.getByLabel("Tin nhắn cho gia sư").fill("phân biệt dog và cat");
   await page.getByRole("button", { name: "Gửi" }).click();
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}$/);
-  await expect(page.getByText("phân biệt dog và cat")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Tin nhắn" }).getByText("phân biệt dog và cat")).toBeVisible();
   await expect(page.getByText(/chưa trả lời được tin này/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Thử lại" })).toBeVisible();
   expect(errors).toEqual([]);

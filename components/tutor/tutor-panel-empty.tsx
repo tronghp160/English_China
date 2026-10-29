@@ -1,7 +1,8 @@
 "use client";
 
-import { CalendarCheck, ChevronRight, MessageSquare } from "lucide-react";
+import { CalendarCheck, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { STARTER_ICONS } from "@/components/chat/starter-icons";
 import { Pup } from "@/components/mascot/pup";
 import { Button } from "@/components/ui/button";
 import { IconTile } from "@/components/ui/icon-tile";
@@ -77,7 +78,7 @@ export function TutorPanelEmpty({
               onClick={() => onPickStarter(s.text)}
               className="flex w-full min-h-11 items-center gap-3 rounded-xl border border-border/60 bg-surface px-3 py-2 text-left text-sm font-semibold text-fg shadow-xs transition-colors hover:border-primary/40 hover:bg-surface-2 active:bg-surface-2 focus-visible:outline-2 focus-visible:outline-primary"
             >
-              <IconTile icon={MessageSquare} tone="blue" size={32} />
+              <IconTile icon={STARTER_ICONS[s.icon]} tone={s.tone} size={32} />
               <span className="flex-1 min-w-0 leading-tight">{s.label}</span>
               <ChevronRight className="size-4 text-fg-muted shrink-0" aria-hidden />
             </button>
