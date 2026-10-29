@@ -1,6 +1,6 @@
 "use client";
 
-import { BotMessageSquare, SquarePen } from "lucide-react";
+import { BotMessageSquare, Maximize2, Minimize2, SquarePen } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 import { PettablePup } from "@/components/mascot/pettable-pup";
@@ -25,6 +25,9 @@ type Common = {
   aiEnabled: boolean;
   displayName: string;
   onNewChat: () => void;
+  /** Full screen: the window covers the whole page (sidebar, top bar and phone nav included). */
+  expanded: boolean;
+  onToggleExpand: () => void;
 };
 
 /**
@@ -51,6 +54,11 @@ export function TutorChatFrame(
 /** Height of the window: the screen minus the top bar (and the phone's bottom nav). */
 const FRAME =
   "flex h-[calc(100dvh-11.5rem)] min-h-[26rem] flex-col overflow-hidden rounded-xl border border-border/60 bg-surface shadow-md dark:border-border lg:h-[calc(100dvh-6.5rem)] lg:min-h-[32rem]";
+/** Full screen: fixed over everything; the reading column stays a comfortable width. */
+const FRAME_EXPANDED = "fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden bg-surface";
+const frameClass = (expanded: boolean) => (expanded ? FRAME_EXPANDED : FRAME);
+/** Centers messages and the box in full screen so lines do not run across a wide monitor. */
+const column = (expanded: boolean) => (expanded ? "mx-auto w-full max-w-3xl" : "");
 
 function FrameHeader({
   title,
@@ -59,6 +67,8 @@ function FrameHeader({
   mascot,
   onNewChat,
   showNew,
+  expanded,
+  onToggleExpand,
 }: {
   title: string;
   busy: boolean;
@@ -66,6 +76,8 @@ function FrameHeader({
   mascot: boolean;
   onNewChat: () => void;
   showNew: boolean;
+  expanded: boolean;
+  onToggleExpand: () => void;
 }) {
   return (
     <header className="flex shrink-0 items-center gap-3 bg-primary px-4 py-3 text-on-primary lg:px-5">
@@ -88,14 +100,24 @@ function FrameHeader({
           <span className="hidden sm:inline">Cuộc trò chuyện mới</span>
         </Button>
       )}
+      <button
+        type="button"
+        onClick={onToggleExpand}
+        aria-label={expanded ? "Thu nhỏ khung chat" : "Mở toàn màn hình"}
+        aria-pressed={expanded}
+        title={expanded ? "Thu nhỏ (Esc)" : "Toàn màn hình"}
+        className="grid size-10 shrink-0 place-items-center rounded-full text-on-primary transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+      >
+        {expanded ? <Minimize2 className="size-5" aria-hidden /> : <Maximize2 className="size-5" aria-hidden />}
+      </button>
     </header>
   );
 }
 
-function FrameFooter({ children }: { children: ReactNode }) {
+function FrameFooter({ children, expanded }: { children: ReactNode; expanded: boolean }) {
   return (
-    <div className="shrink-0 border-t border-border/60 bg-surface px-3 pt-3 pb-2 dark:border-border lg:px-5">
-      {children}
+    <div className="shrink-0 border-t border-border/60 bg-surface px-3 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] dark:border-border lg:px-5">
+      <div className={column(expanded)}>{children}</div>
       <p className="mt-1.5 text-center text-[0.8125rem] text-fg-subtle">Gia sư AI có thể nhầm. Kiểm tra lại từ quan trọng.</p>
     </div>
   );
@@ -110,6 +132,8 @@ function EmptyFrame({
   displayName,
   onNewChat,
   onCreated,
+  expanded,
+  onToggleExpand,
 }: Common & { onCreated: (thread: { id: string; title: string; prompt: string }) => void }) {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<string | null>(null);
@@ -150,9 +174,10 @@ function EmptyFrame({
   const pendingMessages: ChatMessage[] = pending ? [{ id: "pending", role: "user", parts: [{ type: "text", text: pending }] }] : [];
 
   return (
-    <section className={FRAME} aria-label="Khung chat với gia sư">
-      <FrameHeader title={`Hỏi ${tutorName} bất cứ điều gì`} busy={Boolean(pending)} tutorName={tutorName} mascot={mascot} onNewChat={onNewChat} showNew={false} />
+    <section className={frameClass(expanded)} aria-label="Khung chat với gia sư" aria-modal={expanded || undefined} role={expanded ? "dialog" : undefined}>
+      <FrameHeader title={`Hỏi ${tutorName} bất cứ điều gì`} busy={Boolean(pending)} tutorName={tutorName} mascot={mascot} onNewChat={onNewChat} showNew={false} expanded={expanded} onToggleExpand={onToggleExpand} />
       <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-5 lg:px-6">
+        <div className={column(expanded)}>
         {pending ? (
           <ChatMessages messages={pendingMessages} busy waiting language={language} aiEnabled={aiEnabled} tutorName={tutorName} mascot={mascot} />
         ) : (
@@ -174,9 +199,10 @@ function EmptyFrame({
             )}
           </div>
         )}
+        </div>
       </div>
       {aiEnabled && (
-        <FrameFooter>
+        <FrameFooter expanded={expanded}>
           <form onSubmit={onSubmit}>
             <ChatComposer
               ref={inputRef}
@@ -205,6 +231,8 @@ function ThreadFrame({
   mascot,
   aiEnabled,
   onNewChat,
+  expanded,
+  onToggleExpand,
 }: Common & { threadId: string; title: string | null; initialMessages: ChatMessage[]; initialPrompt?: string }) {
   const { messages, status, busy, waiting, error, send, retry, stop, lastHasText } = useTutorChat({
     threadId,
@@ -235,9 +263,10 @@ function ThreadFrame({
   const showFollowUps = !busy && messages.at(-1)?.role === "assistant" && lastHasText;
 
   return (
-    <section className={FRAME} aria-label="Khung chat với gia sư">
-      <FrameHeader title={title ?? "Cuộc trò chuyện mới"} busy={busy} tutorName={tutorName} mascot={mascot} onNewChat={onNewChat} showNew />
+    <section className={frameClass(expanded)} aria-label="Khung chat với gia sư" aria-modal={expanded || undefined} role={expanded ? "dialog" : undefined}>
+      <FrameHeader title={title ?? "Cuộc trò chuyện mới"} busy={busy} tutorName={tutorName} mascot={mascot} onNewChat={onNewChat} showNew expanded={expanded} onToggleExpand={onToggleExpand} />
       <div ref={scroller} className="flex-1 overflow-y-auto overscroll-contain px-4 py-5 lg:px-6">
+        <div className={column(expanded)}>
         <ChatMessages
           messages={messages}
           busy={busy}
@@ -265,9 +294,10 @@ function ThreadFrame({
           </div>
         )}
         <div ref={endRef} />
+        </div>
       </div>
       {aiEnabled && (
-        <FrameFooter>
+        <FrameFooter expanded={expanded}>
           <form onSubmit={onSubmit}>
             <ChatComposer
               ref={inputRef}

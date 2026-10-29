@@ -54,6 +54,22 @@ export function TutorWorkspace({
   const [created, setCreated] = useState<ThreadSummary[]>([]);
   const [deleted, setDeleted] = useState<string[]>([]);
 
+  // Full screen: the chat covers the page. Esc goes back; the page behind does not scroll meanwhile.
+  const [expanded, setExpanded] = useState(false);
+  useEffect(() => {
+    if (!expanded) return;
+    const html = document.documentElement;
+    html.classList.add("overflow-hidden");
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !e.isComposing) setExpanded(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      html.classList.remove("overflow-hidden");
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [expanded]);
+
   // "Hỏi gia sư" links arrive as /chat?c=<id>&q=…: the question is sent once, so drop it from the address.
   useEffect(() => {
     if (thread && initialPrompt) setUrl(chatUrl(thread.id));
@@ -128,6 +144,8 @@ export function TutorWorkspace({
         displayName={displayName}
         onNewChat={newChat}
         onCreated={onCreated}
+        expanded={expanded}
+        onToggleExpand={() => setExpanded((x) => !x)}
       />
 
       <aside className="min-w-0 space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6.5rem)] lg:overflow-y-auto lg:pr-1 lg:pb-1">
