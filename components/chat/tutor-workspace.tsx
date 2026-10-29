@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { toast } from "sonner";
+import { loadTutorThread } from "@/lib/actions/chat";
 import type { ChatMessage } from "@/lib/ai/chat-tools";
+import { chatUrl } from "@/lib/ai/tutor/chat-url";
 import { groupThreadsByDay, type ThreadSummary } from "@/lib/ai/tutor/history";
 import type { ChatStarter } from "@/lib/ai/tutor/starters";
 import type { LangCode } from "@/lib/lang/types";
@@ -10,15 +13,15 @@ import { TutorHistoryList } from "./tutor-history-list";
 
 type Active = { id: string; title: string | null; messages: ChatMessage[]; prompt?: string } | null;
 
-/** Changes the address bar without a Next navigation, so the open chat keeps its state. */
+/** Changes the address bar without a Next navigation (same /chat route), so the open chat keeps its state. */
 function setUrl(path: string) {
   if (window.location.pathname + window.location.search !== path) window.history.replaceState(null, "", path);
 }
 
 /**
- * /chat and /chat/[id]: the chat window on the left (open straight away), recent conversations and the
- * learner's day on the right (below it on phones). Starting or switching to a new conversation happens
- * in place; the address follows (/chat/<id>) so a reload or a shared link opens the same conversation.
+ * /chat: the chat window on the left (open straight away), recent conversations and the learner's day on
+ * the right (below it on phones). Starting a conversation happens in place; the address follows
+ * (/chat?c=<id>, same route) so a reload or a shared link opens the same conversation.
  */
 export function TutorWorkspace({
   thread,
@@ -51,10 +54,22 @@ export function TutorWorkspace({
   const [created, setCreated] = useState<ThreadSummary[]>([]);
   const [deleted, setDeleted] = useState<string[]>([]);
 
-  // "Hỏi gia sư" links arrive as /chat/<id>?q=…: the question is sent once, so drop it from the address.
+  // "Hỏi gia sư" links arrive as /chat?c=<id>&q=…: the question is sent once, so drop it from the address.
   useEffect(() => {
-    if (thread && initialPrompt) setUrl(`/chat/${thread.id}`);
+    if (thread && initialPrompt) setUrl(chatUrl(thread.id));
   }, [thread, initialPrompt]);
+
+  // The page got another conversation from the server (a link or back/forward changed ?c=): show it.
+  // Compared with the previous prop, not with what is open, so a refresh of the same page changes nothing.
+  const [prevPropId, setPrevPropId] = useState(thread?.id ?? null);
+  const propId = thread?.id ?? null;
+  if (propId !== prevPropId) {
+    setPrevPropId(propId);
+    if (propId !== (active?.id ?? null)) {
+      setActive(thread ? { ...thread, prompt: initialPrompt } : null);
+      setFrameKey(thread?.id ?? "new-from-link");
+    }
+  }
 
   const list = useMemo(() => {
     const seen = new Set<string>();
@@ -68,14 +83,29 @@ export function TutorWorkspace({
 
   const newChat = () => {
     setActive(null);
-    setFrameKey(`new-${Date.now()}`);
-    setUrl("/chat");
+    setFrameKey((k) => (k === "new-a" ? "new-b" : "new-a"));
+    setUrl(chatUrl());
   };
   const onCreated = ({ id, title, prompt }: { id: string; title: string; prompt: string }) => {
     setCreated((c) => [{ id, title, updated_at: new Date().toISOString() }, ...c]);
     setActive({ id, title, messages: [], prompt });
     setFrameKey(id);
-    setUrl(`/chat/${id}`);
+    setUrl(chatUrl(id));
+  };
+  // Opening a conversation from the list happens in place too (no page change).
+  const [opening, setOpening] = useState<string | null>(null);
+  const open = async (id: string) => {
+    if (id === active?.id || opening) return;
+    setOpening(id);
+    const t = await loadTutorThread(id).catch(() => null);
+    setOpening(null);
+    if (!t) {
+      toast.error("Không mở được cuộc trò chuyện này.");
+      return;
+    }
+    setActive({ id: t.id, title: t.title, messages: t.messages });
+    setFrameKey(t.id);
+    setUrl(chatUrl(t.id));
   };
   const onDeleted = (id: string) => {
     setDeleted((d) => [...d, id]);
@@ -105,7 +135,7 @@ export function TutorWorkspace({
           <h2 id="chat-history" className="text-lg font-bold text-fg">
             Trò chuyện gần đây
           </h2>
-          <TutorHistoryList groups={groups} tutorName={tutorName} activeId={active?.id} onDeleted={onDeleted} compact />
+          <TutorHistoryList groups={groups} tutorName={tutorName} activeId={opening ?? active?.id} onOpen={open} onDeleted={onDeleted} compact />
         </section>
         {aside}
       </aside>

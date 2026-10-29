@@ -22,7 +22,7 @@ async function cleanupEmptyThreads(supabase: Awaited<ReturnType<typeof createCli
   }
 }
 
-/** Shared by /chat (no conversation open) and /chat/[threadId]. */
+/** The tutor page (/chat, optionally with a conversation open). */
 export async function TutorWorkspacePage({
   me,
   thread,

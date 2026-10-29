@@ -56,8 +56,13 @@ export function useTutorChat(opts: {
   const sentInitial = useRef(false);
   useEffect(() => {
     if (sentInitial.current || !initialPrompt || initialMessages.length || !aiEnabled) return;
-    sentInitial.current = true;
-    void sendMessage({ text: initialPrompt });
+    // Sent on the next tick and cancelled by the cleanup: React (StrictMode, a quick remount) may run
+    // this effect, unmount (useChat then stops the chat) and run it again. Only the surviving mount sends.
+    const timer = setTimeout(() => {
+      sentInitial.current = true;
+      void sendMessage({ text: initialPrompt });
+    }, 0);
+    return () => clearTimeout(timer);
   }, [initialPrompt, initialMessages.length, aiEnabled, sendMessage]);
 
   const send = (text: string) => {

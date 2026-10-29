@@ -10,6 +10,7 @@ import type { ThreadGroup } from "@/lib/ai/tutor/history";
 import { formatAgo } from "@/lib/format";
 import { toneFor } from "@/lib/tone";
 import { cn } from "@/lib/utils";
+import { chatUrl } from "@/lib/ai/tutor/chat-url";
 
 function sliceGroups(groups: ThreadGroup[], limit: number): ThreadGroup[] {
   let budget = limit;
@@ -31,6 +32,7 @@ export function TutorHistoryList({
   tutorName = "Bin",
   activeId,
   onDeleted,
+  onOpen,
   compact = false,
 }: {
   groups: ThreadGroup[];
@@ -38,6 +40,8 @@ export function TutorHistoryList({
   /** The conversation open in the chat frame: highlighted, not a link to itself. */
   activeId?: string | null;
   onDeleted?: (threadId: string) => void;
+  /** Open a conversation in place instead of following the link (the link still works in a new tab). */
+  onOpen?: (threadId: string) => void;
   /** Narrow side column: smaller rows, no arrow. */
   compact?: boolean;
 }) {
@@ -77,8 +81,13 @@ export function TutorHistoryList({
                   )}
                 >
                   <Link
-                    href={`/chat/${t.id}`}
+                    href={chatUrl(t.id)}
                     aria-current={active ? "page" : undefined}
+                    onClick={(e) => {
+                      if (!onOpen || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                      e.preventDefault();
+                      onOpen(t.id);
+                    }}
                     className={cn("flex min-w-0 flex-1 items-center gap-3 px-3", compact ? "min-h-12 py-2" : "min-h-14 py-2.5")}
                   >
                     <IconTile icon={MessageCircle} tone={tone} size={32} />

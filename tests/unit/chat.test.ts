@@ -159,3 +159,12 @@ describe("groupThreadsByDay", () => {
     expect(groups[0].label).toBe("Hôm nay");
   });
 });
+
+describe("chatUrl", () => {
+  it("keeps every conversation on the /chat route", async () => {
+    const { chatUrl } = await import("@/lib/ai/tutor/chat-url");
+    expect(chatUrl()).toBe("/chat");
+    expect(chatUrl("abc")).toBe("/chat?c=abc");
+    expect(chatUrl("abc", "từ library?")).toBe("/chat?c=abc&q=t%E1%BB%AB+library%3F");
+  });
+});

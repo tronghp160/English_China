@@ -109,7 +109,7 @@ test("tutor widget: floating panel chat, fullscreen on mobile, escape key, and p
   const maximizeBtn = page.getByRole("link", { name: "Mở toàn màn hình" });
   await expect(maximizeBtn).toBeVisible();
   await maximizeBtn.click();
-  await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}$/);
+  await expect(page).toHaveURL(/\/chat\?c=[0-9a-f-]{36}$/);
 
   // 3. Trên /chat: nút launcher không tồn tại
   await expect(page.getByRole("button", { name: /Mở gia sư AI/ })).toHaveCount(0);
