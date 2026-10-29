@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { after } from "next/server";
 import { ChatStart } from "@/components/chat/chat-start";
 import { TutorHistoryList } from "@/components/chat/tutor-history-list";
 import { TutorTipsCard } from "@/components/chat/tutor-tips-card";
@@ -13,6 +14,19 @@ import { createClient } from "@/lib/supabase/server";
 import { readPrefs } from "@/lib/validation";
 
 export const metadata: Metadata = { title: "Gia sư" };
+
+async function cleanupEmptyThreads(supabase: Awaited<ReturnType<typeof createClient>>) {
+  try {
+    const oneDayAgo = new Date(Date.now() - 86_400_000).toISOString();
+    await supabase
+      .from("chat_threads")
+      .delete()
+      .is("title", null)
+      .lt("updated_at", oneDayAgo);
+  } catch {
+    // background cleanup ignore
+  }
+}
 
 export default async function ChatHomePage({ searchParams }: PageProps<"/chat">) {
   const [me, summary, sp] = await Promise.all([
@@ -41,6 +55,10 @@ export default async function ChatHomePage({ searchParams }: PageProps<"/chat">)
   const starters = chatStarters(me.settings.study_langs, { hardWord: hardest });
 
   const groups = groupThreadsByDay(threads ?? [], new Date(), me.settings.timezone);
+
+  after(() => {
+    void cleanupEmptyThreads(supabase);
+  });
 
   return (
     <div className="max-w-5xl pb-12">

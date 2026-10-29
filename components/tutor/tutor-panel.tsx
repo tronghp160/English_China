@@ -113,6 +113,19 @@ export function TutorPanel({
     }
   }, [open, isPhone, activeThread]);
 
+  // Listen for Escape key on window when open
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !e.isComposing) {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
   const handleBusyChange = (isBusy: boolean) => {
     setBusy(isBusy);
     onBusy(isBusy);
@@ -192,7 +205,7 @@ export function TutorPanel({
       ref={panelRef}
       role="dialog"
       aria-modal={isPhone}
-      aria-label={`Trò chuyện với ${tutorName}`}
+      aria-label="Gia sư AI"
       tabIndex={-1}
       onKeyDown={onKeyDown}
       className={cn(

@@ -47,3 +47,11 @@ Keep these texts. Emoji next to them may go. If one must change, edit the test i
   - Admin deck view (`/admin/decks/[id]`): "Danh sách từ vựng", "Người đang theo học", button "Xem từ", button "Chuyển về riêng tư", button "Xóa bộ từ".
   - Admin word actions: button "Xóa từ", alertdialog "Xóa từ".
   - Privacy policy: page `/quyen-rieng-tu` (heading "Quyền riêng tư"), signup notice "Bằng việc đăng ký, bạn đồng ý với quyền riêng tư của Sổ Từ.".
+
+## Added in Tutor UI V2 (tests/e2e/tutor-widget.spec.ts, chat.spec.ts)
+- Tutor floating widget:
+  - Launcher button: `aria-label="Mở gia sư AI"`, `aria-label="Đóng gia sư AI"`
+  - Panel header & controls: dialog "Gia sư AI", button "Mở toàn màn hình", button "Cuộc trò chuyện mới", button "Đóng khung gia sư"
+  - Composer input: label "Tin nhắn cho gia sư (khung nổi)"
+  - Answer actions: button "Sao chép câu trả lời", button "Thử lại câu này"
+  - Hub page `/chat`: button "Cuộc trò chuyện mới", cards "Hôm nay của bạn", "Mẹo hỏi hay", "Lịch sử trò chuyện"

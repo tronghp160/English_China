@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useOptionalMe } from "@/components/app-shell/me-provider";
 import { useKeyboardOpen } from "@/lib/use-keyboard-open";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -45,12 +45,13 @@ export function TutorWidget({ aiEnabled = true }: { aiEnabled?: boolean }) {
     });
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setOpen(false);
-    // Return focus to launcher button
-    const btn = launcherRef.current?.querySelector("button");
-    btn?.focus();
-  };
+    setTimeout(() => {
+      const btn = launcherRef.current?.querySelector("button");
+      btn?.focus();
+    }, 0);
+  }, []);
 
   const handleAnswerEnd = () => {
     if (!open) {

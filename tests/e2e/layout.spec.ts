@@ -163,6 +163,22 @@ test.describe("app pages", () => {
     });
   }
 
+  test("tutor floating panel on /today fits every width", async () => {
+    const problems: string[] = [];
+    for (const vp of VIEWPORTS) {
+      await page.setViewportSize(vp);
+      await page.goto("/today", { waitUntil: "networkidle" });
+      const launcher = page.getByRole("button", { name: "Mở gia sư AI" });
+      if (await launcher.isVisible()) {
+        await launcher.click();
+        await page.waitForTimeout(150);
+        for (const p of await audit(page)) problems.push(`${vp.width}px  ${p}`);
+        await page.keyboard.press("Escape");
+      }
+    }
+    expect(Array.from(new Set(problems)), "tutor floating panel\n").toEqual([]);
+  });
+
   test("no page raised an error", () => {
     expect(errors).toEqual([]);
   });
