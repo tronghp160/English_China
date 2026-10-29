@@ -26,11 +26,19 @@ function AddLink({ deckId, name, term }: { deckId: string; name: string; term: s
 }
 
 /** A suggested word as a small specimen, with a way to add it. It opens the normal add-word form; nothing is saved here. */
-export function SuggestWordCard({ word, language }: { word: SuggestedWord; language: LangCode }) {
+export function SuggestWordCard({
+  word,
+  language,
+  size = "default",
+}: {
+  word: SuggestedWord;
+  language: LangCode;
+  size?: "default" | "sm";
+}) {
   // The thread's own deck comes first (chatTools.suggestWord sorts it).
   const [first, ...others] = word.decks.slice(0, 6);
   return (
-    <div className="my-3">
+    <div className={size === "sm" ? "my-2" : "my-3"}>
       <WordHero lang={language} term={word.term} reading={word.reading} size="sm">
         <p className="text-sm text-fg">{word.meaning_vi}</p>
       </WordHero>
