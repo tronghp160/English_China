@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useOptionalMe } from "@/components/app-shell/me-provider";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { ChatMessage } from "@/lib/ai/chat-tools";
-import type { ChatStarter } from "@/lib/ai/tutor/starters";
+import { FOLLOW_UPS, type ChatStarter } from "@/lib/ai/tutor/starters";
 import type { LangCode } from "@/lib/lang/types";
 import { ChatComposer } from "./chat-composer";
 import { ChatMessages, errorText } from "./chat-messages";
@@ -35,13 +35,14 @@ export function ChatView({
   const tutorName = mascot ? (prefs?.mascot_name ?? "Bin") : "Gia sư";
   const router = useRouter();
 
-  const { messages, status, busy, waiting, error, send, retry, stop } = useTutorChat({
-    threadId,
-    initialMessages,
-    initialPrompt,
-    aiEnabled,
-    onFirstAnswer: () => router.refresh(),
-  });
+  const { messages, status, busy, waiting, error, send, retry, stop, lastHasText } =
+    useTutorChat({
+      threadId,
+      initialMessages,
+      initialPrompt,
+      aiEnabled,
+      onFirstAnswer: () => router.refresh(),
+    });
 
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -76,6 +77,9 @@ export function ChatView({
     });
   };
 
+  const lastMessage = messages.at(-1);
+  const showFollowUps = !busy && lastMessage?.role === "assistant" && lastHasText;
+
   return (
     <div className="flex flex-col">
       {messages.length === 0 && (
@@ -103,6 +107,22 @@ export function ChatView({
         mascot={mascot}
         density="page"
       />
+
+      {showFollowUps && (
+        <div className="mt-3 flex flex-wrap gap-2 pl-10.5">
+          {FOLLOW_UPS.map((fu, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => handleSend(fu)}
+              className="inline-flex min-h-10 items-center rounded-full border border-border/80 bg-surface px-3.5 text-sm font-medium text-fg shadow-xs transition-colors hover:border-primary/50 hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              {fu}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div ref={endRef} />
 
       {aiEnabled && (
@@ -118,6 +138,7 @@ export function ChatView({
             onStop={stop}
             busy={busy}
             size="page"
+            placeholder={messages.length === 0 ? "Hỏi gia sư bất cứ điều gì…" : `Hỏi tiếp ${tutorName}…`}
           />
         </form>
       )}

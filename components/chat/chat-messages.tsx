@@ -1,6 +1,7 @@
 "use client";
 
-import { BookOpenCheck, RotateCcw } from "lucide-react";
+import { BookOpenCheck, Copy, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 import { Pup } from "@/components/mascot/pup";
 import { Button } from "@/components/ui/button";
 import type { ChatMessage } from "@/lib/ai/chat-tools";
@@ -160,6 +161,39 @@ export function ChatMessages({
                     </p>
                   )}
                 </div>
+                {!streaming && hasContent && !isPanel && (
+                  <div className="mt-1 flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Sao chép câu trả lời"
+                      className="size-10 rounded-full text-fg-muted hover:text-fg"
+                      onClick={() => {
+                        const text = m.parts
+                          .filter((p) => p.type === "text")
+                          .map((p) => p.text)
+                          .join("\n\n");
+                        void navigator.clipboard.writeText(text);
+                        toast.success("Đã sao chép");
+                      }}
+                    >
+                      <Copy className="size-4" aria-hidden />
+                    </Button>
+                    {isLast && onRetry && aiEnabled && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Trả lời lại"
+                        className="size-10 rounded-full text-fg-muted hover:text-fg"
+                        onClick={onRetry}
+                      >
+                        <RotateCcw className="size-4" aria-hidden />
+                      </Button>
+                    )}
+                  </div>
+                )}
                 {renderAnswerActions?.(m, isLast)}
               </div>
             </li>
