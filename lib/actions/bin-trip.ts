@@ -1,6 +1,8 @@
 "use server";
 
+import { after } from "next/server";
 import { z } from "zod";
+import { writeTripStory } from "@/lib/ai/bin-story";
 import { tripWordCandidates } from "@/lib/data/bin";
 import { getProgress } from "@/lib/data/progress";
 import { ownedItems } from "@/lib/bin/catalog";
@@ -180,6 +182,26 @@ export async function startTrip(): Promise<ActionResult<TripView>> {
   if (insertError) {
     if (insertError.code === "23505") return fail("Hôm nay Bin đã đi dạo rồi.");
     return fail("Không thể bắt đầu chuyến đi. Thử lại sau.");
+  }
+
+  const prefs = readPrefs(settings?.prefs);
+  const storyArgs = {
+    userId: user.id,
+    tripId: inserted.id,
+    lang,
+    placeName: place.name,
+    landmark: place.landmark,
+    term: pickedWord?.term ?? null,
+    meaningVi: pickedWord?.meaning_vi ?? null,
+    pinyin: pickedWord?.reading ?? null,
+    name: prefs.mascot_name,
+  };
+  try {
+    after(() => {
+      void writeTripStory(storyArgs);
+    });
+  } catch {
+    void writeTripStory(storyArgs);
   }
 
   const trip = {

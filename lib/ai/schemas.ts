@@ -155,3 +155,9 @@ export function capEnrichResult<T extends EnrichEN | EnrichZH>(r: T, opts: { sen
   }
   return out as T;
 }
+
+export const binStorySchema = z.object({
+  lines: z.array(z.object({ target: z.string().max(160), vi: z.string().max(200) })).min(2).max(3),
+  pinyin: z.array(z.string().max(240)).max(3).optional(),
+});
+export type BinStoryGenerated = z.infer<typeof binStorySchema>;

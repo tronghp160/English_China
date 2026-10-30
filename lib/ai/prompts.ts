@@ -62,3 +62,23 @@ export function batchPrompt(lang: LangCode, items: { term: string; meaning_vi?: 
     .join("\n");
   return `Điền mục từ cho từng từ ${label} sau, giữ đúng thứ tự, trả về mảng entries cùng số phần tử. Nhập hàng loạt nên mỗi từ chỉ cần tối đa 3 nghĩa, mỗi nghĩa 2 câu ví dụ:\n${lines}`;
 }
+
+export function binStorySystem(i: { name: string; lang: LangCode; place: string; landmark: string; term: string }): string {
+  const targetLang = i.lang === "zh" ? "Simplified Chinese" : "English";
+  const zhExtra = i.lang === "zh" ? '\nAlso give "pinyin" for each sentence, with tone marks, same order.' : "";
+  return `You write tiny postcards from a cheerful puppy named ${i.name} to the learner who owns it.
+Write 2 or 3 very short sentences in ${targetLang} for a learner at beginner-to-intermediate level.
+The puppy is visiting ${i.place} (${i.landmark}). The postcard MUST use the word "${i.term}" exactly once, naturally.
+First person, as the puppy. Warm and playful, never guilt-tripping. No emoji. No hashtags.
+For each sentence, give a natural Vietnamese translation in "vi".${zhExtra}
+Keep each sentence under 15 words (or 20 Chinese characters).`;
+}
+
+export function binStoryPrompt(i: { term: string; meaningVi?: string | null; place: string; landmark: string }): string {
+  return JSON.stringify({
+    term: i.term,
+    meaning_vi: i.meaningVi ?? null,
+    place: i.place,
+    landmark: i.landmark,
+  });
+}
