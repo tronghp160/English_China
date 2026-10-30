@@ -148,6 +148,10 @@ export const LINES = {
     "Ngày mới rồi, vào học một chút nhé.",
     "{name} sẵn sàng học cùng bạn rồi đây.",
   ],
+  eggNew: ["Có một quả trứng lạ trong phòng {name}!", "Ơ, quả trứng này của ai thế?"],
+  eggReady: ["Trứng đang động đậy kìa!", "Sắp nở rồi, chạm thử xem."],
+  hatched: ["Chào bạn mới!", "{name} có bạn rồi, vui quá."],
+  buddyHello: ["{name} và bạn nhỏ chào bạn.", "Hai đứa đang chờ bạn ôn bài."],
 } as const;
 
 export type LineKey = keyof typeof LINES;

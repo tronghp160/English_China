@@ -1354,7 +1354,7 @@ export function Egg({ species, progress, ready, size = 64, onTap }: {...})
 
 ---
 
-## Bước 3.3 — Ấp trứng và nở
+## Bước 3.3 — Ấp trứng và nở ✅
 
 ### 3.3.a Khu "Bạn nhỏ" trong Góc của Bin (`components/mascot/bin-buddies.tsx`)
 - Thêm ô thứ 8 "Bạn nhỏ" (tone `coral`, icon `PawPrint`) như bảng ở 1.4.a; bấm → `panel = "buddies"`. Nếu có trứng `ready`, ô hiện chấm tròn nhỏ `bg-c-coral` ở góc (`aria-label` của ô thêm ", có trứng sắp nở").

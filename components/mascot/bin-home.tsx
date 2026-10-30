@@ -1,6 +1,6 @@
 "use client";
 
-import { Bone, Footprints, Heart, Lock, Mail, Shirt, Sofa, Star, Volleyball, X } from "lucide-react";
+import { Bone, Footprints, Heart, Lock, Mail, PawPrint, Shirt, Sofa, Star, Volleyball, X } from "lucide-react";
 import { m } from "motion/react";
 import Link from "next/link";
 import { Dialog as DialogPrimitive } from "radix-ui";
@@ -27,10 +27,12 @@ import {
 import { playSfx } from "@/lib/sfx";
 import { TONE_CLASSES, type Tone } from "@/lib/tone";
 import { cn } from "@/lib/utils";
+import { BinBuddies } from "./bin-buddies";
 import { BinDecor } from "./bin-decor";
 import type { BinPanel } from "./bin-home-provider";
 import { BinRoom } from "./bin-room";
 import { BinTrip } from "./bin-trip";
+import type { BuddySpecies } from "@/lib/bin/buddies";
 import { OutfitIcon } from "./outfits";
 import { Pup } from "./pup";
 import { useBinAction } from "./use-bin";
@@ -39,7 +41,7 @@ import { useBinAction } from "./use-bin";
 const roll = () => Math.random();
 
 const TILES: {
-  id: "feed" | "play" | "tricks" | "outfits" | "decor" | "trip" | "postcards";
+  id: "feed" | "play" | "tricks" | "outfits" | "decor" | "trip" | "postcards" | "buddies";
   label: string;
   tone: Tone;
   icon: typeof Bone;
@@ -51,6 +53,7 @@ const TILES: {
   { id: "decor", label: "Trang trí", tone: "orange", icon: Sofa },
   { id: "trip", label: "Đi dạo", tone: "grape", icon: Footprints },
   { id: "postcards", label: "Bưu thiếp", tone: "teal", icon: Mail },
+  { id: "buddies", label: "Bạn nhỏ", tone: "coral", icon: PawPrint },
 ];
 
 /**
@@ -207,6 +210,7 @@ export function BinHome({
     else if (id === "tricks") setTricksOpen((v) => !v);
     else if (id === "decor") setPanel("decor");
     else if (id === "trip") setPanel("trip");
+    else if (id === "buddies") setPanel("buddies");
     else outfitsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
@@ -433,6 +437,16 @@ export function BinHome({
                   </div>
                 ))}
 
+              {panel === "buddies" && (
+                <BinBuddies
+                  name={name}
+                  onBack={() => setPanel("main")}
+                  activeBuddy={(prefs.bin_buddy as BuddySpecies) || null}
+                  playBin={bin.play}
+                  speak={speak}
+                />
+              )}
+
               {panel === "main" && (
                 <>
                   <div className="grid grid-cols-4 gap-2">
@@ -441,6 +455,8 @@ export function BinHome({
                       const disabledAway = isAway && (id === "feed" || id === "play" || id === "tricks");
                       const disabled = (id === "feed" && busy) || disabledAway;
                       const title = disabledAway ? `${name} đang đi dạo` : undefined;
+                      const isEggReady = id === "buddies" && data?.hasReadyEgg;
+                      const ariaLabel = isEggReady ? `${label}, có trứng sắp nở` : undefined;
 
                       if (id === "postcards") {
                         return (
@@ -465,15 +481,19 @@ export function BinHome({
                           key={id}
                           type="button"
                           title={title}
+                          aria-label={ariaLabel}
                           aria-expanded={id === "tricks" ? tricksOpen : undefined}
                           disabled={disabled}
                           onClick={() => onTile(id)}
                           className={cn(
-                            "flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-[18px] px-1 text-center text-sm leading-tight font-bold transition-transform active:scale-95 disabled:opacity-60",
+                            "relative flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-[18px] px-1 text-center text-sm leading-tight font-bold transition-transform active:scale-95 disabled:opacity-60",
                             t.soft,
                             t.fg,
                           )}
                         >
+                          {isEggReady && (
+                            <span className="absolute top-2 right-2 size-2.5 rounded-full bg-c-coral ring-2 ring-surface" />
+                          )}
                           <Icon className="size-6" aria-hidden />
                           {label}
                         </button>

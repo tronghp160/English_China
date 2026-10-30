@@ -15,6 +15,7 @@ import type { TripStatus } from "@/lib/bin/trip";
 import { studyDay } from "@/lib/srs/streak";
 import { getOrWriteGreeting } from "@/lib/ai/bin-greeting";
 import type { PupMood } from "@/lib/mascot/lines";
+import { buddyBySpecies, type BuddySpecies } from "@/lib/bin/buddies";
 
 /** What "Góc của Bin" shows, read when the sheet opens (REDESIGN_V3 §5.2). */
 export type BinHomeData = {
@@ -32,16 +33,18 @@ export type BinHomeData = {
   owned: string[];
   trip: TripView;
   scarves: number;
+  hasReadyEgg: boolean;
 };
 
 export async function loadBinHome(): Promise<ActionResult<BinHomeData>> {
   const user = await requireUser();
   const admin = createAdminClient();
-  const [p, itemsRes, roomRes, tripRes] = await Promise.all([
+  const [p, itemsRes, roomRes, tripRes, eggRes] = await Promise.all([
     getProgress(),
     admin.from("bin_items").select("item_id, qty").eq("user_id", user.id),
     admin.from("bin_room").select("slot, item_id").eq("user_id", user.id),
     loadTrip(),
+    admin.from("bin_buddies").select("species, start_correct").eq("user_id", user.id).is("hatched_at", null),
   ]);
   const owned = ownedItems(itemsRes.data ?? []);
   const room = resolveRoom(roomRes.data ?? [], owned);
@@ -50,6 +53,10 @@ export async function loadBinHome(): Promise<ActionResult<BinHomeData>> {
     : { status: { kind: "locked", needReviews: 20, needQuests: 2 }, trip: null };
   const scarfRow = (itemsRes.data ?? []).find((r) => r.item_id === "streak_scarf");
   const scarves = scarfRow?.qty ?? 0;
+  const hasReadyEgg = (eggRes.data ?? []).some((r) => {
+    const b = buddyBySpecies(r.species as BuddySpecies);
+    return b ? p.totalCorrect - r.start_correct >= b.hatchCorrect : false;
+  });
   return ok({
     level: p.level,
     bones: p.bones,
@@ -65,6 +72,7 @@ export async function loadBinHome(): Promise<ActionResult<BinHomeData>> {
     owned: Array.from(owned),
     trip,
     scarves,
+    hasReadyEgg,
   });
 }
 
