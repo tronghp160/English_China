@@ -7,11 +7,14 @@ import {
   History,
   Mail,
   MessageSquare,
+  PawPrint,
   Shield,
   Sofa,
   Sparkles,
   Zap,
 } from "lucide-react";
+import { Buddy } from "@/components/mascot/buddy";
+import { Egg } from "@/components/mascot/egg";
 import { OutfitIcon } from "@/components/mascot/outfits";
 import { Pup } from "@/components/mascot/pup";
 import { RoomItemIcon } from "@/components/mascot/room-items";
@@ -20,6 +23,7 @@ import { IconTile } from "@/components/ui/icon-tile";
 import type { PetSummary } from "@/lib/admin-pet";
 import { dateTime } from "@/lib/admin-format";
 import { ITEM_BY_ID, ROOM_SLOTS, SLOT_LABEL } from "@/lib/bin/catalog";
+import { buddyBySpecies } from "@/lib/bin/buddies";
 import { OUTFITS, outfitCondition } from "@/lib/progress";
 
 const KIND_INFO: Record<string, { label: string; tone?: "blue" | "mint" | "orange" | "grape" }> = {
@@ -400,6 +404,61 @@ export function PetPanel({ pet }: { pet: PetSummary }) {
           </div>
         ) : (
           <p className="text-sm text-fg-muted">Chưa có chuyến đi nào được ghi nhận.</p>
+        )}
+      </section>
+
+      {/* Companions / Buddies */}
+      <section className="rounded-lg bg-surface p-5 shadow-sm dark:border dark:border-border">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <PawPrint className="size-5 text-c-coral" aria-hidden="true" />
+            <h3 className="text-lg font-bold">Bạn nhỏ cùng nhà</h3>
+          </div>
+          {pet.activeBuddy && (
+            <Badge tone="blue">
+              Đang đi cùng: {pet.buddies.find((b) => b.species === pet.activeBuddy)?.name ?? pet.activeBuddy}
+            </Badge>
+          )}
+        </div>
+        {pet.buddies.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {pet.buddies.map((b) => {
+              const info = buddyBySpecies(b.species);
+              const isActive = pet.activeBuddy === b.species;
+              return (
+                <div
+                  key={b.species}
+                  className="flex flex-col items-center rounded-lg border border-border bg-surface-2 p-3 text-center"
+                >
+                  <div className="my-2 flex size-14 items-center justify-center">
+                    {b.state === "hatched" ? (
+                      <Buddy species={b.species} mood="happy" size={48} />
+                    ) : (
+                      <Egg species={b.species} size={48} />
+                    )}
+                  </div>
+                  <p className="font-bold text-fg">{b.name}</p>
+                  <span className="text-xs text-fg-muted">
+                    {info?.defaultName ?? b.species} ({b.species})
+                  </span>
+                  <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+                    <Badge tone={b.state === "hatched" ? "mint" : "coral"}>
+                      {b.state === "hatched" ? "Đã nở" : "Trứng"}
+                    </Badge>
+                    {isActive && <Badge tone="blue">Đang đi cùng</Badge>}
+                  </div>
+                  <div className="mt-2 w-full text-left text-xs text-fg-muted">
+                    <p>Nhận trứng: {dateTime(b.eggAt, true)}</p>
+                    <p className="mt-0.5">
+                      Nở: {b.hatchedAt ? dateTime(b.hatchedAt, true) : "Chưa nở"}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-fg-muted">Chưa có bạn nhỏ nào.</p>
         )}
       </section>
 

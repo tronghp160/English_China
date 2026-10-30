@@ -91,6 +91,8 @@ describe("buildPetSummary", () => {
     expect(defaultPet.scarves).toBe(0);
     expect(defaultPet.freezes30).toEqual([]);
     expect(defaultPet.dailyGreeting).toBeNull();
+    expect(defaultPet.buddies).toEqual([]);
+    expect(defaultPet.activeBuddy).toBeNull();
 
     // Custom values test
     const customPet = buildPetSummary({
@@ -130,6 +132,17 @@ describe("buildPetSummary", () => {
         wordId: "autumn",
         createdAt: "2026-10-30T07:00:00Z",
       },
+      buddies: [
+        {
+          species: "miu",
+          name: "Miu",
+          state: "hatched",
+          eggAt: "2026-10-25T00:00:00Z",
+          hatchedAt: "2026-10-26T00:00:00Z",
+          startCorrect: 10,
+        },
+      ],
+      activeBuddy: "miu",
     });
 
     expect(customPet.boneBalance).toBe(42);
@@ -145,5 +158,9 @@ describe("buildPetSummary", () => {
     expect(customPet.freezes30).toEqual(["2026-10-29", "2026-10-25"]);
     expect(customPet.dailyGreeting?.greeting).toBe("Chào buổi sáng!");
     expect(customPet.dailyGreeting?.source).toBe("ai");
+    expect(customPet.buddies).toHaveLength(1);
+    expect(customPet.buddies[0].species).toBe("miu");
+    expect(customPet.buddies[0].state).toBe("hatched");
+    expect(customPet.activeBuddy).toBe("miu");
   });
 });

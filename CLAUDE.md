@@ -225,3 +225,30 @@ UI and client logic only: no DB migration, no change to FSRS or existing server 
 - **Giám sát quản trị (Admin Monitoring)**:
   - `lib/admin-pet.ts` và `lib/data/admin-monitor.ts`: bổ sung số lượng khăn giữ chuỗi, danh sách ngày đóng băng 30 ngày qua, và chi tiết lời chào hàng ngày (nguồn AI/mẫu, tâm trạng, từ gắn kèm).
   - Giao diện `components/admin/pet-panel.tsx`: hiển thị thẻ Khăn & Đóng băng chuỗi và khu vực Lời chào hôm nay.
+
+## Bin 3.0 — Giai đoạn 3 (docs/PLAN-bin-3.md)
+- **Bạn nhỏ & Trứng (Pet Companions & Eggs)**:
+  - Bảng `bin_buddies` (`supabase/migrations/20261030000016_bin_buddies.sql`): `user_id`, `species` (`miu`, `panda`, `duck`, `bunny`), `name`, `egg_at`, `start_correct`, `hatched_at`. RLS: người dùng chỉ đọc được của chính mình, cấm insert/update/delete trực tiếp từ client.
+  - RPC `bin_mastered_counts`: đếm số từ đã thuộc (`scheduled_days >= 21`, recognize cards, review state, không suspended) cho từng ngôn ngữ `en`, `zh`.
+  - Quy tắc nhận trứng (`lib/bin/buddies.ts`):
+    - `miu`: 25 từ thuộc bất kỳ (`en` hoặc `zh`).
+    - `panda`: 25 từ thuộc tiếng Trung (`zh`).
+    - `duck`: 25 từ thuộc tiếng Anh (`en`).
+    - `bunny`: 100 từ thuộc bất kỳ.
+  - Tiến độ ấp trứng: tính theo số câu đúng sau thời điểm nhận trứng (`totalCorrect - start_correct`), Miu/Panda/Duck cần 30 câu đúng, Bunny cần 60 câu đúng.
+  - Đồng bộ và quản lý: `lib/actions/bin-buddies.ts` (`syncBuddies`, `hatchBuddy`, `renameBuddy`, `setActiveBuddy`) và `lib/data/bin.ts` (`syncBuddiesData`). Bạn đồng hành đang đi cùng lưu tại pref `bin_buddy` (`lib/validation.ts`).
+- **Hình vẽ vector SVG & Hiệu ứng hoạt họa**:
+  - `components/mascot/buddy.tsx`: hình vẽ vector SVG 120×120 cho 4 loài thú cưng × 3 tâm trạng (`happy`, `sleepy`, `cheer`) đồng bộ phong cách nét vẽ của Bin (`--pup-ink`, `--pup-blush`, `--pup-feature`). Ngoại lệ hoạt họa: bạn nhỏ chỉ chớp mắt (`.buddy-blink`), lệch pha 1.8s so với Bin, tôn trọng `prefers-reduced-motion`.
+  - `components/mascot/egg.tsx`: hình vẽ quả trứng vector SVG với hoa văn đặc trưng theo loài, vết nứt theo tiến độ (0, ≥0.5, ≥0.9), hiệu ứng lắc nhẹ (`.egg-wobble`) khi sẵn sàng nở.
+  - Xem trước tại `/dev-ui/bin` (`components/mascot/bin-lab.tsx`).
+- **Giao diện Góc của Bin & Hoạt cảnh nở trứng**:
+  - Ô thứ 8 "Bạn nhỏ" (`components/mascot/bin-home.tsx`): tone coral, icon `PawPrint`, hiện chấm tròn thông báo khi có trứng sẵn sàng nở.
+  - Khu quản lý Bạn nhỏ (`components/mascot/bin-buddies.tsx`): hiển thị 4 loài ở 3 trạng thái: khóa (bóng mờ), trứng (tiến độ ấp), đã nở (đổi tên, chọn đi cùng).
+  - Hoạt cảnh nở trứng: chạm 3 lần để ấp nở, dialog phóng to với trứng nứt, confetti, bạn nhỏ mừng rỡ cùng Bin nhảy múa và form đặt tên thân mật.
+- **Bạn nhỏ đi theo Bin**:
+  - `BinRoom` (`components/mascot/bin-room.tsx`): bạn nhỏ đứng cạnh Bin bên góc phòng; khi Bin đi dạo vắng nhà, bạn nhỏ ngủ ngoan trên đệm (`mood="sleepy"`).
+  - Hôm nay (`Today`): `components/mascot/pettable-pup.tsx` cho phép chạm vào bạn nhỏ để kích hoạt tâm trạng phấn khích 1 giây (`cheer`) kèm âm thanh pop.
+  - Màn hình kết thúc học (`components/review/session-gifts.tsx`): bạn nhỏ cùng Bin chúc mừng khi lên cấp, trao quà trứng mới (`egg`) và báo trứng sẵn sàng nở (`eggReady`).
+- **Giám sát quản trị (Admin Monitoring)**:
+  - `lib/admin-pet.ts` và `lib/data/admin-monitor.ts`: bổ sung danh sách bạn nhỏ (`buddies`: loài, tên, trạng thái, ngày nhận trứng/ngày nở) và bạn nhỏ đang đi cùng (`activeBuddy`).
+  - Giao diện `components/admin/pet-panel.tsx`: thẻ hiển thị trực quan các bạn nhỏ cùng nhà và trạng thái đồng hành.

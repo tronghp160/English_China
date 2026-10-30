@@ -1,4 +1,5 @@
 import type { PupMood } from "@/lib/mascot/lines";
+import { isBuddySpecies, type BuddySpecies } from "@/lib/bin/buddies";
 import {
   BIN_MOOD_LABEL,
   binMoodFor,
@@ -56,6 +57,15 @@ export type AdminDailyGreeting = {
   createdAt: string;
 };
 
+export type AdminBuddyEntry = {
+  species: BuddySpecies;
+  name: string;
+  state: "egg" | "hatched";
+  eggAt: string;
+  hatchedAt: string | null;
+  startCorrect: number;
+};
+
 export type PetSummary = {
   name: string;
   mascotOn: boolean;
@@ -71,6 +81,8 @@ export type PetSummary = {
   scarves: number;
   freezes30: string[];
   dailyGreeting: AdminDailyGreeting | null;
+  buddies: AdminBuddyEntry[];
+  activeBuddy: BuddySpecies | null;
   treatsFed: number;
   fedToday: boolean;
   lastFed: string | null;
@@ -105,6 +117,8 @@ export function buildPetSummary(input: {
   scarves?: number;
   freezes30?: string[];
   dailyGreeting?: AdminDailyGreeting | null;
+  buddies?: AdminBuddyEntry[];
+  activeBuddy?: BuddySpecies | null;
 }): PetSummary {
   const now = input.now ?? new Date();
   const timezone = input.timezone || "Asia/Ho_Chi_Minh";
@@ -226,6 +240,13 @@ export function buildPetSummary(input: {
   const scarves = input.scarves ?? 0;
   const freezes30 = input.freezes30 ?? [];
   const dailyGreeting = input.dailyGreeting ?? null;
+  const buddies = input.buddies ?? [];
+  const activeBuddy =
+    input.activeBuddy !== undefined
+      ? input.activeBuddy
+      : isBuddySpecies(prefs.bin_buddy)
+        ? (prefs.bin_buddy as BuddySpecies)
+        : null;
 
   return {
     name: prefs.mascot_name,
@@ -242,6 +263,8 @@ export function buildPetSummary(input: {
     scarves,
     freezes30,
     dailyGreeting,
+    buddies,
+    activeBuddy,
     treatsFed: prefs.bin_treats_fed,
     fedToday,
     lastFed: prefs.bin_last_fed,

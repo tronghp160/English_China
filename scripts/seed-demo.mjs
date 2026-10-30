@@ -277,6 +277,46 @@ async function seedPet(userId) {
     ]),
     "bin_ledger",
   );
+
+  // Companions: Miu hatched and following Bin, Panda egg in progress (20/30)
+  const { data: statsRows } = await sb.from("daily_stats").select("correct").eq("user_id", userId);
+  const totalCorrect = (statsRows ?? []).reduce((sum, r) => sum + (r.correct || 0), 0);
+  const pandaStartCorrect = Math.max(0, totalCorrect - 20);
+
+  await must(
+    sb.from("bin_buddies").upsert(
+      [
+        {
+          user_id: userId,
+          species: "miu",
+          name: "Miu",
+          start_correct: 0,
+          egg_at: new Date(Date.now() - 5 * DAY).toISOString(),
+          hatched_at: new Date(Date.now() - 3 * DAY).toISOString(),
+        },
+        {
+          user_id: userId,
+          species: "panda",
+          name: "Panda",
+          start_correct: pandaStartCorrect,
+          egg_at: new Date(Date.now() - 2 * DAY).toISOString(),
+          hatched_at: null,
+        },
+      ],
+      { onConflict: "user_id, species" },
+    ),
+    "bin_buddies",
+  );
+
+  const { data: settingsRow } = await sb.from("user_settings").select("prefs").eq("user_id", userId).maybeSingle();
+  const currentPrefs = settingsRow?.prefs || {};
+  await must(
+    sb
+      .from("user_settings")
+      .update({ prefs: { ...currentPrefs, bin_buddy: "miu" } })
+      .eq("user_id", userId),
+    "bin_buddy pref",
+  );
 }
 await seedPet(demo);
 

@@ -1402,7 +1402,7 @@ Hiện bạn nhỏ đang `active` (pref `bin_buddy`, phải là bạn đã nở 
 
 ---
 
-## Bước 3.6 — Admin, seed, tài liệu, kiểm tra cuối
+## Bước 3.6 — Admin, seed, tài liệu, kiểm tra cuối ✅
 - `pet-panel.tsx`: danh sách bạn nhỏ (loài, tên, trạng thái, ngày nhận trứng/nở), bạn đang đi cùng.
 - `scripts/seed-demo.mjs`: `demo@example.com` có Miu đã nở và đang đi cùng, trứng Panda đang ấp 20/30.
 - `CLAUDE.md`: mục **"Bin 3.0 — Giai đoạn 3"**.

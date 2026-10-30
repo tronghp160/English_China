@@ -12,7 +12,8 @@ import {
   type LevelBuckets,
   type PlaceSummary,
 } from "@/lib/admin-monitor-utils";
-import { buildPetSummary, type AdminLatestTrip, type AdminRoomSlots, type LedgerEntry, type PetSummary } from "@/lib/admin-pet";
+import { buildPetSummary, type AdminBuddyEntry, type AdminLatestTrip, type AdminRoomSlots, type LedgerEntry, type PetSummary } from "@/lib/admin-pet";
+import type { BuddySpecies } from "@/lib/bin/buddies";
 import { placeById } from "@/lib/bin/places";
 import {
   placeLabel,
@@ -275,6 +276,7 @@ export async function getPetSummaryFor(userId: string): Promise<PetSummary> {
     { data: scarfData },
     { data: freezes30Data },
     { data: dailyData },
+    { data: buddiesData },
   ] = await Promise.all([
     getPetSummariesFor([userId]),
     sb.rpc("bin_balance", { p_user: userId }),
@@ -314,6 +316,11 @@ export async function getPetSummaryFor(userId: string): Promise<PetSummary> {
       .eq("user_id", userId)
       .eq("study_day", todayDay)
       .maybeSingle(),
+    sb
+      .from("bin_buddies")
+      .select("species, name, egg_at, start_correct, hatched_at")
+      .eq("user_id", userId)
+      .order("egg_at", { ascending: true }),
   ]);
 
   const base =
@@ -367,6 +374,15 @@ export async function getPetSummaryFor(userId: string): Promise<PetSummary> {
       }
     : null;
 
+  const buddies: AdminBuddyEntry[] = (buddiesData ?? []).map((b) => ({
+    species: b.species as BuddySpecies,
+    name: b.name,
+    state: b.hatched_at ? "hatched" : "egg",
+    eggAt: b.egg_at,
+    hatchedAt: b.hatched_at,
+    startCorrect: b.start_correct,
+  }));
+
   return {
     ...base,
     boneBalance: typeof balanceData === "number" ? balanceData : base.bones,
@@ -377,6 +393,7 @@ export async function getPetSummaryFor(userId: string): Promise<PetSummary> {
     scarves,
     freezes30,
     dailyGreeting,
+    buddies,
   };
 }
 

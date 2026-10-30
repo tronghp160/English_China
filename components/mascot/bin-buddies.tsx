@@ -187,6 +187,7 @@ export function BinBuddies({
               return (
                 <div
                   key={b.species}
+                  data-species={b.species}
                   className="flex flex-col justify-between rounded-xl border border-dashed border-border bg-surface-2/60 p-4"
                 >
                   <div className="flex items-center gap-3">
@@ -224,6 +225,7 @@ export function BinBuddies({
               return (
                 <div
                   key={b.species}
+                  data-species={b.species}
                   className={cn(
                     "flex flex-col justify-between rounded-xl border p-4 transition-colors",
                     hatch.ready
@@ -293,6 +295,7 @@ export function BinBuddies({
             return (
               <div
                 key={b.species}
+                data-species={b.species}
                 className={cn(
                   "flex flex-col justify-between rounded-xl border p-4 shadow-sm transition-colors",
                   isCurrentActive
