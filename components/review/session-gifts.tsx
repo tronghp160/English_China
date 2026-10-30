@@ -1,11 +1,12 @@
 "use client";
 
-import { Bone, Flame, Gift, Sparkles } from "lucide-react";
+import { Bone, Flame, Footprints, Gift, Sparkles } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useMe } from "@/components/app-shell/me-provider";
 import { Confetti } from "@/components/fx/confetti";
 import { CountUp } from "@/components/fx/count-up";
+import { useBinHome } from "@/components/mascot/bin-home-provider";
 import { Pup } from "@/components/mascot/pup";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -55,6 +56,7 @@ function GiftCard({ children, className }: { children: React.ReactNode; classNam
  */
 export function SessionGifts({ xp, correct, answers }: { xp: number; correct: number; answers: number }) {
   const { prefs } = useMe();
+  const home = useBinHome();
   const reduced = useReducedMotion();
   const sync = useOutboxStatus();
   const [data, setData] = useState<{ now: SessionRewardData; base: SessionRewardData | null; flushed: boolean } | null>(null);
@@ -207,6 +209,26 @@ export function SessionGifts({ xp, correct, answers }: { xp: number; correct: nu
               {[...gains.newOutfits.map((o) => `Trang phục ${o.name.toLowerCase()}`), ...gains.newTricks.map((t) => `Trò ${t.name.toLowerCase()}`)].join(", ")}
             </p>
           </div>
+        </GiftCard>
+      )}
+
+      {prefs.mascot && data?.now.trip?.kind === "ready" && (!data.base || data.base.trip?.kind !== "ready") && allOpen && (
+        <GiftCard className="bg-c-grape-soft text-c-grape-fg justify-between">
+          <div className="flex items-center gap-3.5">
+            <IconTile icon={Footprints} tone="grape" size={48} solid />
+            <div className="min-w-0">
+              <p className="font-extrabold">Đủ điều kiện!</p>
+              <p className="text-sm">Cho {prefs.mascot_name} đi dạo</p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            className="shrink-0"
+            onClick={() => home?.open("trip")}
+          >
+            Đi dạo
+          </Button>
         </GiftCard>
       )}
 

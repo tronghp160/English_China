@@ -14,6 +14,7 @@ import {
   type TrickId,
 } from "@/lib/progress";
 import { longestStreak } from "@/lib/srs/streak";
+import { tripStatus, type TripStatus } from "@/lib/bin/trip";
 import { createClient } from "@/lib/supabase/server";
 import { readPrefs } from "@/lib/validation";
 
@@ -38,6 +39,7 @@ export type Progress = {
   outfit: OutfitId;
   outfits: OutfitId[];
   tricks: TrickId[];
+  trip: TripStatus;
 };
 
 /**
@@ -48,9 +50,15 @@ export const getProgress = cache(async (): Promise<Progress> => {
   const summary = await getStudySummary();
   const { me, today, streak } = summary;
   const supabase = await createClient();
-  const [statsRes, walletRes] = await Promise.all([
+  const [statsRes, walletRes, tripRes] = await Promise.all([
     supabase.from("daily_stats").select("day, reviews, correct, new_learned, xp").eq("user_id", me.user.id),
     supabase.rpc("bin_wallet"),
+    supabase
+      .from("bin_trips")
+      .select("id, study_day, place_id, returns_at, collected_at")
+      .eq("user_id", me.user.id)
+      .order("started_at", { ascending: false })
+      .limit(1),
   ]);
   const rows = statsRes.data ?? [];
   let bones = 0;
@@ -81,6 +89,15 @@ export const getProgress = cache(async (): Promise<Progress> => {
   }).map((q) => ({ ...q, claimed: taken.includes(q.id) }));
 
   const level = levelFromXp(totalXp);
+  const latestTrip = tripRes.data?.[0] ?? null;
+  const trip = tripStatus({
+    today,
+    reviewsToday: todayRow?.reviews ?? 0,
+    questsDone: quests.filter((q) => q.done).length,
+    now: new Date(),
+    latest: latestTrip,
+  });
+
   return {
     today,
     level,
@@ -99,5 +116,6 @@ export const getProgress = cache(async (): Promise<Progress> => {
       : "none",
     outfits: unlockedOutfits({ longestStreak: longest, level: level.level }),
     tricks: unlockedTricks(level.level),
+    trip,
   };
 });

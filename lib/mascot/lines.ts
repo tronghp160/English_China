@@ -119,6 +119,10 @@ export const LINES = {
   decorPlaced: ["Đẹp hơn rồi!", "{name} thích chỗ này lắm."],
   decorBought: ["Đồ mới! Cảm ơn bạn!", "{name} vui quá, có đồ mới rồi."],
   decorShort: ["Thiếu chút xương nữa. Ôn thêm vài câu nhé.", "Gom thêm xương rồi quay lại mua nha."],
+  tripReady: ["Ôn đủ rồi, cho {name} đi dạo không?", "{name} muốn ra ngoài chơi một vòng."],
+  tripAway: ["{name} đang đi dạo, lát về kể bạn nghe.", "{name} ra ngoài rồi, bạn cứ học tiếp nhé."],
+  tripBack: ["{name} về rồi! Có quà cho bạn.", "Mở bưu thiếp ra xem nào."],
+  tripOvernight: ["{name} ngủ lại ở đó, sáng mai về."],
 } as const;
 
 export type LineKey = keyof typeof LINES;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bone, Heart, Lock, Shirt, Sofa, Star, Volleyball, X } from "lucide-react";
+import { Bone, Footprints, Heart, Lock, Mail, Shirt, Sofa, Star, Volleyball, X } from "lucide-react";
 import { m } from "motion/react";
 import Link from "next/link";
 import { Dialog as DialogPrimitive } from "radix-ui";
@@ -10,6 +10,7 @@ import { useMe } from "@/components/app-shell/me-provider";
 import { DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import { feedBin, loadBinHome, setBinOutfit, type BinHomeData } from "@/lib/actions/bin";
 import { DEFAULT_ROOM, type RoomSlot } from "@/lib/bin/catalog";
+import { placeById } from "@/lib/bin/places";
 import { haptic } from "@/lib/haptics";
 import { say as sayLine, type LineKey } from "@/lib/mascot/lines";
 import {
@@ -29,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { BinDecor } from "./bin-decor";
 import type { BinPanel } from "./bin-home-provider";
 import { BinRoom } from "./bin-room";
+import { BinTrip } from "./bin-trip";
 import { OutfitIcon } from "./outfits";
 import { Pup } from "./pup";
 import { useBinAction } from "./use-bin";
@@ -37,7 +39,7 @@ import { useBinAction } from "./use-bin";
 const roll = () => Math.random();
 
 const TILES: {
-  id: "feed" | "play" | "tricks" | "outfits" | "decor";
+  id: "feed" | "play" | "tricks" | "outfits" | "decor" | "trip" | "postcards";
   label: string;
   tone: Tone;
   icon: typeof Bone;
@@ -47,6 +49,8 @@ const TILES: {
   { id: "tricks", label: "Làm trò", tone: "blue", icon: Star },
   { id: "outfits", label: "Trang phục", tone: "pink", icon: Shirt },
   { id: "decor", label: "Trang trí", tone: "orange", icon: Sofa },
+  { id: "trip", label: "Đi dạo", tone: "grape", icon: Footprints },
+  { id: "postcards", label: "Bưu thiếp", tone: "teal", icon: Mail },
 ];
 
 /**
@@ -191,9 +195,12 @@ export function BinHome({
     else if (id === "play") throwBall();
     else if (id === "tricks") setTricksOpen((v) => !v);
     else if (id === "decor") setPanel("decor");
+    else if (id === "trip") setPanel("trip");
     else outfitsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
+  const isAway = data?.trip?.status.kind === "away";
+  const isBack = data?.trip?.status.kind === "back";
   const level = data?.level;
   const bones = data?.bones ?? 0;
   const goStudy = dueCount > 0 ? "/review" : "/practice";
@@ -248,23 +255,38 @@ export function BinHome({
           <div className="grid gap-4 lg:grid-cols-[1.15fr_1fr] lg:gap-6">
             <div className="flex flex-col gap-3">
               <div className="relative h-[270px] overflow-hidden rounded-[24px] bg-scene-wall lg:h-[360px]">
-                <BinRoom night={night} name={name} room={data?.room ?? DEFAULT_ROOM} preview={preview} />
+                <BinRoom
+                  night={night}
+                  name={name}
+                  room={data?.room ?? DEFAULT_ROOM}
+                  preview={preview}
+                  away={
+                    isAway && data?.trip?.trip
+                      ? {
+                          placeName: placeById(data.trip.trip.placeId)?.name ?? data.trip.trip.placeId,
+                          backAt: data.trip.trip.returnsAt,
+                        }
+                      : null
+                  }
+                />
 
-                <m.div
-                  ref={binRef}
-                  className="absolute bottom-[26px] left-1/2 -ml-[64px] lg:-ml-[110px]"
-                  animate={chasing ? { x: [0, 190, 190, 0] } : { x: 0 }}
-                  transition={chasing ? { duration: 1.5, times: [0, 0.35, 0.55, 1], ease: "easeInOut" } : { duration: 0.2 }}
-                >
-                  <Pup
-                    mood={bin.mood}
-                    action={bin.action}
-                    outfit={outfit}
-                    follow
-                    className="size-[170px] lg:size-[220px]"
-                    size={170}
-                  />
-                </m.div>
+                {!isAway && (
+                  <m.div
+                    ref={binRef}
+                    className="absolute bottom-[26px] left-1/2 -ml-[64px] lg:-ml-[110px]"
+                    animate={chasing ? { x: [0, 190, 190, 0] } : { x: 0 }}
+                    transition={chasing ? { duration: 1.5, times: [0, 0.35, 0.55, 1], ease: "easeInOut" } : { duration: 0.2 }}
+                  >
+                    <Pup
+                      mood={isBack ? "love" : bin.mood}
+                      action={bin.action}
+                      outfit={outfit}
+                      follow
+                      className="size-[170px] lg:size-[220px]"
+                      size={170}
+                    />
+                  </m.div>
+                )}
 
                 {chasing && (
                   <m.span
@@ -276,7 +298,7 @@ export function BinHome({
                   />
                 )}
 
-                {bones > 0 && (
+                {bones > 0 && !isAway && (
                   <>
                     <m.button
                       type="button"
@@ -378,17 +400,58 @@ export function BinHome({
                   </div>
                 ))}
 
+              {panel === "trip" &&
+                (data ? (
+                  <BinTrip
+                    name={name}
+                    dueCount={dueCount}
+                    initialTrip={data.trip}
+                    onBack={() => setPanel("main")}
+                    onBonesChange={(bones) => setData((d) => (d ? { ...d, bones } : d))}
+                    onRoomChange={(room) => setData((d) => (d ? { ...d, room: { ...d.room, ...room } } : d))}
+                    onCloseHome={() => onOpenChange(false)}
+                    playBin={bin.play}
+                  />
+                ) : (
+                  <div className="flex min-h-[200px] items-center justify-center text-sm font-semibold text-fg-muted">
+                    Đang tải…
+                  </div>
+                ))}
+
               {panel === "main" && (
                 <>
                   <div className="grid grid-cols-4 gap-2">
                     {TILES.map(({ id, label, tone, icon: Icon }) => {
                       const t = TONE_CLASSES[tone];
+                      const disabledAway = isAway && (id === "feed" || id === "play" || id === "tricks");
+                      const disabled = (id === "feed" && busy) || disabledAway;
+                      const title = disabledAway ? `${name} đang đi dạo` : undefined;
+
+                      if (id === "postcards") {
+                        return (
+                          <Link
+                            key={id}
+                            href="/bin/postcards"
+                            onClick={() => onOpenChange(false)}
+                            className={cn(
+                              "flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-[18px] px-1 text-center text-sm leading-tight font-bold transition-transform active:scale-95",
+                              t.soft,
+                              t.fg,
+                            )}
+                          >
+                            <Icon className="size-6" aria-hidden />
+                            {label}
+                          </Link>
+                        );
+                      }
+
                       return (
                         <button
                           key={id}
                           type="button"
+                          title={title}
                           aria-expanded={id === "tricks" ? tricksOpen : undefined}
-                          disabled={id === "feed" && busy}
+                          disabled={disabled}
                           onClick={() => onTile(id)}
                           className={cn(
                             "flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-[18px] px-1 text-center text-sm leading-tight font-bold transition-transform active:scale-95 disabled:opacity-60",

@@ -25,6 +25,8 @@ import { CONTACT } from "@/lib/contact";
 import { getDeckSamples, getMyDecks } from "@/lib/data/decks";
 import { getProgress } from "@/lib/data/progress";
 import { getStudySummary } from "@/lib/data/study";
+import { placeById } from "@/lib/bin/places";
+import { AutoOpenBin, TodayTripAwayCard, TodayTripBackCard } from "@/components/today/today-trip-card";
 import { LINES, say, type LineKey, type PupMood } from "@/lib/mascot/lines";
 import { readPrefs } from "@/lib/validation";
 
@@ -47,7 +49,12 @@ function dateLine(day: string) {
   );
 }
 
-export default async function TodayPage() {
+export default async function TodayPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ bin?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : undefined;
   const [s, decks, progress] = await Promise.all([getStudySummary(), getMyDecks(), getProgress()]);
   const due = s.langs.reduce((n, l) => n + l.due, 0);
   const fresh = s.langs.reduce((n, l) => n + l.newToday, 0);
@@ -60,8 +67,17 @@ export default async function TodayPage() {
     .map((d) => ({ id: d.id, name: d.name, language: d.language }));
   const firstName = s.me.profile.display_name.split(/\s+/).at(-1);
   const prefs = readPrefs(s.me.settings.prefs);
-  const [mood, line]: [PupMood, LineKey] =
-    s.totalCards === 0
+
+  const trip = progress.trip;
+  const isTripAway = trip.kind === "away";
+  const isTripBack = trip.kind === "back";
+  const isTripReady = trip.kind === "ready";
+  const awayPlaceName = isTripAway ? (placeById(trip.placeId)?.name ?? trip.placeId) : "";
+  const awayReturnsAt = isTripAway ? trip.returnsAt : "";
+
+  const [mood, line]: [PupMood, LineKey] = isTripAway
+    ? ["sleepy", "tripAway"]
+    : s.totalCards === 0
       ? ["wave", "empty"]
       : s.streak.current > 0 && !s.streak.activeToday
         ? ["sleepy", "streakAtRisk"]
@@ -80,6 +96,9 @@ export default async function TodayPage() {
   const texts = Array.from({ length: LINES[line].length }, (_, i) =>
     say(line, { seed: seed + i, name: prefs.mascot_name, n: line === "streakAtRisk" ? s.streak.current : remaining }),
   );
+  if (isTripReady) {
+    texts.push(say("tripReady", { seed, name: prefs.mascot_name }));
+  }
   const minutes = Math.max(1, Math.ceil((remaining * 20) / 60));
   const activeDays = s.days.filter((d) => d.reviews > 0).map((d) => d.day);
   const topDecks = [...decks]
@@ -131,6 +150,10 @@ export default async function TodayPage() {
           name={prefs.mascot_name}
         />
       </header>
+
+      {sp?.bin === "trip" && <AutoOpenBin panel="trip" />}
+
+      {prefs.mascot && isTripBack && <TodayTripBackCard name={prefs.mascot_name} />}
 
       {s.totalCards === 0 ? (
         <div className="flex flex-col gap-6">
@@ -220,11 +243,37 @@ export default async function TodayPage() {
                     <span className="text-center text-[0.8125rem] opacity-85 sm:text-sm">khoảng {minutes} phút</span>
                   </div>
                   {prefs.mascot && (
-                    <MascotSay mood={mood} name={prefs.mascot_name} text={text} texts={texts} size={56} className="mt-2 lg:hidden" />
+                    <MascotSay
+                      mood={mood}
+                      name={prefs.mascot_name}
+                      text={text}
+                      texts={texts}
+                      size={56}
+                      className={isTripAway ? "mt-2" : "mt-2 lg:hidden"}
+                      hidePup={isTripAway}
+                      bubbleAction={isTripReady ? "trip" : undefined}
+                    />
+                  )}
+                  {prefs.mascot && isTripAway && (
+                    <TodayTripAwayCard
+                      name={prefs.mascot_name}
+                      placeName={awayPlaceName}
+                      returnsAt={awayReturnsAt}
+                      timeZone={s.me.settings.timezone}
+                    />
                   )}
                 </div>
-                {prefs.mascot && (
-                  <PettablePup mood="cheer" name={prefs.mascot_name} size={96} pupClassName="xl:size-[7.5rem]" bubble bubbleClassName="right-0 bottom-full mr-0 mb-1" sleepAfterMs={30_000} className="absolute right-5 -bottom-1.5 hidden lg:block" />
+                {prefs.mascot && !isTripAway && (
+                  <PettablePup
+                    mood="cheer"
+                    name={prefs.mascot_name}
+                    size={96}
+                    pupClassName="xl:size-[7.5rem]"
+                    bubble
+                    bubbleClassName="right-0 bottom-full mr-0 mb-1"
+                    sleepAfterMs={30_000}
+                    className="absolute right-5 -bottom-1.5 hidden lg:block"
+                  />
                 )}
               </section>
             ) : (
@@ -277,11 +326,37 @@ export default async function TodayPage() {
                     </Link>
                   </div>
                   {prefs.mascot && (
-                    <MascotSay mood={mood} name={prefs.mascot_name} text={text} texts={texts} size={56} className="mt-2 lg:hidden" />
+                    <MascotSay
+                      mood={mood}
+                      name={prefs.mascot_name}
+                      text={text}
+                      texts={texts}
+                      size={56}
+                      className={isTripAway ? "mt-2" : "mt-2 lg:hidden"}
+                      hidePup={isTripAway}
+                      bubbleAction={isTripReady ? "trip" : undefined}
+                    />
+                  )}
+                  {prefs.mascot && isTripAway && (
+                    <TodayTripAwayCard
+                      name={prefs.mascot_name}
+                      placeName={awayPlaceName}
+                      returnsAt={awayReturnsAt}
+                      timeZone={s.me.settings.timezone}
+                    />
                   )}
                 </div>
-                {prefs.mascot && (
-                  <PettablePup mood="cheer" name={prefs.mascot_name} size={96} pupClassName="xl:size-[7.5rem]" bubble bubbleClassName="right-0 bottom-full mr-0 mb-1" sleepAfterMs={30_000} className="absolute right-5 -bottom-1.5 hidden lg:block" />
+                {prefs.mascot && !isTripAway && (
+                  <PettablePup
+                    mood="cheer"
+                    name={prefs.mascot_name}
+                    size={96}
+                    pupClassName="xl:size-[7.5rem]"
+                    bubble
+                    bubbleClassName="right-0 bottom-full mr-0 mb-1"
+                    sleepAfterMs={30_000}
+                    className="absolute right-5 -bottom-1.5 hidden lg:block"
+                  />
                 )}
               </section>
             )}

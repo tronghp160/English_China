@@ -10,6 +10,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { prefsSchema, type Prefs } from "@/lib/validation";
 import { fail, ok, type ActionResult } from "./result";
+import { loadTrip, type TripView } from "./bin-trip";
+import type { TripStatus } from "@/lib/bin/trip";
 
 /** What "Góc của Bin" shows, read when the sheet opens (REDESIGN_V3 §5.2). */
 export type BinHomeData = {
@@ -25,18 +27,23 @@ export type BinHomeData = {
   questsDone: number;
   room: Record<RoomSlot, string>;
   owned: string[];
+  trip: TripView;
 };
 
 export async function loadBinHome(): Promise<ActionResult<BinHomeData>> {
   const user = await requireUser();
   const admin = createAdminClient();
-  const [p, itemsRes, roomRes] = await Promise.all([
+  const [p, itemsRes, roomRes, tripRes] = await Promise.all([
     getProgress(),
     admin.from("bin_items").select("item_id, qty").eq("user_id", user.id),
     admin.from("bin_room").select("slot, item_id").eq("user_id", user.id),
+    loadTrip(),
   ]);
   const owned = ownedItems(itemsRes.data ?? []);
   const room = resolveRoom(roomRes.data ?? [], owned);
+  const trip: TripView = tripRes.ok
+    ? tripRes.data
+    : { status: { kind: "locked", needReviews: 20, needQuests: 2 }, trip: null };
   return ok({
     level: p.level,
     bones: p.bones,
@@ -50,6 +57,7 @@ export async function loadBinHome(): Promise<ActionResult<BinHomeData>> {
     questsDone: p.quests.filter((q) => q.done).length,
     room,
     owned: Array.from(owned),
+    trip,
   });
 }
 
@@ -62,6 +70,7 @@ export type SessionRewardData = {
   reviewsToday: number;
   bones: number;
   quests: { id: QuestId; title: string; progress: number; target: number; done: boolean; claimed: boolean }[];
+  trip: TripStatus;
 };
 
 export async function loadSessionRewards(): Promise<ActionResult<SessionRewardData>> {
@@ -74,6 +83,7 @@ export async function loadSessionRewards(): Promise<ActionResult<SessionRewardDa
     reviewsToday: p.reviewsToday,
     bones: p.bones,
     quests: p.quests.map(({ id, title, progress, target, done, claimed }) => ({ id, title, progress, target, done, claimed })),
+    trip: p.trip,
   });
 }
 

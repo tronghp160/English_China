@@ -18,6 +18,8 @@ export function MascotSay({
   size = 72,
   className,
   bubbleClassName,
+  hidePup = false,
+  bubbleAction,
 }: {
   mood: PupMood;
   name: string;
@@ -27,6 +29,8 @@ export function MascotSay({
   size?: number;
   className?: string;
   bubbleClassName?: string;
+  hidePup?: boolean;
+  bubbleAction?: "trip" | "home";
 }) {
   const [reaction, setReaction] = useState<{ count: number; line?: LineKey } | null>(null);
   const home = useBinHome();
@@ -55,13 +59,38 @@ export function MascotSay({
       stop();
     };
   }, [lines]);
+
+  const handleBubbleClick = () => {
+    if (bubbleAction === "trip") {
+      home?.open("trip");
+    } else if (bubbleAction === "home") {
+      home?.open();
+    }
+  };
+
   return (
     <div className={cn("flex items-end gap-2", className)}>
-      <PettablePup mood={mood} name={name} size={size} onPet={(count, line) => setReaction({ count, line })} />
+      {!hidePup && (
+        <PettablePup mood={mood} name={name} size={size} onPet={(count, line) => setReaction({ count, line })} />
+      )}
       <div
         ref={box}
+        onClick={bubbleAction ? handleBubbleClick : undefined}
+        role={bubbleAction ? "button" : undefined}
+        tabIndex={bubbleAction ? 0 : undefined}
+        onKeyDown={
+          bubbleAction
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleBubbleClick();
+                }
+              }
+            : undefined
+        }
         className={cn(
           "min-w-0 rounded-lg rounded-bl-[4px] bg-surface px-3.5 py-2.5 shadow-sm dark:border dark:border-border",
+          bubbleAction && "cursor-pointer transition-transform active:scale-[0.98]",
           bubbleClassName,
         )}
       >
