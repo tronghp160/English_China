@@ -4,7 +4,10 @@ import { parseUserAgent, readRequestMeta } from "@/lib/presence";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-const bodySchema = z.object({ path: z.string().max(200).startsWith("/") });
+const bodySchema = z.object({
+  path: z.string().max(200).startsWith("/"),
+  deviceModel: z.string().max(80).optional(),
+});
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const lastBeat = new Map<string, number>(); // per server instance: drop bursts under 5s without touching the database
 
@@ -25,6 +28,7 @@ export async function POST(request: Request) {
 
   const meta = readRequestMeta(request.headers);
   const device = parseUserAgent(request.headers.get("user-agent"));
+  const deviceModel = parsed.data.deviceModel || device.deviceModel || undefined;
   const rawSession = claims?.session_id;
   const { error } = await createAdminClient().rpc("record_presence", {
     p_user_id: userId,
@@ -41,6 +45,7 @@ export async function POST(request: Request) {
     p_browser: device.browser,
     p_os: device.os,
     p_user_agent: request.headers.get("user-agent")?.slice(0, 400) ?? undefined,
+    p_device_model: deviceModel,
   });
   // Never break the app because of tracking (e.g. the account was just deleted: foreign key error).
   if (error) console.error("[presence]", error.message);

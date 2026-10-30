@@ -54,6 +54,7 @@ export type OnlineRow = {
   latitude: number | null;
   longitude: number | null;
   deviceType: DeviceType;
+  deviceModel: string | null;
   browser: string | null;
   os: string | null;
 };
@@ -75,6 +76,7 @@ export type AdminUserMonitoring = {
   status: PresenceStatus;
   place: string;
   deviceType: DeviceType;
+  deviceModel: string | null;
   pet: {
     level: number;
     outfit: OutfitId;
@@ -163,6 +165,7 @@ export async function getOnlineNow(): Promise<{ online: OnlineRow[]; away: Onlin
       latitude: p.latitude,
       longitude: p.longitude,
       deviceType: (p.device_type as DeviceType) || "unknown",
+      deviceModel: p.device_model ?? null,
       browser: p.browser,
       os: p.os,
     };
@@ -450,6 +453,7 @@ export async function listUsersForAdmin({
     const pStatus = presenceStatus(presence?.last_seen_at);
     const place = presence ? placeLabel(presence) : "Chưa ghi nhận";
     const deviceType = (presence?.device_type as DeviceType) || "unknown";
+    const deviceModel = presence?.device_model ?? null;
 
     return {
       id: u.id,
@@ -466,6 +470,7 @@ export async function listUsersForAdmin({
       status: pStatus,
       place,
       deviceType,
+      deviceModel,
       totalXp: rollup?.total_xp ?? 0,
       activeDays: rollup?.active_days ?? 0,
       lastActiveDay: rollup?.last_active_day ?? null,
@@ -501,6 +506,7 @@ export async function listUsersForAdmin({
       status: u.status,
       place: u.place,
       deviceType: u.deviceType,
+      deviceModel: u.deviceModel,
       pet: pet
         ? {
             level: pet.level.level,

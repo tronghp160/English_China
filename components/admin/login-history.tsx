@@ -86,6 +86,7 @@ export function LoginHistory({
                         deviceType={ev.device_type}
                         browser={ev.browser}
                         os={ev.os}
+                        deviceModel={ev.device_model}
                       />
                     </td>
                     <td className="p-3 whitespace-nowrap">

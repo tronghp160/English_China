@@ -469,7 +469,8 @@ async function UsersTab({
                 </div>
                 <p className="truncate text-sm text-fg">{u.email}</p>
                 <p className="text-sm text-fg-muted">
-                  Tạo {dateTime(u.createdAt)} · Online {ago(u.lastSeenAt)} · {u.place} · {u.decks} bộ từ
+                  Tạo {dateTime(u.createdAt)} · Online {ago(u.lastSeenAt)} · {u.place}
+                  {u.deviceModel ? ` · ${u.deviceModel}` : ""} · {u.decks} bộ từ
                 </p>
                 {u.pet && (
                   <div className="mt-1.5">

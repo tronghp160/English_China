@@ -45,7 +45,12 @@ export async function OnlineTab({ meId }: { meId: string }) {
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-muted">
               <PlaceLine city={u.city} region={u.region} country={u.country} ip={u.ip} />
               <span>·</span>
-              <DeviceChip deviceType={u.deviceType} browser={u.browser} os={u.os} />
+              <DeviceChip
+                deviceType={u.deviceType}
+                browser={u.browser}
+                os={u.os}
+                deviceModel={u.deviceModel}
+              />
               <span>·</span>
               <span>Online {ago(u.lastSeenAt)}</span>
             </div>

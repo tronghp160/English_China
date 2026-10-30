@@ -750,6 +750,7 @@ export type Database = {
           city: string | null;
           country: string | null;
           created_at: string;
+          device_model: string | null;
           device_type: string | null;
           id: number;
           ip: string | null;
@@ -767,6 +768,7 @@ export type Database = {
           city?: string | null;
           country?: string | null;
           created_at?: string;
+          device_model?: string | null;
           device_type?: string | null;
           id?: number;
           ip?: string | null;
@@ -784,6 +786,7 @@ export type Database = {
           city?: string | null;
           country?: string | null;
           created_at?: string;
+          device_model?: string | null;
           device_type?: string | null;
           id?: number;
           ip?: string | null;
@@ -1024,6 +1027,7 @@ export type Database = {
           browser: string | null;
           city: string | null;
           country: string | null;
+          device_model: string | null;
           device_type: string | null;
           ip: string | null;
           last_seen_at: string;
@@ -1041,6 +1045,7 @@ export type Database = {
           browser?: string | null;
           city?: string | null;
           country?: string | null;
+          device_model?: string | null;
           device_type?: string | null;
           ip?: string | null;
           last_seen_at?: string;
@@ -1058,6 +1063,7 @@ export type Database = {
           browser?: string | null;
           city?: string | null;
           country?: string | null;
+          device_model?: string | null;
           device_type?: string | null;
           ip?: string | null;
           last_seen_at?: string;
@@ -1565,6 +1571,7 @@ export type Database = {
           p_browser?: string | null;
           p_os?: string | null;
           p_user_agent?: string | null;
+          p_device_model?: string | null;
         };
         Returns: boolean;
       };

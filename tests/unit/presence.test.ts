@@ -39,6 +39,7 @@ describe("parseUserAgent", () => {
       deviceType: "desktop",
       browser: "Chrome",
       os: "Windows",
+      deviceModel: null,
     });
 
     // Safari on iPhone
@@ -48,6 +49,7 @@ describe("parseUserAgent", () => {
       deviceType: "mobile",
       browser: "Safari",
       os: "iOS",
+      deviceModel: null,
     });
 
     // Chrome on Android Mobile
@@ -57,6 +59,7 @@ describe("parseUserAgent", () => {
       deviceType: "mobile",
       browser: "Chrome",
       os: "Android",
+      deviceModel: "Google Pixel 8",
     });
 
     // Safari on iPad
@@ -66,6 +69,7 @@ describe("parseUserAgent", () => {
       deviceType: "tablet",
       browser: "Safari",
       os: "iOS",
+      deviceModel: null,
     });
 
     // Zalo in-app on Android
@@ -75,6 +79,7 @@ describe("parseUserAgent", () => {
       deviceType: "mobile",
       browser: "Zalo",
       os: "Android",
+      deviceModel: "Samsung Galaxy S21 Ultra",
     });
 
     // Edge on macOS
@@ -84,6 +89,7 @@ describe("parseUserAgent", () => {
       deviceType: "desktop",
       browser: "Edge",
       os: "macOS",
+      deviceModel: null,
     });
 
     // Empty / null UA
@@ -91,11 +97,13 @@ describe("parseUserAgent", () => {
       deviceType: "unknown",
       browser: "Không rõ",
       os: "Không rõ",
+      deviceModel: null,
     });
     expect(parseUserAgent("")).toEqual({
       deviceType: "unknown",
       browser: "Không rõ",
       os: "Không rõ",
+      deviceModel: null,
     });
   });
 });

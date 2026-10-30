@@ -1,3 +1,5 @@
+import { parseAndroidModelFromUA } from "@/lib/device-detection";
+
 export const HEARTBEAT_MS = 45_000;
 export const ONLINE_WINDOW_MS = 2 * 60_000;
 export const AWAY_WINDOW_MS = 15 * 60_000;
@@ -39,13 +41,16 @@ export const DEVICE_LABEL: Record<DeviceType, string> = {
   unknown: "Không rõ thiết bị",
 };
 
-export function parseUserAgent(ua: string | null | undefined): {
+export type DeviceInfo = {
   deviceType: DeviceType;
   browser: string;
   os: string;
-} {
+  deviceModel?: string | null;
+};
+
+export function parseUserAgent(ua: string | null | undefined): DeviceInfo {
   if (!ua || !ua.trim()) {
-    return { deviceType: "unknown", browser: "Không rõ", os: "Không rõ" };
+    return { deviceType: "unknown", browser: "Không rõ", os: "Không rõ", deviceModel: null };
   }
 
   // Browser detection
@@ -98,7 +103,9 @@ export function parseUserAgent(ua: string | null | undefined): {
     deviceType = "desktop";
   }
 
-  return { deviceType, browser, os };
+  const deviceModel = /Android/i.test(ua) ? parseAndroidModelFromUA(ua) : null;
+
+  return { deviceType, browser, os, deviceModel };
 }
 
 export type RequestMeta = {

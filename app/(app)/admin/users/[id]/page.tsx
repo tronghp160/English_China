@@ -464,6 +464,7 @@ function UserLoginTab({
                   deviceType={presence?.device_type}
                   browser={presence?.browser}
                   os={presence?.os}
+                  deviceModel={presence?.device_model}
                 />
               </div>
             </div>
