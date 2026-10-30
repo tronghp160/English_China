@@ -88,6 +88,15 @@ export function MascotPrefs({
             checked={optimistic.mascot}
             onCheckedChange={(v) => save({ mascot: v })}
           />
+          {optimistic.mascot && (
+            <SwitchRow
+              id="pref-mascot-ai-greeting"
+              label="Lời chào thông minh mỗi ngày"
+              hint={`${optimistic.mascot_name} nhắc lại từ bạn vừa học hôm qua. Dùng 1 lượt AI mỗi ngày.`}
+              checked={optimistic.bin_ai_greeting}
+              onCheckedChange={(v) => save({ bin_ai_greeting: v })}
+            />
+          )}
           <div className="flex flex-col gap-1.5 py-3">
             <Label htmlFor="pref-mascot-name">Tên bạn cún</Label>
             <Input

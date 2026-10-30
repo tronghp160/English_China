@@ -58,6 +58,8 @@ export const prefsSchema = z.object({
   haptics: z.boolean().optional(),
   /** Outfit id of Bin, one of OUTFITS in lib/progress.ts; "none" = no outfit. */
   bin_outfit: z.string().max(20).optional(),
+  /** Bin writes one greeting a day with AI (needs the AI key); off = only the fixed lines. */
+  bin_ai_greeting: z.boolean().optional(),
   /** @deprecated since Bin 3.0, bones live in bin_ledger */
   bin_treats_fed: z.number().int().min(0).optional(),
   /** @deprecated since Bin 3.0, bones live in bin_ledger */
@@ -83,6 +85,7 @@ export const DEFAULT_PREFS: Required<Prefs> = {
   sound: true,
   haptics: true,
   bin_outfit: "none",
+  bin_ai_greeting: true,
   bin_treats_fed: 0,
   bin_last_fed: "",
   quests_total: 0,

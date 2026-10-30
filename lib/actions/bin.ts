@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireMe, requireUser } from "@/lib/auth";
 import { getProgress } from "@/lib/data/progress";
 import { isRoomItemId, ITEM_BY_ID, lockReason, ownedItems, resolveRoom, ROOM_SLOTS, type RoomSlot } from "@/lib/bin/catalog";
 import { OUTFITS, QUEST_BONES, QUEST_IDS, pruneClaimed, type LevelInfo, type OutfitId, type QuestId, type TrickId } from "@/lib/progress";
@@ -12,6 +12,9 @@ import { prefsSchema, type Prefs } from "@/lib/validation";
 import { fail, ok, type ActionResult } from "./result";
 import { loadTrip, type TripView } from "./bin-trip";
 import type { TripStatus } from "@/lib/bin/trip";
+import { studyDay } from "@/lib/srs/streak";
+import { getOrWriteGreeting } from "@/lib/ai/bin-greeting";
+import type { PupMood } from "@/lib/mascot/lines";
 
 /** What "Góc của Bin" shows, read when the sheet opens (REDESIGN_V3 §5.2). */
 export type BinHomeData = {
@@ -245,4 +248,15 @@ export async function placeItem(input: unknown): Promise<ActionResult<{ slot: Ro
     if (error) return fail("Không lưu được. Thử lại.");
   }
   return ok({ slot, itemId });
+}
+
+export async function loadGreeting(): Promise<ActionResult<{ text: string; mood: PupMood } | null>> {
+  try {
+    const me = await requireMe();
+    const today = studyDay(new Date(), me.settings.timezone);
+    const greeting = await getOrWriteGreeting(me.user.id, today);
+    return ok(greeting ? { text: greeting.text, mood: greeting.mood } : null);
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "Không tải được lời chào.");
+  }
 }

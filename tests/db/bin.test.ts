@@ -225,4 +225,83 @@ describe("bin ledger and wallet", () => {
       ),
     ).rejects.toThrow("already_collected");
   });
+
+  it("12. bin_daily RLS: user reads own row, cannot read others, cannot insert directly", async () => {
+    // Service inserts greeting for Alice
+    await as(db, "service", () =>
+      db.query(
+        `insert into public.bin_daily (user_id, study_day, greeting, mood, source)
+         values ($1, '2026-10-30', 'Chào buổi sáng!', 'happy', 'template')`,
+        [alice],
+      ),
+    );
+
+    // Alice reads her own greeting
+    const aliceRes = await as(db, alice, () =>
+      db.query<{ greeting: string }>("select greeting from public.bin_daily where user_id = $1", [alice]),
+    );
+    expect(aliceRes.rows).toHaveLength(1);
+    expect(aliceRes.rows[0].greeting).toBe("Chào buổi sáng!");
+
+    // Bob cannot read Alice's greeting
+    const bobRes = await as(db, bob, () =>
+      db.query("select * from public.bin_daily where user_id = $1", [alice]),
+    );
+    expect(bobRes.rows).toHaveLength(0);
+
+    // Alice cannot insert or update directly (authenticated revoked)
+    await expect(
+      as(db, alice, () =>
+        db.query(
+          `insert into public.bin_daily (user_id, study_day, greeting, mood, source)
+           values ($1, '2026-10-31', 'Hacking', 'happy', 'template')`,
+          [alice],
+        ),
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("13. bin_recent_misses returns top missed words for authenticated user", async () => {
+    // Create a deck and word for Alice
+    const deckRes = await as(db, "service", () =>
+      db.query<{ id: string }>(
+        "insert into public.decks (owner_id, name, language) values ($1, 'Miss Deck', 'en') returning id",
+        [alice],
+      ),
+    );
+    const deckId = deckRes.rows[0].id;
+    const wordRes = await as(db, "service", () =>
+      db.query<{ id: string }>(
+        `insert into public.words (deck_id, created_by, language, term, normalized, meaning_vi)
+         values ($1, $2, 'en', 'stubborn', 'stubborn', 'bướng bỉnh')
+         returning id`,
+        [deckId, alice],
+      ),
+    );
+    const wordId = wordRes.rows[0].id;
+
+    // Insert 2 failed review logs (rating = 1) for Alice
+    await as(db, "service", () =>
+      db.query(
+        `insert into public.review_logs (user_id, word_id, direction, mode, rating, was_correct, duration_ms, state_before, reviewed_at)
+         values ($1, $2, 'recognize', 'quiz', 1, false, 1000, 'review', now()),
+                ($1, $2, 'recognize', 'quiz', 1, false, 1200, 'review', now())`,
+        [alice, wordId],
+      ),
+    );
+
+    // Alice calls bin_recent_misses
+    const misses = await as(db, alice, () =>
+      db.query<{ term: string; misses: number }>("select term, misses from public.bin_recent_misses(2)"),
+    );
+    expect(misses.rows).toContainEqual(
+      expect.objectContaining({ term: "stubborn", misses: 2 }),
+    );
+
+    // Bob calls bin_recent_misses -> does not see Alice's word
+    const bobMisses = await as(db, bob, () =>
+      db.query<{ term: string }>("select term from public.bin_recent_misses(2)"),
+    );
+    expect(bobMisses.rows.some((r) => r.term === "stubborn")).toBe(false);
+  });
 });

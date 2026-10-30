@@ -82,3 +82,30 @@ export function binStoryPrompt(i: { term: string; meaningVi?: string | null; pla
     landmark: i.landmark,
   });
 }
+
+export function binGreetingSystem(name: string): string {
+  return `You are ${name}, a friendly puppy mascot in a Vietnamese vocabulary app. Write ONE greeting in Vietnamese for today, at most 2 short sentences (max 160 characters).
+Mention at most one word from the list, written exactly as given, and only if it fits naturally (for example: "Hôm qua mình thấy bạn hơi vấp chữ 鼓励, hôm nay gặp lại nó nhé").
+Be warm and light. Never guilt-trip, never mention losing, never invent numbers that are not given. No emoji. Do not use the word "streak"; say "chuỗi".
+Pick a mood that matches the text. word_id must be the id of the word you mentioned, or null.`;
+}
+
+export function binGreetingPrompt(context: {
+  name: string;
+  streak: number;
+  dueToday: number;
+  reviewedToday: number;
+  hardWords: { id: string; term: string; meaningVi: string | null; language: LangCode }[];
+  newYesterday: { id: string; term: string; meaningVi: string | null; language: LangCode }[];
+  tripBack: boolean;
+}): string {
+  return JSON.stringify({
+    mascot_name: context.name,
+    current_streak: context.streak,
+    cards_due_today: context.dueToday,
+    cards_reviewed_today: context.reviewedToday,
+    difficult_words_recently: context.hardWords.map((w) => ({ id: w.id, term: w.term, meaning: w.meaningVi })),
+    new_words_learned_yesterday: context.newYesterday.map((w) => ({ id: w.id, term: w.term, meaning: w.meaningVi })),
+    trip_back_with_postcard: context.tripBack,
+  });
+}

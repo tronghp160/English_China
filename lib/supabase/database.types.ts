@@ -116,6 +116,77 @@ export type Database = {
 
         ];
       };
+      bin_daily: {
+        Row: {
+          created_at: string;
+          greeting: string;
+          mood: string;
+          source: string;
+          study_day: string;
+          user_id: string;
+          word_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          greeting: string;
+          mood: string;
+          source: string;
+          study_day: string;
+          user_id: string;
+          word_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          greeting?: string;
+          mood?: string;
+          source?: string;
+          study_day?: string;
+          user_id?: string;
+          word_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bin_daily_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bin_daily_word_id_fkey";
+            columns: ["word_id"];
+            isOneToOne: false;
+            referencedRelation: "words";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bin_freezes: {
+        Row: {
+          created_at: string;
+          day: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          day: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          day?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bin_freezes_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       bin_items: {
         Row: {
           acquired_at: string;
@@ -1178,6 +1249,19 @@ export type Database = {
         };
         Returns: undefined;
       };
+      bin_recent_misses: {
+        Args: {
+          p_days?: number | null;
+          p_user?: string | null;
+        };
+        Returns: {
+            word_id: string;
+            term: string;
+            meaning_vi: string;
+            language: Database["public"]["Enums"]["lang_code"];
+            misses: number;
+          }[];
+      };
       bin_spend: {
         Args: {
           p_user: string | null;
@@ -1201,6 +1285,13 @@ export type Database = {
             state: string;
             last_review: string;
           }[];
+      };
+      bin_use_freezes: {
+        Args: {
+          p_user: string | null;
+          p_days: string[] | null;
+        };
+        Returns: string[];
       };
       bin_wallet: {
         Args: never;

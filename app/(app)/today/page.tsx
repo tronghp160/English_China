@@ -8,7 +8,7 @@ import { CountUp } from "@/components/fx/count-up";
 import { Reveal } from "@/components/fx/reveal";
 import { Tilt } from "@/components/fx/tilt";
 import { LangMark } from "@/components/lang-mark";
-import { MascotSay } from "@/components/mascot/mascot-say";
+import { DailyGreeting } from "@/components/mascot/daily-greeting";
 import { PettablePup } from "@/components/mascot/pettable-pup";
 import { Pup } from "@/components/mascot/pup";
 import { ProgressRing } from "@/components/stats/progress-ring";
@@ -243,11 +243,11 @@ export default async function TodayPage({
                     <span className="text-center text-[0.8125rem] opacity-85 sm:text-sm">khoảng {minutes} phút</span>
                   </div>
                   {prefs.mascot && (
-                    <MascotSay
-                      mood={mood}
+                    <DailyGreeting
+                      fallback={{ mood, text, texts }}
+                      situation={line}
                       name={prefs.mascot_name}
-                      text={text}
-                      texts={texts}
+                      today={s.today}
                       size={56}
                       className={isTripAway ? "mt-2" : "mt-2 lg:hidden"}
                       hidePup={isTripAway}
@@ -270,6 +270,7 @@ export default async function TodayPage({
                     size={96}
                     pupClassName="xl:size-[7.5rem]"
                     bubble
+                    defaultBubbleText={text}
                     bubbleClassName="right-0 bottom-full mr-0 mb-1"
                     sleepAfterMs={30_000}
                     className="absolute right-5 -bottom-1.5 hidden lg:block"
@@ -326,11 +327,11 @@ export default async function TodayPage({
                     </Link>
                   </div>
                   {prefs.mascot && (
-                    <MascotSay
-                      mood={mood}
+                    <DailyGreeting
+                      fallback={{ mood, text, texts }}
+                      situation={line}
                       name={prefs.mascot_name}
-                      text={text}
-                      texts={texts}
+                      today={s.today}
                       size={56}
                       className={isTripAway ? "mt-2" : "mt-2 lg:hidden"}
                       hidePup={isTripAway}
@@ -353,6 +354,7 @@ export default async function TodayPage({
                     size={96}
                     pupClassName="xl:size-[7.5rem]"
                     bubble
+                    defaultBubbleText={text}
                     bubbleClassName="right-0 bottom-full mr-0 mb-1"
                     sleepAfterMs={30_000}
                     className="absolute right-5 -bottom-1.5 hidden lg:block"

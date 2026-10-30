@@ -161,3 +161,10 @@ export const binStorySchema = z.object({
   pinyin: z.array(z.string().max(240)).max(3).optional(),
 });
 export type BinStoryGenerated = z.infer<typeof binStorySchema>;
+
+export const binGreetingSchema = z.object({
+  text: z.string().min(10).max(160),
+  mood: z.enum(["happy", "wave", "cheer", "love", "wink", "cool", "think"]),
+  word_id: z.string().uuid().nullable(),
+});
+export type BinGreetingGenerated = z.infer<typeof binGreetingSchema>;

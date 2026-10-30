@@ -64,6 +64,7 @@ export function PettablePup({
   bubbleClassName,
   pupClassName,
   sleepAfterMs,
+  defaultBubbleText,
 }: {
   mood: PupMood;
   name: string;
@@ -77,12 +78,15 @@ export function PettablePup({
   /** Class for the drawing itself, e.g. `size-24 xl:size-30` to grow it on wide screens (`size` is the small one). */
   pupClassName?: string;
   sleepAfterMs?: number;
+  /** Optional initial bubble text shown before the first pat (e.g. daily greeting). */
+  defaultBubbleText?: string;
 }) {
   const home = useBinHome();
   const [pets, setPets] = useState(0);
   const [petting, setPetting] = useState(false);
   const [sleeping, setSleeping] = useState(false);
   const [bubbleText, setBubbleText] = useState<string | null>(null);
+  const activeBubbleText = pets > 0 ? bubbleText : (bubbleText ?? defaultBubbleText ?? null);
   const bin = useBinAction(sleeping ? "sleepy" : mood);
   const playRef = useRef(bin.play);
   useEffect(() => {
@@ -231,7 +235,7 @@ export function PettablePup({
         <Pup mood={shown} action={bin.action} size={size} follow={size >= 40} className={pupClassName} />
         {petting && <Hearts key={pets} />}
       </button>
-      {bubbleText && (
+      {activeBubbleText && (
         <div
           role="status"
           className={cn(
@@ -239,7 +243,7 @@ export function PettablePup({
             bubbleClassName,
           )}
         >
-          {bubbleText}
+          {activeBubbleText}
           {home && (
             <button
               type="button"

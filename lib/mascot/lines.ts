@@ -139,6 +139,11 @@ export const LINES = {
     "Mấy từ này khó thật, {name} vẫn ở đây.",
   ],
   halfway: ["Được một nửa rồi.", "Nửa chặng rồi, cố lên."],
+  greetDaily: [
+    "Hôm nay bạn học từ mới hay ôn bài cũ?",
+    "Ngày mới rồi, vào học một chút nhé.",
+    "{name} sẵn sàng học cùng bạn rồi đây.",
+  ],
 } as const;
 
 export type LineKey = keyof typeof LINES;
