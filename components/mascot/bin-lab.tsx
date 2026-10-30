@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { DEFAULT_ROOM, ITEMS, ROOM_SLOTS, SLOT_LABEL, type RoomSlot } from "@/lib/bin/catalog";
 import { BIN_ACTION_NAMES, PUP_MOODS, type BinAction } from "@/lib/mascot/lines";
 import { OUTFITS } from "@/lib/progress";
 import { cn } from "@/lib/utils";
+import { BinRoom } from "./bin-room";
 import { OutfitIcon } from "./outfits";
 import { Pup } from "./pup";
 import { useBinAction } from "./use-bin";
@@ -15,6 +17,8 @@ export function BinLab() {
   const [reduced, setReduced] = useState(false);
   const [follow, setFollow] = useState(true);
   const [size, setSize] = useState(200);
+  const [labRoom, setLabRoom] = useState<Record<RoomSlot, string>>(DEFAULT_ROOM);
+  const [labNight, setLabNight] = useState(false);
   const bin = useBinAction("happy", { reduced });
 
   return (
@@ -106,6 +110,43 @@ export function BinLab() {
               {o.name}
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg">Phòng của Bin</h2>
+          <Button size="sm" variant="outline" onClick={() => setLabNight((n) => !n)}>
+            Chế độ: {labNight ? "Đêm" : "Ngày"}
+          </Button>
+        </div>
+        <div className="relative mx-auto h-[270px] w-full max-w-[500px] overflow-hidden rounded-[24px] bg-scene-wall lg:h-[360px]">
+          <BinRoom night={labNight} name="BIN" room={labRoom} />
+          <div className="absolute bottom-[26px] left-1/2 -ml-[85px] lg:-ml-[110px]">
+            <Pup mood={bin.mood} action={bin.action} outfit={outfit} size={170} className="size-[170px] lg:size-[220px]" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {ROOM_SLOTS.map((slot) => {
+            const slotItems = ITEMS.filter((item) => item.slot === slot);
+            return (
+              <div key={slot} className="flex flex-col gap-1 text-xs">
+                <span className="font-bold text-fg-muted">{SLOT_LABEL[slot]}</span>
+                <select
+                  aria-label={SLOT_LABEL[slot]}
+                  className="rounded-md border border-border bg-surface p-1.5 text-xs font-medium text-fg"
+                  value={labRoom[slot]}
+                  onChange={(e) => setLabRoom((r) => ({ ...r, [slot]: e.target.value }))}
+                >
+                  {slotItems.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>

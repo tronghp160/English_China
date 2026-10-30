@@ -155,6 +155,12 @@
   --scene-frame: #c98b5a;
   --scene-bowl: #ff5c4d;
   --scene-bowl-rim: #c7311f;
+  --scene-wood: color-mix(in oklab, var(--c-orange) 35%, var(--surface-2));
+  --scene-wood-dark: color-mix(in oklab, var(--c-orange-fg) 75%, #2b2d3a);
+  --scene-cushion: var(--c-pink-soft);
+  --scene-plant: var(--c-mint);
+  --scene-plant-dark: var(--c-mint-fg);
+  --scene-gold: var(--c-sun);
 
   /* Pinyin tone colors, AA on white */
   --tone-1: #d92d20;
@@ -281,6 +287,12 @@
   --scene-frame: #b97a4c;
   --scene-bowl: #ff7a6b;
   --scene-bowl-rim: #c7311f;
+  --scene-wood: color-mix(in oklab, var(--c-orange) 30%, var(--surface-2));
+  --scene-wood-dark: color-mix(in oklab, var(--c-orange-fg) 85%, #000);
+  --scene-cushion: var(--c-pink-soft);
+  --scene-plant: var(--c-mint);
+  --scene-plant-dark: var(--c-mint-fg);
+  --scene-gold: var(--c-sun);
 
   --tone-1: #ff7070;
   --tone-2: #ffab4a;
@@ -332,6 +344,12 @@
   --color-scene-frame: var(--scene-frame);
   --color-scene-bowl: var(--scene-bowl);
   --color-scene-bowl-rim: var(--scene-bowl-rim);
+  --color-scene-wood: var(--scene-wood);
+  --color-scene-wood-dark: var(--scene-wood-dark);
+  --color-scene-cushion: var(--scene-cushion);
+  --color-scene-plant: var(--scene-plant);
+  --color-scene-plant-dark: var(--scene-plant-dark);
+  --color-scene-gold: var(--scene-gold);
   --color-c-grape: var(--c-grape);
   --color-c-grape-soft: var(--c-grape-soft);
   --color-c-grape-fg: var(--c-grape-fg);

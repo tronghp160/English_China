@@ -25,6 +25,8 @@ import {
 import { playSfx } from "@/lib/sfx";
 import { TONE_CLASSES, type Tone } from "@/lib/tone";
 import { cn } from "@/lib/utils";
+import { DEFAULT_ROOM } from "@/lib/bin/catalog";
+import { BinRoom } from "./bin-room";
 import { OutfitIcon } from "./outfits";
 import { Pup } from "./pup";
 import { useBinAction } from "./use-bin";
@@ -39,42 +41,7 @@ const TILES: { id: "feed" | "play" | "tricks" | "outfits"; label: string; tone: 
   { id: "outfits", label: "Trang phục", tone: "pink", icon: Shirt },
 ];
 
-/** The room: wall, window, name plate, floor, rug and bowl, all from the --scene-* tokens. */
-function Room({ night, name }: { night: boolean; name: string }) {
-  return (
-    <>
-      <div
-        aria-hidden
-        className={cn(
-          "absolute top-[22px] left-[22px] h-20 w-[92px] overflow-hidden rounded-[14px] border-[5px] border-surface shadow-xs",
-          night ? "bg-scene-window-night" : "bg-scene-window",
-        )}
-      >
-        <span className="absolute inset-y-0 left-1/2 w-[5px] -translate-x-1/2 bg-surface" />
-        {night ? (
-          <span className="absolute top-3.5 left-3 size-[22px] rounded-full bg-c-sun-soft shadow-[inset_-6px_0_0_0_var(--scene-window-night)]" />
-        ) : (
-          <>
-            <span className="absolute top-3.5 left-3 size-[22px] rounded-full bg-c-sun" />
-            <span className="absolute right-2 bottom-3.5 h-3 w-[30px] rounded-full bg-surface" />
-          </>
-        )}
-      </div>
-      <div
-        aria-hidden
-        className="absolute top-[30px] right-6 grid h-[50px] w-[70px] place-items-center rounded-[10px] border-4 border-scene-frame bg-surface text-xs font-extrabold tracking-wide text-c-orange-fg"
-      >
-        {name.slice(0, 5).toUpperCase()}
-      </div>
-      <div aria-hidden className="absolute inset-x-0 bottom-0 h-[92px] bg-scene-floor" />
-      <div aria-hidden className="absolute right-[18%] bottom-[22px] left-[18%] h-[46px] rounded-full bg-scene-rug" />
-      <div
-        aria-hidden
-        className="absolute right-[26px] bottom-[26px] h-[22px] w-[54px] rounded-b-[22px] border-t-[6px] border-scene-bowl-rim bg-scene-bowl"
-      />
-    </>
-  );
-}
+
 
 /**
  * "Góc của Bin" (REDESIGN_V3 §5.2, mockup 06): a sheet from the bottom on a phone, a wide dialog on a laptop.
@@ -249,7 +216,7 @@ export function BinHome({ open, onOpenChange }: { open: boolean; onOpenChange: (
           <div className="grid gap-4 lg:grid-cols-[1.15fr_1fr] lg:gap-6">
             <div className="flex flex-col gap-3">
               <div className="relative h-[270px] overflow-hidden rounded-[24px] bg-scene-wall lg:h-[360px]">
-                <Room night={night} name={name} />
+                <BinRoom night={night} name={name} room={data?.room ?? DEFAULT_ROOM} />
 
                 <m.div
                   ref={binRef}
