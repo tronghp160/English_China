@@ -160,3 +160,106 @@ $$;
 
 revoke execute on function public.bin_buy(uuid, text, int, int) from public, anon, authenticated;
 grant execute on function public.bin_buy(uuid, text, int, int) to service_role;
+
+-- ---------------------------------------------------------------------------
+-- Bin trips (walks) and postcards (PLAN-bin-3.md §1.5)
+-- ---------------------------------------------------------------------------
+create table if not exists public.bin_trips (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles on delete cascade,
+  study_day date not null,
+  lang public.lang_code not null,
+  place_id text not null check (char_length(place_id) <= 40),
+  word_id uuid references public.words on delete set null,
+  word_term text check (char_length(word_term) <= 200),    -- kept so the postcard survives a deleted word
+  story jsonb,                                             -- see BinStory in lib/bin/trip.ts; null until written
+  bones int not null check (bones between 0 and 20),
+  item_id text check (char_length(item_id) <= 40),
+  started_at timestamptz not null default now(),
+  returns_at timestamptz not null,
+  collected_at timestamptz,
+  notified_at timestamptz,
+  unique (user_id, study_day)
+);
+create index if not exists bin_trips_user_started on public.bin_trips (user_id, started_at desc);
+create index if not exists bin_trips_due on public.bin_trips (returns_at) where collected_at is null and notified_at is null;
+
+alter table public.bin_trips enable row level security;
+drop policy if exists "bin_trips: own read" on public.bin_trips;
+create policy "bin_trips: own read" on public.bin_trips for select to authenticated using (user_id = auth.uid());
+revoke insert, update, delete on public.bin_trips from authenticated, anon;
+
+-- Collects a trip that is back: marks it, pays the bones and adds the item, all at once.
+create or replace function public.bin_collect_trip(p_user uuid, p_trip uuid)
+returns int
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  t public.bin_trips;
+begin
+  perform public.bin_lock(p_user);
+  select * into t from public.bin_trips where id = p_trip and user_id = p_user for update;
+  if not found then raise exception 'no_trip'; end if;
+  if t.collected_at is not null then raise exception 'already_collected'; end if;
+  if t.returns_at > now() then raise exception 'not_back'; end if;
+  update public.bin_trips set collected_at = now() where id = p_trip;
+  if t.bones > 0 then
+    insert into public.bin_ledger (user_id, kind, amount, ref, study_day)
+    values (p_user, 'trip', t.bones, p_trip::text, public.study_day(p_user))
+    on conflict do nothing;
+  end if;
+  if t.item_id is not null then
+    insert into public.bin_items (user_id, item_id, qty) values (p_user, t.item_id, 1)
+    on conflict (user_id, item_id) do nothing;
+  end if;
+  return public.bin_balance(p_user);
+end;
+$$;
+
+create or replace function public.bin_trip_candidates(p_user uuid)
+returns table (
+  id uuid,
+  term text,
+  meaning_vi text,
+  language public.lang_code,
+  reading text,
+  lapses int,
+  state text,
+  last_review timestamptz
+)
+language sql stable security definer set search_path = ''
+as $$
+  with pool as (
+    select
+      w.id,
+      w.term,
+      w.meaning_vi,
+      w.language,
+      w.reading,
+      c.lapses,
+      c.state::text as state,
+      c.last_review,
+      case
+        when c.state in ('learning', 'relearning') or c.lapses >= 2 then 1
+        when c.state = 'review' and c.last_review >= now() - interval '14 days' then 2
+        else 3
+      end as priority
+    from public.user_cards c
+    join public.words w on w.id = c.word_id
+    where c.user_id = p_user
+      and c.direction = 'recognize'
+      and c.suspended = false
+      and w.deck_id in (select public.study_deck_ids(p_user))
+  )
+  select id, term, meaning_vi, language, reading, lapses, state, last_review
+  from pool
+  where priority <= 2
+  order by priority asc, lapses desc, last_review desc nulls last
+  limit 30;
+$$;
+
+revoke execute on function public.bin_collect_trip(uuid, uuid) from public, anon, authenticated;
+grant execute on function public.bin_collect_trip(uuid, uuid) to service_role;
+revoke execute on function public.bin_trip_candidates(uuid) from public, anon, authenticated;
+grant execute on function public.bin_trip_candidates(uuid) to service_role;
+

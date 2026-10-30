@@ -209,6 +209,72 @@ export type Database = {
           },
         ];
       };
+      bin_trips: {
+        Row: {
+          bones: number;
+          collected_at: string | null;
+          id: string;
+          item_id: string | null;
+          lang: Database["public"]["Enums"]["lang_code"];
+          notified_at: string | null;
+          place_id: string;
+          returns_at: string;
+          started_at: string;
+          story: Json | null;
+          study_day: string;
+          user_id: string;
+          word_id: string | null;
+          word_term: string | null;
+        };
+        Insert: {
+          bones: number;
+          collected_at?: string | null;
+          id?: string;
+          item_id?: string | null;
+          lang: Database["public"]["Enums"]["lang_code"];
+          notified_at?: string | null;
+          place_id: string;
+          returns_at: string;
+          started_at?: string;
+          story?: Json | null;
+          study_day: string;
+          user_id: string;
+          word_id?: string | null;
+          word_term?: string | null;
+        };
+        Update: {
+          bones?: number;
+          collected_at?: string | null;
+          id?: string;
+          item_id?: string | null;
+          lang?: Database["public"]["Enums"]["lang_code"];
+          notified_at?: string | null;
+          place_id?: string;
+          returns_at?: string;
+          started_at?: string;
+          story?: Json | null;
+          study_day?: string;
+          user_id?: string;
+          word_id?: string | null;
+          word_term?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bin_trips_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bin_trips_word_id_fkey";
+            columns: ["word_id"];
+            isOneToOne: false;
+            referencedRelation: "words";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       chat_messages: {
         Row: {
           created_at: string;
@@ -1090,6 +1156,13 @@ export type Database = {
         };
         Returns: number;
       };
+      bin_collect_trip: {
+        Args: {
+          p_user: string | null;
+          p_trip: string | null;
+        };
+        Returns: number;
+      };
       bin_grant: {
         Args: {
           p_user: string | null;
@@ -1113,6 +1186,21 @@ export type Database = {
           p_ref?: string | null;
         };
         Returns: number;
+      };
+      bin_trip_candidates: {
+        Args: {
+          p_user: string | null;
+        };
+        Returns: {
+            id: string;
+            term: string;
+            meaning_vi: string;
+            language: Database["public"]["Enums"]["lang_code"];
+            reading: string;
+            lapses: number;
+            state: string;
+            last_review: string;
+          }[];
       };
       bin_wallet: {
         Args: never;

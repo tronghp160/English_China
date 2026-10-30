@@ -165,4 +165,64 @@ describe("bin ledger and wallet", () => {
     );
     expect(goldCheck.rows).toHaveLength(0);
   });
+
+  it("11. bin_collect_trip collects trip, pays bones, awards item and enforces permissions", async () => {
+    // Insert a trip for Alice that hasn't returned yet (returns 1 hour in the future)
+    const tripRes = await as(db, "service", () =>
+      db.query<{ id: string }>(
+        `insert into public.bin_trips (user_id, study_day, lang, place_id, bones, item_id, returns_at)
+         values ($1, '2026-10-30', 'en', 'london', 5, 'bed_royal', now() + interval '1 hour')
+         returning id`,
+        [alice],
+      ),
+    );
+    const tripId = tripRes.rows[0].id;
+
+    // Trying to collect before return -> raises 'not_back'
+    await expect(
+      as(db, "service", () =>
+        db.query("select public.bin_collect_trip($1, $2)", [alice, tripId]),
+      ),
+    ).rejects.toThrow("not_back");
+
+    // Bob tries to collect Alice's trip -> raises 'no_trip'
+    await expect(
+      as(db, "service", () =>
+        db.query("select public.bin_collect_trip($1, $2)", [bob, tripId]),
+      ),
+    ).rejects.toThrow("no_trip");
+
+    // Make trip returned (returns_at in past)
+    await as(db, "service", () =>
+      db.query("update public.bin_trips set returns_at = now() - interval '1 minute' where id = $1", [tripId]),
+    );
+
+    // Alice collects trip: Alice currently has 2 bones, gains 5 -> balance = 7
+    const collectRes = await as(db, "service", () =>
+      db.query<{ bin_collect_trip: number }>("select public.bin_collect_trip($1, $2)", [alice, tripId]),
+    );
+    expect(collectRes.rows[0].bin_collect_trip).toBe(7);
+
+    // Ledger has trip entry
+    const ledger = await as(db, "service", () =>
+      db.query<{ kind: string; amount: number; ref: string }>(
+        "select kind, amount, ref from public.bin_ledger where user_id = $1 and ref = $2",
+        [alice, tripId],
+      ),
+    );
+    expect(ledger.rows).toContainEqual({ kind: "trip", amount: 5, ref: tripId });
+
+    // Item bed_royal added to bin_items
+    const items = await as(db, "service", () =>
+      db.query<{ item_id: string }>("select item_id from public.bin_items where user_id = $1 and item_id = 'bed_royal'", [alice]),
+    );
+    expect(items.rows).toHaveLength(1);
+
+    // Collecting again -> raises 'already_collected'
+    await expect(
+      as(db, "service", () =>
+        db.query("select public.bin_collect_trip($1, $2)", [alice, tripId]),
+      ),
+    ).rejects.toThrow("already_collected");
+  });
 });
