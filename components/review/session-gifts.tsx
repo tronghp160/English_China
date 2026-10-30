@@ -7,7 +7,9 @@ import { useMe } from "@/components/app-shell/me-provider";
 import { Confetti } from "@/components/fx/confetti";
 import { CountUp } from "@/components/fx/count-up";
 import { useBinHome } from "@/components/mascot/bin-home-provider";
+import { Buddy } from "@/components/mascot/buddy";
 import { Pup } from "@/components/mascot/pup";
+import type { BuddySpecies } from "@/lib/bin/buddies";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { IconTile } from "@/components/ui/icon-tile";
@@ -244,8 +246,13 @@ export function SessionGifts({ xp, correct, answers }: { xp: number; correct: nu
         <DialogContent showCloseButton={false} className="items-center text-center">
           {levelUp && <Confetti preset="big" />}
           {prefs.mascot && (
-            <div className="mx-auto">
+            <div className="mx-auto flex items-end justify-center gap-3">
               <Pup mood="cheer" action="dance" size={120} />
+              {prefs.bin_buddy && (
+                <div className="animate-pop">
+                  <Buddy species={prefs.bin_buddy as BuddySpecies} mood="cheer" size={60} />
+                </div>
+              )}
             </div>
           )}
           <DialogTitle className="font-display text-[1.75rem] leading-tight font-extrabold">Lên cấp {gains.after.level}!</DialogTitle>

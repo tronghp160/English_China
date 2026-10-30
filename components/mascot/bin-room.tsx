@@ -1,6 +1,8 @@
 import type { JSX } from "react";
 import type { RoomSlot } from "@/lib/bin/catalog";
+import type { BuddySpecies } from "@/lib/bin/buddies";
 import { cn } from "@/lib/utils";
+import { Buddy } from "./buddy";
 import { RoomItemArt } from "./room-items";
 
 /**
@@ -13,6 +15,7 @@ export function BinRoom({
   room,
   preview,
   away,
+  buddy,
 }: {
   night: boolean;
   name: string;
@@ -21,6 +24,8 @@ export function BinRoom({
   preview?: { slot: RoomSlot; itemId: string } | null;
   /** Bin is on a trip: the bed shows a note instead of Bin (see 1.7). */
   away?: { placeName: string; backAt: string } | null;
+  /** Active companion buddy that stays in the room. */
+  buddy?: BuddySpecies | null;
 }): JSX.Element {
   const getItem = (slot: RoomSlot) => (preview && preview.slot === slot ? preview.itemId : room[slot]);
   const isPreview = (slot: RoomSlot) => Boolean(preview && preview.slot === slot);
@@ -124,6 +129,25 @@ export function BinRoom({
       >
         <RoomItemArt id={cornerItem} />
       </div>
+
+      {/* Active companion buddy */}
+      {buddy && (
+        <div
+          className={cn(
+            "pointer-events-auto absolute bottom-[24px] z-10",
+            away
+              ? "left-1/2 -translate-x-1/2"
+              : "left-[14%] sm:left-[18%] lg:left-[22%]",
+          )}
+        >
+          <Buddy
+            species={buddy}
+            mood={away ? "sleepy" : "happy"}
+            size={64}
+            className="size-[64px] lg:size-[84px]"
+          />
+        </div>
+      )}
     </div>
   );
 }

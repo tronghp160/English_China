@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { BuddySpecies } from "@/lib/bin/buddies";
 import { say, type LineKey, type PupMood } from "@/lib/mascot/lines";
 import { cn } from "@/lib/utils";
 import { useBinHome } from "./bin-home-provider";
@@ -21,6 +22,7 @@ export function MascotSay({
   hidePup = false,
   bubbleAction,
   outfit,
+  buddy,
 }: {
   mood: PupMood;
   name: string;
@@ -33,6 +35,7 @@ export function MascotSay({
   hidePup?: boolean;
   bubbleAction?: "trip" | "home";
   outfit?: string;
+  buddy?: BuddySpecies | null;
 }) {
   const [reaction, setReaction] = useState<{ count: number; line?: LineKey } | null>(null);
   const home = useBinHome();
@@ -73,7 +76,7 @@ export function MascotSay({
   return (
     <div className={cn("flex items-end gap-2", className)}>
       {!hidePup && (
-        <PettablePup mood={mood} name={name} size={size} outfit={outfit} onPet={(count, line) => setReaction({ count, line })} />
+        <PettablePup mood={mood} name={name} size={size} outfit={outfit} buddy={buddy} onPet={(count, line) => setReaction({ count, line })} />
       )}
       <div
         ref={box}

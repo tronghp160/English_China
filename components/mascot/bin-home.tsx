@@ -283,6 +283,7 @@ export function BinHome({
                         }
                       : null
                   }
+                  buddy={(prefs.bin_buddy as BuddySpecies) || null}
                 />
 
                 {!isAway && (

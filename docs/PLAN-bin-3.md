@@ -1384,7 +1384,7 @@ Có thể đi hết vòng: trứng → đủ câu đúng → chạm 3 lần → 
 
 ---
 
-## Bước 3.4 — Bạn nhỏ đi theo Bin
+## Bước 3.4 — Bạn nhỏ đi theo Bin ✅
 
 Hiện bạn nhỏ đang `active` (pref `bin_buddy`, phải là bạn đã nở — kiểm tra lại ở server khi đọc; bạn chưa nở/không tồn tại → coi như không có):
 1. **Phòng của Bin** (`BinRoom` thêm prop `buddy?: BuddySpecies | null`): đứng bên trái Bin, `bottom-[24px]`, size 64 (lg 84). Khi Bin đi dạo, bạn nhỏ **ở nhà** mood `sleepy` ngồi trên nệm.

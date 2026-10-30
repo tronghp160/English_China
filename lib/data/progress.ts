@@ -15,6 +15,7 @@ import {
 } from "@/lib/progress";
 import { longestStreak } from "@/lib/srs/streak";
 import { tripStatus, type TripStatus } from "@/lib/bin/trip";
+import { isBuddySpecies, type BuddySpecies } from "@/lib/bin/buddies";
 import { createClient } from "@/lib/supabase/server";
 import { readPrefs } from "@/lib/validation";
 
@@ -40,6 +41,7 @@ export type Progress = {
   outfits: OutfitId[];
   tricks: TrickId[];
   trip: TripStatus;
+  buddy: BuddySpecies | null;
 };
 
 /**
@@ -50,7 +52,7 @@ export const getProgress = cache(async (): Promise<Progress> => {
   const summary = await getStudySummary();
   const { me, today, streak } = summary;
   const supabase = await createClient();
-  const [statsRes, walletRes, tripRes] = await Promise.all([
+  const [statsRes, walletRes, tripRes, buddyRes] = await Promise.all([
     supabase.from("daily_stats").select("day, reviews, correct, new_learned, xp").eq("user_id", me.user.id),
     supabase.rpc("bin_wallet"),
     supabase
@@ -59,6 +61,13 @@ export const getProgress = cache(async (): Promise<Progress> => {
       .eq("user_id", me.user.id)
       .order("started_at", { ascending: false })
       .limit(1),
+    supabase
+      .from("bin_buddies")
+      .select("species")
+      .eq("user_id", me.user.id)
+      .eq("species", readPrefs(me.settings.prefs).bin_buddy)
+      .not("hatched_at", "is", null)
+      .maybeSingle(),
   ]);
   const rows = statsRes.data ?? [];
   let bones = 0;
@@ -117,5 +126,9 @@ export const getProgress = cache(async (): Promise<Progress> => {
     outfits: unlockedOutfits({ longestStreak: longest, level: level.level }),
     tricks: unlockedTricks(level.level),
     trip,
+    buddy:
+      buddyRes.data && isBuddySpecies(buddyRes.data.species)
+        ? (buddyRes.data.species as BuddySpecies)
+        : null,
   };
 });

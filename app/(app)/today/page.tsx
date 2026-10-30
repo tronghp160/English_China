@@ -89,6 +89,7 @@ export default async function TodayPage({
               ? ["surprised", "dueMany"]
               : ["happy", "due"];
   const heroOutfit = s.frozenYesterday ? "scarf" : undefined;
+  const heroBuddy = progress.buddy;
   const seed = new Date(s.today).getUTCDate();
   const nValue = line === "streakAtRisk" || line === "streakSaved" ? s.streak.current : remaining;
   const text = say(line, {
@@ -257,6 +258,7 @@ export default async function TodayPage({
                       hidePup={isTripAway}
                       bubbleAction={isTripReady ? "trip" : undefined}
                       outfit={heroOutfit}
+                      buddy={heroBuddy}
                     />
                   )}
                   {prefs.mascot && isTripAway && (
@@ -280,6 +282,7 @@ export default async function TodayPage({
                     sleepAfterMs={30_000}
                     className="absolute right-5 -bottom-1.5 hidden lg:block"
                     outfit={heroOutfit}
+                    buddy={heroBuddy}
                   />
                 )}
               </section>
@@ -343,6 +346,7 @@ export default async function TodayPage({
                       hidePup={isTripAway}
                       bubbleAction={isTripReady ? "trip" : undefined}
                       outfit={heroOutfit}
+                      buddy={heroBuddy}
                     />
                   )}
                   {prefs.mascot && isTripAway && (
@@ -366,6 +370,7 @@ export default async function TodayPage({
                     sleepAfterMs={30_000}
                     className="absolute right-5 -bottom-1.5 hidden lg:block"
                     outfit={heroOutfit}
+                    buddy={heroBuddy}
                   />
                 )}
               </section>

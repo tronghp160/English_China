@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { BuddySpecies } from "@/lib/bin/buddies";
 import { loadGreeting } from "@/lib/actions/bin";
 import type { LineKey, PupMood } from "@/lib/mascot/lines";
 import { MascotSay } from "./mascot-say";
@@ -15,6 +16,7 @@ export function DailyGreeting({
   bubbleAction,
   today,
   outfit,
+  buddy,
 }: {
   fallback: { mood: PupMood; text: string; texts?: string[] };
   situation: LineKey;
@@ -25,6 +27,7 @@ export function DailyGreeting({
   bubbleAction?: "trip" | "home";
   today: string;
   outfit?: string;
+  buddy?: BuddySpecies | null;
 }) {
   const [greeting, setGreeting] = useState<{ text: string; mood: PupMood } | null>(null);
 
@@ -85,6 +88,7 @@ export function DailyGreeting({
       hidePup={hidePup}
       bubbleAction={bubbleAction}
       outfit={outfit}
+      buddy={buddy}
     />
   );
 }

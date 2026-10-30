@@ -5,8 +5,10 @@ import { fireConfetti } from "@/components/fx/confetti";
 import { haptic } from "@/lib/haptics";
 import { say as sayLine, type BinAction, type LineKey, type PupMood } from "@/lib/mascot/lines";
 import { playSfx } from "@/lib/sfx";
+import type { BuddySpecies } from "@/lib/bin/buddies";
 import { cn } from "@/lib/utils";
 import { useBinHome } from "./bin-home-provider";
+import { Buddy } from "./buddy";
 import { Pup } from "./pup";
 import { useBinAction } from "./use-bin";
 
@@ -66,6 +68,7 @@ export function PettablePup({
   sleepAfterMs,
   defaultBubbleText,
   outfit,
+  buddy,
 }: {
   mood: PupMood;
   name: string;
@@ -83,12 +86,15 @@ export function PettablePup({
   defaultBubbleText?: string;
   /** Optional outfit override (e.g. scarf on streak freeze). */
   outfit?: string;
+  /** Optional companion buddy following Bin. */
+  buddy?: BuddySpecies | null;
 }) {
   const home = useBinHome();
   const [pets, setPets] = useState(0);
   const [petting, setPetting] = useState(false);
   const [sleeping, setSleeping] = useState(false);
   const [bubbleText, setBubbleText] = useState<string | null>(null);
+  const [buddyMood, setBuddyMood] = useState<"happy" | "sleepy" | "cheer">("happy");
   const activeBubbleText = pets > 0 ? bubbleText : (bubbleText ?? defaultBubbleText ?? null);
   const bin = useBinAction(sleeping ? "sleepy" : mood);
   const playRef = useRef(bin.play);
@@ -238,6 +244,28 @@ export function PettablePup({
         <Pup mood={shown} action={bin.action} size={size} follow={size >= 40} className={pupClassName} outfit={outfit} />
         {petting && <Hearts key={pets} />}
       </button>
+      {buddy && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setBuddyMood("cheer");
+            playSfx("pop");
+            haptic("light");
+            setTimeout(() => setBuddyMood("happy"), 1000);
+          }}
+          aria-label="Chạm vào bạn nhỏ"
+          data-testid="buddy"
+          className="absolute -left-6 -bottom-1 z-10 block cursor-pointer touch-manipulation rounded-full border-0 bg-transparent p-0 transition-transform active:scale-95 lg:-left-9 lg:bottom-0"
+        >
+          <Buddy
+            species={buddy}
+            mood={buddyMood}
+            size={40}
+            className="size-10 lg:size-14"
+          />
+        </button>
+      )}
       {activeBubbleText && (
         <div
           role="status"
