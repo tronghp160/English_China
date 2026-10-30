@@ -9,6 +9,8 @@ import { IconTile } from "@/components/ui/icon-tile";
 import type { ThreadGroup } from "@/lib/ai/tutor/history";
 import { formatAgo } from "@/lib/format";
 import { toneFor } from "@/lib/tone";
+import { cn } from "@/lib/utils";
+import { chatUrl } from "@/lib/ai/tutor/chat-url";
 
 function sliceGroups(groups: ThreadGroup[], limit: number): ThreadGroup[] {
   let budget = limit;
@@ -28,9 +30,20 @@ function sliceGroups(groups: ThreadGroup[], limit: number): ThreadGroup[] {
 export function TutorHistoryList({
   groups,
   tutorName = "Bin",
+  activeId,
+  onDeleted,
+  onOpen,
+  compact = false,
 }: {
   groups: ThreadGroup[];
   tutorName?: string;
+  /** The conversation open in the chat frame: highlighted, not a link to itself. */
+  activeId?: string | null;
+  onDeleted?: (threadId: string) => void;
+  /** Open a conversation in place instead of following the link (the link still works in a new tab). */
+  onOpen?: (threadId: string) => void;
+  /** Narrow side column: smaller rows, no arrow. */
+  compact?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -39,7 +52,7 @@ export function TutorHistoryList({
   if (totalCount === 0) {
     return (
       <p className="text-sm text-fg-muted">
-        Chưa có cuộc trò chuyện nào. Hỏi {tutorName} câu đầu tiên ở trên nhé.
+        Chưa có cuộc trò chuyện nào. Hỏi {tutorName} câu đầu tiên nhé.
       </p>
     );
   }
@@ -58,25 +71,40 @@ export function TutorHistoryList({
             {g.threads.map((t) => {
               const title = t.title ?? "Cuộc trò chuyện mới";
               const tone = toneFor(t.id);
+              const active = t.id === activeId;
               return (
                 <li
                   key={t.id}
-                  className="flex items-center gap-1 rounded-lg border border-border/60 bg-surface pr-1 shadow-xs transition-colors hover:bg-surface-2 dark:border-border"
+                  className={cn(
+                    "flex items-center gap-1 rounded-lg border pr-1 shadow-xs transition-colors dark:border-border",
+                    active ? "border-primary/40 bg-primary-soft" : "border-border/60 bg-surface hover:bg-surface-2",
+                  )}
                 >
                   <Link
-                    href={`/chat/${t.id}`}
-                    className="flex min-h-14 min-w-0 flex-1 items-center gap-3 px-3 py-2.5"
+                    href={chatUrl(t.id)}
+                    aria-current={active ? "page" : undefined}
+                    onClick={(e) => {
+                      if (!onOpen || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                      e.preventDefault();
+                      onOpen(t.id);
+                    }}
+                    className={cn("flex min-w-0 flex-1 items-center gap-3 px-3", compact ? "min-h-12 py-2" : "min-h-14 py-2.5")}
                   >
                     <IconTile icon={MessageCircle} tone={tone} size={32} />
-                    <span className="min-w-0 flex-1 truncate font-medium text-fg">
-                      {title}
+                    <span className="min-w-0 flex-1">
+                      <span className={cn("block truncate font-medium", active ? "text-primary-fg" : "text-fg", compact && "text-sm")}>
+                        {title}
+                      </span>
+                      {compact && <span className="block text-xs text-fg-muted">{formatAgo(t.updated_at)}</span>}
                     </span>
-                    <span className="shrink-0 text-xs text-fg-muted">
-                      {formatAgo(t.updated_at)}
-                    </span>
-                    <ChevronRight className="size-4 shrink-0 text-fg-subtle" aria-hidden />
+                    {!compact && (
+                      <>
+                        <span className="shrink-0 text-xs text-fg-muted">{formatAgo(t.updated_at)}</span>
+                        <ChevronRight className="size-4 shrink-0 text-fg-subtle" aria-hidden />
+                      </>
+                    )}
                   </Link>
-                  <DeleteChatButton threadId={t.id} title={title} />
+                  <DeleteChatButton threadId={t.id} title={title} onDeleted={onDeleted} />
                 </li>
               );
             })}

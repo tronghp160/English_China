@@ -6,7 +6,18 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteChat } from "@/lib/actions/chat";
 
-export function DeleteChatButton({ threadId, title, redirectTo }: { threadId: string; title: string; redirectTo?: string }) {
+export function DeleteChatButton({
+  threadId,
+  title,
+  redirectTo,
+  onDeleted,
+}: {
+  threadId: string;
+  title: string;
+  redirectTo?: string;
+  /** Called after a successful delete (the tutor page updates its own list). */
+  onDeleted?: (threadId: string) => void;
+}) {
   const router = useRouter();
   const [pending, start] = useTransition();
   return (
@@ -20,6 +31,7 @@ export function DeleteChatButton({ threadId, title, redirectTo }: { threadId: st
           const res = await deleteChat(threadId);
           if (!res.ok) return void toast.error(res.error);
           toast.success("Đã xóa cuộc trò chuyện");
+          onDeleted?.(threadId);
           if (redirectTo) router.push(redirectTo);
           else router.refresh();
         });

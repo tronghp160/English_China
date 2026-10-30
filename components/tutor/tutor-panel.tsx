@@ -1,5 +1,7 @@
 "use client";
 
+import { chatUrl } from "@/lib/ai/tutor/chat-url";
+
 import { BotMessageSquare, Maximize2, SquarePen, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -257,7 +259,7 @@ export function TutorPanel({
                 <SquarePen className="size-5" aria-hidden />
               </button>
               <Link
-                href={`/chat/${activeThread.id}`}
+                href={chatUrl(activeThread.id)}
                 onClick={onClose}
                 aria-label="Mở toàn màn hình"
                 className="grid size-10 place-items-center rounded-full text-on-primary hover:bg-white/15 active:bg-white/20 focus-visible:outline-2 focus-visible:outline-white"

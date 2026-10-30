@@ -31,6 +31,9 @@ const themeScript = `(function(){try{var t=localStorage.getItem(${JSON.stringify
   THEME_STORAGE_KEY,
 )});var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d)}catch(e){}})()`;
 
+// Chrome/Edge may offer the app install before React has started: keep that event for lib/pwa.ts.
+const installScript = `window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__sotuInstallPrompt=e})`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -40,6 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: installScript }} />
       </head>
       <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>

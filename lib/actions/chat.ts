@@ -10,6 +10,7 @@ import { requireMe, requireUser } from "@/lib/auth";
 import type { LangCode } from "@/lib/lang/types";
 import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "./result";
+import { chatUrl } from "@/lib/ai/tutor/chat-url";
 
 const startSchema = z.object({
   /** Optional: guessed from the first message, else the learner's first study language. */
@@ -59,7 +60,7 @@ export async function startChat(formData: FormData) {
   const { data } = await insertThread(me.user.id, { language, deckId: deck_id, title });
   if (!data) redirect("/chat?error=1");
   revalidatePath("/chat");
-  redirect(`/chat/${data.id}?q=${encodeURIComponent(prompt)}`);
+  redirect(chatUrl(data.id, prompt));
 }
 
 /** The panel's conversation: thread + last 60 messages, or null when it was deleted. */
@@ -111,7 +112,8 @@ export async function createTutorThread(prompt: string): Promise<ActionResult<{ 
   const { data, error } = await insertThread(me.user.id, { language, title });
   if (error || !data) return fail("Không tạo được cuộc trò chuyện.");
 
-  revalidatePath("/chat");
+  // No revalidatePath: the tutor page adds the thread to its own list, and a refresh here could
+  // re-render the page while the first question is being sent.
   return ok({ id: data.id });
 }
 
