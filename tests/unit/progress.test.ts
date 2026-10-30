@@ -48,13 +48,14 @@ describe("levelFromXp", () => {
 });
 
 describe("bonesAvailable", () => {
-  it("is one per 10 right answers plus two per quest reward, minus what was fed", () => {
-    expect(bonesAvailable({ totalCorrect: 95, questsClaimedTotal: 2, treatsFed: 3 })).toBe(9 + 4 - 3);
+  it("is one per 10 right answers plus ledger sum", () => {
+    expect(bonesAvailable({ totalCorrect: 95, ledgerSum: 1 })).toBe(9 + 1);
   });
 
-  it("is never negative", () => {
-    expect(bonesAvailable({ totalCorrect: 5, questsClaimedTotal: 0, treatsFed: 4 })).toBe(0);
-    expect(bonesAvailable({ totalCorrect: 0, questsClaimedTotal: 0, treatsFed: 0 })).toBe(0);
+  it("is never negative even when ledgerSum is negative", () => {
+    expect(bonesAvailable({ totalCorrect: 5, ledgerSum: -4 })).toBe(0);
+    expect(bonesAvailable({ totalCorrect: 50, ledgerSum: -10 })).toBe(0);
+    expect(bonesAvailable({ totalCorrect: 0, ledgerSum: 0 })).toBe(0);
   });
 });
 

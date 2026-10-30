@@ -116,6 +116,44 @@ export type Database = {
 
         ];
       };
+      bin_ledger: {
+        Row: {
+          amount: number;
+          created_at: string;
+          id: number;
+          kind: string;
+          ref: string | null;
+          study_day: string;
+          user_id: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          id?: number;
+          kind: string;
+          ref?: string | null;
+          study_day: string;
+          user_id: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          id?: number;
+          kind?: string;
+          ref?: string | null;
+          study_day?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bin_ledger_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       chat_messages: {
         Row: {
           created_at: string;
@@ -978,27 +1016,64 @@ export type Database = {
       };
       ai_usage_total: {
         Args: {
-          p_day: string;
+          p_day: string | null;
         };
         Returns: number;
       };
+      bin_balance: {
+        Args: {
+          p_user: string | null;
+        };
+        Returns: number;
+      };
+      bin_grant: {
+        Args: {
+          p_user: string | null;
+          p_kind: string | null;
+          p_amount: number | null;
+          p_ref?: string | null;
+        };
+        Returns: number;
+      };
+      bin_lock: {
+        Args: {
+          p_user: string | null;
+        };
+        Returns: undefined;
+      };
+      bin_spend: {
+        Args: {
+          p_user: string | null;
+          p_kind: string | null;
+          p_amount: number | null;
+          p_ref?: string | null;
+        };
+        Returns: number;
+      };
+      bin_wallet: {
+        Args: never;
+        Returns: {
+            balance: number;
+            fed_today: boolean;
+          }[];
+      };
       cache_hit: {
         Args: {
-          p_language: Database["public"]["Enums"]["lang_code"];
-          p_normalized: string;
-          p_prompt_version: number;
+          p_language: Database["public"]["Enums"]["lang_code"] | null;
+          p_normalized: string | null;
+          p_prompt_version: number | null;
         };
         Returns: undefined;
       };
       can_edit_deck: {
         Args: {
-          did: string;
+          did: string | null;
         };
         Returns: boolean;
       };
       can_read_deck: {
         Args: {
-          did: string;
+          did: string | null;
         };
         Returns: boolean;
       };
@@ -1012,14 +1087,14 @@ export type Database = {
       };
       clone_deck: {
         Args: {
-          p_user_id: string;
-          p_deck_id: string;
+          p_user_id: string | null;
+          p_deck_id: string | null;
         };
         Returns: string;
       };
       deck_topics: {
         Args: {
-          p_deck_id: string;
+          p_deck_id: string | null;
         };
         Returns: {
             topic: string;
@@ -1028,7 +1103,7 @@ export type Database = {
       };
       ensure_user_cards: {
         Args: {
-          p_deck_id?: string;
+          p_deck_id?: string | null;
         };
         Returns: number;
       };
@@ -1038,8 +1113,8 @@ export type Database = {
       };
       get_due_cards: {
         Args: {
-          p_deck_id?: string;
-          p_limit?: number;
+          p_deck_id?: string | null;
+          p_limit?: number | null;
         };
         Returns: {
             word_id: string;
@@ -1060,8 +1135,8 @@ export type Database = {
       };
       group_activity: {
         Args: {
-          p_group_id: string;
-          p_limit?: number;
+          p_group_id: string | null;
+          p_limit?: number | null;
         };
         Returns: {
             kind: string;
@@ -1075,7 +1150,7 @@ export type Database = {
       };
       group_preview: {
         Args: {
-          p_code: string;
+          p_code: string | null;
         };
         Returns: {
             id: string;
@@ -1087,44 +1162,44 @@ export type Database = {
       };
       hit_ip_rate_limit: {
         Args: {
-          p_key_hash: string;
-          p_bucket: string;
-          p_window_seconds: number;
-          p_max: number;
+          p_key_hash: string | null;
+          p_bucket: string | null;
+          p_window_seconds: number | null;
+          p_max: number | null;
         };
         Returns: boolean;
       };
       hit_rate_limit: {
         Args: {
-          p_user_id: string;
-          p_bucket: string;
-          p_window_seconds: number;
-          p_max: number;
+          p_user_id: string | null;
+          p_bucket: string | null;
+          p_window_seconds: number | null;
+          p_max: number | null;
         };
         Returns: boolean;
       };
       increment_ai_usage: {
         Args: {
-          p_user_id: string;
-          p_day: string;
+          p_user_id: string | null;
+          p_day: string | null;
         };
         Returns: number;
       };
       is_group_member: {
         Args: {
-          gid: string;
+          gid: string | null;
         };
         Returns: boolean;
       };
       join_group: {
         Args: {
-          p_code: string;
+          p_code: string | null;
         };
         Returns: string;
       };
       mark_reminded: {
         Args: {
-          p_user_ids: string[];
+          p_user_ids: string[] | null;
         };
         Returns: undefined;
       };
@@ -1164,22 +1239,22 @@ export type Database = {
       };
       new_cards_left: {
         Args: {
-          p_user_id: string;
+          p_user_id: string | null;
         };
         Returns: number;
       };
       next_day_start: {
         Args: {
-          p_user_id: string;
+          p_user_id: string | null;
         };
         Returns: string;
       };
       practice_words: {
         Args: {
-          p_deck_id: string;
-          p_language: Database["public"]["Enums"]["lang_code"];
-          p_source?: string;
-          p_limit?: number;
+          p_deck_id: string | null;
+          p_language: Database["public"]["Enums"]["lang_code"] | null;
+          p_source?: string | null;
+          p_limit?: number | null;
         };
         Returns: {
             word: Json;
@@ -1189,42 +1264,42 @@ export type Database = {
       };
       record_presence: {
         Args: {
-          p_user_id: string;
-          p_path?: string;
-          p_session_id?: string;
-          p_ip?: string;
-          p_country?: string;
-          p_region?: string;
-          p_city?: string;
-          p_latitude?: number;
-          p_longitude?: number;
-          p_timezone?: string;
-          p_device_type?: string;
-          p_browser?: string;
-          p_os?: string;
-          p_user_agent?: string;
+          p_user_id: string | null;
+          p_path?: string | null;
+          p_session_id?: string | null;
+          p_ip?: string | null;
+          p_country?: string | null;
+          p_region?: string | null;
+          p_city?: string | null;
+          p_latitude?: number | null;
+          p_longitude?: number | null;
+          p_timezone?: string | null;
+          p_device_type?: string | null;
+          p_browser?: string | null;
+          p_os?: string | null;
+          p_user_agent?: string | null;
         };
         Returns: boolean;
       };
       record_review: {
         Args: {
-          p_user_id: string;
-          p_word_id: string;
-          p_direction: string;
-          p_mode: Database["public"]["Enums"]["review_mode"];
-          p_rating: number;
-          p_was_correct: boolean;
-          p_duration_ms: number;
-          p_update_card: boolean;
-          p_card: Json;
-          p_reviewed_at?: string;
-          p_client_id?: string;
+          p_user_id: string | null;
+          p_word_id: string | null;
+          p_direction: string | null;
+          p_mode: Database["public"]["Enums"]["review_mode"] | null;
+          p_rating: number | null;
+          p_was_correct: boolean | null;
+          p_duration_ms: number | null;
+          p_update_card: boolean | null;
+          p_card: Json | null;
+          p_reviewed_at?: string | null;
+          p_client_id?: string | null;
         };
         Returns: Json;
       };
       regenerate_invite_code: {
         Args: {
-          p_group_id: string;
+          p_group_id: string | null;
         };
         Returns: string;
       };
@@ -1237,15 +1312,15 @@ export type Database = {
       };
       search_deck_words: {
         Args: {
-          p_deck_id: string;
-          p_q?: string;
-          p_topic?: string;
-          p_pos?: string;
-          p_status?: string;
-          p_level?: string;
-          p_sort?: string;
-          p_offset?: number;
-          p_limit?: number;
+          p_deck_id: string | null;
+          p_q?: string | null;
+          p_topic?: string | null;
+          p_pos?: string | null;
+          p_status?: string | null;
+          p_level?: string | null;
+          p_sort?: string | null;
+          p_offset?: number | null;
+          p_limit?: number | null;
         };
         Returns: {
             id: string;
@@ -1266,27 +1341,27 @@ export type Database = {
       };
       set_suspended: {
         Args: {
-          p_word_ids: string[];
-          p_suspended: boolean;
+          p_word_ids: string[] | null;
+          p_suspended: boolean | null;
         };
         Returns: number;
       };
       shares_group_with: {
         Args: {
-          other: string;
+          other: string | null;
         };
         Returns: boolean;
       };
       study_day: {
         Args: {
-          p_user_id: string;
-          p_at?: string;
+          p_user_id: string | null;
+          p_at?: string | null;
         };
         Returns: string;
       };
       study_deck_ids: {
         Args: {
-          p_user_id: string;
+          p_user_id: string | null;
         };
         Returns: string[];
       };
@@ -1314,13 +1389,13 @@ export type Database = {
       };
       user_tz: {
         Args: {
-          p_user_id: string;
+          p_user_id: string | null;
         };
         Returns: string;
       };
       weekly_leaderboard: {
         Args: {
-          p_group_id: string;
+          p_group_id: string | null;
         };
         Returns: {
             user_id: string;
@@ -1333,7 +1408,7 @@ export type Database = {
       };
       word_progress: {
         Args: {
-          p_word_id: string;
+          p_word_id: string | null;
         };
         Returns: {
             direction: string;

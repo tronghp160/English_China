@@ -2,7 +2,6 @@ import "server-only";
 import { cache } from "react";
 import { getStudySummary } from "@/lib/data/study";
 import {
-  bonesAvailable,
   claimedOn,
   dailyQuests,
   levelFromXp,
@@ -49,8 +48,19 @@ export const getProgress = cache(async (): Promise<Progress> => {
   const summary = await getStudySummary();
   const { me, today, streak } = summary;
   const supabase = await createClient();
-  const { data } = await supabase.from("daily_stats").select("day, reviews, correct, new_learned, xp").eq("user_id", me.user.id);
-  const rows = data ?? [];
+  const [statsRes, walletRes] = await Promise.all([
+    supabase.from("daily_stats").select("day, reviews, correct, new_learned, xp").eq("user_id", me.user.id),
+    supabase.rpc("bin_wallet"),
+  ]);
+  const rows = statsRes.data ?? [];
+  let bones = 0;
+  let fedToday = false;
+  if (walletRes.error) {
+    console.error("[bin] wallet", walletRes.error);
+  } else if (walletRes.data && walletRes.data.length > 0) {
+    bones = walletRes.data[0].balance ?? 0;
+    fedToday = Boolean(walletRes.data[0].fed_today);
+  }
 
   const totalXp = rows.reduce((n, r) => n + r.xp, 0);
   const totalCorrect = rows.reduce((n, r) => n + r.correct, 0);
@@ -82,8 +92,8 @@ export const getProgress = cache(async (): Promise<Progress> => {
     reviewsToday: todayRow?.reviews ?? 0,
     quests,
     unclaimed: quests.filter((q) => q.done && !q.claimed).map((q) => q.id),
-    bones: bonesAvailable({ totalCorrect, questsClaimedTotal: prefs.quests_total, treatsFed: prefs.bin_treats_fed }),
-    fedToday: prefs.bin_last_fed === today,
+    bones,
+    fedToday,
     outfit: (unlockedOutfits({ longestStreak: longest, level: level.level }) as string[]).includes(prefs.bin_outfit)
       ? (prefs.bin_outfit as OutfitId)
       : "none",

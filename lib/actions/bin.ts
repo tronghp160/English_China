@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { getProgress } from "@/lib/data/progress";
 import { OUTFITS, QUEST_BONES, QUEST_IDS, pruneClaimed, type LevelInfo, type OutfitId, type QuestId, type TrickId } from "@/lib/progress";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { prefsSchema, type Prefs } from "@/lib/validation";
 import { fail, ok, type ActionResult } from "./result";
@@ -77,14 +78,10 @@ async function savePrefs(userId: string, change: (stored: Prefs) => Prefs): Prom
 /** Gives Bin one bone: needs a bone in hand (earned minus fed), counts it and remembers the day. */
 export async function feedBin(): Promise<ActionResult<{ bones: number }>> {
   const user = await requireUser();
-  const progress = await getProgress();
-  if (progress.bones <= 0) return fail("Chưa có xương để cho ăn.");
-  const saved = await savePrefs(user.id, (stored) => ({
-    bin_treats_fed: (stored.bin_treats_fed ?? 0) + 1,
-    bin_last_fed: progress.today,
-  }));
-  if (!saved) return fail("Không lưu được. Thử lại.");
-  return ok({ bones: progress.bones - 1 });
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("bin_spend", { p_user: user.id, p_kind: "feed", p_amount: 1, p_ref: null });
+  if (error) return fail(error.message.includes("not_enough_bones") ? "Chưa có xương để cho ăn." : "Không lưu được. Thử lại.");
+  return ok({ bones: data });
 }
 
 const outfitSchema = z.string().refine((id) => OUTFITS.some((o) => o.id === id), "Trang phục không có.");
@@ -119,11 +116,19 @@ export async function claimQuest(input: unknown): Promise<ActionResult<{ id: Que
   const quest = progress.quests.find((q) => q.id === id);
   if (!quest?.done) return fail("Chưa xong nhiệm vụ này.");
   if (quest.claimed) return fail("Đã nhận thưởng rồi.");
+  const admin = createAdminClient();
+  const { data: newBones, error: grantError } = await admin.rpc("bin_grant", {
+    p_user: user.id,
+    p_kind: "quest",
+    p_amount: QUEST_BONES,
+    p_ref: `${progress.today}:${id}`,
+  });
+  if (grantError) return fail("Không lưu được. Thử lại.");
   const saved = await savePrefs(user.id, (stored) => {
     const claimed = { ...(stored.quests_claimed ?? {}) };
     claimed[progress.today] = [...(claimed[progress.today] ?? []), id];
     return { quests_claimed: pruneClaimed(claimed), quests_total: (stored.quests_total ?? 0) + 1 };
   });
   if (!saved) return fail("Không lưu được. Thử lại.");
-  return ok({ id, bones: progress.bones + QUEST_BONES });
+  return ok({ id, bones: newBones });
 }

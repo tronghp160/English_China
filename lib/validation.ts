@@ -58,9 +58,9 @@ export const prefsSchema = z.object({
   haptics: z.boolean().optional(),
   /** Outfit id of Bin, one of OUTFITS in lib/progress.ts; "none" = no outfit. */
   bin_outfit: z.string().max(20).optional(),
-  /** Bones fed to Bin so far; bones in hand = earned (lib/progress.ts) minus this. */
+  /** @deprecated since Bin 3.0, bones live in bin_ledger */
   bin_treats_fed: z.number().int().min(0).optional(),
-  /** Study day (YYYY-MM-DD) of the last feeding, "" = never. */
+  /** @deprecated since Bin 3.0, bones live in bin_ledger */
   bin_last_fed: z.string().max(10).optional(),
   /** Quest rewards taken since the start; `quests_claimed` only keeps the last 7 days, this keeps the count. */
   quests_total: z.number().int().min(0).optional(),

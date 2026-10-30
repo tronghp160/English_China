@@ -35,10 +35,9 @@ export function levelFromXp(totalXp: number): LevelInfo {
 
 // ---- Bones -----------------------------------------------------------------
 
-/** One bone per 10 right answers, two per quest reward taken, minus what Bin has eaten. */
-export function bonesAvailable(input: { totalCorrect: number; questsClaimedTotal: number; treatsFed: number }): number {
-  const earned = Math.floor(Math.max(0, input.totalCorrect) / 10) + QUEST_BONES * Math.max(0, input.questsClaimedTotal);
-  return Math.max(0, earned - Math.max(0, input.treatsFed));
+/** Bones in hand: one per 10 right answers plus everything in the ledger (quests, trips, feeding, buying). */
+export function bonesAvailable(input: { totalCorrect: number; ledgerSum: number }): number {
+  return Math.max(0, Math.floor(Math.max(0, input.totalCorrect) / 10) + input.ledgerSum);
 }
 
 // ---- Daily quests ----------------------------------------------------------

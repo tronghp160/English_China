@@ -161,7 +161,7 @@ for (const f of funcs) {
     const type = tsType(udt, isArr);
     if (mode === "i" || mode === "b") {
       const decl = argDecls.find((d) => d.trim().startsWith(n + " ")) ?? "";
-      inArgs.push(`          ${n}${/ DEFAULT /i.test(decl) ? "?" : ""}: ${type};`);
+      inArgs.push(`          ${n}${/ DEFAULT /i.test(decl) ? "?" : ""}: ${type} | null;`);
     }
     if (mode === "t" || mode === "o") outCols.push(`            ${n}: ${type};`);
   });

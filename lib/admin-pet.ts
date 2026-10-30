@@ -52,6 +52,7 @@ export function buildPetSummary(input: {
   prefsRaw: unknown;
   timezone: string;
   now?: Date;
+  ledgerSum?: number;
 }): PetSummary {
   const now = input.now ?? new Date();
   const timezone = input.timezone || "Asia/Ho_Chi_Minh";
@@ -77,10 +78,10 @@ export function buildPetSummary(input: {
   const outfit: OutfitId = unlocked.includes(requestedOutfit) ? requestedOutfit : "none";
   const outfitName = OUTFITS.find((o) => o.id === outfit)?.name ?? "Không mặc";
 
+  const ledgerSum = input.ledgerSum ?? (2 * prefs.quests_total - prefs.bin_treats_fed);
   const bones = bonesAvailable({
     totalCorrect,
-    questsClaimedTotal: prefs.quests_total,
-    treatsFed: prefs.bin_treats_fed,
+    ledgerSum,
   });
   const fedToday = prefs.bin_last_fed === dayStr;
 
