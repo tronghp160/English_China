@@ -611,6 +611,29 @@
   transform-origin: center;
   animation: pup-blink 4.6s ease-in-out infinite;
 }
+.buddy-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pup-blink 4.6s ease-in-out infinite;
+  animation-delay: 1.8s;
+}
+.egg-wobble {
+  transform-box: fill-box;
+  transform-origin: 50% 90%;
+  animation: egg-wobble 500ms ease-in-out;
+}
+@keyframes egg-wobble {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-7deg);
+  }
+  75% {
+    transform: rotate(7deg);
+  }
+}
 @keyframes pup-blink {
   0%,
   91%,
@@ -1645,6 +1668,8 @@
   .animate-fade-up,
   .pup-tail,
   .pup-blink,
+  .buddy-blink,
+  .egg-wobble,
   .pup-extra,
   .pup-rise {
     animation: none;

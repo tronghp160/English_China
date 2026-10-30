@@ -7,9 +7,12 @@ import { BIN_ACTION_NAMES, PUP_MOODS, type BinAction } from "@/lib/mascot/lines"
 import { OUTFITS } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 import { BinRoom } from "./bin-room";
+import { Buddy } from "./buddy";
+import { Egg } from "./egg";
 import { OutfitIcon } from "./outfits";
 import { Pup } from "./pup";
 import { useBinAction } from "./use-bin";
+import { BUDDY_SPECIES, buddyBySpecies, type BuddySpecies } from "@/lib/bin/buddies";
 
 /** Everything about Bin in one place for the dev-only /dev-ui/bin page: moods, outfits, actions, looking, reduced motion. */
 export function BinLab() {
@@ -19,6 +22,12 @@ export function BinLab() {
   const [size, setSize] = useState(200);
   const [labRoom, setLabRoom] = useState<Record<RoomSlot, string>>(DEFAULT_ROOM);
   const [labNight, setLabNight] = useState(false);
+  const [eggTapCount, setEggTapCount] = useState<Record<BuddySpecies, number>>({
+    miu: 0,
+    panda: 0,
+    duck: 0,
+    bunny: 0,
+  });
   const bin = useBinAction("happy", { reduced });
 
   return (
@@ -144,6 +153,107 @@ export function BinLab() {
                     </option>
                   ))}
                 </select>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Companions & Eggs Section */}
+      <section className="space-y-6">
+        <div>
+          <h2 className="text-lg font-bold">Bạn nhỏ cùng nhà (4 loài × 3 cảm xúc)</h2>
+          <p className="text-sm text-fg-muted">
+            Vẽ cùng phong cách Bin: nét viền mực, má hồng, mắt chấm nhấp nháy, tỉ lệ hài hòa khi đứng cạnh Bin.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {BUDDY_SPECIES.map((sp) => {
+            const def = buddyBySpecies(sp)!;
+            return (
+              <div key={sp} className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="font-bold">{def.defaultName}</h3>
+                  <span className="text-xs text-fg-muted">loài: {sp}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center text-xs text-fg-muted">
+                  <div className="flex flex-col items-center gap-1 rounded-lg bg-surface-2 p-2">
+                    <Buddy species={sp} mood="happy" size={64} />
+                    <span>Vui</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 rounded-lg bg-surface-2 p-2">
+                    <Buddy species={sp} mood="sleepy" size={64} />
+                    <span>Ngủ</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 rounded-lg bg-surface-2 p-2">
+                    <Buddy species={sp} mood="cheer" size={64} />
+                    <span>Reo</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Side-by-side with Bin */}
+        <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+          <h3 className="mb-3 font-bold">So sánh cạnh Bin (kích thước cùng bộ)</h3>
+          <div className="flex flex-wrap items-end justify-around gap-4 rounded-lg bg-surface-2 p-4">
+            <div className="flex flex-col items-center gap-1 text-xs">
+              <Pup mood="happy" size={72} animated={false} />
+              <span className="font-semibold text-fg">Bin</span>
+            </div>
+            {BUDDY_SPECIES.map((sp) => {
+              const def = buddyBySpecies(sp)!;
+              return (
+                <div key={sp} className="flex flex-col items-center gap-1 text-xs">
+                  <Buddy species={sp} mood="happy" size={60} />
+                  <span className="text-fg-muted">{def.defaultName}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Eggs Section */}
+        <div>
+          <h2 className="text-lg font-bold">Trứng của bạn nhỏ (4 loài × 3 mức nứt)</h2>
+          <p className="text-sm text-fg-muted">
+            Trứng mang hoa văn đặc trưng từng loài; nứt dần theo số câu đúng; lắc lư khi sẵn sàng nở (bấm vào trứng sẵn sàng để chạm thử).
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {BUDDY_SPECIES.map((sp) => {
+            const def = buddyBySpecies(sp)!;
+            const taps = eggTapCount[sp];
+            return (
+              <div key={sp} className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="font-bold">Trứng {def.defaultName}</h3>
+                  <span className="text-xs text-fg-muted">chạm: {taps} lần</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center text-xs text-fg-muted">
+                  <div className="flex flex-col items-center gap-1 rounded-lg bg-surface-2 p-2">
+                    <Egg species={sp} progress={0} size={48} />
+                    <span>Mới nhận</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 rounded-lg bg-surface-2 p-2">
+                    <Egg species={sp} progress={0.5} size={48} />
+                    <span>Đang nứt</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 rounded-lg bg-surface-2 p-2">
+                    <Egg
+                      species={sp}
+                      progress={1}
+                      ready
+                      size={48}
+                      onTap={() => setEggTapCount((prev) => ({ ...prev, [sp]: prev[sp] + 1 }))}
+                    />
+                    <span className="font-semibold text-c-coral-fg">Sẵn sàng!</span>
+                  </div>
+                </div>
               </div>
             );
           })}

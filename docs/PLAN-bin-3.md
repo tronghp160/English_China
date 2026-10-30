@@ -1319,7 +1319,7 @@ bin_buddy: z.string().max(20).optional(),
 
 ---
 
-## Bước 3.2 — Vẽ bạn nhỏ và trứng
+## Bước 3.2 — Vẽ bạn nhỏ và trứng ✅
 
 ### 3.2.a `components/mascot/buddy.tsx` (tạo mới)
 ```ts
