@@ -8,8 +8,9 @@ import { Confetti } from "@/components/fx/confetti";
 import { CountUp } from "@/components/fx/count-up";
 import { useBinHome } from "@/components/mascot/bin-home-provider";
 import { Buddy } from "@/components/mascot/buddy";
+import { Egg } from "@/components/mascot/egg";
 import { Pup } from "@/components/mascot/pup";
-import type { BuddySpecies } from "@/lib/bin/buddies";
+import { buddyBySpecies, type BuddySpecies } from "@/lib/bin/buddies";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { IconTile } from "@/components/ui/icon-tile";
@@ -26,13 +27,21 @@ const STEP_MS = 750;
 /** If the answers have not all reached the server by then, the totals are estimated from this session. */
 const WAIT_FOR_SYNC_MS = 6000;
 
-type Gift = "level" | "streak" | "bones" | "unlocks";
+type Gift = "level" | "streak" | "bones" | "unlocks" | "egg" | "eggReady";
 
-function giftsOf(g: SessionGains, extendedStreak: boolean, streak: number): Gift[] {
+function giftsOf(
+  g: SessionGains,
+  extendedStreak: boolean,
+  streak: number,
+  newEggs: BuddySpecies[] = [],
+  eggReady: BuddySpecies[] = [],
+): Gift[] {
   const list: Gift[] = ["level"];
   if (extendedStreak && streak > 0) list.push("streak");
   if (g.bonesEarned > 0) list.push("bones");
   if (g.newOutfits.length || g.newTricks.length) list.push("unlocks");
+  if (newEggs.length > 0) list.push("egg");
+  if (eggReady.length > 0) list.push("eggReady");
   return list;
 }
 
@@ -101,7 +110,11 @@ export function SessionGifts({ xp, correct, answers }: { xp: number; correct: nu
       streak: streakNow,
     };
   })();
-  const gifts = gains ? giftsOf(gains, extended, streak) : [];
+  const newEggs = data?.now.newEggs ?? [];
+  const eggReady = (data?.now.eggReady ?? []).filter(
+    (sp) => !(data?.base?.eggReady ?? []).includes(sp),
+  );
+  const gifts = gains ? giftsOf(gains, extended, streak, newEggs, eggReady) : [];
 
   // Open the gifts one by one (all at once with reduced motion).
   useEffect(() => {
@@ -211,6 +224,48 @@ export function SessionGifts({ xp, correct, answers }: { xp: number; correct: nu
               {[...gains.newOutfits.map((o) => `Trang phục ${o.name.toLowerCase()}`), ...gains.newTricks.map((t) => `Trò ${t.name.toLowerCase()}`)].join(", ")}
             </p>
           </div>
+        </GiftCard>
+      )}
+
+      {gifts.includes("egg") && opened > gifts.indexOf("egg") && newEggs.length > 0 && (
+        <GiftCard className="justify-between bg-c-coral-soft text-c-coral-fg">
+          <div className="flex min-w-0 items-center gap-3.5">
+            <Egg species={newEggs[0]} size={48} />
+            <div className="min-w-0">
+              <p className="font-extrabold">Bạn nhận được một quả trứng!</p>
+              <p className="text-sm">
+                Ấp đủ {buddyBySpecies(newEggs[0])?.hatchCorrect ?? 30} câu đúng để nở.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            className="shrink-0"
+            onClick={() => home?.open("buddies")}
+          >
+            Xem trứng
+          </Button>
+        </GiftCard>
+      )}
+
+      {gifts.includes("eggReady") && opened > gifts.indexOf("eggReady") && eggReady.length > 0 && (
+        <GiftCard className="justify-between bg-c-coral-soft text-c-coral-fg">
+          <div className="flex min-w-0 items-center gap-3.5">
+            <Egg species={eggReady[0]} ready size={48} />
+            <div className="min-w-0">
+              <p className="font-extrabold">Trứng sắp nở rồi!</p>
+              <p className="text-sm">Chạm vào trứng trong phòng để ấp nở.</p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            className="shrink-0"
+            onClick={() => home?.open("buddies")}
+          >
+            Xem trứng
+          </Button>
         </GiftCard>
       )}
 

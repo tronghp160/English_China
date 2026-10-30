@@ -16,6 +16,7 @@ import { studyDay } from "@/lib/srs/streak";
 import { getOrWriteGreeting } from "@/lib/ai/bin-greeting";
 import type { PupMood } from "@/lib/mascot/lines";
 import { buddyBySpecies, type BuddySpecies } from "@/lib/bin/buddies";
+import { syncBuddiesData } from "@/lib/data/bin";
 
 /** What "Góc của Bin" shows, read when the sheet opens (REDESIGN_V3 §5.2). */
 export type BinHomeData = {
@@ -86,19 +87,37 @@ export type SessionRewardData = {
   bones: number;
   quests: { id: QuestId; title: string; progress: number; target: number; done: boolean; claimed: boolean }[];
   trip: TripStatus;
+  newEggs: BuddySpecies[];
+  eggReady: BuddySpecies[];
 };
 
 export async function loadSessionRewards(): Promise<ActionResult<SessionRewardData>> {
-  await requireUser();
-  const p = await getProgress();
+  const user = await requireUser();
+  const [p, buddiesData] = await Promise.all([
+    getProgress(),
+    syncBuddiesData(user.id),
+  ]);
+  const eggReady = buddiesData.buddies
+    .filter((b) => b.state === "egg" && b.hatch?.ready)
+    .map((b) => b.species);
+
   return ok({
     totalXp: p.totalXp,
     totalCorrect: p.totalCorrect,
     streak: p.streak,
     reviewsToday: p.reviewsToday,
     bones: p.bones,
-    quests: p.quests.map(({ id, title, progress, target, done, claimed }) => ({ id, title, progress, target, done, claimed })),
+    quests: p.quests.map(({ id, title, progress, target, done, claimed }) => ({
+      id,
+      title,
+      progress,
+      target,
+      done,
+      claimed,
+    })),
     trip: p.trip,
+    newEggs: buddiesData.newEggs,
+    eggReady,
   });
 }
 

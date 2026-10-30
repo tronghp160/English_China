@@ -1395,7 +1395,7 @@ Hiện bạn nhỏ đang `active` (pref `bin_buddy`, phải là bạn đã nở 
 
 ---
 
-## Bước 3.5 — Quà trứng ở màn kết thúc phiên
+## Bước 3.5 — Quà trứng ở màn kết thúc phiên ✅
 - `loadSessionRewards` gọi logic của `syncBuddies` (tách hàm dùng chung trong `lib/data/bin.ts` để không gọi server action từ server action) và trả `newEggs`.
 - `session-gifts.tsx`: thêm loại quà `"egg"` vào `Gift` (sau `"unlocks"`): `Egg` của loài mới + "Bạn nhận được một quả trứng!" + "Ấp đủ {hatchCorrect} câu đúng để nở." + nút "Xem trứng" mở Góc của Bin ở `panel="buddies"`.
 - Khi trứng của bạn đã `ready` sau phiên (trước phiên chưa ready): quà `"eggReady"` "Trứng sắp nở rồi!" với cùng nút.
