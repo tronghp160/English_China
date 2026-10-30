@@ -116,6 +116,41 @@ export type Database = {
 
         ];
       };
+      bin_buddies: {
+        Row: {
+          egg_at: string;
+          hatched_at: string | null;
+          name: string;
+          species: string;
+          start_correct: number;
+          user_id: string;
+        };
+        Insert: {
+          egg_at?: string;
+          hatched_at?: string | null;
+          name: string;
+          species: string;
+          start_correct: number;
+          user_id: string;
+        };
+        Update: {
+          egg_at?: string;
+          hatched_at?: string | null;
+          name?: string;
+          species?: string;
+          start_correct?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bin_buddies_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       bin_daily: {
         Row: {
           created_at: string;
@@ -1248,6 +1283,15 @@ export type Database = {
           p_user: string | null;
         };
         Returns: undefined;
+      };
+      bin_mastered_counts: {
+        Args: {
+          p_user?: string | null;
+        };
+        Returns: {
+          language: Database["public"]["Enums"]["lang_code"];
+          n: number;
+        }[];
       };
       bin_recent_misses: {
         Args: {

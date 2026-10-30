@@ -1224,7 +1224,7 @@ E2E xanh; ảnh chụp thẻ chuỗi 390px với 0/1/2 khăn.
 
 # GIAI ĐOẠN 3 — Bạn nhỏ của Bin: Miu, Panda (và hai bạn nữa)
 
-## Bước 3.1 — Dữ liệu và điều kiện nhận trứng
+## Bước 3.1 — Dữ liệu và điều kiện nhận trứng ✅
 
 ### 3.1.a Danh sách bạn nhỏ (`lib/bin/buddies.ts`, tạo mới, thuần)
 ```ts

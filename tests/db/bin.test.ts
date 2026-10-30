@@ -355,4 +355,128 @@ describe("bin ledger and wallet", () => {
     );
     expect(bobCall.rows[0].bin_use_freezes).toHaveLength(0);
   });
+
+  it("15. bin_mastered_counts counts only recognize review cards with scheduled_days >= 21 and not suspended", async () => {
+    // Create decks for Alice
+    const enDeckRes = await as(db, "service", () =>
+      db.query<{ id: string }>(
+        "insert into public.decks (owner_id, name, language) values ($1, 'Mastered EN', 'en') returning id",
+        [alice],
+      ),
+    );
+    const zhDeckRes = await as(db, "service", () =>
+      db.query<{ id: string }>(
+        "insert into public.decks (owner_id, name, language) values ($1, 'Mastered ZH', 'zh') returning id",
+        [alice],
+      ),
+    );
+    const enDeckId = enDeckRes.rows[0].id;
+    const zhDeckId = zhDeckRes.rows[0].id;
+
+    // Create 5 words in enDeck, 1 word in zhDeck
+    const wordsRes = await as(db, "service", () =>
+      db.query<{ id: string; language: string }>(
+        `insert into public.words (deck_id, created_by, language, term, normalized, meaning_vi)
+         values
+           ($1, $3, 'en', 'word1', 'word1', 'từ 1'),
+           ($1, $3, 'en', 'word2', 'word2', 'từ 2'),
+           ($1, $3, 'en', 'word3', 'word3', 'từ 3'),
+           ($1, $3, 'en', 'word4', 'word4', 'từ 4'),
+           ($1, $3, 'en', 'word5', 'word5', 'từ 5'),
+           ($2, $3, 'zh', 'word6', 'word6', 'từ 6')
+         returning id, language`,
+        [enDeckId, zhDeckId, alice],
+      ),
+    );
+    const [w1, w2, w3, w4, w5, w6] = wordsRes.rows;
+
+    // Insert user_cards:
+    // w1: recognize, review, 25 days, not suspended -> QUALIFIES (en)
+    // w2: recall, review, 25 days, not suspended -> DOES NOT QUALIFY (direction != recognize)
+    // w3: recognize, learning, 25 days, not suspended -> DOES NOT QUALIFY (state != review)
+    // w4: recognize, review, 15 days, not suspended -> DOES NOT QUALIFY (scheduled_days < 21)
+    // w5: recognize, review, 25 days, suspended -> DOES NOT QUALIFY (suspended)
+    // w6: recognize, review, 30 days, not suspended -> QUALIFIES (zh)
+    await as(db, "service", () =>
+      db.query(
+        `insert into public.user_cards (user_id, word_id, direction, state, scheduled_days, suspended, reps, lapses, due)
+         values
+           ($1, $2, 'recognize', 'review', 25, false, 5, 0, now()),
+           ($1, $3, 'recall', 'review', 25, false, 5, 0, now()),
+           ($1, $4, 'recognize', 'learning', 25, false, 5, 0, now()),
+           ($1, $5, 'recognize', 'review', 15, false, 5, 0, now()),
+           ($1, $6, 'recognize', 'review', 25, true, 5, 0, now()),
+           ($1, $7, 'recognize', 'review', 30, false, 5, 0, now())`,
+        [alice, w1.id, w2.id, w3.id, w4.id, w5.id, w6.id],
+      ),
+    );
+
+    // Alice calls bin_mastered_counts()
+    const counts = await as(db, alice, () =>
+      db.query<{ language: string; n: number }>("select language, n from public.bin_mastered_counts()"),
+    );
+
+    const enRow = counts.rows.find((r) => r.language === "en");
+    const zhRow = counts.rows.find((r) => r.language === "zh");
+    expect(enRow?.n).toBe(1);
+    expect(zhRow?.n).toBe(1);
+
+    // Bob calls bin_mastered_counts() -> sees 0 rows
+    const bobCounts = await as(db, bob, () =>
+      db.query<{ language: string; n: number }>("select language, n from public.bin_mastered_counts()"),
+    );
+    expect(bobCounts.rows).toHaveLength(0);
+  });
+
+  it("16. bin_buddies RLS: user reads own row, cannot read others, cannot insert/update directly", async () => {
+    // Service role inserts buddy for Alice
+    await as(db, "service", () =>
+      db.query(
+        `insert into public.bin_buddies (user_id, species, name, start_correct)
+         values ($1, 'miu', 'Miu', 50)`,
+        [alice],
+      ),
+    );
+
+    // Alice can read her buddy
+    const aliceRows = await as(db, alice, () =>
+      db.query<{ species: string; name: string }>(
+        "select species, name from public.bin_buddies where user_id = $1",
+        [alice],
+      ),
+    );
+    expect(aliceRows.rows).toHaveLength(1);
+    expect(aliceRows.rows[0].species).toBe("miu");
+    expect(aliceRows.rows[0].name).toBe("Miu");
+
+    // Bob cannot read Alice's buddy
+    const bobRows = await as(db, bob, () =>
+      db.query<{ species: string }>(
+        "select species from public.bin_buddies where user_id = $1",
+        [alice],
+      ),
+    );
+    expect(bobRows.rows).toHaveLength(0);
+
+    // Alice cannot insert directly into bin_buddies
+    await expect(
+      as(db, alice, () =>
+        db.query(
+          `insert into public.bin_buddies (user_id, species, name, start_correct)
+           values ($1, 'panda', 'Panda', 50)`,
+          [alice],
+        ),
+      ),
+    ).rejects.toThrow();
+
+    // Alice cannot update directly
+    await expect(
+      as(db, alice, () =>
+        db.query(
+          "update public.bin_buddies set name = 'Hacked' where user_id = $1",
+          [alice],
+        ),
+      ),
+    ).rejects.toThrow();
+  });
 });

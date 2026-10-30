@@ -3,6 +3,17 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { LangCode } from "@/lib/lang/types";
 import { addDays, computeStreak } from "@/lib/srs/streak";
 import { readPrefs } from "@/lib/validation";
+import {
+  BUDDIES,
+  buddyBySpecies,
+  eggCondition,
+  eggsEarned,
+  hatchProgress,
+  isBuddySpecies,
+  type BuddiesData,
+  type BuddySpecies,
+  type BuddyView,
+} from "@/lib/bin/buddies";
 
 export type TripCandidateWord = {
   id: string;
@@ -117,5 +128,111 @@ export async function greetingContext(userId: string, today: string): Promise<Gr
     hardWords,
     newYesterday,
     tripBack,
+  };
+}
+
+export async function syncBuddiesData(userId: string): Promise<BuddiesData> {
+  const admin = createAdminClient();
+
+  const [settingsRes, statsRes, masteredRes, buddiesRes] = await Promise.all([
+    admin.from("user_settings").select("prefs").eq("user_id", userId).maybeSingle(),
+    admin.from("daily_stats").select("correct").eq("user_id", userId),
+    admin.rpc("bin_mastered_counts", { p_user: userId }),
+    admin.from("bin_buddies").select("species, name, start_correct, hatched_at").eq("user_id", userId),
+  ]);
+
+  const totalCorrect = (statsRes.data ?? []).reduce((sum, r) => sum + r.correct, 0);
+
+  const mastered = { en: 0, zh: 0 };
+  for (const row of masteredRes.data ?? []) {
+    if (row.language === "en" || row.language === "zh") {
+      mastered[row.language] = row.n;
+    }
+  }
+
+  let buddiesRows = buddiesRes.data ?? [];
+  const have = new Set<BuddySpecies>(buddiesRows.map((r) => r.species as BuddySpecies));
+
+  const newEggs = eggsEarned(mastered, have);
+  if (newEggs.length > 0) {
+    const inserts = newEggs.map((sp) => {
+      const buddyDef = buddyBySpecies(sp);
+      return {
+        user_id: userId,
+        species: sp,
+        name: buddyDef?.defaultName ?? sp,
+        start_correct: totalCorrect,
+      };
+    });
+
+    const { data: insertedRows } = await admin
+      .from("bin_buddies")
+      .insert(inserts)
+      .select("species, name, start_correct, hatched_at");
+
+    if (insertedRows && insertedRows.length > 0) {
+      buddiesRows = [...buddiesRows, ...insertedRows];
+    }
+  }
+
+  const prefs = readPrefs(settingsRes.data?.prefs);
+  let active: BuddySpecies | null = null;
+  if (isBuddySpecies(prefs.bin_buddy)) {
+    const hatchedRow = buddiesRows.find(
+      (r) => r.species === prefs.bin_buddy && r.hatched_at !== null,
+    );
+    if (hatchedRow) {
+      active = prefs.bin_buddy;
+    }
+  }
+
+  const buddies: BuddyView[] = BUDDIES.map((b) => {
+    const row = buddiesRows.find((r) => r.species === b.species);
+    const cond = eggCondition(b);
+    const currentMastered =
+      b.egg.lang === "any"
+        ? mastered.en + mastered.zh
+        : mastered[b.egg.lang] ?? 0;
+
+    if (!row) {
+      return {
+        species: b.species,
+        name: b.defaultName,
+        state: "locked" as const,
+        condition: cond,
+        mastered: currentMastered,
+        hatch: null,
+      };
+    }
+
+    if (row.hatched_at !== null) {
+      return {
+        species: b.species,
+        name: row.name,
+        state: "hatched" as const,
+        condition: cond,
+        mastered: currentMastered,
+        hatch: null,
+      };
+    }
+
+    return {
+      species: b.species,
+      name: row.name,
+      state: "egg" as const,
+      condition: cond,
+      mastered: currentMastered,
+      hatch: hatchProgress({
+        totalCorrect,
+        startCorrect: row.start_correct,
+        need: b.hatchCorrect,
+      }),
+    };
+  });
+
+  return {
+    buddies,
+    active,
+    newEggs,
   };
 }
