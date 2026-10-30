@@ -16,6 +16,7 @@
     "db:push": "node scripts/db-push.mjs",
     "db:types:local": "node scripts/gen-db-types.mjs",
     "db:seed": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-demo.mjs",
+    "db:seed:bin": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-bin-full.mjs",
     "admin:grant": "node scripts/admin.mjs grant",
     "admin:revoke": "node scripts/admin.mjs revoke",
     "admin:list": "node scripts/admin.mjs list",
