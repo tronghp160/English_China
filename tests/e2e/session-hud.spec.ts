@@ -96,3 +96,16 @@ test("công tắc âm thanh trên thanh phiên", async () => {
   await expect(page.getByRole("button", { name: "Tắt âm thanh" })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test("trả lời đúng 5 câu liên tiếp: Bin hiện bong bóng chứa số 5", async () => {
+  await page.goto(`/practice/quiz?deck=${deckId}&n=8`);
+  for (let i = 1; i <= 5; i++) {
+    await answer(true);
+    await expect(page.getByText("Đúng rồi!")).toBeVisible();
+    if (i === 5) {
+      await expect(page.getByText(/5 câu liền|Combo 5|5 câu đúng/)).toBeVisible();
+    } else {
+      await next();
+    }
+  }
+});

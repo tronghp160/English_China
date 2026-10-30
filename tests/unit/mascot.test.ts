@@ -16,6 +16,22 @@ describe("mascot lines", () => {
     expect(text).not.toMatch(/\{(name|n)\}/);
   });
 
+  it("fills {word} and has no emoji or overlong lines in new session lines", () => {
+    const redeemText = say("redeem", { seed: 0, word: "apple" });
+    expect(redeemText).toContain("apple");
+
+    const newKeys = ["comboTalk", "redeem", "comeback", "wrongRun", "halfway"] as const;
+    const emojiRegex = /\p{Extended_Pictographic}/u;
+
+    for (const key of newKeys) {
+      for (let seed = 0; seed < 10; seed++) {
+        const text = say(key, { seed, name: "Bin", n: 30, word: "鼓励" });
+        expect(text).not.toMatch(emojiRegex);
+        expect(text.length).toBeLessThanOrEqual(60);
+      }
+    }
+  });
+
   it("covers every line with any seed", () => {
     for (const key of Object.keys(LINES) as (keyof typeof LINES)[])
       for (let seed = 0; seed < 10; seed++) expect(say(key, { seed, n: 3 })).toBeTruthy();

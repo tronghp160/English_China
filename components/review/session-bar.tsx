@@ -16,7 +16,7 @@ import { say, type PupMood } from "@/lib/mascot/lines";
 import { playSfx, setSfxEnabled } from "@/lib/sfx";
 import { subscribeOutbox, type OutboxStatus } from "@/lib/srs/outbox";
 import { cn } from "@/lib/utils";
-import type { SessionReaction } from "./use-session-hud";
+import type { HudTalk, SessionReaction } from "./use-session-hud";
 
 export function useOutboxStatus() {
   const [status, setStatus] = useState<OutboxStatus>({ pending: 0, syncing: false, error: null });
@@ -78,7 +78,7 @@ export function SessionBar({
   /** Text at the right end instead of done/total */
   label?: string;
   /** Combo and XP of the session; their presence turns the HUD on. */
-  hud?: { combo: number; xp: number; reaction: SessionReaction | null };
+  hud?: { combo: number; xp: number; reaction: SessionReaction | null; talk?: HudTalk | null };
   ariaLabel?: string;
 }) {
   const { prefs } = useMe();
@@ -95,7 +95,17 @@ export function SessionBar({
     play.current = bin.play;
     clear.current = bin.clear;
   }, [bin.play, bin.clear]);
-  const [idleLine, setIdleLine] = useState<string | null>(null);
+  const name = prefs.mascot_name;
+  const talk = hud?.talk;
+  const [dismissedTalkId, setDismissedTalkId] = useState<number | null>(null);
+  const [idleBubble, setIdleBubble] = useState<string | null>(null);
+
+  const bubble =
+    talk && prefs.mascot && dismissedTalkId !== talk.id
+      ? { text: say(talk.key, { seed: talk.id, name, n: talk.n, word: talk.word }), key: talk.key }
+      : idleBubble
+        ? { text: idleBubble, key: "idleSession" }
+        : null;
 
   const reaction = hud?.reaction;
   const combo = hud?.combo ?? 0;
@@ -113,19 +123,36 @@ export function SessionBar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reaction?.n]);
 
+  useEffect(() => {
+    if (!talk || !prefs.mascot) return;
+
+    if (talk.key === "comboTalk") {
+      play.current("dance");
+    } else if (talk.key === "redeem" || talk.key === "comeback") {
+      play.current("highFive");
+    } else if (talk.key === "wrongRun") {
+      play.current("sit");
+    }
+
+    const t = setTimeout(() => {
+      setDismissedTalkId(talk.id);
+    }, 2600);
+    return () => clearTimeout(t);
+  }, [talk, prefs.mascot]);
+
   // Still there? After 25 s with no answer, key or tap Bin yawns and says so.
-  const name = prefs.mascot_name;
   useEffect(() => {
     if (!pup) return;
     let idle: ReturnType<typeof setTimeout> | undefined;
     let hide: ReturnType<typeof setTimeout> | undefined;
     const arm = () => {
       clearTimeout(idle);
-      setIdleLine((l) => (l ? null : l));
+      setIdleBubble(null);
       idle = setTimeout(() => {
         play.current("yawn");
-        setIdleLine(say("idleSession", { seed: Math.floor(Date.now() / 1000), name }));
-        hide = setTimeout(() => setIdleLine(null), 5000);
+        const text = say("idleSession", { seed: Math.floor(Date.now() / 1000), name });
+        setIdleBubble(text);
+        hide = setTimeout(() => setIdleBubble(null), 5000);
       }, IDLE_MS);
     };
     const events = ["pointerdown", "keydown"] as const;
@@ -203,9 +230,13 @@ export function SessionBar({
               <Pup mood={bin.mood} action={bin.action} size={30} />
             </span>
           )}
-          {idleLine && (
-            <p aria-hidden className="pointer-events-none absolute top-full left-0 z-10 mt-1 rounded-lg rounded-tl-[4px] bg-surface px-3 py-1.5 text-sm font-semibold whitespace-nowrap text-fg shadow-md">
-              {idleLine}
+          {bubble && (
+            <p
+              role={bubble.key === "comboTalk" ? "status" : undefined}
+              aria-live={bubble.key === "comboTalk" ? "polite" : undefined}
+              className="pointer-events-none absolute top-full left-0 z-10 mt-1 rounded-lg rounded-tl-[4px] bg-surface px-3 py-1.5 text-sm font-semibold whitespace-nowrap text-fg shadow-md"
+            >
+              {bubble.text}
             </p>
           )}
         </div>

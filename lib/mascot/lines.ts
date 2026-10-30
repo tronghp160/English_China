@@ -123,6 +123,22 @@ export const LINES = {
   tripAway: ["{name} đang đi dạo, lát về kể bạn nghe.", "{name} ra ngoài rồi, bạn cứ học tiếp nhé."],
   tripBack: ["{name} về rồi! Có quà cho bạn.", "Mở bưu thiếp ra xem nào."],
   tripOvernight: ["{name} ngủ lại ở đó, sáng mai về."],
+  comboTalk: [
+    "{n} câu liền! {name} chóng mặt vì bạn đó.",
+    "Combo {n}! Giữ nhịp này nhé.",
+    "{n} câu đúng liên tục, quá đỉnh.",
+  ],
+  redeem: [
+    "Lần này nhớ {word} rồi!",
+    "{word}, lần này chuẩn luôn.",
+    "Thấy chưa, {word} vào đầu rồi.",
+  ],
+  comeback: ["Gỡ lại rồi!", "Đó, vậy mới đúng chứ.", "Lấy lại nhịp rồi."],
+  wrongRun: [
+    "Khó nhỉ. Chậm lại một chút cũng được.",
+    "Mấy từ này khó thật, {name} vẫn ở đây.",
+  ],
+  halfway: ["Được một nửa rồi.", "Nửa chặng rồi, cố lên."],
 } as const;
 
 export type LineKey = keyof typeof LINES;
@@ -136,11 +152,14 @@ export function seedOf(text: string): number {
 
 export function say(
   key: LineKey,
-  { seed = 0, name = "Bin", n }: { seed?: number; name?: string; n?: number } = {},
+  { seed = 0, name = "Bin", n, word }: { seed?: number; name?: string; n?: number; word?: string } = {},
 ): string {
   const options = LINES[key];
   const line = options[seed % options.length];
-  return line.replaceAll("{name}", name).replaceAll("{n}", String(n ?? ""));
+  return line
+    .replaceAll("{name}", name)
+    .replaceAll("{n}", String(n ?? ""))
+    .replaceAll("{word}", word ?? "");
 }
 
 /** How the puppy reacts to an answer; varied by `seed` so it doesn't repeat itself. */

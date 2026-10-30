@@ -95,7 +95,12 @@ export function ReviewSession({
         reviewedAt: at.toISOString(),
         updateCard: true,
       });
-      answerHud({ correct: rating > 1 });
+      const currentTotal = results.length + remaining(queue);
+      answerHud({
+        correct: rating > 1,
+        word: { id: current.word.id, term: current.word.term },
+        progress: currentTotal > 0 ? (results.length + 1) / currentTotal : 0,
+      });
       playSfx("whoosh");
       if (!reduced) setFlyer({ id: results.length, word: current.word, direction: current.direction, rating });
       const nextQueue = answer(queue, current, { ...current, card }, rating === 1, at);
@@ -162,7 +167,7 @@ export function ReviewSession({
         total={total}
         exitHref={exitHref}
         pup={prefs.mascot ? { mood: "happy" } : undefined}
-        hud={{ combo: hud.combo, xp: hud.xp, reaction: hud.reaction }}
+        hud={{ combo: hud.combo, xp: hud.xp, reaction: hud.reaction, talk: hud.talk }}
       />
       <div className="flex flex-1 flex-col justify-center py-4">
         <CardStack

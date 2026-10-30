@@ -65,7 +65,11 @@ export function PracticeSession({
     (o: Outcome) => {
       if (!q || outcome) return;
       setOutcome(o);
-      answerHud(o);
+      answerHud({
+        ...o,
+        word: { id: q.word.id, term: q.word.term },
+        progress: questions.length > 0 ? (index + 1) / questions.length : 0,
+      });
       void enqueueReview({
         clientId: crypto.randomUUID(),
         wordId: q.word.id,
@@ -91,7 +95,7 @@ export function PracticeSession({
         say(q.word);
       requestAnimationFrame(() => continueRef.current?.focus());
     },
-    [countsToSrs, answerHud, outcome, prefs.auto_speak, q, say],
+    [countsToSrs, answerHud, outcome, prefs.auto_speak, q, say, index, questions.length],
   );
 
   const next = useCallback(() => {
@@ -330,7 +334,7 @@ export function PracticeSession({
         total={questions.length}
         exitHref={exitHref}
         pup={prefs.mascot ? { mood: "happy" } : undefined}
-        hud={{ combo: hud.combo, xp: hud.xp, reaction: hud.reaction }}
+        hud={{ combo: hud.combo, xp: hud.xp, reaction: hud.reaction, talk: hud.talk }}
       />
       <QuestionSlide id={q.id} className="flex flex-1 flex-col justify-center py-2">
         {body}

@@ -80,7 +80,7 @@ function LearnBar({ state, exitHref, mood, hud }: { state: LearnState; exitHref:
       label={`Vòng ${state.round}`}
       ariaLabel={`Đã thuộc ${p.mastered}/${state.words.length}, đang học ${p.learning}`}
       pup={mood ? { mood } : undefined}
-      hud={hud ? { combo: hud.combo, xp: hud.xp, reaction: hud.reaction } : undefined}
+      hud={hud ? { combo: hud.combo, xp: hud.xp, reaction: hud.reaction, talk: hud.talk } : undefined}
     />
   );
 }
@@ -230,7 +230,12 @@ export function LearnSession({
       setOutcome(o);
       tally.current = { right: tally.current.right + (o.correct ? 1 : 0), total: tally.current.total + 1 };
       setVisit((v) => ({ right: v.right + (o.correct ? 1 : 0), total: v.total + 1 }));
-      answerHud(o);
+      const p = progress(state);
+      answerHud({
+        ...o,
+        word: { id: q.word.id, term: q.word.term },
+        progress: state.words.length > 0 ? p.mastered / state.words.length : 0,
+      });
       void enqueueReview({
         clientId: crypto.randomUUID(),
         wordId: q.word.id,
