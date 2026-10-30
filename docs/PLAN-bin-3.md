@@ -862,7 +862,7 @@ E2E xanh; ảnh chụp 4 trạng thái (ready, away, back, done) ở 390px và 1
 
 # GIAI ĐOẠN 2 — Bin trò chuyện (bản nhẹ) + Khăn giữ chuỗi
 
-## Bước 2.1 — Bin nói trong phiên học
+## Bước 2.1 — Bin nói trong phiên học ✅
 
 ### Hiện trạng
 `session-bar.tsx` đã làm Bin nhảy/rũ/nhảy múa theo câu trả lời và có bong bóng `idleLine` sau 25 giây không làm gì. `LINES` đã có `combo`, `praise`, `wrongComfort` nhưng **chưa được dùng trong phiên**. Bước này cho Bin **nói** vào những thời điểm đáng nói, không gọi AI.
@@ -939,7 +939,7 @@ Test xanh; trong một phiên 20 câu Bin nói **không quá ~6 lần**; tắt l
 
 ---
 
-## Bước 2.2 — Lời chào AI mỗi ngày trên Today
+## Bước 2.2 — Lời chào AI mỗi ngày trên Today ✅
 
 ### 2.2.a Migration `supabase/migrations/20261030000015_bin_companion.sql` (phần 1)
 ```sql
@@ -1038,7 +1038,7 @@ Mỗi user tối đa **1** lần gọi AI cho lời chào mỗi ngày (kiểm tr
 
 ---
 
-## Bước 2.3 — Khăn giữ chuỗi: logic chuỗi
+## Bước 2.3 — Khăn giữ chuỗi: logic chuỗi ✅
 
 ### Luật (chốt)
 - Đã có **1 ngày nghỉ miễn phí mỗi tuần** (giữ nguyên). Khăn là lớp bảo vệ **thêm**.
@@ -1181,7 +1181,7 @@ Toàn bộ test chuỗi cũ vẫn xanh (không đổi hành vi khi không có kh
 
 ---
 
-## Bước 2.4 — Khăn giữ chuỗi: shop và giao diện
+## Bước 2.4 — Khăn giữ chuỗi: shop và giao diện ✅
 
 ### 2.4.a Danh mục
 `lib/bin/catalog.ts` thêm loại đồ đặc biệt:
@@ -1216,7 +1216,7 @@ E2E xanh; ảnh chụp thẻ chuỗi 390px với 0/1/2 khăn.
 
 ---
 
-## Bước 2.5 — Admin và tài liệu
+## Bước 2.5 — Admin và tài liệu ✅
 - `pet-panel.tsx`: số khăn, các ngày đã đóng băng (30 ngày gần nhất), lời chào hôm nay (nếu có, kèm `source`).
 - `CLAUDE.md`: mục **"Bin 3.0 — Giai đoạn 2"**: luật Bin nói trong phiên (`session-talk.ts`, `TALK_GAP`), lời chào AI (1 lần/ngày, khi nào gọi, dự phòng, pref), khăn giữ chuỗi (luật, `planFreezes`, chỗ tiêu khăn, nhóm đọc được `bin_freezes`).
 

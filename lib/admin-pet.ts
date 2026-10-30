@@ -48,6 +48,14 @@ export type AdminLatestTrip = {
   wordTerm: string | null;
 };
 
+export type AdminDailyGreeting = {
+  greeting: string;
+  mood: string;
+  source: "ai" | "template";
+  wordId: string | null;
+  createdAt: string;
+};
+
 export type PetSummary = {
   name: string;
   mascotOn: boolean;
@@ -60,6 +68,9 @@ export type PetSummary = {
   room: AdminRoomSlots;
   latestTrip: AdminLatestTrip | null;
   postcardCount: number;
+  scarves: number;
+  freezes30: string[];
+  dailyGreeting: AdminDailyGreeting | null;
   treatsFed: number;
   fedToday: boolean;
   lastFed: string | null;
@@ -91,6 +102,9 @@ export function buildPetSummary(input: {
   latestTrip?: AdminLatestTrip | null;
   postcardCount?: number;
   frozenDays?: string[];
+  scarves?: number;
+  freezes30?: string[];
+  dailyGreeting?: AdminDailyGreeting | null;
 }): PetSummary {
   const now = input.now ?? new Date();
   const timezone = input.timezone || "Asia/Ho_Chi_Minh";
@@ -209,6 +223,9 @@ export function buildPetSummary(input: {
   };
   const latestTrip = input.latestTrip ?? null;
   const postcardCount = input.postcardCount ?? 0;
+  const scarves = input.scarves ?? 0;
+  const freezes30 = input.freezes30 ?? [];
+  const dailyGreeting = input.dailyGreeting ?? null;
 
   return {
     name: prefs.mascot_name,
@@ -222,6 +239,9 @@ export function buildPetSummary(input: {
     room,
     latestTrip,
     postcardCount,
+    scarves,
+    freezes30,
+    dailyGreeting,
     treatsFed: prefs.bin_treats_fed,
     fedToday,
     lastFed: prefs.bin_last_fed,

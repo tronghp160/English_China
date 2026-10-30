@@ -88,6 +88,9 @@ describe("buildPetSummary", () => {
     });
     expect(defaultPet.latestTrip).toBeNull();
     expect(defaultPet.postcardCount).toBe(0);
+    expect(defaultPet.scarves).toBe(0);
+    expect(defaultPet.freezes30).toEqual([]);
+    expect(defaultPet.dailyGreeting).toBeNull();
 
     // Custom values test
     const customPet = buildPetSummary({
@@ -118,6 +121,15 @@ describe("buildPetSummary", () => {
         wordTerm: "umbrella",
       },
       postcardCount: 5,
+      scarves: 1,
+      freezes30: ["2026-10-29", "2026-10-25"],
+      dailyGreeting: {
+        greeting: "Chào buổi sáng!",
+        mood: "happy",
+        source: "ai",
+        wordId: "autumn",
+        createdAt: "2026-10-30T07:00:00Z",
+      },
     });
 
     expect(customPet.boneBalance).toBe(42);
@@ -129,5 +141,9 @@ describe("buildPetSummary", () => {
     expect(customPet.latestTrip?.placeId).toBe("london");
     expect(customPet.latestTrip?.status).toBe("Đang đi");
     expect(customPet.postcardCount).toBe(5);
+    expect(customPet.scarves).toBe(1);
+    expect(customPet.freezes30).toEqual(["2026-10-29", "2026-10-25"]);
+    expect(customPet.dailyGreeting?.greeting).toBe("Chào buổi sáng!");
+    expect(customPet.dailyGreeting?.source).toBe("ai");
   });
 });

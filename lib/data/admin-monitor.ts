@@ -211,9 +211,10 @@ export async function getPetSummariesFor(userIds: string[]): Promise<Map<string,
   // Chunk by 500
   for (let i = 0; i < userIds.length; i += 500) {
     const chunk = userIds.slice(i, i + 500);
-    const [{ data: statsData }, { data: settingsData }] = await Promise.all([
+    const [{ data: statsData }, { data: settingsData }, { data: freezesData }] = await Promise.all([
       sb.from("daily_stats").select("user_id, day, reviews, correct, new_learned, xp").in("user_id", chunk),
       sb.from("user_settings").select("user_id, prefs, timezone").in("user_id", chunk),
+      sb.from("bin_freezes").select("user_id, day").in("user_id", chunk),
     ]);
 
     const statsByUser = new Map<
@@ -234,6 +235,13 @@ export async function getPetSummariesFor(userIds: string[]): Promise<Map<string,
       });
     }
 
+    const freezesByUser = new Map<string, string[]>();
+    for (const row of freezesData ?? []) {
+      const list = freezesByUser.get(row.user_id) ?? [];
+      list.push(row.day);
+      freezesByUser.set(row.user_id, list);
+    }
+
     for (const uid of chunk) {
       const rows = statsByUser.get(uid) ?? [];
       const s = settingsByUser.get(uid);
@@ -243,6 +251,7 @@ export async function getPetSummariesFor(userIds: string[]): Promise<Map<string,
           rows,
           prefsRaw: s?.prefs ?? {},
           timezone: s?.timezone || "Asia/Ho_Chi_Minh",
+          frozenDays: freezesByUser.get(uid) ?? [],
         }),
       );
     }
@@ -253,6 +262,9 @@ export async function getPetSummariesFor(userIds: string[]): Promise<Map<string,
 
 export async function getPetSummaryFor(userId: string): Promise<PetSummary> {
   const sb = createAdminClient();
+  const todayDay = studyDay(new Date(), "Asia/Ho_Chi_Minh");
+  const thirtyDaysAgo = addDays(todayDay, -30);
+
   const [
     map,
     { data: balanceData },
@@ -260,6 +272,9 @@ export async function getPetSummaryFor(userId: string): Promise<PetSummary> {
     { data: roomData },
     { data: tripData },
     { count: postcardCount },
+    { data: scarfData },
+    { data: freezes30Data },
+    { data: dailyData },
   ] = await Promise.all([
     getPetSummariesFor([userId]),
     sb.rpc("bin_balance", { p_user: userId }),
@@ -281,6 +296,24 @@ export async function getPetSummaryFor(userId: string): Promise<PetSummary> {
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
       .not("collected_at", "is", null),
+    sb
+      .from("bin_items")
+      .select("qty")
+      .eq("user_id", userId)
+      .eq("item_id", "streak_scarf")
+      .maybeSingle(),
+    sb
+      .from("bin_freezes")
+      .select("day")
+      .eq("user_id", userId)
+      .gte("day", thirtyDaysAgo)
+      .order("day", { ascending: false }),
+    sb
+      .from("bin_daily")
+      .select("greeting, mood, source, word_id, created_at")
+      .eq("user_id", userId)
+      .eq("study_day", todayDay)
+      .maybeSingle(),
   ]);
 
   const base =
@@ -322,6 +355,18 @@ export async function getPetSummaryFor(userId: string): Promise<PetSummary> {
     };
   }
 
+  const scarves = scarfData?.qty ?? 0;
+  const freezes30 = (freezes30Data ?? []).map((r) => r.day);
+  const dailyGreeting = dailyData
+    ? {
+        greeting: dailyData.greeting,
+        mood: dailyData.mood,
+        source: dailyData.source as "ai" | "template",
+        wordId: dailyData.word_id,
+        createdAt: dailyData.created_at,
+      }
+    : null;
+
   return {
     ...base,
     boneBalance: typeof balanceData === "number" ? balanceData : base.bones,
@@ -329,6 +374,9 @@ export async function getPetSummaryFor(userId: string): Promise<PetSummary> {
     room,
     latestTrip,
     postcardCount: postcardCount ?? 0,
+    scarves,
+    freezes30,
+    dailyGreeting,
   };
 }
 

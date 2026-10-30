@@ -6,6 +6,8 @@ import {
   Gift,
   History,
   Mail,
+  MessageSquare,
+  Shield,
   Sofa,
   Sparkles,
   Zap,
@@ -147,8 +149,66 @@ export function PetPanel({ pet }: { pet: PetSummary }) {
             </div>
             <p className="mt-3 text-xs text-fg-muted">Tâm trạng Bin: {pet.moodLabel}</p>
           </div>
+
+          {/* Streak Scarves & Freezes */}
+          <div className="rounded-lg bg-surface p-4 shadow-sm dark:border dark:border-border">
+            <div className="flex items-center gap-3">
+              <IconTile icon={Shield} tone="blue" size={40} />
+              <div className="min-w-0">
+                <p className="font-display text-xl font-extrabold tabular-nums">{pet.scarves} / 2 khăn</p>
+                <p className="text-sm text-fg-muted">Khăn giữ chuỗi sở hữu</p>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-fg-muted">
+              Đóng băng 30 ngày qua:{" "}
+              <strong>
+                {pet.freezes30.length > 0
+                  ? `${pet.freezes30.length} ngày (${pet.freezes30.slice(0, 3).join(", ")}${
+                      pet.freezes30.length > 3 ? "..." : ""
+                    })`
+                  : "Chưa có"}
+              </strong>
+            </p>
+          </div>
         </div>
       </div>
+
+      {/* Daily Greeting */}
+      <section className="rounded-lg bg-surface p-5 shadow-sm dark:border dark:border-border">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="size-5 text-c-blue" aria-hidden="true" />
+            <h3 className="text-lg font-bold">Lời chào hôm nay</h3>
+          </div>
+          {pet.dailyGreeting && (
+            <div className="flex items-center gap-2">
+              <Badge tone={pet.dailyGreeting.source === "ai" ? "mint" : "blue"}>
+                {pet.dailyGreeting.source === "ai" ? "Trí tuệ nhân tạo (AI)" : "Câu mẫu"}
+              </Badge>
+              <Badge variant="outline">Tâm trạng: {pet.dailyGreeting.mood}</Badge>
+            </div>
+          )}
+        </div>
+        {pet.dailyGreeting ? (
+          <div className="rounded-lg border border-border bg-surface-2 p-4">
+            <p className="text-base font-medium italic text-fg">
+              &ldquo;{pet.dailyGreeting.greeting}&rdquo;
+            </p>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-fg-muted">
+              <span>
+                {pet.dailyGreeting.wordId
+                  ? `Từ vựng ôn tập: ${pet.dailyGreeting.wordId}`
+                  : "Không gắn từ cụ thể"}
+              </span>
+              <span>Tạo lúc: {dateTime(pet.dailyGreeting.createdAt, true)}</span>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-fg-muted">
+            Chưa tạo lời chào hôm nay (sẽ tạo khi người dùng mở trang Hôm nay).
+          </p>
+        )}
+      </section>
 
       {/* Wardrobe (8 outfits) */}
       <section className="rounded-lg bg-surface p-5 shadow-sm dark:border dark:border-border">

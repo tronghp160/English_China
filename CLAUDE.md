@@ -204,3 +204,24 @@ UI and client logic only: no DB migration, no change to FSRS or existing server 
   - Màn hình kết thúc phiên `session-gifts.tsx`: hiển thị gợi ý cho Bin đi dạo khi vừa đạt đủ điều kiện.
   - Cron thông báo: Do gói Vercel Hobby giới hạn 1 cron mỗi ngày (ưu tiên dành cho nhắc nhở học tập hàng ngày trong `vercel.json`), cron push thông báo định kỳ 30 phút cho chuyến đi chưa kích hoạt.
   - E2E: `tests/e2e/bin-trip.spec.ts`.
+
+## Bin 3.0 — Giai đoạn 2 (docs/PLAN-bin-3.md)
+- **Lời thoại trong phiên học (Session Talk)**:
+  - Máy trạng thái thuần túy (`lib/mascot/session-talk.ts`): tính toán phản ứng của linh vật dựa trên chuỗi đúng (combo), trả lời sai liên tiếp (wrongRun), cứu nguy (redeem), quay lại sau khi sai (comeback), nửa chặng đường (halfway).
+  - Khoảng cách tối thiểu giữa 2 lần nói liên tiếp: `TALK_GAP = 4` câu (chỉ ngoại lệ khi đạt mốc combo tròn 5, 10, 15... hoặc câu cứu nguy).
+  - Tích hợp `use-session-hud.ts` và `components/study/session-bar.tsx` với bóng thoại động và cập nhật `aria-live="polite"` cho hỗ trợ tiếp cận (screen reader).
+  - E2E: `tests/e2e/bin-session-talk.spec.ts`.
+- **Lời chào hàng ngày thông minh (AI Daily Greeting)**:
+  - Bảng `bin_daily` (`supabase/migrations/20261030000015_bin_companion.sql`): lưu 1 lời chào/ngày học/người dùng. RLS: user chỉ đọc/ghi dòng của chính mình.
+  - RPC `bin_recent_misses`: lấy tối đa 5 từ sai gần đây để AI lồng ghép vào lời chào khích lệ.
+  - `lib/ai/bin-greeting.ts` (`getOrWriteGreeting`): kiểm tra bộ nhớ đệm `bin_daily`, quota Gemini, tạo lời chào qua schema JSON có cấu trúc (`greeting`, `mood`, `wordId`), chống ảo giác số liệu (number hallucination guard), tự động fallback sang `greetDaily` mẫu khi người dùng tắt `bin_ai_greeting` trong Cài đặt hoặc khi AI gặp sự cố.
+  - Tích hợp hero trang Hôm nay (`components/mascot/daily-greeting.tsx` & `app/(app)/today/page.tsx`).
+- **Khăn giữ chuỗi & Đóng băng tự động (Streak Scarf & Freezes)**:
+  - Vật phẩm đặc biệt `streak_scarf` (`lib/bin/catalog.ts`): giá 20 khúc xương, tối đa sở hữu 2 chiếc. Mua qua modal Trang trí (`components/mascot/bin-decor.tsx`).
+  - Bảng `bin_freezes` và RPCs `bin_freezes`, `bin_use_freezes`: ghi nhận các ngày chuỗi được bảo vệ. Đồng đội trong nhóm (`groups.ts`) được phép đọc `bin_freezes` để tính chuỗi nhất quán.
+  - Thuật toán `computeStreak` và `planFreezes` (`lib/srs/streak.ts`): tự động bù đắp các ngày lỡ học tối đa bằng số khăn hiện có. Khi vào trang Hôm nay, `getStudySummary` tự động tiêu thụ khăn qua `bin_use_freezes` nếu phát hiện ngày lỡ học.
+  - Giao diện: Hôm nay thông báo Bin cứu chuỗi (`streakSaved`), Bin đeo khăn giữ chuỗi (`outfit="scarf"`), lịch tuần hiển thị ngày đóng băng với biểu tượng Khiên (`Shield`).
+  - Unit tests: `tests/unit/streak-freeze.test.ts`. E2E: `tests/e2e/bin-scarf.spec.ts`.
+- **Giám sát quản trị (Admin Monitoring)**:
+  - `lib/admin-pet.ts` và `lib/data/admin-monitor.ts`: bổ sung số lượng khăn giữ chuỗi, danh sách ngày đóng băng 30 ngày qua, và chi tiết lời chào hàng ngày (nguồn AI/mẫu, tâm trạng, từ gắn kèm).
+  - Giao diện `components/admin/pet-panel.tsx`: hiển thị thẻ Khăn & Đóng băng chuỗi và khu vực Lời chào hôm nay.
