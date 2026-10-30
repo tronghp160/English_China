@@ -115,6 +115,10 @@ export const LINES = {
   praise: ["Chuẩn luôn!", "Giỏi quá!", "Nhớ dai ghê!", "Quá đỉnh!", "Đúng rồi đó!"],
   wrongComfort: ["Không sao, lần sau nhớ nha", "Sai một lần là nhớ lâu hơn.", "Từ này sẽ quay lại, đừng lo."],
   idleSession: ["Còn đó không? {name} chờ nè.", "{name} đang chờ bạn đó."],
+  decorPreview: ["Để {name} ngửi thử…", "Trông cũng hợp đó."],
+  decorPlaced: ["Đẹp hơn rồi!", "{name} thích chỗ này lắm."],
+  decorBought: ["Đồ mới! Cảm ơn bạn!", "{name} vui quá, có đồ mới rồi."],
+  decorShort: ["Thiếu chút xương nữa. Ôn thêm vài câu nhé.", "Gom thêm xương rồi quay lại mua nha."],
 } as const;
 
 export type LineKey = keyof typeof LINES;

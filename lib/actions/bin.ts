@@ -21,16 +21,19 @@ export type BinHomeData = {
   fedToday: boolean;
   reviewedToday: boolean;
   streak: number;
+  longestStreak: number;
   questsDone: number;
   room: Record<RoomSlot, string>;
+  owned: string[];
 };
 
 export async function loadBinHome(): Promise<ActionResult<BinHomeData>> {
-  await requireUser();
-  const [p, supabase] = await Promise.all([getProgress(), createClient()]);
-  const [itemsRes, roomRes] = await Promise.all([
-    supabase.from("bin_items").select("item_id, qty"),
-    supabase.from("bin_room").select("slot, item_id"),
+  const user = await requireUser();
+  const admin = createAdminClient();
+  const [p, itemsRes, roomRes] = await Promise.all([
+    getProgress(),
+    admin.from("bin_items").select("item_id, qty").eq("user_id", user.id),
+    admin.from("bin_room").select("slot, item_id").eq("user_id", user.id),
   ]);
   const owned = ownedItems(itemsRes.data ?? []);
   const room = resolveRoom(roomRes.data ?? [], owned);
@@ -43,8 +46,10 @@ export async function loadBinHome(): Promise<ActionResult<BinHomeData>> {
     fedToday: p.fedToday,
     reviewedToday: p.reviewedToday,
     streak: p.streak,
+    longestStreak: p.longestStreak,
     questsDone: p.quests.filter((q) => q.done).length,
     room,
+    owned: Array.from(owned),
   });
 }
 
@@ -210,12 +215,11 @@ export async function placeItem(input: unknown): Promise<ActionResult<{ slot: Ro
   const item = ITEM_BY_ID.get(itemId);
   if (!item || item.slot !== slot) return fail("Vật phẩm không đúng vị trí này.");
 
-  const supabase = await createClient();
-  const { data: itemsData } = await supabase.from("bin_items").select("item_id, qty");
+  const admin = createAdminClient();
+  const { data: itemsData } = await admin.from("bin_items").select("item_id, qty").eq("user_id", user.id);
   const owned = ownedItems(itemsData ?? []);
   if (!owned.has(itemId)) return fail("Chưa sở hữu vật phẩm này.");
 
-  const admin = createAdminClient();
   if (itemId.endsWith("_none")) {
     const { error } = await admin.from("bin_room").delete().eq("user_id", user.id).eq("slot", slot);
     if (error) return fail("Không lưu được. Thử lại.");

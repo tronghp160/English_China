@@ -6,7 +6,11 @@ import { createContext, use, useCallback, useMemo, useState } from "react";
 // Bin's corner is big (scene, drag and drop, outfits), so it only loads the first time someone opens it.
 const BinHome = dynamic(() => import("./bin-home").then((m) => m.BinHome), { ssr: false });
 
-type BinHomeContextValue = { open: () => void };
+export type BinPanel = "main" | "decor" | "trip" | "buddies";
+
+const VALID_PANELS: ReadonlySet<string> = new Set<BinPanel>(["main", "decor", "trip", "buddies"]);
+
+type BinHomeContextValue = { open: (panel?: BinPanel | unknown) => void };
 
 const BinHomeContext = createContext<BinHomeContextValue | null>(null);
 
@@ -14,15 +18,19 @@ const BinHomeContext = createContext<BinHomeContextValue | null>(null);
 export function BinHomeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
-  const openHome = useCallback(() => {
+  const [panel, setPanel] = useState<BinPanel>("main");
+  const openHome = useCallback((target?: BinPanel | unknown) => {
     setMounted(true);
+    const targetPanel: BinPanel =
+      typeof target === "string" && VALID_PANELS.has(target) ? (target as BinPanel) : "main";
+    setPanel(targetPanel);
     setOpen(true);
   }, []);
   const value = useMemo(() => ({ open: openHome }), [openHome]);
   return (
     <BinHomeContext value={value}>
       {children}
-      {mounted && <BinHome open={open} onOpenChange={setOpen} />}
+      {mounted && <BinHome open={open} onOpenChange={setOpen} initialPanel={panel} />}
     </BinHomeContext>
   );
 }

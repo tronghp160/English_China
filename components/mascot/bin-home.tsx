@@ -1,14 +1,15 @@
 "use client";
 
-import { Bone, Heart, Lock, Shirt, Star, Volleyball, X } from "lucide-react";
+import { Bone, Heart, Lock, Shirt, Sofa, Star, Volleyball, X } from "lucide-react";
 import { m } from "motion/react";
 import Link from "next/link";
 import { Dialog as DialogPrimitive } from "radix-ui";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useMe } from "@/components/app-shell/me-provider";
 import { DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import { feedBin, loadBinHome, setBinOutfit, type BinHomeData } from "@/lib/actions/bin";
+import { DEFAULT_ROOM, type RoomSlot } from "@/lib/bin/catalog";
 import { haptic } from "@/lib/haptics";
 import { say as sayLine, type LineKey } from "@/lib/mascot/lines";
 import {
@@ -25,7 +26,8 @@ import {
 import { playSfx } from "@/lib/sfx";
 import { TONE_CLASSES, type Tone } from "@/lib/tone";
 import { cn } from "@/lib/utils";
-import { DEFAULT_ROOM } from "@/lib/bin/catalog";
+import { BinDecor } from "./bin-decor";
+import type { BinPanel } from "./bin-home-provider";
 import { BinRoom } from "./bin-room";
 import { OutfitIcon } from "./outfits";
 import { Pup } from "./pup";
@@ -34,23 +36,37 @@ import { useBinAction } from "./use-bin";
 /** Randomness lives out here: it is only used from event handlers, never while rendering. */
 const roll = () => Math.random();
 
-const TILES: { id: "feed" | "play" | "tricks" | "outfits"; label: string; tone: Tone; icon: typeof Bone }[] = [
+const TILES: {
+  id: "feed" | "play" | "tricks" | "outfits" | "decor";
+  label: string;
+  tone: Tone;
+  icon: typeof Bone;
+}[] = [
   { id: "feed", label: "Cho ăn", tone: "sun", icon: Bone },
   { id: "play", label: "Ném bóng", tone: "mint", icon: Volleyball },
   { id: "tricks", label: "Làm trò", tone: "blue", icon: Star },
   { id: "outfits", label: "Trang phục", tone: "pink", icon: Shirt },
+  { id: "decor", label: "Trang trí", tone: "orange", icon: Sofa },
 ];
-
-
 
 /**
  * "Góc của Bin" (REDESIGN_V3 §5.2, mockup 06): a sheet from the bottom on a phone, a wide dialog on a laptop.
  * Feed Bin a bone (drag it, or the button), throw the ball, ask for a trick, pick an outfit. What it shows is
  * read when it opens (`loadBinHome`); feeding and the outfit are saved by server actions.
  */
-export function BinHome({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function BinHome({
+  open,
+  onOpenChange,
+  initialPanel = "main",
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initialPanel?: BinPanel;
+}) {
   const { prefs, dueCount } = useMe();
   const name = prefs.mascot_name;
+  const [panel, setPanel] = useState<BinPanel>(initialPanel);
+  const [preview, setPreview] = useState<{ slot: RoomSlot; itemId: string } | null>(null);
   const [data, setData] = useState<BinHomeData | null>(null);
   const [failed, setFailed] = useState(false);
   const [line, setLine] = useState("");
@@ -64,11 +80,26 @@ export function BinHome({ open, onOpenChange }: { open: boolean; onOpenChange: (
   const outfitsRef = useRef<HTMLDivElement>(null);
   const chase = useRef<ReturnType<typeof setTimeout>>(undefined);
 
+  const ownedSet = useMemo(() => new Set(data?.owned ?? []), [data?.owned]);
+
   const score = data
     ? binMoodScore({ reviewedToday: data.reviewedToday, streak: data.streak, fedToday: data.fedToday, questsDone: data.questsDone })
     : 3;
   const baseMood = binMoodFor(score, night);
   const bin = useBinAction(baseMood);
+
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevInitialPanel, setPrevInitialPanel] = useState(initialPanel);
+  if (open !== prevOpen || initialPanel !== prevInitialPanel) {
+    setPrevOpen(open);
+    setPrevInitialPanel(initialPanel);
+    if (!open) {
+      setPanel("main");
+      setPreview(null);
+    } else {
+      setPanel(initialPanel);
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -159,6 +190,7 @@ export function BinHome({ open, onOpenChange }: { open: boolean; onOpenChange: (
     if (id === "feed") void feed();
     else if (id === "play") throwBall();
     else if (id === "tricks") setTricksOpen((v) => !v);
+    else if (id === "decor") setPanel("decor");
     else outfitsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
@@ -216,7 +248,7 @@ export function BinHome({ open, onOpenChange }: { open: boolean; onOpenChange: (
           <div className="grid gap-4 lg:grid-cols-[1.15fr_1fr] lg:gap-6">
             <div className="flex flex-col gap-3">
               <div className="relative h-[270px] overflow-hidden rounded-[24px] bg-scene-wall lg:h-[360px]">
-                <BinRoom night={night} name={name} room={data?.room ?? DEFAULT_ROOM} />
+                <BinRoom night={night} name={name} room={data?.room ?? DEFAULT_ROOM} preview={preview} />
 
                 <m.div
                   ref={binRef}
@@ -317,90 +349,123 @@ export function BinHome({ open, onOpenChange }: { open: boolean; onOpenChange: (
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-4 gap-2">
-                {TILES.map(({ id, label, tone, icon: Icon }) => {
-                  const t = TONE_CLASSES[tone];
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      aria-expanded={id === "tricks" ? tricksOpen : undefined}
-                      disabled={id === "feed" && busy}
-                      onClick={() => onTile(id)}
-                      className={cn(
-                        "flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-[18px] px-1 text-center text-sm leading-tight font-bold transition-transform active:scale-95 disabled:opacity-60",
-                        t.soft,
-                        t.fg,
-                      )}
-                    >
-                      <Icon className="size-6" aria-hidden />
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
+              {panel === "decor" &&
+                (data ? (
+                  <BinDecor
+                    bones={data.bones}
+                    level={data.level.level}
+                    longestStreak={data.longestStreak}
+                    room={data.room}
+                    owned={ownedSet}
+                    onBonesChange={(bones) => setData((d) => (d ? { ...d, bones } : d))}
+                    onRoomChange={(room) => setData((d) => (d ? { ...d, room } : d))}
+                    onOwnedAdd={(itemId) =>
+                      setData((d) => (d ? { ...d, owned: Array.from(new Set([...d.owned, itemId])) } : d))
+                    }
+                    onPreview={setPreview}
+                    onBack={() => {
+                      setPreview(null);
+                      setPanel("main");
+                    }}
+                    playBin={bin.play}
+                    speak={speak}
+                    dueCount={dueCount}
+                    onCloseHome={() => onOpenChange(false)}
+                  />
+                ) : (
+                  <div className="flex min-h-[200px] items-center justify-center text-sm font-semibold text-fg-muted">
+                    Đang tải…
+                  </div>
+                ))}
 
-              {tricksOpen && data && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm font-bold text-fg-muted">Làm trò</span>
-                  <div className="flex flex-wrap gap-2">
-                    {TRICKS.map((t) => {
-                      const unlocked = data.tricks.includes(t.id);
+              {panel === "main" && (
+                <>
+                  <div className="grid grid-cols-4 gap-2">
+                    {TILES.map(({ id, label, tone, icon: Icon }) => {
+                      const t = TONE_CLASSES[tone];
                       return (
                         <button
-                          key={t.id}
+                          key={id}
                           type="button"
-                          disabled={!unlocked}
-                          aria-label={unlocked ? t.name : `${t.name}, mở ở cấp ${t.level}`}
-                          onClick={() => trick(t.id)}
+                          aria-expanded={id === "tricks" ? tricksOpen : undefined}
+                          disabled={id === "feed" && busy}
+                          onClick={() => onTile(id)}
                           className={cn(
-                            "inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-bold",
-                            unlocked ? "bg-primary-soft text-primary-fg" : "bg-surface-2 text-fg-muted",
+                            "flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-[18px] px-1 text-center text-sm leading-tight font-bold transition-transform active:scale-95 disabled:opacity-60",
+                            t.soft,
+                            t.fg,
                           )}
                         >
-                          {!unlocked && <Lock className="size-3.5" aria-hidden />}
-                          {t.name}
-                          {!unlocked && <span className="font-semibold">· Cấp {t.level}</span>}
+                          <Icon className="size-6" aria-hidden />
+                          {label}
                         </button>
                       );
                     })}
                   </div>
-                </div>
-              )}
 
-              <div ref={outfitsRef} className="flex flex-col gap-2">
-                <span className="text-sm font-bold text-fg-muted">Trang phục</span>
-                <div className="flex flex-wrap gap-2">
-                  {OUTFITS.map((o) => {
-                    const unlocked = data ? data.outfits.includes(o.id) : o.id === "none";
-                    const worn = outfit === o.id;
-                    const need = outfitCondition(o);
-                    return (
-                      <button
-                        key={o.id}
-                        type="button"
-                        disabled={!unlocked}
-                        aria-pressed={unlocked ? worn : undefined}
-                        aria-label={unlocked ? `${o.name}${worn ? ", đang mặc" : ""}` : `${o.name}, mở khi ${need?.toLowerCase()}`}
-                        onClick={() => void choose(o.id)}
-                        className={cn(
-                          "relative grid size-16 place-items-center rounded-md border-2 transition-colors",
-                          worn ? "border-primary bg-primary-soft" : unlocked ? "border-border bg-surface hover:bg-surface-2" : "border-surface-2 bg-surface-2 text-fg-muted",
-                        )}
-                      >
-                        {unlocked ? (
-                          <OutfitIcon outfit={o.id} size={36} />
-                        ) : (
-                          <span className="flex flex-col items-center gap-0.5 text-[0.8125rem] leading-none font-bold">
-                            <Lock className="size-5" aria-hidden />
-                            {need?.replace("Chuỗi ", "")}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+                  {tricksOpen && data && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-sm font-bold text-fg-muted">Làm trò</span>
+                      <div className="flex flex-wrap gap-2">
+                        {TRICKS.map((t) => {
+                          const unlocked = data.tricks.includes(t.id);
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              disabled={!unlocked}
+                              aria-label={unlocked ? t.name : `${t.name}, mở ở cấp ${t.level}`}
+                              onClick={() => trick(t.id)}
+                              className={cn(
+                                "inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-bold",
+                                unlocked ? "bg-primary-soft text-primary-fg" : "bg-surface-2 text-fg-muted",
+                              )}
+                            >
+                              {!unlocked && <Lock className="size-3.5" aria-hidden />}
+                              {t.name}
+                              {!unlocked && <span className="font-semibold">· Cấp {t.level}</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={outfitsRef} className="flex flex-col gap-2">
+                    <span className="text-sm font-bold text-fg-muted">Trang phục</span>
+                    <div className="flex flex-wrap gap-2">
+                      {OUTFITS.map((o) => {
+                        const unlocked = data ? data.outfits.includes(o.id) : o.id === "none";
+                        const worn = outfit === o.id;
+                        const need = outfitCondition(o);
+                        return (
+                          <button
+                            key={o.id}
+                            type="button"
+                            disabled={!unlocked}
+                            aria-pressed={unlocked ? worn : undefined}
+                            aria-label={unlocked ? `${o.name}${worn ? ", đang mặc" : ""}` : `${o.name}, mở khi ${need?.toLowerCase()}`}
+                            onClick={() => void choose(o.id)}
+                            className={cn(
+                              "relative grid size-16 place-items-center rounded-md border-2 transition-colors",
+                              worn ? "border-primary bg-primary-soft" : unlocked ? "border-border bg-surface hover:bg-surface-2" : "border-surface-2 bg-surface-2 text-fg-muted",
+                            )}
+                          >
+                            {unlocked ? (
+                              <OutfitIcon outfit={o.id} size={36} />
+                            ) : (
+                              <span className="flex flex-col items-center gap-0.5 text-[0.8125rem] leading-none font-bold">
+                                <Lock className="size-5" aria-hidden />
+                                {need?.replace("Chuỗi ", "")}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </DialogPrimitive.Content>
