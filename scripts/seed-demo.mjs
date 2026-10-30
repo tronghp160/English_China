@@ -194,6 +194,92 @@ await seedProgress(demo, wordIds);
 await seedWeek(minh, 5, 30);
 await seedWeek(lan, 3, 18);
 
+console.log("Pet room & trips…");
+async function seedPet(userId) {
+  const day3 = studyDay(-3);
+  const day2 = studyDay(-2);
+  const t3 = new Date(Date.now() - 3 * DAY).toISOString();
+  const t2 = new Date(Date.now() - 2 * DAY).toISOString();
+
+  await must(
+    sb.from("bin_items").upsert([
+      { user_id: userId, item_id: "bed_cushion", qty: 1 },
+      { user_id: userId, item_id: "wall_sun", qty: 1 },
+    ]),
+    "bin_items",
+  );
+
+  await must(
+    sb.from("bin_room").upsert([
+      { user_id: userId, slot: "bed", item_id: "bed_cushion" },
+      { user_id: userId, slot: "wall", item_id: "wall_sun" },
+    ]),
+    "bin_room",
+  );
+
+  await must(
+    sb.from("bin_trips").upsert(
+      [
+        {
+          user_id: userId,
+          study_day: day3,
+          lang: "en",
+          place_id: "london",
+          word_term: "umbrella",
+          bones: 5,
+          item_id: null,
+          started_at: t3,
+          returns_at: t3,
+          collected_at: t3,
+          story: {
+            source: "template",
+            lines: [
+              { target: "In London, I saw a big umbrella near Big Ben!", vi: "Ở Luân Đôn, Bin thấy một chiếc ô lớn gần Big Ben!" },
+              { target: "It was raining so I stayed dry.", vi: "Trời mưa nên Bin tìm chỗ trú." },
+            ],
+          },
+        },
+        {
+          user_id: userId,
+          study_day: day2,
+          lang: "zh",
+          place_id: "beijing",
+          word_term: "熊猫",
+          bones: 6,
+          item_id: null,
+          started_at: t2,
+          returns_at: t2,
+          collected_at: t2,
+          story: {
+            source: "template",
+            lines: [
+              { target: "在天坛，我看到了可爱的熊猫！", vi: "Ở Thiên Đàn, Bin đã thấy một chú gấu trúc đáng yêu!" },
+              { target: "天气很好，我玩得很开心。", vi: "Thời tiết rất đẹp, Bin chơi rất vui." },
+            ],
+            pinyin: [
+              "Zài tiāntán, wǒ kàndàole kě'ài de xióngmāo!",
+              "Tiānqì hěn hǎo, wǒ wán de hěn kāixīn.",
+            ],
+          },
+        },
+      ],
+      { onConflict: "user_id, study_day" },
+    ),
+    "bin_trips",
+  );
+
+  await must(
+    sb.from("bin_ledger").insert([
+      { user_id: userId, kind: "buy", amount: -12, ref: "bed_cushion", study_day: day3 },
+      { user_id: userId, kind: "buy", amount: -10, ref: "wall_sun", study_day: day3 },
+      { user_id: userId, kind: "trip", amount: 5, ref: "london", study_day: day3 },
+      { user_id: userId, kind: "trip", amount: 6, ref: "beijing", study_day: day2 },
+    ]),
+    "bin_ledger",
+  );
+}
+await seedPet(demo);
+
 console.log(`
 Done. Sign in with any of these (password: ${PASSWORD}):
   ${ACCOUNTS.demo.email}   ← main demo account: 4 decks, cards due today, 9-day streak

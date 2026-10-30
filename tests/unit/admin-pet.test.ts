@@ -68,4 +68,66 @@ describe("buildPetSummary", () => {
     expect(pet.unlocked).toContain("glasses");
     expect(pet.outfit).toBe("cap");
   });
+
+  it("handles boneBalance, ledger, room, latestTrip, and postcardCount with custom and default values", () => {
+    // Default values test
+    const defaultPet = buildPetSummary({
+      rows: [],
+      prefsRaw: {},
+      timezone: "Asia/Ho_Chi_Minh",
+    });
+    expect(defaultPet.boneBalance).toBe(0);
+    expect(defaultPet.ledger).toEqual([]);
+    expect(defaultPet.room).toEqual({
+      bowl: null,
+      bed: null,
+      wall: null,
+      toy: null,
+      rug: null,
+      corner: null,
+    });
+    expect(defaultPet.latestTrip).toBeNull();
+    expect(defaultPet.postcardCount).toBe(0);
+
+    // Custom values test
+    const customPet = buildPetSummary({
+      rows: [],
+      prefsRaw: {},
+      timezone: "Asia/Ho_Chi_Minh",
+      boneBalance: 42,
+      ledger: [
+        {
+          id: 1,
+          created_at: "2026-10-30T09:00:00Z",
+          kind: "buy",
+          amount: -12,
+          ref: "bed_cushion",
+          study_day: "2026-10-30",
+        },
+      ],
+      room: {
+        bed: "bed_cushion",
+        wall: "wall_sun",
+      },
+      latestTrip: {
+        id: "trip-1",
+        placeId: "london",
+        placeName: "Luân Đôn",
+        returnsAt: "2026-10-30T12:00:00Z",
+        status: "Đang đi",
+        wordTerm: "umbrella",
+      },
+      postcardCount: 5,
+    });
+
+    expect(customPet.boneBalance).toBe(42);
+    expect(customPet.ledger).toHaveLength(1);
+    expect(customPet.ledger[0].amount).toBe(-12);
+    expect(customPet.room.bed).toBe("bed_cushion");
+    expect(customPet.room.wall).toBe("wall_sun");
+    expect(customPet.room.bowl).toBeNull();
+    expect(customPet.latestTrip?.placeId).toBe("london");
+    expect(customPet.latestTrip?.status).toBe("Đang đi");
+    expect(customPet.postcardCount).toBe(5);
+  });
 });

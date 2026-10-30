@@ -2,16 +2,31 @@ import {
   Award,
   Bone,
   Flame,
+  Footprints,
   Gift,
+  History,
+  Mail,
+  Sofa,
   Sparkles,
   Zap,
 } from "lucide-react";
 import { OutfitIcon } from "@/components/mascot/outfits";
 import { Pup } from "@/components/mascot/pup";
+import { RoomItemIcon } from "@/components/mascot/room-items";
 import { Badge } from "@/components/ui/badge";
 import { IconTile } from "@/components/ui/icon-tile";
 import type { PetSummary } from "@/lib/admin-pet";
+import { dateTime } from "@/lib/admin-format";
+import { ITEM_BY_ID, ROOM_SLOTS, SLOT_LABEL } from "@/lib/bin/catalog";
 import { OUTFITS, outfitCondition } from "@/lib/progress";
+
+const KIND_INFO: Record<string, { label: string; tone?: "blue" | "mint" | "orange" | "grape" }> = {
+  migrate: { label: "Khởi tạo (v1)" },
+  quest: { label: "Nhiệm vụ", tone: "blue" },
+  feed: { label: "Cho ăn", tone: "orange" },
+  buy: { label: "Mua đồ", tone: "grape" },
+  trip: { label: "Đi dạo", tone: "mint" },
+};
 
 export function PetPanel({ pet }: { pet: PetSummary }) {
   const xpPct = Math.round(pet.level.progress * 100);
@@ -80,8 +95,8 @@ export function PetPanel({ pet }: { pet: PetSummary }) {
             <div className="flex items-center gap-3">
               <IconTile icon={Bone} tone="orange" size={40} />
               <div className="min-w-0">
-                <p className="font-display text-xl font-extrabold tabular-nums">{pet.bones} khúc xương</p>
-                <p className="text-sm text-fg-muted">Đã cho ăn: {pet.treatsFed} cái</p>
+                <p className="font-display text-xl font-extrabold tabular-nums">{pet.boneBalance} khúc xương</p>
+                <p className="text-sm text-fg-muted">Sổ cái thực tế · Đã cho ăn: {pet.treatsFed}</p>
               </div>
             </div>
             <p className="mt-3 text-xs text-fg-muted">
@@ -89,6 +104,21 @@ export function PetPanel({ pet }: { pet: PetSummary }) {
               <strong className={pet.fedToday ? "text-success-fg" : "text-fg"}>
                 {pet.fedToday ? "Đã cho ăn" : "Chưa"}
               </strong>
+            </p>
+          </div>
+
+          {/* Postcards & Trips */}
+          <div className="rounded-lg bg-surface p-4 shadow-sm dark:border dark:border-border">
+            <div className="flex items-center gap-3">
+              <IconTile icon={Mail} tone="grape" size={40} />
+              <div className="min-w-0">
+                <p className="font-display text-xl font-extrabold tabular-nums">{pet.postcardCount} / 24 nơi</p>
+                <p className="text-sm text-fg-muted">Bưu thiếp đã sưu tầm</p>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-fg-muted">
+              Chuyến gần nhất:{" "}
+              <strong>{pet.latestTrip ? `${pet.latestTrip.placeName} (${pet.latestTrip.status})` : "Chưa đi"}</strong>
             </p>
           </div>
 
@@ -232,6 +262,138 @@ export function PetPanel({ pet }: { pet: PetSummary }) {
           </div>
         </section>
       </div>
+
+      {/* Current Room Layout (6 slots) */}
+      <section className="rounded-lg bg-surface p-5 shadow-sm dark:border dark:border-border">
+        <div className="mb-4 flex items-center gap-2">
+          <Sofa className="size-5 text-c-orange" aria-hidden="true" />
+          <h3 className="text-lg font-bold">Phòng của {pet.name} (6 vị trí)</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {ROOM_SLOTS.map((slot) => {
+            const itemId = pet.room[slot];
+            const item = itemId ? ITEM_BY_ID.get(itemId) : null;
+
+            return (
+              <div
+                key={slot}
+                className="flex flex-col items-center rounded-lg border border-border bg-surface-2 p-3 text-center"
+              >
+                <span className="text-xs font-bold text-fg-muted">{SLOT_LABEL[slot]}</span>
+                <div className="my-2 flex size-12 items-center justify-center">
+                  {itemId ? (
+                    <RoomItemIcon id={itemId} size={40} />
+                  ) : (
+                    <span className="text-xs text-fg-subtle">Trống</span>
+                  )}
+                </div>
+                <span className="truncate text-xs font-semibold text-fg">
+                  {item?.name ?? (itemId ? itemId : "(Chưa đặt)")}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Latest Trip Details */}
+      <section className="rounded-lg bg-surface p-5 shadow-sm dark:border dark:border-border">
+        <div className="mb-4 flex items-center gap-2">
+          <Footprints className="size-5 text-c-grape" aria-hidden="true" />
+          <h3 className="text-lg font-bold">Chuyến đi gần nhất</h3>
+        </div>
+        {pet.latestTrip ? (
+          <div className="grid gap-3 sm:grid-cols-4">
+            <div className="rounded-md bg-surface-2 p-3">
+              <span className="text-xs text-fg-muted">Địa điểm</span>
+              <p className="mt-1 font-bold text-fg">{pet.latestTrip.placeName}</p>
+              <span className="text-xs text-fg-muted">{pet.latestTrip.placeId}</span>
+            </div>
+            <div className="rounded-md bg-surface-2 p-3">
+              <span className="text-xs text-fg-muted">Trạng thái</span>
+              <p className="mt-1">
+                <Badge
+                  tone={
+                    pet.latestTrip.status === "Đã đón"
+                      ? "mint"
+                      : pet.latestTrip.status.includes("Đã về")
+                        ? "blue"
+                        : "orange"
+                  }
+                >
+                  {pet.latestTrip.status}
+                </Badge>
+              </p>
+            </div>
+            <div className="rounded-md bg-surface-2 p-3">
+              <span className="text-xs text-fg-muted">Thời gian về</span>
+              <p className="mt-1 text-sm font-semibold text-fg">
+                {dateTime(pet.latestTrip.returnsAt, true)}
+              </p>
+            </div>
+            <div className="rounded-md bg-surface-2 p-3">
+              <span className="text-xs text-fg-muted">Từ nhặt được</span>
+              <p className="mt-1 text-sm font-bold text-fg">
+                {pet.latestTrip.wordTerm ?? "(Không có từ)"}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-fg-muted">Chưa có chuyến đi nào được ghi nhận.</p>
+        )}
+      </section>
+
+      {/* Bone Ledger (Recent 20 rows) */}
+      <section className="rounded-lg bg-surface p-5 shadow-sm dark:border dark:border-border">
+        <div className="mb-4 flex items-center gap-2">
+          <History className="size-5 text-fg-muted" aria-hidden="true" />
+          <h3 className="text-lg font-bold">Sổ cái xương (20 giao dịch gần nhất)</h3>
+        </div>
+        {pet.ledger.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-border text-xs text-fg-muted">
+                  <th className="py-2 pr-4 font-semibold">Thời gian</th>
+                  <th className="py-2 pr-4 font-semibold">Ngày học</th>
+                  <th className="py-2 pr-4 font-semibold">Loại</th>
+                  <th className="py-2 pr-4 font-semibold text-right">Số lượng</th>
+                  <th className="py-2 pl-4 font-semibold">Tham chiếu</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {pet.ledger.map((row) => {
+                  const info = KIND_INFO[row.kind] ?? { label: row.kind, tone: "neutral" };
+                  const isPositive = row.amount > 0;
+                  const isZero = row.amount === 0;
+
+                  return (
+                    <tr key={row.id} className="hover:bg-surface-2/50">
+                      <td className="py-2.5 pr-4 text-xs tabular-nums text-fg-muted">
+                        {dateTime(row.created_at, true)}
+                      </td>
+                      <td className="py-2.5 pr-4 text-xs tabular-nums">{row.study_day}</td>
+                      <td className="py-2.5 pr-4">
+                        <Badge tone={info.tone}>{info.label}</Badge>
+                      </td>
+                      <td
+                        className={`py-2.5 pr-4 text-right font-mono font-bold tabular-nums ${
+                          isPositive ? "text-success-fg" : isZero ? "text-fg-muted" : "text-destructive"
+                        }`}
+                      >
+                        {isPositive ? `+${row.amount}` : row.amount}
+                      </td>
+                      <td className="py-2.5 pl-4 text-xs text-fg-muted">{row.ref ?? "-"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-fg-muted">Chưa có giao dịch sổ cái nào.</p>
+        )}
+      </section>
     </div>
   );
 }

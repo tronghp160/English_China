@@ -71,14 +71,14 @@ Sau bước có migration: `pnpm db:types:local` để sinh lại `lib/supabase/
 
 | Giai đoạn | Bước | Nội dung | Migration |
 |---|---|---|---|
-| **1** | 1.1 | Sổ xương (`bin_ledger`) + RPC, chuyển dữ liệu cũ | `20261030000014_bin_economy.sql` |
-| | 1.2 | Danh mục đồ + bảng đồ sở hữu/phòng | (cùng file 000014) |
-| | 1.3 | Phòng của Bin hiển thị đồ (`BinRoom`) | — |
-| | 1.4 | Shop & trang trí trong Góc của Bin | — |
-| | 1.5 | Bin đi dạo: dữ liệu + logic | (cùng file 000014) |
-| | 1.6 | Bin đi dạo: truyện AI + mẫu dự phòng | — |
-| | 1.7 | Bin đi dạo: giao diện (Góc của Bin, Today, bưu thiếp) | — |
-| | 1.8 | Admin, seed demo, `CLAUDE.md` | — |
+| **1** | 1.1 | ✅ Sổ xương (`bin_ledger`) + RPC, chuyển dữ liệu cũ | `20261030000014_bin_economy.sql` |
+| | 1.2 | ✅ Danh mục đồ + bảng đồ sở hữu/phòng | (cùng file 000014) |
+| | 1.3 | ✅ Phòng của Bin hiển thị đồ (`BinRoom`) | — |
+| | 1.4 | ✅ Shop & trang trí trong Góc của Bin | — |
+| | 1.5 | ✅ Bin đi dạo: dữ liệu + logic | (cùng file 000014) |
+| | 1.6 | ✅ Bin đi dạo: truyện AI + mẫu dự phòng | — |
+| | 1.7 | ✅ Bin đi dạo: giao diện (Góc của Bin, Today, bưu thiếp) | — |
+| | 1.8 | ✅ Admin, seed demo, `CLAUDE.md` | — |
 | **2** | 2.1 | Bin nói trong phiên học (combo, gỡ lại, nhớ ra từ) | — |
 | | 2.2 | Lời chào AI mỗi ngày trên Today | `20261030000015_bin_companion.sql` |
 | | 2.3 | Khăn giữ chuỗi: logic chuỗi | (cùng file 000015) |
@@ -102,7 +102,7 @@ Chỗ tiêu: cho ăn (1), đồ phòng (6–40), khăn giữ chuỗi (20).
 
 # GIAI ĐOẠN 1 — Sổ xương, Phòng & Shop, Bin đi dạo
 
-## Bước 1.1 — Sổ xương (`bin_ledger`) và RPC
+## Bước 1.1 — Sổ xương (`bin_ledger`) và RPC ✅
 
 ### Vì sao
 Hiện số xương = `floor(tổng câu đúng / 10) + 2 × quests_total − bin_treats_fed`, trong đó `quests_total` và `bin_treats_fed` nằm trong `user_settings.prefs` (JSON). Người dùng có quyền `update` cột `prefs` (xem `20261016000003_rls.sql`), nên có thể tự sửa số xương; và đọc-sửa-ghi JSON ở hai tab cùng lúc có thể mất một lần ghi. Muốn có shop thì xương phải nằm trong một sổ ghi chép an toàn.
@@ -279,7 +279,7 @@ Theo mẫu `tests/db/push.test.ts`. Các ca:
 
 ---
 
-## Bước 1.2 — Danh mục đồ, đồ sở hữu, phòng
+## Bước 1.2 — Danh mục đồ, đồ sở hữu, phòng ✅
 
 ### 1.2.a Thêm vào cuối `20261030000014_bin_economy.sql`
 
@@ -444,7 +444,7 @@ Test xanh; types DB có `bin_items`, `bin_room`, `bin_buy`.
 
 ---
 
-## Bước 1.3 — Phòng của Bin hiển thị đồ (`BinRoom`)
+## Bước 1.3 — Phòng của Bin hiển thị đồ (`BinRoom`) ✅
 
 ### 1.3.a Token màu mới trong `app/globals.css`
 Thêm cạnh khối `--scene-*` (cả sáng ~dòng 150 và tối ~dòng 276), và khai báo `--color-scene-*` ở khối `@theme` (~dòng 327) theo đúng mẫu đang có:
@@ -511,7 +511,7 @@ export function BinRoom({ night, name, room, preview, away }: {
 
 ---
 
-## Bước 1.4 — Shop & trang trí trong Góc của Bin
+## Bước 1.4 — Shop & trang trí trong Góc của Bin ✅
 
 ### 1.4.a Bố cục ô chức năng
 `TILES` trong `bin-home.tsx` giữ lưới **4 cột** như hiện tại (`grid-cols-4`), thành **2 hàng**. Thứ tự cuối cùng sau cả 3 giai đoạn:
@@ -571,7 +571,7 @@ E2E xanh; ảnh 390px: lưới không tràn ngang, nút ≥ 44px; bàn phím: Ta
 
 ---
 
-## Bước 1.5 — Bin đi dạo: dữ liệu và logic
+## Bước 1.5 — Bin đi dạo: dữ liệu và logic ✅
 
 ### 1.5.a Luật (chốt)
 - **Điều kiện đi**: trong ngày học hiện tại đã **xong ≥ 2/3 nhiệm vụ** (`quests.filter(q => q.done).length >= 2`) **hoặc** `reviewsToday >= 20`.
@@ -732,7 +732,7 @@ Test xanh. Gọi `startTrip` từ một test tích hợp nhỏ hoặc từ trang
 
 ---
 
-## Bước 1.6 — Truyện của Bin bằng AI (có dự phòng)
+## Bước 1.6 — Truyện của Bin bằng AI (có dự phòng) ✅
 
 ### 1.6.a `lib/ai/bin-story.ts` (tạo mới, `server-only`)
 ```ts
@@ -787,7 +787,7 @@ Test xanh; khi thiếu API key, đi dạo vẫn chạy trọn vẹn với truy�
 
 ---
 
-## Bước 1.7 — Bin đi dạo: giao diện
+## Bước 1.7 — Bin đi dạo: giao diện ✅
 
 ### 1.7.a `components/mascot/bin-trip.tsx` (tạo mới) — khu "Đi dạo" trong Góc của Bin
 Mở bằng ô "Đi dạo" (`panel === "trip"`). Nội dung theo `TripStatus`:
@@ -851,7 +851,7 @@ E2E xanh; ảnh chụp 4 trạng thái (ready, away, back, done) ở 390px và 1
 
 ---
 
-## Bước 1.8 — Admin, seed demo, tài liệu
+## Bước 1.8 — Admin, seed demo, tài liệu ✅
 
 - `lib/admin-pet.ts` + `components/admin/pet-panel.tsx`: thêm số dư xương (từ `bin_balance` qua admin client), 20 dòng `bin_ledger` gần nhất (bảng: thời gian, loại, số, ref), phòng hiện tại (6 slot), chuyến gần nhất (địa điểm, trạng thái), số bưu thiếp. Cập nhật `tests/unit/admin-pet.test.ts`.
 - `scripts/seed-demo.mjs`: tài khoản `demo@example.com` có sẵn 2 món phòng (`bed_cushion`, `wall_sun` đặt vào phòng) và 2 chuyến cũ đã đón (London, Bắc Kinh) có truyện mẫu.

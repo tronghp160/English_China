@@ -178,3 +178,29 @@ UI and client logic only: no DB migration, no change to FSRS or existing server 
 - **Xem thử & Kiểm thử**:
   - Seed dữ liệu mẫu: `pnpm admin:seed-presence` (tạo dữ liệu online, away, offline và thú cưng cho demo, minh, lan).
   - E2E testing: `tests/e2e/admin-monitoring.spec.ts` (mô phỏng geo headers Vercel, kiểm tra nhịp tim, các tab admin và quyền truy cập).
+
+## Bin 3.0 — Giai đoạn 1 (docs/PLAN-bin-3.md)
+- **Sổ xương & RPCs bảo mật** (`supabase/migrations/20261030000014_bin_economy.sql`):
+  - Bảng `bin_ledger`: lưu từng biến động xương (`migrate`, `quest`, `feed`, `buy`, `trip`). Khóa id tự tăng, index đa cột theo user, loại và study_day.
+  - Số dư xương: `bin_balance(p_user)` = `floor(sum(daily_stats.correct) / 10) + sum(bin_ledger.amount)`.
+  - RPCs `security definer`: `bin_lock` (khóa dòng profile giao dịch), `bin_balance`, `bin_wallet` (dành cho RLS client tra cứu số dư và đã cho ăn hôm nay), `bin_grant` (cộng xương thưởng), `bin_spend` (trừ xương, báo lỗi `not_enough_bones`), `bin_buy` (mua đồ và trừ xương atomic), `bin_collect_trip` (nhận thưởng chuyến đi).
+  - Nghiêm cấm client trực tiếp insert/update/delete vào các bảng `bin_*`; mọi thao tác ghi đều đi qua service role / admin client sau khi xác thực `requireUser()`.
+- **Danh mục đồ & Phòng của Bin**:
+  - Bảng `bin_items` (đồ sở hữu), `bin_room` (vị trí đồ trong phòng). 6 slot vị trí: `bowl`, `bed`, `wall`, `toy`, `rug`, `corner`.
+  - Catalog 28 món (`lib/bin/catalog.ts`), icon và hình minh họa vector 100% bằng SVG (`components/mascot/room-items.tsx`), sử dụng CSS variables/tokens (`--scene-*`), tuyệt đối không dùng mã hex cố định.
+  - Giao diện phòng `components/mascot/bin-room.tsx` (tự động điều chỉnh tỉ lệ theo kích thước màn hình), khu trang trí `components/mascot/bin-decor.tsx` với xác nhận mua 2 bước (2 giây), xem thử tức thì và tự động đặt vào phòng khi mua.
+  - E2E: `tests/e2e/bin-decor.spec.ts`.
+- **Hệ thống Đi dạo (Bin Trips)**:
+  - Luật đi dạo: Tối đa 1 chuyến/ngày học khi đạt ≥ 2/3 nhiệm vụ hoặc ≥ 20 lượt ôn trong ngày. Thời gian đi 180 phút. Giờ về rơi vào 22:00–06:59 được tự động dời sang 07:00 sáng hôm sau (`overnight`).
+  - Lựa chọn điểm đến & từ vựng: 24 địa danh (`lib/bin/places.ts` cho en và zh), ưu tiên địa danh chưa ghé thăm. RPC `bin_trip_candidates` lấy các từ vựng đang học có lapses cao để Bin nhặt về.
+  - Server actions: `lib/actions/bin-trip.ts` (`loadTrip`, `startTrip`, `collectTrip`, `loadPostcards`).
+- **Truyện AI & Dự phòng**:
+  - `lib/ai/bin-story.ts` (`writeTripStory`): gọi model tạo truyện 2–3 câu song ngữ có chứa từ vựng nhặt được, thực thi trong background qua `after()` của Next.js Server Actions.
+  - Tự động lọc sạch ký tự emoji (`\p{Extended_Pictographic}`). Nếu hết quota AI, lỗi model hoặc từ vựng không khớp, tự động ghi truyện mẫu qua `templateStory` mà không gây lỗi giao diện.
+- **Album bưu thiếp & Tích hợp Hôm nay**:
+  - Tuyển tập 24 bưu thiếp tại route `/bin/postcards` (`app/(app)/bin/postcards/page.tsx`, `components/mascot/postcards-gallery.tsx`).
+  - Hình vẽ địa danh vector đặc trưng cho từng nơi (`components/mascot/landmarks.tsx`).
+  - Trang Hôm nay (`app/(app)/today/page.tsx`): hiển thị thẻ đón Bin `TodayTripBackCard` khi Bin về, thẻ `TodayTripAwayCard` thay thế thú cưng khi Bin đang đi, tự động mở dialog Đi dạo khi có tham số `?bin=trip`.
+  - Màn hình kết thúc phiên `session-gifts.tsx`: hiển thị gợi ý cho Bin đi dạo khi vừa đạt đủ điều kiện.
+  - Cron thông báo: Do gói Vercel Hobby giới hạn 1 cron mỗi ngày (ưu tiên dành cho nhắc nhở học tập hàng ngày trong `vercel.json`), cron push thông báo định kỳ 30 phút cho chuyến đi chưa kích hoạt.
+  - E2E: `tests/e2e/bin-trip.spec.ts`.

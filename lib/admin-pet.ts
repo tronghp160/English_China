@@ -21,6 +21,33 @@ import {
 import { computeStreak, longestStreak, studyDay } from "@/lib/srs/streak";
 import { readPrefs } from "@/lib/validation";
 
+export type LedgerEntry = {
+  id: number;
+  created_at: string;
+  kind: string;
+  amount: number;
+  ref: string | null;
+  study_day: string;
+};
+
+export type AdminRoomSlots = {
+  bowl: string | null;
+  bed: string | null;
+  wall: string | null;
+  toy: string | null;
+  rug: string | null;
+  corner: string | null;
+};
+
+export type AdminLatestTrip = {
+  id: string;
+  placeId: string;
+  placeName: string;
+  returnsAt: string;
+  status: string;
+  wordTerm: string | null;
+};
+
 export type PetSummary = {
   name: string;
   mascotOn: boolean;
@@ -28,6 +55,11 @@ export type PetSummary = {
   totalXp: number;
   totalCorrect: number;
   bones: number;
+  boneBalance: number;
+  ledger: LedgerEntry[];
+  room: AdminRoomSlots;
+  latestTrip: AdminLatestTrip | null;
+  postcardCount: number;
   treatsFed: number;
   fedToday: boolean;
   lastFed: string | null;
@@ -53,6 +85,11 @@ export function buildPetSummary(input: {
   timezone: string;
   now?: Date;
   ledgerSum?: number;
+  boneBalance?: number;
+  ledger?: LedgerEntry[];
+  room?: Partial<AdminRoomSlots>;
+  latestTrip?: AdminLatestTrip | null;
+  postcardCount?: number;
 }): PetSummary {
   const now = input.now ?? new Date();
   const timezone = input.timezone || "Asia/Ho_Chi_Minh";
@@ -158,6 +195,20 @@ export function buildPetSummary(input: {
     level: t.level,
   }));
 
+  const boneBalance = input.boneBalance ?? bones;
+  const ledger = input.ledger ?? [];
+  const room: AdminRoomSlots = {
+    bowl: null,
+    bed: null,
+    wall: null,
+    toy: null,
+    rug: null,
+    corner: null,
+    ...input.room,
+  };
+  const latestTrip = input.latestTrip ?? null;
+  const postcardCount = input.postcardCount ?? 0;
+
   return {
     name: prefs.mascot_name,
     mascotOn: prefs.mascot,
@@ -165,6 +216,11 @@ export function buildPetSummary(input: {
     totalXp,
     totalCorrect,
     bones,
+    boneBalance,
+    ledger,
+    room,
+    latestTrip,
+    postcardCount,
     treatsFed: prefs.bin_treats_fed,
     fedToday,
     lastFed: prefs.bin_last_fed,

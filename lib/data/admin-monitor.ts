@@ -12,7 +12,8 @@ import {
   type LevelBuckets,
   type PlaceSummary,
 } from "@/lib/admin-monitor-utils";
-import { buildPetSummary, type PetSummary } from "@/lib/admin-pet";
+import { buildPetSummary, type AdminLatestTrip, type AdminRoomSlots, type LedgerEntry, type PetSummary } from "@/lib/admin-pet";
+import { placeById } from "@/lib/bin/places";
 import {
   placeLabel,
   presenceStatus,
@@ -251,15 +252,84 @@ export async function getPetSummariesFor(userIds: string[]): Promise<Map<string,
 }
 
 export async function getPetSummaryFor(userId: string): Promise<PetSummary> {
-  const map = await getPetSummariesFor([userId]);
-  return (
+  const sb = createAdminClient();
+  const [
+    map,
+    { data: balanceData },
+    { data: ledgerData },
+    { data: roomData },
+    { data: tripData },
+    { count: postcardCount },
+  ] = await Promise.all([
+    getPetSummariesFor([userId]),
+    sb.rpc("bin_balance", { p_user: userId }),
+    sb
+      .from("bin_ledger")
+      .select("id, created_at, kind, amount, ref, study_day")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    sb.from("bin_room").select("slot, item_id").eq("user_id", userId),
+    sb
+      .from("bin_trips")
+      .select("id, place_id, returns_at, collected_at, word_term, study_day")
+      .eq("user_id", userId)
+      .order("started_at", { ascending: false })
+      .limit(1),
+    sb
+      .from("bin_trips")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .not("collected_at", "is", null),
+  ]);
+
+  const base =
     map.get(userId) ??
     buildPetSummary({
       rows: [],
       prefsRaw: {},
       timezone: "Asia/Ho_Chi_Minh",
-    })
-  );
+    });
+
+  const room: AdminRoomSlots = {
+    bowl: null,
+    bed: null,
+    wall: null,
+    toy: null,
+    rug: null,
+    corner: null,
+  };
+  for (const r of roomData ?? []) {
+    if (r.slot in room) {
+      room[r.slot as keyof AdminRoomSlots] = r.item_id;
+    }
+  }
+
+  const latestRow = tripData?.[0];
+  let latestTrip: AdminLatestTrip | null = null;
+  if (latestRow) {
+    const isCollected = Boolean(latestRow.collected_at);
+    const isPast = new Date(latestRow.returns_at).getTime() <= Date.now();
+    const status = isCollected ? "Đã đón" : isPast ? "Đã về (chưa đón)" : "Đang đi";
+    const place = placeById(latestRow.place_id);
+    latestTrip = {
+      id: latestRow.id,
+      placeId: latestRow.place_id,
+      placeName: place?.name ?? latestRow.place_id,
+      returnsAt: latestRow.returns_at,
+      status,
+      wordTerm: latestRow.word_term,
+    };
+  }
+
+  return {
+    ...base,
+    boneBalance: typeof balanceData === "number" ? balanceData : base.bones,
+    ledger: (ledgerData as LedgerEntry[]) ?? [],
+    room,
+    latestTrip,
+    postcardCount: postcardCount ?? 0,
+  };
 }
 
 export async function listUsersForAdmin({
