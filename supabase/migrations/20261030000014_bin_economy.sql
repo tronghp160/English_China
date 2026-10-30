@@ -2,7 +2,7 @@
 -- Bones in hand = floor(sum(daily_stats.correct) / 10) + sum(bin_ledger.amount).
 -- Every write goes through the service-role functions below, called by server actions after requireUser().
 
-create table public.bin_ledger (
+create table if not exists public.bin_ledger (
   id bigint generated always as identity primary key,
   user_id uuid not null references public.profiles on delete cascade,
   kind text not null check (kind in ('migrate', 'quest', 'feed', 'buy', 'trip')),
@@ -11,13 +11,14 @@ create table public.bin_ledger (
   study_day date not null,
   created_at timestamptz not null default now()
 );
-create index on public.bin_ledger (user_id, created_at desc);
-create index on public.bin_ledger (user_id, kind, study_day);
+create index if not exists bin_ledger_user_created_idx on public.bin_ledger (user_id, created_at desc);
+create index if not exists bin_ledger_user_kind_day_idx on public.bin_ledger (user_id, kind, study_day);
 -- One row per quest reward, per trip, per migration: a retried call cannot pay twice.
-create unique index bin_ledger_once on public.bin_ledger (user_id, kind, ref)
+create unique index if not exists bin_ledger_once on public.bin_ledger (user_id, kind, ref)
   where kind in ('migrate', 'quest', 'trip');
 
 alter table public.bin_ledger enable row level security;
+drop policy if exists "bin_ledger: own read" on public.bin_ledger;
 create policy "bin_ledger: own read" on public.bin_ledger
   for select to authenticated using (user_id = auth.uid());
 revoke insert, update, delete on public.bin_ledger from authenticated, anon;
@@ -107,3 +108,55 @@ grant execute on function public.bin_lock(uuid), public.bin_balance(uuid),
   to service_role;
 revoke execute on function public.bin_wallet() from public, anon;
 grant execute on function public.bin_wallet() to authenticated;
+
+-- Items a user owns (room items now; the streak scarf and eggs later). qty > 1 only for consumables.
+create table if not exists public.bin_items (
+  user_id uuid not null references public.profiles on delete cascade,
+  item_id text not null check (char_length(item_id) <= 40),
+  qty int not null default 1 check (qty >= 0 and qty <= 99),
+  acquired_at timestamptz not null default now(),
+  primary key (user_id, item_id)
+);
+
+-- What stands in each spot of the room.
+create table if not exists public.bin_room (
+  user_id uuid not null references public.profiles on delete cascade,
+  slot text not null check (slot in ('bowl', 'bed', 'wall', 'toy', 'rug', 'corner')),
+  item_id text not null check (char_length(item_id) <= 40),
+  primary key (user_id, slot)
+);
+
+alter table public.bin_items enable row level security;
+alter table public.bin_room enable row level security;
+drop policy if exists "bin_items: own read" on public.bin_items;
+create policy "bin_items: own read" on public.bin_items for select to authenticated using (user_id = auth.uid());
+drop policy if exists "bin_room: own read" on public.bin_room;
+create policy "bin_room: own read" on public.bin_room for select to authenticated using (user_id = auth.uid());
+revoke insert, update, delete on public.bin_items, public.bin_room from authenticated, anon;
+
+-- Buys one item: takes the price and adds it to bin_items in one transaction.
+-- p_max_qty: 1 for room items (raises 'already_owned'), 2 for the streak scarf, etc.
+create or replace function public.bin_buy(p_user uuid, p_item text, p_price int, p_max_qty int)
+returns int
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  have int;
+begin
+  if p_price < 0 or p_max_qty < 1 then raise exception 'bad_amount'; end if;
+  perform public.bin_lock(p_user);
+  select qty into have from public.bin_items where user_id = p_user and item_id = p_item;
+  if coalesce(have, 0) >= p_max_qty then raise exception 'already_owned'; end if;
+  if p_price > 0 then
+    if public.bin_balance(p_user) < p_price then raise exception 'not_enough_bones'; end if;
+    insert into public.bin_ledger (user_id, kind, amount, ref, study_day)
+    values (p_user, 'buy', -p_price, p_item, public.study_day(p_user));
+  end if;
+  insert into public.bin_items (user_id, item_id, qty) values (p_user, p_item, 1)
+  on conflict (user_id, item_id) do update set qty = public.bin_items.qty + 1;
+  return public.bin_balance(p_user);
+end;
+$$;
+
+revoke execute on function public.bin_buy(uuid, text, int, int) from public, anon, authenticated;
+grant execute on function public.bin_buy(uuid, text, int, int) to service_role;

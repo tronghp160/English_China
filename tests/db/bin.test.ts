@@ -133,4 +133,36 @@ describe("bin ledger and wallet", () => {
     expect(walletBob.rows[0].fed_today).toBe(false);
     expect(walletBob.rows[0].balance).toBe(0);
   });
+
+  it("10. bin_buy buys item, deducts bones, prevents duplicate purchase and checks balance", async () => {
+    // alice currently has balance 6. Buy bowl_blue for 4 bones (max_qty = 1).
+    const buyRes = await as(db, "service", () =>
+      db.query<{ bin_buy: number }>("select public.bin_buy($1, 'bowl_blue', 4, 1)", [alice]),
+    );
+    expect(buyRes.rows[0].bin_buy).toBe(2);
+
+    const items = await as(db, alice, () =>
+      db.query<{ item_id: string; qty: number }>("select item_id, qty from public.bin_items where user_id = $1", [alice]),
+    );
+    expect(items.rows).toContainEqual({ item_id: "bowl_blue", qty: 1 });
+
+    // Buying again -> raises 'already_owned'
+    await expect(
+      as(db, "service", () =>
+        db.query("select public.bin_buy($1, 'bowl_blue', 4, 1)", [alice]),
+      ),
+    ).rejects.toThrow("already_owned");
+
+    // Alice now has 2 bones. Trying to buy bowl_gold for 10 bones -> raises 'not_enough_bones'
+    await expect(
+      as(db, "service", () =>
+        db.query("select public.bin_buy($1, 'bowl_gold', 10, 1)", [alice]),
+      ),
+    ).rejects.toThrow("not_enough_bones");
+
+    const goldCheck = await as(db, alice, () =>
+      db.query("select * from public.bin_items where user_id = $1 and item_id = 'bowl_gold'", [alice]),
+    );
+    expect(goldCheck.rows).toHaveLength(0);
+  });
 });

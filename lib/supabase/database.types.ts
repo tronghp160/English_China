@@ -116,6 +116,35 @@ export type Database = {
 
         ];
       };
+      bin_items: {
+        Row: {
+          acquired_at: string;
+          item_id: string;
+          qty: number;
+          user_id: string;
+        };
+        Insert: {
+          acquired_at?: string;
+          item_id: string;
+          qty?: number;
+          user_id: string;
+        };
+        Update: {
+          acquired_at?: string;
+          item_id?: string;
+          qty?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bin_items_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       bin_ledger: {
         Row: {
           amount: number;
@@ -147,6 +176,32 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "bin_ledger_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bin_room: {
+        Row: {
+          item_id: string;
+          slot: string;
+          user_id: string;
+        };
+        Insert: {
+          item_id: string;
+          slot: string;
+          user_id: string;
+        };
+        Update: {
+          item_id?: string;
+          slot?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bin_room_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
@@ -1023,6 +1078,15 @@ export type Database = {
       bin_balance: {
         Args: {
           p_user: string | null;
+        };
+        Returns: number;
+      };
+      bin_buy: {
+        Args: {
+          p_user: string | null;
+          p_item: string | null;
+          p_price: number | null;
+          p_max_qty: number | null;
         };
         Returns: number;
       };

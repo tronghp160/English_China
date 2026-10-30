@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { getProgress } from "@/lib/data/progress";
+import { isRoomItemId, ITEM_BY_ID, lockReason, ownedItems, resolveRoom, ROOM_SLOTS, type RoomSlot } from "@/lib/bin/catalog";
 import { OUTFITS, QUEST_BONES, QUEST_IDS, pruneClaimed, type LevelInfo, type OutfitId, type QuestId, type TrickId } from "@/lib/progress";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -21,11 +22,18 @@ export type BinHomeData = {
   reviewedToday: boolean;
   streak: number;
   questsDone: number;
+  room: Record<RoomSlot, string>;
 };
 
 export async function loadBinHome(): Promise<ActionResult<BinHomeData>> {
   await requireUser();
-  const p = await getProgress();
+  const [p, supabase] = await Promise.all([getProgress(), createClient()]);
+  const [itemsRes, roomRes] = await Promise.all([
+    supabase.from("bin_items").select("item_id, qty"),
+    supabase.from("bin_room").select("slot, item_id"),
+  ]);
+  const owned = ownedItems(itemsRes.data ?? []);
+  const room = resolveRoom(roomRes.data ?? [], owned);
   return ok({
     level: p.level,
     bones: p.bones,
@@ -36,6 +44,7 @@ export async function loadBinHome(): Promise<ActionResult<BinHomeData>> {
     reviewedToday: p.reviewedToday,
     streak: p.streak,
     questsDone: p.quests.filter((q) => q.done).length,
+    room,
   });
 }
 
@@ -131,4 +140,95 @@ export async function claimQuest(input: unknown): Promise<ActionResult<{ id: Que
   });
   if (!saved) return fail("Không lưu được. Thử lại.");
   return ok({ id, bones: newBones });
+}
+
+export type RoomData = {
+  bones: number;
+  room: Record<RoomSlot, string>;
+  owned: string[];
+  level: number;
+  longestStreak: number;
+};
+
+export async function loadRoom(): Promise<ActionResult<RoomData>> {
+  await requireUser();
+  const [progress, supabase] = await Promise.all([getProgress(), createClient()]);
+  const [itemsRes, roomRes] = await Promise.all([
+    supabase.from("bin_items").select("item_id, qty"),
+    supabase.from("bin_room").select("slot, item_id"),
+  ]);
+  const owned = ownedItems(itemsRes.data ?? []);
+  const room = resolveRoom(roomRes.data ?? [], owned);
+  return ok({
+    bones: progress.bones,
+    room,
+    owned: Array.from(owned),
+    level: progress.level.level,
+    longestStreak: progress.longestStreak,
+  });
+}
+
+const buyItemSchema = z.string().refine(isRoomItemId, "Vật phẩm không hợp lệ.");
+
+export async function buyItem(input: unknown): Promise<ActionResult<{ bones: number; itemId: string }>> {
+  const user = await requireUser();
+  const parsed = buyItemSchema.safeParse(input);
+  if (!parsed.success) return fail("Vật phẩm không hợp lệ.");
+  const itemId = parsed.data;
+  const item = ITEM_BY_ID.get(itemId);
+  if (!item || item.source.kind !== "shop") return fail("Không thể mua vật phẩm này.");
+
+  const progress = await getProgress();
+  const reason = lockReason(item, { level: progress.level.level, longestStreak: progress.longestStreak });
+  if (reason) return fail(`Chưa mở khóa: ${reason}.`);
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("bin_buy", {
+    p_user: user.id,
+    p_item: itemId,
+    p_price: item.source.price,
+    p_max_qty: 1,
+  });
+  if (error) {
+    if (error.message.includes("not_enough_bones")) return fail("Chưa đủ xương.");
+    if (error.message.includes("already_owned")) return fail("Bạn đã có món này.");
+    return fail("Không lưu được. Thử lại.");
+  }
+  return ok({ bones: data, itemId });
+}
+
+const placeItemSchema = z.object({
+  slot: z.enum(ROOM_SLOTS as [RoomSlot, ...RoomSlot[]]),
+  itemId: z.string().refine(isRoomItemId, "Vật phẩm không hợp lệ."),
+});
+
+export async function placeItem(input: unknown): Promise<ActionResult<{ slot: RoomSlot; itemId: string }>> {
+  const user = await requireUser();
+  const parsed = placeItemSchema.safeParse(input);
+  if (!parsed.success) return fail("Vật phẩm hoặc vị trí không hợp lệ.");
+  const { slot, itemId } = parsed.data;
+  const item = ITEM_BY_ID.get(itemId);
+  if (!item || item.slot !== slot) return fail("Vật phẩm không đúng vị trí này.");
+
+  const supabase = await createClient();
+  const { data: itemsData } = await supabase.from("bin_items").select("item_id, qty");
+  const owned = ownedItems(itemsData ?? []);
+  if (!owned.has(itemId)) return fail("Chưa sở hữu vật phẩm này.");
+
+  const admin = createAdminClient();
+  if (itemId.endsWith("_none")) {
+    const { error } = await admin.from("bin_room").delete().eq("user_id", user.id).eq("slot", slot);
+    if (error) return fail("Không lưu được. Thử lại.");
+  } else {
+    const { error } = await admin.from("bin_room").upsert(
+      {
+        user_id: user.id,
+        slot,
+        item_id: itemId,
+      },
+      { onConflict: "user_id,slot" },
+    );
+    if (error) return fail("Không lưu được. Thử lại.");
+  }
+  return ok({ slot, itemId });
 }
