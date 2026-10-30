@@ -94,6 +94,10 @@ export const LINES = {
     "Chuỗi {n} ngày vẫn còn. Ôn một thẻ là giữ được.",
     "{name} nhớ chuỗi {n} ngày của bạn. Ôn một thẻ là giữ được.",
   ],
+  streakSaved: [
+    "Hôm qua {name} quàng khăn giữ chuỗi giúp bạn rồi. Hôm nay ôn một thẻ nhé.",
+    "Chuỗi {n} ngày vẫn còn nhờ chiếc khăn. Học tiếp nào.",
+  ],
   // Said next to the verdict ("Đúng rồi!", "Chưa đúng"), so they add something instead of repeating it
   correct: ["Chuẩn.", "Nhớ tốt đó.", "Giữ nhịp này nhé.", "Tiếp nào."],
   close: ["Xem lại chính tả.", "Chỉ lệch một chút."],

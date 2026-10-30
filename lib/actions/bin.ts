@@ -31,6 +31,7 @@ export type BinHomeData = {
   room: Record<RoomSlot, string>;
   owned: string[];
   trip: TripView;
+  scarves: number;
 };
 
 export async function loadBinHome(): Promise<ActionResult<BinHomeData>> {
@@ -47,6 +48,8 @@ export async function loadBinHome(): Promise<ActionResult<BinHomeData>> {
   const trip: TripView = tripRes.ok
     ? tripRes.data
     : { status: { kind: "locked", needReviews: 20, needQuests: 2 }, trip: null };
+  const scarfRow = (itemsRes.data ?? []).find((r) => r.item_id === "streak_scarf");
+  const scarves = scarfRow?.qty ?? 0;
   return ok({
     level: p.level,
     bones: p.bones,
@@ -61,6 +64,7 @@ export async function loadBinHome(): Promise<ActionResult<BinHomeData>> {
     room,
     owned: Array.from(owned),
     trip,
+    scarves,
   });
 }
 
@@ -224,6 +228,7 @@ export async function buyItem(input: unknown): Promise<ActionResult<{ bones: num
     }
     return fail("Không lưu được. Thử lại.");
   }
+  revalidatePath("/", "layout");
   return ok({ bones: data, itemId });
 }
 

@@ -9,6 +9,7 @@ import {
   resolveRoom,
   ROOM_SLOTS,
   tripItemsFor,
+  STREAK_SCARF,
 } from "@/lib/bin/catalog";
 
 describe("bin catalog", () => {
@@ -99,5 +100,12 @@ describe("bin catalog", () => {
     const enItems = tripItemsFor("en", owned);
     expect(enItems.some((item) => item.id === "corner_bus")).toBe(true);
     expect(enItems.some((item) => item.id === "toy_kite")).toBe(false);
+  });
+
+  it("STREAK_SCARF definition is valid", () => {
+    expect(STREAK_SCARF.id).toBe("streak_scarf");
+    expect(STREAK_SCARF.price).toBe(20);
+    expect(STREAK_SCARF.maxQty).toBe(2);
+    expect(STREAK_SCARF.name).toBe("Khăn giữ chuỗi");
   });
 });

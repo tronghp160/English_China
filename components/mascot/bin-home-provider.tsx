@@ -6,9 +6,9 @@ import { createContext, use, useCallback, useMemo, useState } from "react";
 // Bin's corner is big (scene, drag and drop, outfits), so it only loads the first time someone opens it.
 const BinHome = dynamic(() => import("./bin-home").then((m) => m.BinHome), { ssr: false });
 
-export type BinPanel = "main" | "decor" | "trip" | "buddies";
+export type BinPanel = "main" | "decor" | "decor:special" | "trip" | "buddies";
 
-const VALID_PANELS: ReadonlySet<string> = new Set<BinPanel>(["main", "decor", "trip", "buddies"]);
+const VALID_PANELS: ReadonlySet<string> = new Set<BinPanel>(["main", "decor", "decor:special", "trip", "buddies"]);
 
 type BinHomeContextValue = { open: (panel?: BinPanel | unknown) => void };
 

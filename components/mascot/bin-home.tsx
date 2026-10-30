@@ -69,7 +69,10 @@ export function BinHome({
 }) {
   const { prefs, dueCount } = useMe();
   const name = prefs.mascot_name;
-  const [panel, setPanel] = useState<BinPanel>(initialPanel);
+  const [panel, setPanel] = useState<BinPanel>(initialPanel === "decor:special" ? "decor" : initialPanel);
+  const [decorSlot, setDecorSlot] = useState<RoomSlot | "special">(
+    initialPanel === "decor:special" ? "special" : "bowl",
+  );
   const [preview, setPreview] = useState<{ slot: RoomSlot; itemId: string } | null>(null);
   const [data, setData] = useState<BinHomeData | null>(null);
   const [failed, setFailed] = useState(false);
@@ -101,7 +104,15 @@ export function BinHome({
       setPanel("main");
       setPreview(null);
     } else {
-      setPanel(initialPanel);
+      if (initialPanel === "decor:special") {
+        setPanel("decor");
+        setDecorSlot("special");
+      } else {
+        setPanel(initialPanel);
+        if (initialPanel === "decor") {
+          setDecorSlot("bowl");
+        }
+      }
     }
   }
 
@@ -379,11 +390,15 @@ export function BinHome({
                     longestStreak={data.longestStreak}
                     room={data.room}
                     owned={ownedSet}
+                    scarves={data.scarves}
+                    name={name}
+                    initialSlot={decorSlot}
                     onBonesChange={(bones) => setData((d) => (d ? { ...d, bones } : d))}
                     onRoomChange={(room) => setData((d) => (d ? { ...d, room } : d))}
                     onOwnedAdd={(itemId) =>
                       setData((d) => (d ? { ...d, owned: Array.from(new Set([...d.owned, itemId])) } : d))
                     }
+                    onScarvesChange={(scarves) => setData((d) => (d ? { ...d, scarves } : d))}
                     onPreview={setPreview}
                     onBack={() => {
                       setPreview(null);

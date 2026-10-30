@@ -1,10 +1,16 @@
-import { Check, Flame, Snowflake } from "lucide-react";
+import { Check, Flame, Shield, Snowflake } from "lucide-react";
 import { IconTile } from "@/components/ui/icon-tile";
 import { addDays, weekStart, type Streak } from "@/lib/srs/streak";
 import { cn } from "@/lib/utils";
 
 const LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
-const STATE_TEXT = { done: "đã ôn", rest: "ngày nghỉ", future: "chưa tới", empty: "chưa ôn" } as const;
+const STATE_TEXT = {
+  done: "đã ôn",
+  rest: "ngày nghỉ",
+  frozen: "ngày giữ chuỗi bằng khăn",
+  future: "chưa tới",
+  empty: "chưa ôn",
+} as const;
 
 /**
  * "Chuỗi ngày" (REDESIGN_V2 §6.2): a pale sun card with the streak number and this week's seven days
@@ -27,10 +33,19 @@ export function StreakWeek({
 }) {
   const active = new Set(activeDays);
   const rest = new Set(streak.restDays);
+  const frozen = new Set(streak.frozenDays ?? []);
   const first = weekStart(today);
   const days = LABELS.map((label, i) => {
     const day = addDays(first, i);
-    const state: keyof typeof STATE_TEXT = active.has(day) ? "done" : rest.has(day) ? "rest" : day > today ? "future" : "empty";
+    const state: keyof typeof STATE_TEXT = active.has(day)
+      ? "done"
+      : frozen.has(day)
+        ? "frozen"
+        : rest.has(day)
+          ? "rest"
+          : day > today
+            ? "future"
+            : "empty";
     return { label, day, state, isToday: day === today };
   });
   return (
@@ -64,12 +79,14 @@ export function StreakWeek({
                 d.state === "done" && d.isToday && "streak-today-glow",
                 d.state === "empty" && !d.isToday && "bg-surface",
                 d.state === "rest" && "bg-surface text-streak-fg",
+                d.state === "frozen" && "bg-c-blue-soft text-c-blue-fg",
                 d.state === "empty" && d.isToday && "border-2 border-dashed border-streak-fg/60",
                 d.state === "future" && "border border-dashed border-streak-fg/30",
               )}
             >
               {d.state === "done" && <Check className="size-4" strokeWidth={3.2} aria-hidden />}
               {d.state === "rest" && <Snowflake className="size-3.5" aria-hidden />}
+              {d.state === "frozen" && <Shield className="size-3.5" aria-hidden />}
               <span className="sr-only">{`${d.label}: ${STATE_TEXT[d.state]}`}</span>
             </span>
             <span aria-hidden className={cn(d.isToday && "font-extrabold")}>

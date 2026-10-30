@@ -65,6 +65,7 @@ export function PettablePup({
   pupClassName,
   sleepAfterMs,
   defaultBubbleText,
+  outfit,
 }: {
   mood: PupMood;
   name: string;
@@ -80,6 +81,8 @@ export function PettablePup({
   sleepAfterMs?: number;
   /** Optional initial bubble text shown before the first pat (e.g. daily greeting). */
   defaultBubbleText?: string;
+  /** Optional outfit override (e.g. scarf on streak freeze). */
+  outfit?: string;
 }) {
   const home = useBinHome();
   const [pets, setPets] = useState(0);
@@ -232,7 +235,7 @@ export function PettablePup({
         onContextMenu={(e) => e.preventDefault()}
         className="bin-pet relative block cursor-pointer touch-manipulation rounded-full select-none"
       >
-        <Pup mood={shown} action={bin.action} size={size} follow={size >= 40} className={pupClassName} />
+        <Pup mood={shown} action={bin.action} size={size} follow={size >= 40} className={pupClassName} outfit={outfit} />
         {petting && <Hearts key={pets} />}
       </button>
       {activeBubbleText && (

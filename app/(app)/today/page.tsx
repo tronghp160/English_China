@@ -77,24 +77,28 @@ export default async function TodayPage({
 
   const [mood, line]: [PupMood, LineKey] = isTripAway
     ? ["sleepy", "tripAway"]
-    : s.totalCards === 0
-      ? ["wave", "empty"]
-      : s.streak.current > 0 && !s.streak.activeToday
-        ? ["sleepy", "streakAtRisk"]
-        : remaining === 0
-          ? ["cheer", "allDone"]
-          : remaining >= 50
-            ? ["surprised", "dueMany"]
-            : ["happy", "due"];
+    : s.frozenYesterday
+      ? ["love", "streakSaved"]
+      : s.totalCards === 0
+        ? ["wave", "empty"]
+        : s.streak.current > 0 && !s.streak.activeToday
+          ? ["sleepy", "streakAtRisk"]
+          : remaining === 0
+            ? ["cheer", "allDone"]
+            : remaining >= 50
+              ? ["surprised", "dueMany"]
+              : ["happy", "due"];
+  const heroOutfit = s.frozenYesterday ? "scarf" : undefined;
   const seed = new Date(s.today).getUTCDate();
+  const nValue = line === "streakAtRisk" || line === "streakSaved" ? s.streak.current : remaining;
   const text = say(line, {
     seed,
     name: prefs.mascot_name,
-    n: line === "streakAtRisk" ? s.streak.current : remaining,
+    n: nValue,
   });
   // The phone bubble takes turns through every line of this situation, starting with today's pick
   const texts = Array.from({ length: LINES[line].length }, (_, i) =>
-    say(line, { seed: seed + i, name: prefs.mascot_name, n: line === "streakAtRisk" ? s.streak.current : remaining }),
+    say(line, { seed: seed + i, name: prefs.mascot_name, n: nValue }),
   );
   if (isTripReady) {
     texts.push(say("tripReady", { seed, name: prefs.mascot_name }));
@@ -252,6 +256,7 @@ export default async function TodayPage({
                       className={isTripAway ? "mt-2" : "mt-2 lg:hidden"}
                       hidePup={isTripAway}
                       bubbleAction={isTripReady ? "trip" : undefined}
+                      outfit={heroOutfit}
                     />
                   )}
                   {prefs.mascot && isTripAway && (
@@ -274,6 +279,7 @@ export default async function TodayPage({
                     bubbleClassName="right-0 bottom-full mr-0 mb-1"
                     sleepAfterMs={30_000}
                     className="absolute right-5 -bottom-1.5 hidden lg:block"
+                    outfit={heroOutfit}
                   />
                 )}
               </section>
@@ -336,6 +342,7 @@ export default async function TodayPage({
                       className={isTripAway ? "mt-2" : "mt-2 lg:hidden"}
                       hidePup={isTripAway}
                       bubbleAction={isTripReady ? "trip" : undefined}
+                      outfit={heroOutfit}
                     />
                   )}
                   {prefs.mascot && isTripAway && (
@@ -358,6 +365,7 @@ export default async function TodayPage({
                     bubbleClassName="right-0 bottom-full mr-0 mb-1"
                     sleepAfterMs={30_000}
                     className="absolute right-5 -bottom-1.5 hidden lg:block"
+                    outfit={heroOutfit}
                   />
                 )}
               </section>
@@ -373,6 +381,7 @@ export default async function TodayPage({
               reviewedToday={s.reviewedToday}
               correctToday={s.correctToday}
               xpToday={s.xpToday}
+              scarves={s.scarves}
             />
           </div>
 

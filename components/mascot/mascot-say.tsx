@@ -20,6 +20,7 @@ export function MascotSay({
   bubbleClassName,
   hidePup = false,
   bubbleAction,
+  outfit,
 }: {
   mood: PupMood;
   name: string;
@@ -31,6 +32,7 @@ export function MascotSay({
   bubbleClassName?: string;
   hidePup?: boolean;
   bubbleAction?: "trip" | "home";
+  outfit?: string;
 }) {
   const [reaction, setReaction] = useState<{ count: number; line?: LineKey } | null>(null);
   const home = useBinHome();
@@ -71,7 +73,7 @@ export function MascotSay({
   return (
     <div className={cn("flex items-end gap-2", className)}>
       {!hidePup && (
-        <PettablePup mood={mood} name={name} size={size} onPet={(count, line) => setReaction({ count, line })} />
+        <PettablePup mood={mood} name={name} size={size} outfit={outfit} onPet={(count, line) => setReaction({ count, line })} />
       )}
       <div
         ref={box}

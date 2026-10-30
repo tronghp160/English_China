@@ -14,6 +14,7 @@ export function DailyGreeting({
   hidePup = false,
   bubbleAction,
   today,
+  outfit,
 }: {
   fallback: { mood: PupMood; text: string; texts?: string[] };
   situation: LineKey;
@@ -23,6 +24,7 @@ export function DailyGreeting({
   hidePup?: boolean;
   bubbleAction?: "trip" | "home";
   today: string;
+  outfit?: string;
 }) {
   const [greeting, setGreeting] = useState<{ text: string; mood: PupMood } | null>(null);
 
@@ -82,6 +84,7 @@ export function DailyGreeting({
       className={className}
       hidePup={hidePup}
       bubbleAction={bubbleAction}
+      outfit={outfit}
     />
   );
 }

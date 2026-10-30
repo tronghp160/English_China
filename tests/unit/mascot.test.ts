@@ -30,6 +30,15 @@ describe("mascot lines", () => {
         expect(text.length).toBeLessThanOrEqual(60);
       }
     }
+
+    // streakSaved line check
+    for (let seed = 0; seed < 10; seed++) {
+      const text = say("streakSaved", { seed, name: "Bin", n: 5 });
+      expect(text).not.toMatch(emojiRegex);
+      expect(text).not.toContain("{name}");
+      expect(text).not.toContain("{n}");
+      expect(text.length).toBeLessThanOrEqual(100);
+    }
   });
 
   it("covers every line with any seed", () => {
