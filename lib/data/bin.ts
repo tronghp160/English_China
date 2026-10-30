@@ -42,7 +42,7 @@ export type GreetingContext = {
 export async function greetingContext(userId: string, today: string): Promise<GreetingContext> {
   const admin = createAdminClient();
 
-  const [settingsRes, statsRes, dueRes, missesRes, tripRes] = await Promise.all([
+  const [settingsRes, statsRes, dueRes, missesRes, tripRes, freezesRes] = await Promise.all([
     admin.from("user_settings").select("prefs, timezone").eq("user_id", userId).maybeSingle(),
     admin
       .from("daily_stats")
@@ -53,15 +53,18 @@ export async function greetingContext(userId: string, today: string): Promise<Gr
     admin.from("user_cards").select("id", { count: "exact", head: true }).eq("user_id", userId).lte("due_at", new Date().toISOString()),
     admin.rpc("bin_recent_misses", { p_days: 2, p_user: userId }),
     admin.from("bin_trips").select("id").eq("user_id", userId).is("collected_at", null).lte("returns_at", new Date().toISOString()).maybeSingle(),
+    admin.from("bin_freezes").select("day").eq("user_id", userId).gte("day", addDays(today, -400)),
   ]);
 
   const prefs = readPrefs(settingsRes.data?.prefs);
   const name = prefs.mascot_name || "Bin";
 
   const stats = statsRes.data ?? [];
+  const frozenDays = (freezesRes.data ?? []).map((r) => r.day);
   const streakObj = computeStreak(
     stats.filter((d) => d.reviews > 0).map((d) => d.day),
     today,
+    frozenDays,
   );
   const streak = streakObj.current;
   const reviewedToday = stats.find((d) => d.day === today)?.reviews ?? 0;

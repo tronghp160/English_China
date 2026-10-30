@@ -33,21 +33,23 @@ export function DailyGreeting({
     }
 
     const storageKey = `sotu:bin-greeting:${today}`;
-    try {
-      const cached = window.sessionStorage.getItem(storageKey);
-      if (cached) {
-        const parsed = JSON.parse(cached) as { text?: string; mood?: PupMood };
-        if (parsed.text && parsed.mood) {
-          setGreeting({ text: parsed.text, mood: parsed.mood });
-          return;
-        }
-      }
-    } catch {
-      // Ignore sessionStorage read errors
-    }
-
     let active = true;
-    void loadGreeting().then((res) => {
+
+    const fetchGreeting = async () => {
+      try {
+        const cached = window.sessionStorage.getItem(storageKey);
+        if (cached) {
+          const parsed = JSON.parse(cached) as { text?: string; mood?: PupMood };
+          if (parsed.text && parsed.mood) {
+            if (active) setGreeting({ text: parsed.text, mood: parsed.mood });
+            return;
+          }
+        }
+      } catch {
+        // Ignore sessionStorage read errors
+      }
+
+      const res = await loadGreeting();
       if (!active || !res.ok || !res.data) return;
       setGreeting(res.data);
       try {
@@ -55,7 +57,9 @@ export function DailyGreeting({
       } catch {
         // Ignore sessionStorage write errors
       }
-    });
+    };
+
+    void fetchGreeting();
 
     return () => {
       active = false;

@@ -60,21 +60,32 @@ export const getGroup = cache(async (groupId: string) => {
 
 export type GroupView = NonNullable<Awaited<ReturnType<typeof getGroup>>>;
 
-/** Current streak per member, from group mates' daily_stats (readable under RLS). */
+/** Current streak per member, from group mates' daily_stats and bin_freezes (readable under RLS). */
 async function getStreaks(userIds: string[]) {
   const out = new Map<string, number>();
   if (!userIds.length) return out;
   const today = studyDay(new Date(), GROUP_TZ);
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("daily_stats")
-    .select("user_id, day")
-    .in("user_id", userIds)
-    .gt("reviews", 0)
-    .gte("day", addDays(today, -120));
+  const [{ data: statsData }, { data: freezesData }] = await Promise.all([
+    supabase
+      .from("daily_stats")
+      .select("user_id, day")
+      .in("user_id", userIds)
+      .gt("reviews", 0)
+      .gte("day", addDays(today, -120)),
+    supabase
+      .from("bin_freezes")
+      .select("user_id, day")
+      .in("user_id", userIds)
+      .gte("day", addDays(today, -120)),
+  ]);
   const days = new Map<string, string[]>();
-  for (const r of data ?? []) days.set(r.user_id, [...(days.get(r.user_id) ?? []), r.day]);
-  for (const id of userIds) out.set(id, computeStreak(days.get(id) ?? [], today).current);
+  for (const r of statsData ?? []) days.set(r.user_id, [...(days.get(r.user_id) ?? []), r.day]);
+  const freezes = new Map<string, string[]>();
+  for (const r of freezesData ?? []) freezes.set(r.user_id, [...(freezes.get(r.user_id) ?? []), r.day]);
+  for (const id of userIds) {
+    out.set(id, computeStreak(days.get(id) ?? [], today, freezes.get(id) ?? []).current);
+  }
   return out;
 }
 

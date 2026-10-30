@@ -24,6 +24,22 @@ export type RoomItem = {
   lang?: LangCode;
 };
 
+export type SpecialItem = {
+  id: "streak_scarf";
+  name: "Khăn giữ chuỗi";
+  price: 20;
+  maxQty: 2;
+  description: string;
+};
+
+export const STREAK_SCARF: SpecialItem = {
+  id: "streak_scarf",
+  name: "Khăn giữ chuỗi",
+  price: 20,
+  maxQty: 2,
+  description: "Lỡ một ngày, khăn giữ chuỗi giúp bạn không bị đứt.",
+};
+
 export const ITEMS: readonly RoomItem[] = [
   // bowl
   { id: "bowl_basic", slot: "bowl", name: "Bát đỏ", source: { kind: "default" } },

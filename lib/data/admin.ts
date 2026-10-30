@@ -262,7 +262,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
   const { data: auth } = await sb.auth.admin.getUserById(userId);
   const u = auth.user;
   if (!u) return null;
-  const [profile, settings, stats, cards, decks, subs, memberships, reviews, ai, threads, messages, adminRow] = await Promise.all([
+  const [profile, settings, stats, cards, decks, subs, memberships, reviews, ai, threads, messages, adminRow, freezes] = await Promise.all([
     sb.from("profiles").select("display_name, username, avatar_url").eq("id", userId).maybeSingle(),
     sb.from("user_settings").select("study_langs, daily_goal, daily_new_limit, timezone, onboarded").eq("user_id", userId).maybeSingle(),
     sb.from("daily_stats").select("day, reviews, correct, xp, words_added").eq("user_id", userId),
@@ -275,6 +275,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
     sb.from("chat_threads").select("id", { count: "exact", head: true }).eq("user_id", userId),
     sb.from("chat_messages").select("id", { count: "exact", head: true }).eq("user_id", userId),
     sb.from("app_admins").select("user_id").eq("user_id", userId).maybeSingle(),
+    sb.from("bin_freezes").select("day").eq("user_id", userId),
   ]);
 
   const groupIds = (memberships.data ?? []).map((m) => m.group_id).filter((g): g is string => Boolean(g));
@@ -297,6 +298,10 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
   const email = u.email ?? "";
   const envAdmin = envAdminEmails().includes(email.toLowerCase());
   const aiRows = ai.data ?? [];
+
+  const constFreezes = freezes.data ?? [];
+  const frozen = constFreezes.map((r) => r.day);
+  const currentStreak = computeStreak(active, today, frozen).current;
 
   return {
     id: u.id,
@@ -324,9 +329,9 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
       reviews: rows.reduce((n, r) => n + r.reviews, 0),
       correct: rows.reduce((n, r) => n + r.correct, 0),
       activeDays: active.length,
-      streak: computeStreak(active, today).current,
+      streak: currentStreak,
       // the current streak may bridge rest days that longestStreak does not count (same rule as getProgress)
-      longestStreak: Math.max(longestStreak(active), computeStreak(active, today).current),
+      longestStreak: Math.max(longestStreak(active), currentStreak),
       lastActiveDay: active.sort().at(-1) ?? null,
       wordsAdded: rows.reduce((n, r) => n + r.words_added, 0),
       last30: Array.from({ length: 30 }, (_, i) => {

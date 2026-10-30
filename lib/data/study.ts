@@ -2,7 +2,8 @@ import "server-only";
 import { cache } from "react";
 import { requireMe } from "@/lib/auth";
 import type { LangCode } from "@/lib/lang/types";
-import { addDays, computeStreak, studyDay } from "@/lib/srs/streak";
+import { addDays, computeStreak, planFreezes, studyDay } from "@/lib/srs/streak";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type LangOverview = {
@@ -20,7 +21,7 @@ export const getStudySummary = cache(async () => {
   await supabase.rpc("ensure_user_cards", {});
   const today = studyDay(new Date(), me.settings.timezone);
   const from = addDays(today, -400);
-  const [{ data: overview }, { data: stats }] = await Promise.all([
+  const [{ data: overview }, { data: stats }, { data: freezesRows }, { data: scarfRow }] = await Promise.all([
     supabase.rpc("today_overview"),
     supabase
       .from("daily_stats")
@@ -28,6 +29,18 @@ export const getStudySummary = cache(async () => {
       .eq("user_id", me.user.id)
       .gte("day", from)
       .order("day"),
+    supabase
+      .from("bin_freezes")
+      .select("day")
+      .eq("user_id", me.user.id)
+      .gte("day", from)
+      .lte("day", today),
+    supabase
+      .from("bin_items")
+      .select("qty")
+      .eq("user_id", me.user.id)
+      .eq("item_id", "streak_scarf")
+      .maybeSingle(),
   ]);
 
   const rows = overview ?? [];
@@ -52,10 +65,35 @@ export const getStudySummary = cache(async () => {
 
   const days = stats ?? [];
   const todayStats = days.find((d) => d.day === today);
-  const streak = computeStreak(
-    days.filter((d) => d.reviews > 0).map((d) => d.day),
-    today,
-  );
+  const activeDays = days.filter((d) => d.reviews > 0).map((d) => d.day);
+
+  let frozen = (freezesRows ?? []).map((r) => r.day);
+  const initialScarves = scarfRow?.qty ?? 0;
+  let scarves = initialScarves;
+  let frozenYesterday = false;
+
+  const plan = planFreezes(activeDays, frozen, today, scarves);
+  if (plan.length > 0) {
+    try {
+      const admin = createAdminClient();
+      const { data: usedDays, error } = await admin.rpc("bin_use_freezes", {
+        p_user: me.user.id,
+        p_days: plan,
+      });
+      if (error) {
+        console.error("[bin] use_freezes error", error);
+      } else if (usedDays && usedDays.length > 0) {
+        frozen = [...frozen, ...usedDays];
+        scarves = Math.max(0, scarves - usedDays.length);
+        const yesterday = addDays(today, -1);
+        frozenYesterday = usedDays.includes(yesterday);
+      }
+    } catch (e) {
+      console.error("[bin] use_freezes exception", e);
+    }
+  }
+
+  const streak = computeStreak(activeDays, today, frozen);
 
   return {
     me,
@@ -68,5 +106,7 @@ export const getStudySummary = cache(async () => {
     correctToday: todayStats?.correct ?? 0,
     xpToday: todayStats?.xp ?? 0,
     totalCards: langs.reduce((n, l) => n + l.total, 0),
+    scarves,
+    frozenYesterday,
   };
 });

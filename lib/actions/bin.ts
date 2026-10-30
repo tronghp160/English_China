@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireMe, requireUser } from "@/lib/auth";
 import { getProgress } from "@/lib/data/progress";
-import { isRoomItemId, ITEM_BY_ID, lockReason, ownedItems, resolveRoom, ROOM_SLOTS, type RoomSlot } from "@/lib/bin/catalog";
+import { isRoomItemId, ITEM_BY_ID, lockReason, ownedItems, resolveRoom, ROOM_SLOTS, STREAK_SCARF, type RoomSlot } from "@/lib/bin/catalog";
 import { OUTFITS, QUEST_BONES, QUEST_IDS, pruneClaimed, type LevelInfo, type OutfitId, type QuestId, type TrickId } from "@/lib/progress";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -186,30 +186,42 @@ export async function loadRoom(): Promise<ActionResult<RoomData>> {
   });
 }
 
-const buyItemSchema = z.string().refine(isRoomItemId, "Vật phẩm không hợp lệ.");
+const buyItemSchema = z.string().refine((id) => isRoomItemId(id) || id === "streak_scarf", "Vật phẩm không hợp lệ.");
 
 export async function buyItem(input: unknown): Promise<ActionResult<{ bones: number; itemId: string }>> {
   const user = await requireUser();
   const parsed = buyItemSchema.safeParse(input);
   if (!parsed.success) return fail("Vật phẩm không hợp lệ.");
   const itemId = parsed.data;
-  const item = ITEM_BY_ID.get(itemId);
-  if (!item || item.source.kind !== "shop") return fail("Không thể mua vật phẩm này.");
 
-  const progress = await getProgress();
-  const reason = lockReason(item, { level: progress.level.level, longestStreak: progress.longestStreak });
-  if (reason) return fail(`Chưa mở khóa: ${reason}.`);
+  let price = 0;
+  let maxQty = 1;
+
+  if (itemId === "streak_scarf") {
+    price = STREAK_SCARF.price;
+    maxQty = STREAK_SCARF.maxQty;
+  } else {
+    const item = ITEM_BY_ID.get(itemId);
+    if (!item || item.source.kind !== "shop") return fail("Không thể mua vật phẩm này.");
+    const progress = await getProgress();
+    const reason = lockReason(item, { level: progress.level.level, longestStreak: progress.longestStreak });
+    if (reason) return fail(`Chưa mở khóa: ${reason}.`);
+    price = item.source.price;
+    maxQty = 1;
+  }
 
   const admin = createAdminClient();
   const { data, error } = await admin.rpc("bin_buy", {
     p_user: user.id,
     p_item: itemId,
-    p_price: item.source.price,
-    p_max_qty: 1,
+    p_price: price,
+    p_max_qty: maxQty,
   });
   if (error) {
     if (error.message.includes("not_enough_bones")) return fail("Chưa đủ xương.");
-    if (error.message.includes("already_owned")) return fail("Bạn đã có món này.");
+    if (error.message.includes("already_owned")) {
+      return fail(itemId === "streak_scarf" ? "Đã có đủ 2 khăn." : "Bạn đã có món này.");
+    }
     return fail("Không lưu được. Thử lại.");
   }
   return ok({ bones: data, itemId });

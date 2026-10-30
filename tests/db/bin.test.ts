@@ -304,4 +304,55 @@ describe("bin ledger and wallet", () => {
     );
     expect(bobMisses.rows.some((r) => r.term === "stubborn")).toBe(false);
   });
+
+  it("14. bin_use_freezes with 1 scarf and 2 days -> only older day used, qty becomes 0", async () => {
+    // Give Alice 1 streak_scarf
+    await as(db, "service", () =>
+      db.query(
+        `insert into public.bin_items (user_id, item_id, qty)
+         values ($1, 'streak_scarf', 1)
+         on conflict (user_id, item_id) do update set qty = 1`,
+        [alice],
+      ),
+    );
+
+    // Call bin_use_freezes with 2 days: Nov 3 and Nov 2 (unsorted)
+    const usedRes = await as(db, "service", () =>
+      db.query<{ bin_use_freezes: string[] }>(
+        "select public.bin_use_freezes($1, array['2026-11-03'::date, '2026-11-02'::date])",
+        [alice],
+      ),
+    );
+    const used = usedRes.rows[0].bin_use_freezes;
+    expect(used).toHaveLength(1);
+    const dayStr = new Date(used[0]).toISOString().slice(0, 10);
+    expect(dayStr).toBe("2026-11-02");
+
+    // Check bin_items qty is now 0
+    const itemsRes = await as(db, "service", () =>
+      db.query<{ qty: number }>(
+        "select qty from public.bin_items where user_id = $1 and item_id = 'streak_scarf'",
+        [alice],
+      ),
+    );
+    expect(itemsRes.rows[0].qty).toBe(0);
+
+    // Call again with same day -> does not decrement or use again
+    const callAgain = await as(db, "service", () =>
+      db.query<{ bin_use_freezes: string[] }>(
+        "select public.bin_use_freezes($1, array['2026-11-02'::date])",
+        [alice],
+      ),
+    );
+    expect(callAgain.rows[0].bin_use_freezes).toHaveLength(0);
+
+    // Bob has 0 scarves -> returns empty array
+    const bobCall = await as(db, "service", () =>
+      db.query<{ bin_use_freezes: string[] }>(
+        "select public.bin_use_freezes($1, array['2026-11-02'::date])",
+        [bob],
+      ),
+    );
+    expect(bobCall.rows[0].bin_use_freezes).toHaveLength(0);
+  });
 });

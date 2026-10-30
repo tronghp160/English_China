@@ -90,6 +90,7 @@ export function buildPetSummary(input: {
   room?: Partial<AdminRoomSlots>;
   latestTrip?: AdminLatestTrip | null;
   postcardCount?: number;
+  frozenDays?: string[];
 }): PetSummary {
   const now = input.now ?? new Date();
   const timezone = input.timezone || "Asia/Ho_Chi_Minh";
@@ -102,7 +103,7 @@ export function buildPetSummary(input: {
   }
 
   const activeDays = input.rows.filter((r) => r.reviews > 0).map((r) => r.day);
-  const streak = computeStreak(activeDays, dayStr).current;
+  const streak = computeStreak(activeDays, dayStr, input.frozenDays ?? []).current;
   const longest = Math.max(longestStreak(activeDays), streak);
 
   const totalXp = input.rows.reduce((sum, r) => sum + r.xp, 0);

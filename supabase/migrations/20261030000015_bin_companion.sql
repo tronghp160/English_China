@@ -63,13 +63,7 @@ begin
       used := array_append(used, d);
     end if;
   end loop;
-  if cardinality(used) > 0 then
-    if have = 0 then
-      delete from public.bin_items where user_id = p_user and item_id = 'streak_scarf';
-    else
-      update public.bin_items set qty = have where user_id = p_user and item_id = 'streak_scarf';
-    end if;
-  end if;
+  update public.bin_items set qty = have where user_id = p_user and item_id = 'streak_scarf';
   return used;
 end;
 $$;
