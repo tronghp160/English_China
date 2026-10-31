@@ -25,7 +25,7 @@ Secret key và mật khẩu database từng bị dán vào chat, nên coi như �
 
 ## 3. Tạo project trên Vercel
 1. vercel.com → **Add New → Project** → chọn repo vừa tạo. Framework tự nhận là Next.js.
-2. **Settings → Functions → Function Region**: chọn **Singapore (sin1)** (cùng vùng với Supabase).
+2. **Settings → Functions → Function Region**: chọn **Singapore (sin1)** (cùng vùng với Supabase, project ở `ap-southeast-1`). Gia sư AI hỏi Supabase vài nhịp trước khi gọi model, nên vùng này quyết định tốc độ của nó. Chỉ đặt được ở đây: `preferredRegion` trong code đã deprecated ở Next 16 (xem `docs/PERF-gia-su.md`).
 3. **Settings → Environment Variables**: thêm các biến dưới đây cho cả Production và Preview.
 
 | Biến | Giá trị |

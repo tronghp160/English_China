@@ -54,3 +54,70 @@ Prelude p50 2928 ms, p90 9813 ms (p90 do vài lần mạng nhảy 4–9 s, khôn
 - **Bước 1.4b (RPC `tutor_snapshot`) không làm**: các query đã chạy song song, gộp thành 1 RPC không bớt nhịp nào trên đường găng mà phải thêm migration lên database đang chạy thật. Đo lại trên Vercel trước khi cân nhắc.
 - **Bước 1.6 (`preferredRegion`) không làm trong code**: Next 16 đánh dấu `preferredRegion` là deprecated (docs bảo bỏ export này). Vùng đã đúng: Vercel Function Region = `sin1` (đặt trong dashboard, xem `docs/DEPLOY.md`), Supabase = `ap-southeast-1` (host pooler `aws-0-ap-southeast-1`).
 - `getClaims` xác thực JWT tại chỗ (1 ms sau lần đầu), nên `auth` chủ yếu là 2 query `profiles` + `user_settings` (đã song song).
+
+## Sau Phase 2 (model nhanh hơn, commit `3deaaf9`)
+
+| Kịch bản | TTFT p50 | TTFT p90 | Total p50 | Total p90 | tools tb |
+|---|---|---|---|---|---|
+| simple_en | 8321 | 20156 | 9474 | 21171 | 0 |
+| simple_zh | 6895 | 13117 | 7640 | 14679 | 0 |
+| correct | 9671 | 11839 | 10300 | 12773 | 0 |
+| tool_mywords | 5731 | 8237 | 6364 | 8647 | 1.67 |
+| tool_rare | 3098 | 3273 | 4316 | 4371 | 0 |
+| followup | 3033 | 4056 | 3456 | 4592 | 0 |
+
+Bảng TTFT phía client lần này bị mạng tới Supabase kéo lên (prelude p90 10,4 s). Tách theo log server thì thấy rõ phần model:
+
+| Trung vị mọi request | prelude | model → chữ đầu | chữ đầu → xong | retry lượt rỗng |
+|---|---|---|---|---|
+| Baseline | 3523 | 3028 (p90 **20092**, do treo) | 3269 | 4 / 26 |
+| Phase 1 | 2928 | 1339 | 3036 | 0 / 24 |
+| Phase 2 | 2909 | 1121 | **426** | 0 / 21 |
+
+- Bỏ `smoothStream` ở server: "chữ đầu → xong" từ ~3 s còn ~0,4 s. Model đã sinh xong từ lâu, chỉ là server nhả chữ chậm.
+- Không còn lượt treo 55 s + retry 55 s: model treo quá 15 s thì chuyển sang model sau, và một lần hết giờ là lỗi ("Thử lại"), không retry.
+- Cooldown: sau lần 503 đầu, các request sau đi thẳng tới `gemini-3.5-flash-lite` (chỉ 3 dòng `rate-limited` trên 22 request ở lần đo cuối, so với 27 / 27 ở baseline).
+- Thinking: 18 / 20 câu chạy "minimal", 2 câu ("Sửa giúp mình…") chạy "low".
+- **Chất lượng với "minimal"** (đọc tay 6 câu: 2 × simple_en, simple_zh, correct): đúng và đủ ý. apple có IPA, loại từ, ví dụ kèm nghĩa; 你好 có pinyin và giải thích biến điệu 3-3; câu sửa có câu đúng, lỗi goes→went kèm quy tắc, lời khen. Giữ "minimal" làm mặc định. Một điểm nhỏ không liên quan tốc độ: model hay mở đầu "Chào bạn!" dù người học không chào.
+- Prompt cache: log có `inputTokens` ~2450, `cachedTokens` 0 với Gemini flash-lite (implicit cache cần prefix dài hơn hoặc lưu lượng lặp nhiều hơn). Với Anthropic, phần ổn định có `cacheControl`. Cần theo dõi trên production.
+- Từ điển tiếng Trung nạp sẵn: `[dict] cvdict loaded in 259 ms` (chạy nền, trước khi tool cần).
+- Mục 1.4b, 2.8: xem "Việc còn lại".
+
+## Phase 3 (client)
+
+Không đổi TTFT phía server. Mỗi chunk không còn render lại cả danh sách: `throttle: 50`, `MessageRow` + `MessageText` memo (chỉ bong bóng đang stream render lại). `GET /api/chat` (ping làm ấm) trả 204 trong ~0,12 s và nạp sẵn CVDICT. Chưa kiểm bằng React DevTools "Highlight updates" (cần làm tay trong trình duyệt).
+
+## Phase 4 (tin đầu tiên, commit `696d954`)
+
+| Kịch bản (tính từ lúc bấm gửi, gồm tạo thread) | TTFT p50 | TTFT p90 |
+|---|---|---|
+| first_old: tạo thread trước rồi gửi | 16562 | 20354 |
+| first_new: gửi ngay với `newThread` | 12511 | 15233 |
+
+3 lần mỗi kịch bản giữa lúc mạng rất xấu (một request mất 12 s chỉ ở `auth`), nên trung vị chỉ mang tính tham khảo. Về cấu trúc: tạo thread trong route chỉ thêm một bước `thread_created` 220–370 ms, còn trước đây là cả một server action (trình duyệt → server → `getMe` → insert → về) **trước khi** request chat bắt đầu. `first_old` trong bench còn rẻ hơn server action thật (script ghi thẳng vào Supabase), nên mức lợi thật lớn hơn số đo.
+
+## Lần đo cuối (Phase 4 build, `RUNS=2`, giới hạn quota)
+
+| Kịch bản | Baseline TTFT p50 | Cuối TTFT p50 | Baseline Total p50 | Cuối Total p50 |
+|---|---|---|---|---|
+| simple_en | 6223 | 2982 | 8892 | 3229 |
+| simple_zh | 6385 | 3307 | 10351 | 3997 |
+| correct | 7893 | 4967 | 12683 | 5824 |
+| tool_mywords | 16482 | 4445 | 18821 | 5044 |
+| tool_rare | 6834 | 2712 | 10917 | 3635 |
+| followup | 3731 | 3465 | 7089 | 4263 |
+
+Log server lần cuối: model → chữ đầu p50 1346 ms, chữ đầu → xong p50 302 ms, không retry. Prelude p50 5,4 s (tính cả các lần đo Phase 4 lúc mạng xấu).
+
+## Kết luận
+
+- Phần model gần đạt mục tiêu: từ lúc gọi model tới chữ đầu ~1,1–1,3 s; câu trả lời xong ngay sau chữ đầu. Lỗi lớn nhất (treo ~2 phút rồi xin lỗi) đã hết.
+- Phần còn lại là **prelude** (các nhịp tới Supabase). Trên máy dev ở Việt Nam mỗi nhịp 0,3–0,9 s, có lúc nhiều giây, nên TTFT ở đây vẫn 3–5 s. Mục tiêu ≤ 1,5 s cho câu đơn giản chỉ kiểm được trên Vercel `sin1` cạnh Supabase.
+
+## Việc còn lại (cho chủ repo)
+
+1. **Đo trên Vercel**: deploy preview, copy cookie phiên từ DevTools rồi `BASE_URL=https://<preview> BENCH_COOKIE='sb-…' pnpm bench:tutor`. Xem mốc `prelude` trong `Server-Timing`: nếu vẫn > 600 ms thì kiểm Function Region và cold start (mốc `auth` của request đầu).
+2. **Chọn model chat (2.8)**: `gemini-3.8-flash` hay trả 503 và không nhận "minimal". Đặt `AI_MODEL_CHAT_GOOGLE` thành một model flash / flash-lite có hạn mức tốt, so 2–3 lựa chọn bằng `ONLY=simple_en,correct pnpm bench:tutor`. Code không tự đổi tên model.
+3. **1.4b (RPC `tutor_snapshot`) chưa làm**: chỉ đáng làm nếu trên Vercel `context` vẫn chậm hơn `limits` rõ rệt.
+4. Kiểm bằng tay trong trình duyệt: React DevTools "Highlight updates" khi stream một câu dài (chỉ tin cuối nháy).
+5. Theo dõi `cachedTokens` trong log `[tutor:timing]` trên production.
