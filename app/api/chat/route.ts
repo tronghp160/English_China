@@ -9,6 +9,7 @@ import { classifyTutorError, tutorErrorMessage } from "@/lib/ai/tutor/errors";
 import { learnerSnapshot } from "@/lib/ai/tutor/learner";
 import { tutorModel } from "@/lib/ai/tutor/model";
 import { pageContextLine } from "@/lib/ai/tutor/page-context";
+import { tutorTimer } from "@/lib/ai/tutor/timing";
 import { getMe } from "@/lib/auth";
 import { hitRateLimit } from "@/lib/rate-limit";
 import { studyDay } from "@/lib/srs/streak";
@@ -48,7 +49,9 @@ const fail = (error: string, status: number, extra?: { kind: string; retryAfter?
   );
 
 export async function POST(request: Request) {
+  const timer = tutorTimer();
   const me = await getMe();
+  timer.mark("auth");
   if (!me) return fail("Bạn cần đăng nhập.", 401);
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return fail(`Tin nhắn trống hoặc dài quá ${CHAT_MAX_CHARS} ký tự.`, 400);
@@ -61,6 +64,7 @@ export async function POST(request: Request) {
     .select("id, language, deck_id, title, deck:decks(name, language)")
     .eq("id", threadId)
     .maybeSingle();
+  timer.mark("thread");
   if (!thread) return fail("Không tìm thấy cuộc trò chuyện.", 404);
 
   if (!(await hitRateLimit(me.user.id, "chat", 12, 60)))
@@ -76,6 +80,7 @@ export async function POST(request: Request) {
     if (e instanceof AiError || err.kind !== "unknown") return fail(tutorErrorMessage(err), err.kind === "quota" ? 429 : 503, err);
     throw e;
   }
+  timer.mark("limits");
 
   const [{ data: rows }, snapshot, pageContext] = await Promise.all([
     supabase
@@ -87,6 +92,7 @@ export async function POST(request: Request) {
     learnerSnapshot(supabase, me.settings.study_langs),
     context?.path ? pageContextLine(supabase, context.path) : Promise.resolve(null),
   ]);
+  timer.mark("context");
   const history = (rows ?? [])
     .reverse()
     .filter((r) => r.id !== message.id)
@@ -102,6 +108,7 @@ export async function POST(request: Request) {
     .from("chat_threads")
     .update({ updated_at: new Date().toISOString(), ...(thread.title ? {} : { title: threadTitle(text) }) })
     .eq("id", threadId);
+  timer.mark("saved");
 
   const tools = chatTools(supabase, { language: thread.language, deckId: thread.deck_id, deckLanguage: thread.deck?.language });
   let messages: ChatMessage[];
@@ -133,6 +140,7 @@ export async function POST(request: Request) {
     return tutorErrorMessage(err);
   };
   let outcome: AnswerOutcome = { status: "failed" };
+  timer.mark("prelude");
 
   const stream = createUIMessageStream<ChatMessage>({
     originalMessages: messages,
@@ -148,9 +156,11 @@ export async function POST(request: Request) {
         providerOptions: PROVIDER_OPTIONS,
         retryProviderOptions: RETRY_PROVIDER_OPTIONS,
         onError,
+        onTiming: timer.mark,
       });
     },
     onEnd: async ({ responseMessage }) => {
+      timer.log({ threadId, status: outcome.status, toolCalls: outcome.toolCalls ?? 0 });
       const hasText = responseMessage.parts.some((p) => p.type === "text" && p.text.trim());
       if (!hasText) return; // failed turns are not stored (the question is; "Thử lại" answers it)
       if (outcome.status === "answered") recordUsage(me.user.id);
@@ -169,6 +179,7 @@ export async function POST(request: Request) {
 
   return createUIMessageStreamResponse({
     stream,
+    headers: { "Server-Timing": timer.header() }, // prelude marks only (sent before the stream starts)
     // Read a copy to the end, so the answer is still generated and saved when the user leaves the page.
     consumeSseStream: async ({ stream: copy }) => {
       const reader = copy.getReader();

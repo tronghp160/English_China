@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "bench:tutor": "node scripts/bench-tutor.mjs",
     "db:types": "supabase gen types typescript --linked --schema public > lib/supabase/database.types.ts",
     "db:push": "node scripts/db-push.mjs",
     "db:types:local": "node scripts/gen-db-types.mjs",

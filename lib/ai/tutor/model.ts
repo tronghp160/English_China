@@ -54,7 +54,9 @@ export function withModelFallback(models: ProviderModel[]): ProviderModel {
       let last: unknown;
       for (const m of [first, ...rest]) {
         try {
-          return await streamOn(m, params);
+          const result = await streamOn(m, params);
+          console.info("[tutor] model", m.modelId);
+          return result;
         } catch (e) {
           last = e;
           if (!isRateLimited(e).limited) throw e;
