@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { learnerBlock, threadTitle, tutorInstructions } from "@/lib/ai/chat-prompt";
+import { learnerBlock, threadTitle, tutorInstructionParts, tutorInstructions } from "@/lib/ai/chat-prompt";
 import { groupThreadsByDay } from "@/lib/ai/tutor/history";
 import { chatStarters, guessLanguage } from "@/lib/ai/tutor/starters";
 import { rankByTerm, sanitizeSearch } from "@/lib/search";
@@ -97,6 +97,17 @@ describe("tutor instructions v2 (one free chat)", () => {
   it("uses the mascot name", () => {
     expect(tutorInstructions({ language: "en", learnerName: "A", tutorName: "Bin" })).toContain("Bạn là Bin");
     expect(learnerBlock([])).toContain("chưa có từ nào");
+  });
+
+  it("keeps everything that changes per learner or turn out of the stable prefix", () => {
+    const a = tutorInstructionParts({ language: "en", learnerName: "Minh", tutorName: "Bin", firstTurn: true, today: "2026-10-31", pageContext: "trang A" });
+    const b = tutorInstructionParts({ language: "zh", learnerName: "Lan", tutorName: "Bin", firstTurn: false, deckName: "HSK 3" });
+    expect(a.stable).toBe(b.stable);
+    expect(a.turn).toContain("Minh");
+    expect(a.turn).toContain("2026-10-31");
+    expect(a.turn).toContain("trang A");
+    expect(b.turn).toContain("không chào lại");
+    expect(tutorInstructions({ language: "en", learnerName: "Minh" }).startsWith(a.stable.replace("Bạn là Bin, gia sư ngoại ngữ của app Sổ Từ", 'Bạn là "Gia sư Sổ Từ"'))).toBe(true);
   });
 });
 

@@ -102,10 +102,15 @@ async function send(threadId, text) {
 }
 
 async function newThread(language) {
-  const { data, error } = await supabase.from("chat_threads").insert({ user_id: userId, language }).select("id").single();
-  if (error) throw new Error(`create thread: ${error.message}`);
-  created.push(data.id);
-  return data.id;
+  for (let attempt = 1; ; attempt++) {
+    const { data, error } = await supabase.from("chat_threads").insert({ user_id: userId, language }).select("id").single();
+    if (!error) {
+      created.push(data.id);
+      return data.id;
+    }
+    if (attempt === 3) throw new Error(`create thread: ${error.message}`);
+    await sleep(2000); // a flaky network: try again
+  }
 }
 
 const results = {};
@@ -114,12 +119,16 @@ try {
   for (const s of SCENARIOS) {
     results[s.name] = [];
     for (let i = 0; i < RUNS; i++) {
-      const threadId = await newThread(s.language);
       let run;
-      for (const text of s.texts) {
-        if (!firstCall) await sleep(GAP_MS);
-        firstCall = false;
-        run = await send(threadId, text); // the last message of the scenario is the one measured
+      try {
+        const threadId = await newThread(s.language);
+        for (const text of s.texts) {
+          if (!firstCall) await sleep(GAP_MS);
+          firstCall = false;
+          run = await send(threadId, text); // the last message of the scenario is the one measured
+        }
+      } catch (e) {
+        run = { error: String(e).slice(0, 200) };
       }
       results[s.name].push(run);
       const line = run.error

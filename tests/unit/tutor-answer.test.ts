@@ -2,7 +2,7 @@ import { APICallError, createUIMessageStream, readUIMessageStream, simulateReada
 import { MockLanguageModelV4 } from "ai/test";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { NO_ANSWER_TEXT, writeTutorAnswer, type AnswerOutcome } from "@/lib/ai/tutor/answer";
+import { MAX_STEPS, NO_ANSWER_TEXT, writeTutorAnswer, type AnswerOutcome } from "@/lib/ai/tutor/answer";
 
 vi.mock("server-only", () => ({}));
 
@@ -112,19 +112,55 @@ describe("writeTutorAnswer", () => {
   });
 
   it("switches tools off on the last step", async () => {
-    // A model that keeps calling tools: the 5th step must run with toolChoice none.
+    // A model that keeps calling tools: the last step must run with toolChoice none.
     const choices: unknown[] = [];
     let n = 0;
     const model = new MockLanguageModelV4({
       doStream: async (opts) => {
         choices.push(opts.toolChoice);
         n++;
-        const chunks = n < 5 ? [{ ...toolCall, toolCallId: `c${n}` }, finish("tool-calls")] : [...textChunks("xong"), finish("stop")];
+        const chunks = n < MAX_STEPS ? [{ ...toolCall, toolCallId: `c${n}` }, finish("tool-calls")] : [...textChunks("xong"), finish("stop")];
         return { stream: simulateReadableStream({ chunks: chunks as never }) };
       },
     });
     const r = await run(model);
     expect(r.text).toBe("xong");
+    expect(choices).toHaveLength(MAX_STEPS);
     expect(choices.at(-1)).toEqual({ type: "none" });
+  });
+
+  it("reports a timed-out call as an error instead of retrying it", async () => {
+    let calls = 0;
+    const model = new MockLanguageModelV4({
+      doStream: async ({ abortSignal }) => {
+        calls++;
+        // Never sends anything; ends only when the call's own timeout aborts it.
+        const stream = new ReadableStream({
+          start(controller) {
+            abortSignal?.addEventListener("abort", () => controller.error(abortSignal.reason));
+          },
+        });
+        return { stream: stream as never };
+      },
+    });
+    let outcome: AnswerOutcome | undefined;
+    const stream = createUIMessageStream<UIMessage>({
+      execute: async ({ writer }) => {
+        outcome = await writeTutorAnswer({
+          writer,
+          model,
+          instructions: "be a tutor",
+          messages: [{ role: "user", content: "hi" }],
+          tools,
+          onError: (e) => (e instanceof Error && e.name === "TimeoutError" ? "hết giờ" : "lỗi"),
+          timeoutMs: 50,
+        });
+      },
+    });
+    let error: string | undefined;
+    for await (const _ of readUIMessageStream({ stream, onError: (e) => (error = String(e)) })) void _;
+    expect(outcome?.status).toBe("failed");
+    expect(calls).toBe(1);
+    expect(error).toContain("hết giờ");
   });
 });

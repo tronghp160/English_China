@@ -12,13 +12,17 @@ export type LookupOutcome = { result: EnrichResult | null; source: LookupSource 
  * Best answer that costs no AI quota: a shared AI answer someone already paid for
  * (dictionary_cache), else the free dictionary. Both are asked in parallel.
  */
-export async function lookupBest(language: LangCode, term: string): Promise<LookupOutcome> {
+export async function lookupBest(
+  language: LangCode,
+  term: string,
+  opts: { timeoutMs?: number } = {},
+): Promise<LookupOutcome> {
   const [cached, dict] = await Promise.all([
     readCachedEnrich(language, normalizeTerm(term, language)).catch((e) => {
       console.error("[lookup] cache", e);
       return null;
     }),
-    lookupFree(language, term).catch((e) => {
+    lookupFree(language, term, opts).catch((e) => {
       console.error("[lookup] dict", e);
       return null;
     }),

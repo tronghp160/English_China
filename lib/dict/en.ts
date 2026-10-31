@@ -12,7 +12,9 @@ import type { PosCode } from "@/lib/pos";
  */
 const MONTH = 60 * 60 * 24 * 30;
 const MAX_SENSES = 8; // Wiktionary does not order senses by frequency, so show a few more
-const TIMEOUT_MS = 5000;
+const TIMEOUT_MS = 5000; // the word form; the tutor passes a shorter one
+
+export type EnglishLookupOptions = { timeoutMs?: number };
 
 const POS: Record<string, PosCode> = {
   noun: "noun",
@@ -40,11 +42,11 @@ function userAgent() {
   return `SoTu/1.0 (vocabulary notebook; ${publicEnv().NEXT_PUBLIC_SITE_URL})`;
 }
 
-async function getText(url: string): Promise<string | null> {
+async function getText(url: string, timeoutMs = TIMEOUT_MS): Promise<string | null> {
   try {
     const res = await fetch(url, {
       headers: { "User-Agent": userAgent() },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
       next: { revalidate: MONTH },
     });
     return res.ok ? await res.text() : null;
@@ -136,18 +138,18 @@ const FREE_POS: Record<string, PosCode> = {
   numeral: "num",
 };
 
-async function viWiktionary(term: string) {
+async function viWiktionary(term: string, timeoutMs?: number) {
   const tries = [...new Set([term, term.toLowerCase()])];
   for (const t of tries) {
-    const raw = await getText(`https://vi.wiktionary.org/w/index.php?title=${encodeURIComponent(t)}&action=raw`);
+    const raw = await getText(`https://vi.wiktionary.org/w/index.php?title=${encodeURIComponent(t)}&action=raw`, timeoutMs);
     const parsed = raw ? parseViWiktionary(raw) : null;
     if (parsed) return parsed;
   }
   return null;
 }
 
-async function freeDictionary(term: string): Promise<FreeDictEntry[] | null> {
-  const body = await getText(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(term.toLowerCase())}`);
+async function freeDictionary(term: string, timeoutMs?: number): Promise<FreeDictEntry[] | null> {
+  const body = await getText(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(term.toLowerCase())}`, timeoutMs);
   if (!body) return null;
   try {
     const json = JSON.parse(body);
@@ -158,9 +160,9 @@ async function freeDictionary(term: string): Promise<FreeDictEntry[] | null> {
 }
 
 /** Free entry for an English word, or null when neither source knows it. */
-export async function lookupEnglish(term: string): Promise<EnrichEN | null> {
+export async function lookupEnglish(term: string, opts: EnglishLookupOptions = {}): Promise<EnrichEN | null> {
   const word = term.trim();
-  const [wiki, free] = await Promise.all([viWiktionary(word), freeDictionary(word)]);
+  const [wiki, free] = await Promise.all([viWiktionary(word, opts.timeoutMs), freeDictionary(word, opts.timeoutMs)]);
   if (!wiki && !free) return null;
 
   const meanings = (free ?? []).flatMap((e) => e.meanings ?? []);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePagePath } from "@/lib/ai/tutor/page-context";
+import { parsePagePath, WORD_CONTEXT_MAX, wordContextLine } from "@/lib/ai/tutor/page-context";
 
 describe("parsePagePath", () => {
   const validUuid = "123e4567-e89b-12d3-a456-426614174000";
@@ -48,5 +48,32 @@ describe("parsePagePath", () => {
     expect(parsePagePath("/today")).toEqual({ kind: "other" });
     expect(parsePagePath("/chat")).toEqual({ kind: "other" });
     expect(parsePagePath("/settings")).toEqual({ kind: "other" });
+  });
+});
+
+describe("wordContextLine", () => {
+  it("adds part of speech, two examples and the learner's note", () => {
+    const line = wordContextLine({
+      term: "坚强",
+      reading: "jiānqiáng",
+      meaning_vi: "kiên cường",
+      parts_of_speech: ["adj"],
+      examples: [
+        { text: "她很坚强。", reading: null, vi: "Cô ấy rất kiên cường." },
+        { text: "坚强的意志", reading: null, vi: "ý chí kiên cường" },
+        { text: "third", reading: null, vi: "thứ ba" },
+      ],
+      personal_note: "  nhớ:  kiên = 坚 ",
+    });
+    expect(line).toContain("坚强 (jiānqiáng) [adj]: kiên cường");
+    expect(line).toContain("她很坚强。 = Cô ấy rất kiên cường.; 坚强的意志 = ý chí kiên cường");
+    expect(line).not.toContain("third");
+    expect(line).toContain("Ghi chú của người học: nhớ: kiên = 坚");
+  });
+
+  it("stays short and copes with odd stored examples", () => {
+    expect(wordContextLine({ term: "a", reading: null, meaning_vi: "b", examples: "nope" })).toBe('Người học đang xem từ a: b. "Từ này" nghĩa là từ đó.');
+    const long = wordContextLine({ term: "a", reading: null, meaning_vi: "b", personal_note: "x".repeat(1000) });
+    expect(long.length).toBe(WORD_CONTEXT_MAX);
   });
 });

@@ -4,7 +4,9 @@ import {
   streamText,
   toUIMessageStream,
   type LanguageModel,
+  type LanguageModelUsage,
   type ModelMessage,
+  type SystemModelMessage,
   type ToolSet,
   type UIMessage,
   type UIMessageChunk,
@@ -14,12 +16,41 @@ import {
 /** Shown when the model ends a turn without writing anything, even after the retry. */
 export const NO_ANSWER_TEXT = "Xin lỗi, mình chưa nghĩ ra câu trả lời cho câu này. Bạn hỏi lại theo cách khác giúp mình nhé.";
 
-/** Tool rounds before the tutor must write (the last round has tools switched off). */
-export const MAX_STEPS = 5;
+/**
+ * Model rounds per answer: up to two may call tools, the last has tools switched off.
+ * Every tool round is a whole extra model call (seconds), so this stays small.
+ */
+export const MAX_STEPS = 3;
+
+/** Asked of the model when a whole turn produced no text. */
+const RETRY_INSTRUCTIONS =
+  "Lượt trước bạn chưa viết gì cho người học. Bây giờ hãy viết câu trả lời đầy đủ bằng chữ, dựa trên kết quả công cụ (nếu có). Không gọi công cụ.";
 
 type ProviderOptions = Parameters<typeof streamText>[0]["providerOptions"];
 
-export type AnswerOutcome = { status: "answered" | "fallback" | "failed"; toolCalls?: number };
+export type AnswerOutcome = {
+  status: "answered" | "fallback" | "failed";
+  toolCalls?: number;
+  /** Tokens of the first model call, for the timing log. */
+  usage?: { inputTokens?: number; cachedTokens?: number };
+};
+
+/** Instructions as system messages, so a stable prefix can carry a cache marker (Anthropic). */
+export type TutorInstructions = string | SystemModelMessage[];
+
+const withRetryNote = (instructions: TutorInstructions): TutorInstructions =>
+  typeof instructions === "string"
+    ? `${instructions}\n\n${RETRY_INSTRUCTIONS}`
+    : [...instructions, { role: "system", content: RETRY_INSTRUCTIONS }];
+
+/** Input tokens and the part read from the provider's prompt cache (Anthropic, or Gemini's implicit caching). */
+function usageOf(usage: LanguageModelUsage, providerMetadata: unknown): AnswerOutcome["usage"] {
+  const google = (providerMetadata as { google?: { usageMetadata?: { cachedContentTokenCount?: number } } } | undefined)?.google;
+  return {
+    inputTokens: usage.inputTokens,
+    cachedTokens: usage.inputTokenDetails?.cacheReadTokens ?? google?.usageMetadata?.cachedContentTokenCount,
+  };
+}
 
 /**
  * Streams the tutor's answer into `writer` and makes sure the turn ends with text.
@@ -35,7 +66,7 @@ export type AnswerOutcome = { status: "answered" | "fallback" | "failed"; toolCa
 export async function writeTutorAnswer<UI extends UIMessage>(opts: {
   writer: UIMessageStreamWriter<UI>;
   model: LanguageModel;
-  instructions: string;
+  instructions: TutorInstructions;
   messages: ModelMessage[];
   tools: ToolSet;
   providerOptions?: ProviderOptions;
@@ -43,7 +74,12 @@ export async function writeTutorAnswer<UI extends UIMessage>(opts: {
   retryProviderOptions?: ProviderOptions;
   onError: (error: unknown) => string;
   maxOutputTokens?: number;
-  /** Off in tests (smoothStream waits between words). */
+  /** Whole-call timeout (default 55 s, under the route's 60 s). */
+  timeoutMs?: number;
+  /**
+   * Word-by-word smoothing on the server. Off by default: it waits 10 ms per word, so a long answer
+   * arrived seconds late and fell behind the model. The client throttles its renders instead.
+   */
   smooth?: boolean;
   /** Stopwatch marks for the route: model_start, first_text, tool_call, retry, done. */
   onTiming?: (name: string) => void;
@@ -52,21 +88,27 @@ export async function writeTutorAnswer<UI extends UIMessage>(opts: {
   const mark = opts.onTiming ?? (() => {});
   let toolCalls = 0;
   let sawText = false;
+  let usage: AnswerOutcome["usage"];
   const end = (status: AnswerOutcome["status"]): AnswerOutcome => {
     mark("done");
-    return { status, toolCalls };
+    return { status, toolCalls, usage };
   };
   const common = {
     model,
     maxRetries: 0, // the model wrapper already falls back on 429; an instant retry only burns quota
     maxOutputTokens: opts.maxOutputTokens ?? 4096, // Gemini counts thinking tokens here too
-    timeout: { totalMs: 55_000, chunkMs: 20_000 },
-    experimental_transform:
-      opts.smooth === false ? undefined : smoothStream({ delayInMs: 10, chunking: new Intl.Segmenter("vi", { granularity: "word" }) }),
+    timeout: { totalMs: opts.timeoutMs ?? 55_000, chunkMs: 20_000 },
+    experimental_transform: opts.smooth
+      ? smoothStream({ delayInMs: 10, chunking: new Intl.Segmenter("vi", { granularity: "word" }) })
+      : undefined,
     onError: () => {}, // errors reach the client as an error chunk (see pump)
   };
 
-  /** Copies one model stream into the writer; reports whether it carried text or an error. */
+  /**
+   * Copies one model stream into the writer; reports whether it carried text or an error.
+   * An abort here can only be the call timeout (the request signal is not passed down): it is
+   * reported as a timeout error, so the turn is not retried for another full timeout.
+   */
   const pump = async (stream: ReadableStream<unknown>) => {
     let text = false;
     let failed = false;
@@ -84,6 +126,11 @@ export async function writeTutorAnswer<UI extends UIMessage>(opts: {
         mark("tool_call");
       }
       if (chunk.type === "error") failed = true;
+      if (chunk.type === "abort") {
+        failed = true;
+        writer.write({ type: "error", errorText: onError(Object.assign(new Error("tutor call timed out"), { name: "TimeoutError" })) });
+        continue;
+      }
       writer.write(chunk as Parameters<typeof writer.write>[0]);
     }
     return { text, failed };
@@ -98,6 +145,9 @@ export async function writeTutorAnswer<UI extends UIMessage>(opts: {
     stopWhen: isStepCount(MAX_STEPS),
     prepareStep: ({ stepNumber }) => (stepNumber >= MAX_STEPS - 1 ? { toolChoice: "none" as const } : undefined),
     providerOptions: opts.providerOptions,
+    onFinish: ({ totalUsage, providerMetadata }) => {
+      usage = usageOf(totalUsage, providerMetadata);
+    },
   });
   const one = await pump(toUIMessageStream({ stream: first.stream, tools, sendFinish: false, onError }));
   if (one.failed) return end("failed");
@@ -117,7 +167,7 @@ export async function writeTutorAnswer<UI extends UIMessage>(opts: {
   }
   const second = streamText({
     ...common,
-    instructions: `${instructions}\n\nLượt trước bạn chưa viết gì cho người học. Bây giờ hãy viết câu trả lời đầy đủ bằng chữ, dựa trên kết quả công cụ (nếu có). Không gọi công cụ.`,
+    instructions: withRetryNote(instructions),
     messages: [...messages, ...toolTurns],
     tools,
     toolChoice: "none",

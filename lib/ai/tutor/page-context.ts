@@ -36,6 +36,40 @@ export function parsePagePath(path: string): PageContextResult {
   return { kind: "other" };
 }
 
+type ViewedWord = {
+  term: string;
+  reading: string | null;
+  meaning_vi: string;
+  parts_of_speech?: string[] | null;
+  examples?: unknown;
+  personal_note?: string | null;
+};
+
+/** Longest word context line (characters): enough to answer about the word without a lookup. */
+export const WORD_CONTEXT_MAX = 400;
+
+/**
+ * Pure: what the learner sees on a word page, so the tutor can explain "this word" without
+ * calling lookupWord for it: meaning, part of speech, up to 2 saved examples and their own note.
+ */
+export function wordContextLine(word: ViewedWord): string {
+  const readingPart = word.reading ? ` (${word.reading})` : "";
+  const pos = word.parts_of_speech?.length ? ` [${word.parts_of_speech.join(", ")}]` : "";
+  const examples = (Array.isArray(word.examples) ? word.examples : [])
+    .filter((e): e is { text: string; vi?: string } => typeof e?.text === "string" && e.text.trim() !== "")
+    .slice(0, 2)
+    .map((e) => (e.vi ? `${e.text} = ${e.vi}` : e.text));
+  const note = word.personal_note?.trim().replace(/\s+/g, " ");
+  const line = [
+    `Người học đang xem từ ${word.term}${readingPart}${pos}: ${word.meaning_vi}. "Từ này" nghĩa là từ đó.`,
+    examples.length ? `Ví dụ đã lưu: ${examples.join("; ")}.` : null,
+    note ? `Ghi chú của người học: ${note}` : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return line.length > WORD_CONTEXT_MAX ? `${line.slice(0, WORD_CONTEXT_MAX - 1)}…` : line;
+}
+
 /** Server: one short line for the instructions, read through the user's RLS client; null when nothing useful. */
 export async function pageContextLine(
   supabase: ServerSupabase,
@@ -46,13 +80,11 @@ export async function pageContextLine(
   if (parsed.kind === "word") {
     const { data: word } = await supabase
       .from("words")
-      .select("term, reading, meaning_vi, language")
+      .select("term, reading, meaning_vi, parts_of_speech, examples, personal_note")
       .eq("id", parsed.id)
       .maybeSingle();
 
-    if (!word) return null;
-    const readingPart = word.reading ? ` (${word.reading})` : "";
-    return `Người học đang xem từ ${word.term}${readingPart}: ${word.meaning_vi}. "Từ này" nghĩa là từ đó.`;
+    return word ? wordContextLine(word) : null;
   }
 
   if (parsed.kind === "deck") {

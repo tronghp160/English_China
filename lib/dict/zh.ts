@@ -18,6 +18,7 @@ const MAX_SENSES = 6;
 let index: Promise<Map<string, Entry[]>> | null = null;
 
 function load() {
+  const started = performance.now();
   index ??= readFile(FILE)
     .then((gz) => {
       const map = new Map<string, Entry[]>();
@@ -32,6 +33,7 @@ function load() {
           else map.set(key, [e]);
         }
       }
+      console.info("[dict] cvdict loaded in", Math.round(performance.now() - started), "ms");
       return map;
     })
     .catch((err) => {
@@ -39,6 +41,11 @@ function load() {
       throw err;
     });
   return index;
+}
+
+/** Starts parsing CVDICT in the background (first lookup after a cold start is otherwise slow). */
+export function preloadChineseDict(): void {
+  void load().catch(() => {});
 }
 
 /** "jian1 qiang2" → "jiān qiáng" (CEDICT writes ü as u: and the neutral tone as 5). */

@@ -1,16 +1,19 @@
 import { convertToModelMessages, createIdGenerator, createUIMessageStream, createUIMessageStreamResponse, validateUIMessages } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { CHAT_HISTORY_LIMIT, CHAT_MAX_CHARS, threadTitle, tutorInstructions } from "@/lib/ai/chat-prompt";
+import { CHAT_HISTORY_LIMIT, CHAT_MAX_CHARS, threadTitle, tutorInstructionParts } from "@/lib/ai/chat-prompt";
 import { chatTools, type ChatMessage } from "@/lib/ai/chat-tools";
 import { AiError, checkQuota, recordUsage, requireProvider } from "@/lib/ai/enrich";
-import { writeTutorAnswer, type AnswerOutcome } from "@/lib/ai/tutor/answer";
+import { writeTutorAnswer, type AnswerOutcome, type TutorInstructions } from "@/lib/ai/tutor/answer";
+import { tutorEffort, type TutorEffort } from "@/lib/ai/tutor/effort";
 import { classifyTutorError, tutorErrorMessage } from "@/lib/ai/tutor/errors";
 import { learnerSnapshot } from "@/lib/ai/tutor/learner";
 import { tutorModel } from "@/lib/ai/tutor/model";
 import { pageContextLine } from "@/lib/ai/tutor/page-context";
+import { slimHistory } from "@/lib/ai/tutor/slim-history";
 import { tutorTimer } from "@/lib/ai/tutor/timing";
 import { getMe } from "@/lib/auth";
+import { preloadChineseDict } from "@/lib/dict/zh";
 import type { AiProvider } from "@/lib/env";
 import { hitRateLimit } from "@/lib/rate-limit";
 import { studyDay } from "@/lib/srs/streak";
@@ -33,11 +36,12 @@ const bodySchema = z.object({
   context: z.object({ path: z.string().max(200) }).optional(),
 });
 
-// Some thinking makes answers smarter; "low" keeps it quick. The retry after an empty turn thinks less.
-const PROVIDER_OPTIONS = {
+// Thinking delays the first word: quick questions get "minimal", corrections and comparisons "low"
+// (tutorEffort). A model without "minimal" is moved to "low" by the model wrapper.
+const providerOptionsFor = (effort: TutorEffort) => ({
   anthropic: { effort: "low" as const },
-  google: { thinkingConfig: { thinkingLevel: "low" as const } },
-};
+  google: { thinkingConfig: { thinkingLevel: effort } },
+});
 const RETRY_PROVIDER_OPTIONS = {
   anthropic: { effort: "low" as const },
   google: { thinkingConfig: { thinkingLevel: "minimal" as const } },
@@ -58,6 +62,9 @@ export async function POST(request: Request) {
   if (!parsed.success) return fail(`Tin nhắn trống hoặc dài quá ${CHAT_MAX_CHARS} ký tự.`, 400);
   const { id: threadId, message, context } = parsed.data;
   const text = message.parts[0].text;
+  const effort = tutorEffort(text);
+  // lookupWord (zh) would otherwise parse the whole dictionary on its first call after a cold start.
+  if (me.settings.study_langs.includes("zh")) preloadChineseDict();
 
   const limitFailure = (e: unknown) => {
     const err = classifyTutorError(e);
@@ -102,6 +109,7 @@ export async function POST(request: Request) {
   if (!thread) return fail("Không tìm thấy cuộc trò chuyện.", 404);
   if (!allowed) return fail("Bạn gửi nhanh quá. Đợi một chút rồi gửi tiếp nhé.", 429, { kind: "rate", retryAfter: 20 });
   if (quotaError) return limitFailure(quotaError);
+  if (thread.language === "zh") preloadChineseDict();
 
   const userMessage: ChatMessage = { id: message.id, role: "user", parts: [{ type: "text", text }] };
   // Saved concurrently with the model call; awaited before the answer is stored, so the question
@@ -133,17 +141,16 @@ export async function POST(request: Request) {
   const tools = chatTools(supabase, { language: thread.language, deckId: thread.deck_id, deckLanguage: thread.deck?.language });
   let messages: ChatMessage[];
   try {
-    messages = await validateUIMessages<ChatMessage>({ messages: [...history, userMessage], tools });
+    // Older answers keep only their text, and empty turns are dropped (slimHistory).
+    messages = await validateUIMessages<ChatMessage>({ messages: [...slimHistory(history), userMessage], tools });
   } catch (e) {
     // Stored history no longer matches the tool schemas: answer from this message alone.
     console.error("[tutor] history", e);
     messages = [userMessage];
   }
-  // Empty assistant turns from before this fix carry nothing for the model.
-  messages = messages.filter((m) => m.role !== "assistant" || m.parts.some((p) => p.type === "text" && p.text.trim()));
 
   const prefs = readPrefs(me.settings.prefs);
-  const instructions = tutorInstructions({
+  const parts = tutorInstructionParts({
     language: thread.language,
     learnerName: me.profile.display_name,
     deckName: thread.deck?.name,
@@ -153,6 +160,15 @@ export async function POST(request: Request) {
     today: studyDay(new Date(), me.settings.timezone),
     pageContext,
   });
+  // Stable part first, so providers can reuse it from their prompt cache: Gemini does that on its own
+  // for a repeated prefix; Anthropic needs the marker on the stable system message.
+  const instructions: TutorInstructions =
+    provider.provider === "anthropic"
+      ? [
+          { role: "system", content: parts.stable, providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } } },
+          { role: "system", content: parts.turn },
+        ]
+      : `${parts.stable}\n\n${parts.turn}`;
   const modelMessages = await convertToModelMessages(messages);
   const onError = (e: unknown) => {
     const err = classifyTutorError(e);
@@ -174,7 +190,7 @@ export async function POST(request: Request) {
           instructions,
           messages: modelMessages,
           tools,
-          providerOptions: PROVIDER_OPTIONS,
+          providerOptions: providerOptionsFor(effort),
           retryProviderOptions: RETRY_PROVIDER_OPTIONS,
           onError,
           onTiming: timer.mark,
@@ -184,7 +200,7 @@ export async function POST(request: Request) {
       }
     },
     onEnd: async ({ responseMessage }) => {
-      timer.log({ threadId, status: outcome.status, toolCalls: outcome.toolCalls ?? 0 });
+      timer.log({ threadId, status: outcome.status, toolCalls: outcome.toolCalls ?? 0, effort, ...outcome.usage });
       const hasText = responseMessage.parts.some((p) => p.type === "text" && p.text.trim());
       if (!hasText) return; // failed turns are not stored (the question is; "Thử lại" answers it)
       if (outcome.status === "answered") recordUsage(me.user.id);

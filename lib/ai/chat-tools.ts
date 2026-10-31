@@ -36,7 +36,8 @@ export function chatTools(supabase: ServerSupabase, ctx: { language: LangCode; d
       inputExamples: [{ input: { term: "resilient", language: "en" } }, { input: { term: "坚强", language: "zh" } }],
       execute: async ({ term, language }) => {
         const l = pick(language);
-        const { result, source } = await lookupBest(l, term);
+        // A short timeout: when the free dictionary is slow, the tutor answers on its own (found: false).
+        const { result, source } = await lookupBest(l, term, { timeoutMs: 2500 });
         if (!result) return { found: false as const, term, language: l };
         return { found: true as const, language: l, source, entry: summarizeEntry(result) };
       },
