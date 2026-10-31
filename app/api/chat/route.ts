@@ -53,6 +53,15 @@ const fail = (error: string, status: number, extra?: { kind: string; retryAfter?
     { status, headers: extra?.retryAfter ? { "Retry-After": String(Math.ceil(extra.retryAfter)) } : undefined },
   );
 
+/**
+ * Warm-up ping (lib/ai/tutor/warm.ts): wakes this function before the learner sends and starts
+ * loading the Chinese dictionary. Returns no data and costs no quota, so it needs no session.
+ */
+export async function GET() {
+  preloadChineseDict();
+  return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+}
+
 export async function POST(request: Request) {
   const timer = tutorTimer();
   const [me, body] = await Promise.all([getMe(), request.json().catch(() => null)]);

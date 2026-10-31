@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CHAT_MAX_CHARS } from "@/lib/ai/chat-prompt";
 import type { ChatMessage } from "@/lib/ai/chat-tools";
 
@@ -41,6 +41,8 @@ export function useTutorChat(opts: {
     id: threadId,
     messages: initialMessages,
     transport,
+    // At most one render per 50 ms while an answer streams (the server no longer smooths word by word).
+    throttle: 50,
     // The server titles the thread from the first message; refresh so the header shows it.
     onFinish: () => {
       if (!initialMessages.length && !titled.current) {
@@ -72,10 +74,11 @@ export function useTutorChat(opts: {
     void sendMessage({ text: t });
   };
 
-  const retry = () => {
+  // Stable, so memoized message rows (ChatMessages) do not re-render for it.
+  const retry = useCallback(() => {
     if (error) clearError();
     void regenerate();
-  };
+  }, [error, clearError, regenerate]);
 
   const stop = () => {
     void stopChat();

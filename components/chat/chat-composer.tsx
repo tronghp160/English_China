@@ -4,6 +4,7 @@ import { ArrowUp, Square } from "lucide-react";
 import { forwardRef, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { CHAT_MAX_CHARS } from "@/lib/ai/chat-prompt";
+import { warmTutor } from "@/lib/ai/tutor/warm";
 import { cn } from "@/lib/utils";
 
 /** Enter sends on devices with a keyboard; never while an IME (Telex, pinyin) is composing. */
@@ -72,6 +73,7 @@ export const ChatComposer = forwardRef<
           name={name}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onFocus={warmTutor}
           onKeyDown={(e) => {
             if (enterSends(e)) {
               e.preventDefault();

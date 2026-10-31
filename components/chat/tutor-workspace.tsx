@@ -6,6 +6,7 @@ import { loadTutorThread } from "@/lib/actions/chat";
 import type { ChatMessage } from "@/lib/ai/chat-tools";
 import { chatUrl } from "@/lib/ai/tutor/chat-url";
 import { groupThreadsByDay, type ThreadSummary } from "@/lib/ai/tutor/history";
+import { warmTutor } from "@/lib/ai/tutor/warm";
 import type { ChatStarter } from "@/lib/ai/tutor/starters";
 import type { LangCode } from "@/lib/lang/types";
 import { TutorChatFrame } from "./tutor-chat-frame";
@@ -53,6 +54,8 @@ export function TutorWorkspace({
   const [frameKey, setFrameKey] = useState(thread?.id ?? "new");
   const [created, setCreated] = useState<ThreadSummary[]>([]);
   const [deleted, setDeleted] = useState<string[]>([]);
+
+  useEffect(() => warmTutor(), []); // the learner opened /chat to ask something
 
   // Full screen: the chat covers the page. Esc goes back; the page behind does not scroll meanwhile.
   const [expanded, setExpanded] = useState(false);

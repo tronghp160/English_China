@@ -1,6 +1,7 @@
 "use client";
 
 import { chatUrl } from "@/lib/ai/tutor/chat-url";
+import { warmTutor } from "@/lib/ai/tutor/warm";
 
 import { BotMessageSquare, Maximize2, SquarePen, X } from "lucide-react";
 import Link from "next/link";
@@ -114,6 +115,11 @@ export function TutorPanel({
       return () => clearTimeout(timer);
     }
   }, [open, isPhone, activeThread]);
+
+  // Opening the panel means a question is coming: wake the chat function now.
+  useEffect(() => {
+    if (open) warmTutor();
+  }, [open]);
 
   // Listen for Escape key on window when open
   useEffect(() => {

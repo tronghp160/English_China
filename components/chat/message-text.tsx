@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from "react";
+import { Fragment, memo, type ReactNode } from "react";
 
 /*
  * Tiny renderer for the tutor's light markdown: paragraphs, "- " / "1. " lists,
@@ -52,7 +52,8 @@ export function toBlocks(text: string): Block[] {
   return blocks.filter((b) => b.lines.length);
 }
 
-export function MessageText({ text }: { text: string }) {
+/** Memoized on `text`: a streaming answer re-parses only its own growing text. No hooks, so the admin viewer can render it on the server. */
+export const MessageText = memo(function MessageText({ text }: { text: string }) {
   return (
     <div className="space-y-3 leading-relaxed break-words">
       {toBlocks(text).map((b, bi) => {
@@ -78,4 +79,4 @@ export function MessageText({ text }: { text: string }) {
       })}
     </div>
   );
-}
+});

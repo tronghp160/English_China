@@ -71,6 +71,7 @@ async function send(threadId, text) {
   let ttfb, ttft;
   let tools = 0;
   let chars = 0;
+  let answer = "";
   let error;
   let buf = "";
   for (;;) {
@@ -88,9 +89,10 @@ async function send(threadId, text) {
       } catch {
         continue;
       }
-      if (ev.type === "text-delta" && ev.delta?.trim()) {
-        ttft ??= performance.now() - t0;
+      if (ev.type === "text-delta" && ev.delta) {
+        if (ev.delta.trim()) ttft ??= performance.now() - t0;
         chars += ev.delta.length;
+        answer += ev.delta;
       }
       if (ev.type === "tool-input-available") tools++;
       if (ev.type === "error") error = ev.errorText;
@@ -98,7 +100,8 @@ async function send(threadId, text) {
   }
   const total = performance.now() - t0;
   const r = (n) => (n === undefined ? null : Math.round(n));
-  return { ttfb: r(ttfb), ttft: r(ttft), total: r(total), tools, chars, error, serverTiming };
+  // The answer is kept (in the JSON file only) so quality can be read next to the timings.
+  return { ttfb: r(ttfb), ttft: r(ttft), total: r(total), tools, chars, error, serverTiming, answer };
 }
 
 async function newThread(language) {
