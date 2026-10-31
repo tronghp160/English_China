@@ -11,6 +11,7 @@ import { tutorModel } from "@/lib/ai/tutor/model";
 import { pageContextLine } from "@/lib/ai/tutor/page-context";
 import { tutorTimer } from "@/lib/ai/tutor/timing";
 import { getMe } from "@/lib/auth";
+import type { AiProvider } from "@/lib/env";
 import { hitRateLimit } from "@/lib/rate-limit";
 import { studyDay } from "@/lib/srs/streak";
 import { createClient } from "@/lib/supabase/server";
@@ -50,39 +51,31 @@ const fail = (error: string, status: number, extra?: { kind: string; retryAfter?
 
 export async function POST(request: Request) {
   const timer = tutorTimer();
-  const me = await getMe();
+  const [me, body] = await Promise.all([getMe(), request.json().catch(() => null)]);
   timer.mark("auth");
   if (!me) return fail("Bạn cần đăng nhập.", 401);
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return fail(`Tin nhắn trống hoặc dài quá ${CHAT_MAX_CHARS} ký tự.`, 400);
   const { id: threadId, message, context } = parsed.data;
   const text = message.parts[0].text;
 
-  const supabase = await createClient();
-  const { data: thread } = await supabase
-    .from("chat_threads")
-    .select("id, language, deck_id, title, deck:decks(name, language)")
-    .eq("id", threadId)
-    .maybeSingle();
-  timer.mark("thread");
-  if (!thread) return fail("Không tìm thấy cuộc trò chuyện.", 404);
-
-  if (!(await hitRateLimit(me.user.id, "chat", 12, 60)))
-    return fail("Bạn gửi nhanh quá. Đợi một chút rồi gửi tiếp nhé.", 429, { kind: "rate", retryAfter: 20 });
-
-  let provider;
-  try {
-    provider = requireProvider();
-    await checkQuota(me.user.id); // the unit is recorded only once an answer was written (onEnd)
-  } catch (e) {
+  const limitFailure = (e: unknown) => {
     const err = classifyTutorError(e);
     if (err.kind === "no_key") console.error("[tutor] no AI key on the server");
     if (e instanceof AiError || err.kind !== "unknown") return fail(tutorErrorMessage(err), err.kind === "quota" ? 429 : 503, err);
     throw e;
+  };
+  let provider: AiProvider;
+  try {
+    provider = requireProvider(); // no I/O
+  } catch (e) {
+    return limitFailure(e);
   }
-  timer.mark("limits");
 
-  const [{ data: rows }, snapshot, pageContext] = await Promise.all([
+  const supabase = await createClient();
+  // The context needs only the thread id and the user, so it loads alongside the checks below;
+  // when a check fails it is simply dropped (a few wasted reads).
+  const contextPromise = Promise.all([
     supabase
       .from("chat_messages")
       .select("id, role, parts")
@@ -92,23 +85,50 @@ export async function POST(request: Request) {
     learnerSnapshot(supabase, me.settings.study_langs),
     context?.path ? pageContextLine(supabase, context.path) : Promise.resolve(null),
   ]);
+  contextPromise.catch(() => {}); // awaited below; this only avoids an unhandled rejection on an early return
+
+  // One round for the thread and both limits. A request for a missing thread now also counts
+  // towards the rate limit (acceptable). The error order stays 404 → rate → quota.
+  const [{ data: thread }, allowed, quotaError] = await Promise.all([
+    supabase.from("chat_threads").select("id, language, deck_id, title, deck:decks(name, language)").eq("id", threadId).maybeSingle(),
+    hitRateLimit(me.user.id, "chat", 12, 60),
+    // the unit is recorded only once an answer was written (onEnd)
+    checkQuota(me.user.id).then(
+      () => null,
+      (e: unknown) => e ?? new Error("checkQuota failed"),
+    ),
+  ]);
+  timer.mark("limits");
+  if (!thread) return fail("Không tìm thấy cuộc trò chuyện.", 404);
+  if (!allowed) return fail("Bạn gửi nhanh quá. Đợi một chút rồi gửi tiếp nhé.", 429, { kind: "rate", retryAfter: 20 });
+  if (quotaError) return limitFailure(quotaError);
+
+  const userMessage: ChatMessage = { id: message.id, role: "user", parts: [{ type: "text", text }] };
+  // Saved concurrently with the model call; awaited before the answer is stored, so the question
+  // still survives a failed answer (retry keeps the same id) and stays before the answer in time.
+  const saveUser = Promise.all([
+    supabase.from("chat_messages").upsert(
+      { thread_id: threadId, id: message.id, user_id: me.user.id, role: "user", parts: userMessage.parts as unknown as Json },
+      { onConflict: "thread_id,id", ignoreDuplicates: true },
+    ),
+    supabase
+      .from("chat_threads")
+      .update({ updated_at: new Date().toISOString(), ...(thread.title ? {} : { title: threadTitle(text) }) })
+      .eq("id", threadId),
+  ]).then(
+    ([saved, touched]) => {
+      if (saved.error) console.error("[tutor] save user", saved.error.message);
+      if (touched.error) console.error("[tutor] touch thread", touched.error.message);
+    },
+    (e: unknown) => console.error("[tutor] save user", e),
+  );
+
+  const [{ data: rows }, snapshot, pageContext] = await contextPromise;
   timer.mark("context");
   const history = (rows ?? [])
     .reverse()
     .filter((r) => r.id !== message.id)
     .map((r) => ({ id: r.id, role: r.role, parts: r.parts }) as unknown as ChatMessage);
-
-  const userMessage: ChatMessage = { id: message.id, role: "user", parts: [{ type: "text", text }] };
-  // Saved before the model runs, so the question survives a failed answer (retry keeps the same id).
-  await supabase.from("chat_messages").upsert(
-    { thread_id: threadId, id: message.id, user_id: me.user.id, role: "user", parts: userMessage.parts as unknown as Json },
-    { onConflict: "thread_id,id", ignoreDuplicates: true },
-  );
-  await supabase
-    .from("chat_threads")
-    .update({ updated_at: new Date().toISOString(), ...(thread.title ? {} : { title: threadTitle(text) }) })
-    .eq("id", threadId);
-  timer.mark("saved");
 
   const tools = chatTools(supabase, { language: thread.language, deckId: thread.deck_id, deckLanguage: thread.deck?.language });
   let messages: ChatMessage[];
@@ -147,17 +167,21 @@ export async function POST(request: Request) {
     generateId: createIdGenerator({ prefix: "msg", size: 16 }),
     onError,
     execute: async ({ writer }) => {
-      outcome = await writeTutorAnswer({
-        writer,
-        model: tutorModel(provider),
-        instructions,
-        messages: modelMessages,
-        tools,
-        providerOptions: PROVIDER_OPTIONS,
-        retryProviderOptions: RETRY_PROVIDER_OPTIONS,
-        onError,
-        onTiming: timer.mark,
-      });
+      try {
+        outcome = await writeTutorAnswer({
+          writer,
+          model: tutorModel(provider),
+          instructions,
+          messages: modelMessages,
+          tools,
+          providerOptions: PROVIDER_OPTIONS,
+          retryProviderOptions: RETRY_PROVIDER_OPTIONS,
+          onError,
+          onTiming: timer.mark,
+        });
+      } finally {
+        await saveUser; // onEnd, which stores the answer, runs after execute
+      }
     },
     onEnd: async ({ responseMessage }) => {
       timer.log({ threadId, status: outcome.status, toolCalls: outcome.toolCalls ?? 0 });

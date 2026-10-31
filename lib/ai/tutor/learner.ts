@@ -27,17 +27,24 @@ export async function learnerSnapshot(supabase: ServerSupabase, languages: LangC
     });
   };
 
+  const lists = (language: LangCode) => Promise.all([words(language, "hard", 8), words(language, "recent", 6)]);
+
   try {
-    const { data: overview } = await supabase.rpc("today_overview");
+    // The word lists for the study languages load together with the overview (one round, not two).
+    const studied = [...new Set(languages)];
+    const [{ data: overview }, early] = await Promise.all([
+      supabase.rpc("today_overview"),
+      Promise.all(studied.map(async (l) => [l, await lists(l)] as const)),
+    ]);
     const rows = overview ?? [];
-    const langs = [...new Set([...languages, ...rows.map((r) => r.language)])];
+    const ready = new Map(early);
+    const langs = [...new Set([...studied, ...rows.map((r) => r.language)])];
     return await Promise.all(
       langs.map(async (language) => {
         const row = rows.find((r) => r.language === language);
         const total = Number(row?.total_cards ?? 0);
-        const [hard, recent] = total
-          ? await Promise.all([words(language, "hard", 8), words(language, "recent", 6)])
-          : [[], []];
+        // A language with cards that is not in study_langs (rare) costs a second round.
+        const [hard, recent] = total ? (ready.get(language) ?? (await lists(language))) : [[], []];
         return {
           language,
           total,
