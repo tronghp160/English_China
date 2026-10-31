@@ -489,7 +489,7 @@ export function WordComposer({
           <div className="flex items-center gap-2">
             <span className="text-xs text-fg-muted shrink-0">Vào bộ:</span>
             <Select value={targetDeckId} onValueChange={setTargetDeckId}>
-              <SelectTrigger size="sm" aria-label="Vào bộ" className="h-9 max-w-56 text-xs">
+              <SelectTrigger size="sm" aria-label="Vào bộ" className="max-w-56 text-xs">
                 <SelectValue placeholder="Chọn bộ từ" />
               </SelectTrigger>
               <SelectContent>

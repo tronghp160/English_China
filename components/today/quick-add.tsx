@@ -109,7 +109,7 @@ export function QuickAdd({
           <div className="flex items-center gap-2">
             <span className="text-xs text-fg-muted shrink-0">Vào bộ:</span>
             <Select value={deckId} onValueChange={choose}>
-              <SelectTrigger size="sm" className="h-9 max-w-full truncate text-xs" aria-label="Vào bộ">
+              <SelectTrigger size="sm" className="max-w-full truncate text-xs" aria-label="Vào bộ">
                 <SelectValue placeholder="Chọn bộ từ" />
               </SelectTrigger>
               <SelectContent>

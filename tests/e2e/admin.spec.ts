@@ -77,12 +77,15 @@ test("được cấp quyền: quản lý người dùng, từ vựng, bộ từ 
   }).select().single();
   expect(threadErr).toBeNull();
 
-  await sb.from("chat_messages").insert({
+  // chat_messages.id has no default (the client's message id), so it must be given.
+  const { error: msgErr } = await sb.from("chat_messages").insert({
     thread_id: thread.id,
+    id: "msg_e2e_admin",
     user_id: otherId,
     role: "user",
     parts: [{ type: "text", text: "Xin chào gia sư" }],
   });
+  expect(msgErr).toBeNull();
 
   await page.goto("/today");
   await page.getByRole("button", { name: "Tài khoản và cài đặt" }).click();
@@ -104,23 +107,23 @@ test("được cấp quyền: quản lý người dùng, từ vựng, bộ từ 
 
   // user detail page: words tab
   await page.goto(`/admin/users/${otherId}?tab=words`);
-  await expect(page.getByText("resilient")).toBeVisible();
+  await expect(page.getByText("resilient", { exact: true })).toBeVisible();
   // click details to expand
-  await page.getByText("resilient").click();
+  await page.getByText("resilient", { exact: true }).click();
   await expect(page.getByText("Cô ấy kiên cường.")).toBeVisible();
   await expect(page.getByText("Ghi chú riêng tư của người dùng")).toBeVisible();
 
   // admin deck page: see word and delete it
   await page.goto(`/admin/decks/${privDeck.id}`);
-  await expect(page.getByText("resilient")).toBeVisible();
-  await page.getByText("resilient").click();
+  await expect(page.getByText("resilient", { exact: true })).toBeVisible();
+  await page.getByText("resilient", { exact: true }).click();
   await page.getByRole("button", { name: "Xóa từ" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Xóa từ" }).click();
-  await expect(page.getByText("resilient")).toHaveCount(0);
+  await expect(page.getByText("resilient", { exact: true })).toHaveCount(0);
 
   // user detail page: chat tab
   await page.goto(`/admin/users/${otherId}?tab=chat`);
-  await expect(page.getByText("Trò chuyện E2E")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Trò chuyện E2E" })).toBeVisible(); // the title is also in the thread list
   await expect(page.getByText("Xin chào gia sư")).toBeVisible();
 
   // my own row has no buttons

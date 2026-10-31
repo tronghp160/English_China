@@ -110,7 +110,7 @@ export function MascotSay({
           <button
             type="button"
             onClick={home.open}
-            className="mt-1.5 min-h-9 rounded-full bg-primary-soft px-3 text-sm font-bold text-primary-fg hover:bg-primary-soft/70"
+            className="mt-1.5 min-h-10 rounded-full bg-primary-soft px-3 text-sm font-bold text-primary-fg hover:bg-primary-soft/70"
           >
             Chơi với {name}
           </button>

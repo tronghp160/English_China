@@ -199,8 +199,10 @@ test("nhật ký ghi nhận thao tác khóa tài khoản và xem lịch sử đ�
 
   // Check audit tab
   await pageA.goto("/admin?tab=audit");
-  await expect(pageA.getByText("Khóa tài khoản").first()).toBeVisible();
-  await expect(pageA.getByText("Xem lịch sử đăng nhập").first()).toBeVisible();
+  // In the log table, not the action filter (its <option>s carry the same labels).
+  const log = pageA.getByRole("table");
+  await expect(log.getByText("Khóa tài khoản").first()).toBeVisible();
+  await expect(log.getByText("Xem lịch sử đăng nhập").first()).toBeVisible();
 });
 
 test("không có lỗi trang không mong muốn", () => {

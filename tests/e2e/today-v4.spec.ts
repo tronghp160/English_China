@@ -16,9 +16,15 @@ test.beforeAll(async ({ browser }) => {
 
   const userId = (await userIdByEmail(email))!;
   const day = studyDay(new Date(), "Asia/Ho_Chi_Minh");
+  // "Done for today" needs no due cards and no new cards left: the sample decks only have new cards,
+  // so today's new-card allowance (daily_new_limit) is marked as used.
+  const { data: settings } = await admin().from("user_settings").select("daily_new_limit").eq("user_id", userId).single();
   const { error } = await admin()
     .from("daily_stats")
-    .upsert({ user_id: userId, day, reviews: 25, correct: 20, new_learned: 6, xp: 40 }, { onConflict: "user_id,day" });
+    .upsert(
+      { user_id: userId, day, reviews: 25, correct: 20, new_learned: settings?.daily_new_limit ?? 15, xp: 40 },
+      { onConflict: "user_id,day" },
+    );
   if (error) throw error;
 });
 
@@ -45,7 +51,7 @@ test("ở 1280px thẻ Hoạt động có heatmap 26 cột hiển thị", async 
 
 test("khi đã ôn xong hiện dòng Bạn đã ôn … lượt, nhớ đúng …%", async () => {
   await page.goto("/today");
-  await expect(page.getByText("Hôm nay ôn xong rồi")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hôm nay ôn xong rồi" })).toBeVisible(); // one heading per layout, the other is hidden
   await expect(page.getByText(/Bạn đã ôn 25 lượt, nhớ đúng 80%/)).toBeVisible();
   expect(errors).toEqual([]);
 });
