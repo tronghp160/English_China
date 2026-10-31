@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { admin, deleteUserByEmail, signUp, testEmail, userIdByEmail, watchErrors } from "./helpers";
+import { admin, createMockedThread, deleteUserByEmail, signUp, testEmail, userIdByEmail, watchErrors } from "./helpers";
 
 const email = testEmail();
 const email2 = testEmail();
@@ -37,13 +37,14 @@ test("gia sư: hỏi từ ô chat, nhận câu trả lời và mở form thêm t
   const deck = decks![0];
 
   if (process.env.E2E_REAL_AI !== "1") {
-    await page.route("**/api/chat", (route) =>
-      route.fulfill({
+    await page.route("**/api/chat", async (route) => {
+      await createMockedThread(email, route.request().postDataJSON());
+      await route.fulfill({
         status: 200,
         headers: { "content-type": "text/event-stream", "x-vercel-ai-ui-message-stream": "v1" },
         body: tutorStream(deck),
-      }),
-    );
+      });
+    });
   }
 
   await page.getByRole("link", { name: "Gia sư" }).first().click();
@@ -80,13 +81,14 @@ test("gia sư: gõ câu hỏi ở trang Gia sư, câu trả lời rỗng hiện 
   await signUp(page, email2);
   // An answer stream with no text at all (what Gemini sometimes sent): the bubble must not stay blank.
   const empty = [{ type: "start", messageId: "msg_e2e_empty" }, { type: "start-step" }, { type: "finish-step" }, { type: "finish" }];
-  await page.route("**/api/chat", (route) =>
-    route.fulfill({
+  await page.route("**/api/chat", async (route) => {
+    await createMockedThread(email2, route.request().postDataJSON());
+    await route.fulfill({
       status: 200,
       headers: { "content-type": "text/event-stream", "x-vercel-ai-ui-message-stream": "v1" },
       body: empty.map((c) => `data: ${JSON.stringify(c)}\n\n`).join("") + "data: [DONE]\n\n",
-    }),
-  );
+    });
+  });
   await page.goto("/chat");
   await page.getByLabel("Tin nhắn cho gia sư").fill("phân biệt dog và cat");
   await page.getByRole("button", { name: "Gửi" }).click();

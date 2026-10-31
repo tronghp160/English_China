@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { admin, deleteUserByEmail, signUp, testEmail, userIdByEmail, watchErrors } from "./helpers";
+import { admin, createMockedThread, deleteUserByEmail, signUp, testEmail, userIdByEmail, watchErrors } from "./helpers";
 
 const email = testEmail();
 
@@ -33,9 +33,12 @@ test("tutor widget: floating panel chat, fullscreen on mobile, escape key, and p
   await signUp(page, email);
   await page.goto("/today");
 
+  const posted: { newThread?: unknown }[] = [];
   if (process.env.E2E_REAL_AI !== "1") {
     await page.route("**/api/chat", async (route) => {
       const body = route.request().postDataJSON();
+      if (body?.message) posted.push(body);
+      await createMockedThread(email, body);
       if (body?.id && body?.message) {
         const userId = await userIdByEmail(email);
         if (userId) {
@@ -101,15 +104,23 @@ test("tutor widget: floating panel chat, fullscreen on mobile, escape key, and p
   const starter = page.getByRole("button", { name: /Kiểm tra nhanh 5 từ đến hạn/ });
   await expect(starter).toBeVisible();
   await starter.click();
+  // The question shows at once: the panel picks the thread id, no server action runs first.
+  await expect(panel.getByText("Kiểm tra nhanh mình 5 từ đến hạn ôn nhé")).toBeVisible();
 
   if (process.env.E2E_REAL_AI !== "1") {
     await expect(page.getByText("Chào bạn! Đây là câu trả lời thử nghiệm")).toBeVisible();
+    // Only the first question asks /api/chat to create the thread.
+    expect(posted).toHaveLength(1);
+    expect(posted[0].newThread).toEqual({});
   }
 
   const maximizeBtn = page.getByRole("link", { name: "Mở toàn màn hình" });
   await expect(maximizeBtn).toBeVisible();
   await maximizeBtn.click();
   await expect(page).toHaveURL(/\/chat\?c=[0-9a-f-]{36}$/);
+  // The thread was created with that first message, so the conversation is still there after a reload.
+  await page.reload();
+  await expect(page.getByRole("list", { name: "Tin nhắn" }).getByText("Kiểm tra nhanh mình 5 từ đến hạn ôn nhé")).toBeVisible();
 
   // 3. Trên /chat: nút launcher không tồn tại
   await expect(page.getByRole("button", { name: /Mở gia sư AI/ })).toHaveCount(0);

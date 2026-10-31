@@ -54,6 +54,24 @@ describe("chat RLS", () => {
     ).rejects.toThrow();
   });
 
+  it("accepts a thread id chosen by the client, and an upsert of someone else's id changes nothing", async () => {
+    // /api/chat creates the thread with the first message, using the id the client picked.
+    const id = "6f1d6a0e-4c1b-4c84-9a57-2b8e5d3f9c11";
+    const created = await as(db, alice, () =>
+      db.query("insert into public.chat_threads (id, user_id, language, title) values ($1, $2, 'en', 'mới') returning id", [id, alice]),
+    );
+    expect(created.rows).toEqual([{ id }]);
+    // Bob sending that id with newThread: the route's upsert (on conflict do nothing) leaves it alone…
+    await as(db, bob, () =>
+      db.query("insert into public.chat_threads (id, user_id, language) values ($1, $2, 'zh') on conflict (id) do nothing", [id, bob]),
+    );
+    // …and he still cannot see it, so the route answers 404.
+    const seen = await as(db, bob, () => db.query("select id from public.chat_threads where id = $1", [id]));
+    expect(seen.rows).toHaveLength(0);
+    const owner = await db.query<{ user_id: string; language: string }>("select user_id, language from public.chat_threads where id = $1", [id]);
+    expect(owner.rows).toEqual([{ user_id: alice, language: "en" }]);
+  });
+
   it("does not let others delete, and cascades messages when the owner deletes", async () => {
     const del = await as(db, bob, () => db.query("delete from public.chat_threads where id = $1 returning id", [thread]));
     expect(del.rows).toHaveLength(0);

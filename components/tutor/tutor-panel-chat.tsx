@@ -14,6 +14,7 @@ export function TutorPanelChat({
   language,
   initialMessages,
   initialPrompt,
+  isNew,
   aiEnabled,
   tutorName,
   mascot = true,
@@ -24,6 +25,8 @@ export function TutorPanelChat({
   language: LangCode;
   initialMessages: ChatMessage[];
   initialPrompt?: string;
+  /** The thread does not exist yet; the first message creates it. */
+  isNew?: boolean;
   aiEnabled: boolean;
   tutorName: string;
   mascot?: boolean;
@@ -36,6 +39,7 @@ export function TutorPanelChat({
     initialPrompt,
     aiEnabled,
     prepareContext: () => ({ path: window.location.pathname }),
+    newThread: isNew ? {} : undefined,
   });
 
   const [input, setInput] = useState("");

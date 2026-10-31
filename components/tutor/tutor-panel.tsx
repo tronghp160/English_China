@@ -1,6 +1,7 @@
 "use client";
 
 import { chatUrl } from "@/lib/ai/tutor/chat-url";
+import { guessLanguage } from "@/lib/ai/tutor/starters";
 import { warmTutor } from "@/lib/ai/tutor/warm";
 
 import { BotMessageSquare, Maximize2, SquarePen, X } from "lucide-react";
@@ -8,7 +9,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { Pup } from "@/components/mascot/pup";
-import { createTutorThread, loadTutorThread } from "@/lib/actions/chat";
+import { loadTutorThread } from "@/lib/actions/chat";
 import type { ChatMessage } from "@/lib/ai/chat-tools";
 import type { LangCode } from "@/lib/lang/types";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -22,6 +23,8 @@ export type PanelThread = {
   language: LangCode;
   messages: ChatMessage[];
   initialPrompt?: string;
+  /** Opened here with a new id: the first message creates the thread (useTutorChat newThread). */
+  isNew?: boolean;
 };
 
 export function TutorPanel({
@@ -57,7 +60,6 @@ export function TutorPanel({
   const [loadingThread, setLoadingThread] = useState(false);
   const [busy, setBusy] = useState(false);
   const [emptyInput, setEmptyInput] = useState("");
-  const [creating, setCreating] = useState(false);
 
   const storageKey = `sotu:tutor-panel:${userId}`;
 
@@ -139,31 +141,26 @@ export function TutorPanel({
     onBusy(isBusy);
   };
 
-  const handleStartPrompt = async (promptText: string) => {
+  // The first question opens the chat at once: the id is picked here and /api/chat creates the
+  // thread with that first message (no server action round trip before sending).
+  const handleStartPrompt = (promptText: string) => {
     const text = promptText.trim();
-    if (!text || creating || busy) return;
-    setCreating(true);
+    if (!text || busy) return;
+    const id = crypto.randomUUID();
     try {
-      const res = await createTutorThread(text);
-      if (res.ok && res.data) {
-        const id = res.data.id;
-        try {
-          localStorage.setItem(storageKey, id);
-        } catch {
-          // ignore
-        }
-        setActiveThread({
-          id,
-          title: null,
-          language: studyLangs[0] ?? "en",
-          messages: [],
-          initialPrompt: text,
-        });
-        setEmptyInput("");
-      }
-    } finally {
-      setCreating(false);
+      localStorage.setItem(storageKey, id);
+    } catch {
+      // ignore
     }
+    setActiveThread({
+      id,
+      title: null,
+      language: guessLanguage(text, studyLangs[0] ?? "en"),
+      messages: [],
+      initialPrompt: text,
+      isNew: true,
+    });
+    setEmptyInput("");
   };
 
   const handleNewChat = () => {
@@ -204,7 +201,7 @@ export function TutorPanel({
 
   const onEmptySubmit = (e: FormEvent) => {
     e.preventDefault();
-    void handleStartPrompt(emptyInput);
+    handleStartPrompt(emptyInput);
   };
 
   return (
@@ -298,6 +295,7 @@ export function TutorPanel({
           language={activeThread.language}
           initialMessages={activeThread.messages}
           initialPrompt={activeThread.initialPrompt}
+          isNew={activeThread.isNew}
           aiEnabled={aiEnabled}
           tutorName={tutorName}
           mascot={mascot}
@@ -324,8 +322,8 @@ export function TutorPanel({
                 ref={inputRef}
                 value={emptyInput}
                 onChange={setEmptyInput}
-                onSend={() => void handleStartPrompt(emptyInput)}
-                busy={creating}
+                onSend={() => handleStartPrompt(emptyInput)}
+                busy={busy}
                 size="panel"
                 inputId="tutor-panel-input"
                 placeholder={`Hỏi ${tutorName} bất cứ điều gì…`}

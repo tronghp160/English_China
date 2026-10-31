@@ -2,11 +2,9 @@
 
 import { BotMessageSquare, Maximize2, Minimize2, SquarePen } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { toast } from "sonner";
 import { PettablePup } from "@/components/mascot/pettable-pup";
 import { Pup } from "@/components/mascot/pup";
 import { Button } from "@/components/ui/button";
-import { createTutorThread } from "@/lib/actions/chat";
 import { threadTitle } from "@/lib/ai/chat-prompt";
 import type { ChatMessage } from "@/lib/ai/chat-tools";
 import { FOLLOW_UPS, type ChatStarter } from "@/lib/ai/tutor/starters";
@@ -41,6 +39,8 @@ export function TutorChatFrame(
     title: string | null;
     initialMessages: ChatMessage[];
     initialPrompt?: string;
+    /** The thread does not exist yet: the first message creates it (useTutorChat newThread). */
+    isNew?: boolean;
     onCreated: (thread: { id: string; title: string; prompt: string }) => void;
   },
 ) {
@@ -124,7 +124,6 @@ function FrameFooter({ children, expanded }: { children: ReactNode; expanded: bo
 }
 
 function EmptyFrame({
-  language,
   starters,
   tutorName,
   mascot,
@@ -136,7 +135,6 @@ function EmptyFrame({
   onToggleExpand,
 }: Common & { onCreated: (thread: { id: string; title: string; prompt: string }) => void }) {
   const [input, setInput] = useState("");
-  const [pending, setPending] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Ready to type as soon as the page opens (keyboard devices only: a phone keyboard would cover the window).
@@ -144,20 +142,15 @@ function EmptyFrame({
     if (window.matchMedia("(pointer: fine)").matches) inputRef.current?.focus({ preventScroll: true });
   }, []);
 
-  const ask = async (text: string) => {
+  // The conversation opens at once with an id picked here; /api/chat creates the thread with the
+  // first message (no server action round trip before the question is sent).
+  const ask = (text: string) => {
     const t = text.trim();
-    if (!t || pending) return;
-    setPending(t);
-    const res = await createTutorThread(t);
-    if (!res.ok) {
-      setPending(null);
-      toast.error(res.error);
-      return;
-    }
-    onCreated({ id: res.data.id, title: threadTitle(t), prompt: t });
+    if (!t) return;
+    onCreated({ id: crypto.randomUUID(), title: threadTitle(t), prompt: t });
   };
   const pick = (s: ChatStarter) => {
-    if (s.send) return void ask(s.text);
+    if (s.send) return ask(s.text);
     setInput(s.text);
     requestAnimationFrame(() => {
       const el = inputRef.current;
@@ -167,20 +160,14 @@ function EmptyFrame({
   };
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    void ask(input);
+    ask(input);
   };
-
-  // While the conversation is being created, show the question and Bin thinking.
-  const pendingMessages: ChatMessage[] = pending ? [{ id: "pending", role: "user", parts: [{ type: "text", text: pending }] }] : [];
 
   return (
     <section className={frameClass(expanded)} aria-label="Khung chat với gia sư" aria-modal={expanded || undefined} role={expanded ? "dialog" : undefined}>
-      <FrameHeader title={`Hỏi ${tutorName} bất cứ điều gì`} busy={Boolean(pending)} tutorName={tutorName} mascot={mascot} onNewChat={onNewChat} showNew={false} expanded={expanded} onToggleExpand={onToggleExpand} />
+      <FrameHeader title={`Hỏi ${tutorName} bất cứ điều gì`} busy={false} tutorName={tutorName} mascot={mascot} onNewChat={onNewChat} showNew={false} expanded={expanded} onToggleExpand={onToggleExpand} />
       <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-5 lg:px-6">
         <div className={column(expanded)}>
-        {pending ? (
-          <ChatMessages messages={pendingMessages} busy waiting language={language} aiEnabled={aiEnabled} tutorName={tutorName} mascot={mascot} />
-        ) : (
           <div className="mx-auto flex max-w-xl flex-col items-center gap-5 text-center">
             {mascot && <PettablePup name={tutorName} mood="wave" size={96} />}
             <div className="space-y-1.5">
@@ -192,13 +179,12 @@ function EmptyFrame({
             </div>
             {aiEnabled ? (
               <div className="w-full text-left">
-                <ChatStarters starters={starters} onPick={pick} disabled={Boolean(pending)} />
+                <ChatStarters starters={starters} onPick={pick} />
               </div>
             ) : (
               <p className="text-sm text-danger-fg">Gia sư chưa được bật (thiếu khóa AI trên máy chủ).</p>
             )}
           </div>
-        )}
         </div>
       </div>
       {aiEnabled && (
@@ -208,8 +194,8 @@ function EmptyFrame({
               ref={inputRef}
               value={input}
               onChange={setInput}
-              onSend={() => void ask(input)}
-              busy={Boolean(pending)}
+              onSend={() => ask(input)}
+              busy={false}
               size="panel"
               label="Tin nhắn cho gia sư"
               placeholder="Hỏi về một từ, nhờ sửa câu, luyện hội thoại…"
@@ -226,6 +212,7 @@ function ThreadFrame({
   title,
   initialMessages,
   initialPrompt,
+  isNew,
   language,
   tutorName,
   mascot,
@@ -233,8 +220,9 @@ function ThreadFrame({
   onNewChat,
   expanded,
   onToggleExpand,
-}: Common & { threadId: string; title: string | null; initialMessages: ChatMessage[]; initialPrompt?: string }) {
+}: Common & { threadId: string; title: string | null; initialMessages: ChatMessage[]; initialPrompt?: string; isNew?: boolean }) {
   const { messages, status, busy, waiting, error, send, retry, stop, lastHasText } = useTutorChat({
+    newThread: isNew ? {} : undefined,
     threadId,
     initialMessages,
     initialPrompt,

@@ -12,7 +12,8 @@ import type { LangCode } from "@/lib/lang/types";
 import { TutorChatFrame } from "./tutor-chat-frame";
 import { TutorHistoryList } from "./tutor-history-list";
 
-type Active = { id: string; title: string | null; messages: ChatMessage[]; prompt?: string } | null;
+/** isNew: opened here with a fresh id; the first message creates the thread (/api/chat newThread). */
+type Active = { id: string; title: string | null; messages: ChatMessage[]; prompt?: string; isNew?: boolean } | null;
 
 /** Changes the address bar without a Next navigation (same /chat route), so the open chat keeps its state. */
 function setUrl(path: string) {
@@ -107,7 +108,7 @@ export function TutorWorkspace({
   };
   const onCreated = ({ id, title, prompt }: { id: string; title: string; prompt: string }) => {
     setCreated((c) => [{ id, title, updated_at: new Date().toISOString() }, ...c]);
-    setActive({ id, title, messages: [], prompt });
+    setActive({ id, title, messages: [], prompt, isNew: true });
     setFrameKey(id);
     setUrl(chatUrl(id));
   };
@@ -139,6 +140,7 @@ export function TutorWorkspace({
         title={active?.title ?? null}
         initialMessages={active?.messages ?? []}
         initialPrompt={active?.prompt}
+        isNew={active?.isNew}
         language={language}
         starters={starters}
         tutorName={tutorName}

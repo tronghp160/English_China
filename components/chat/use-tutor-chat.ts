@@ -15,13 +15,20 @@ export function useTutorChat(opts: {
   aiEnabled: boolean;
   onFirstAnswer?: () => void;
   prepareContext?: () => Record<string, unknown> | undefined;
+  /**
+   * The client picked threadId and the thread does not exist yet: /api/chat creates it with the
+   * first message. Sent until a first answer arrives, so "Thử lại" after a failed first send
+   * (rate limit, quota) still creates it.
+   */
+  newThread?: { deckId?: string | null };
 }) {
   const { threadId, initialMessages, initialPrompt, aiEnabled, onFirstAnswer, prepareContext } = opts;
   const titled = useRef(false);
-
-  const [transport] = useState(
-    () =>
-      new DefaultChatTransport<ChatMessage>({
+  const [{ transport, threadCreated }] = useState(() => {
+    // Sent with every request until the first answer arrives (then the thread exists).
+    let newThread = opts.newThread ?? null;
+    return {
+      transport: new DefaultChatTransport<ChatMessage>({
         api: "/api/chat",
         // History lives on the server; send only the new message and optional context.
         prepareSendMessagesRequest: ({ messages, id }) => {
@@ -31,11 +38,16 @@ export function useTutorChat(opts: {
               id,
               message: messages.at(-1),
               ...(context ? { context } : {}),
+              ...(newThread ? { newThread } : {}),
             },
           };
         },
       }),
-  );
+      threadCreated: () => {
+        newThread = null;
+      },
+    };
+  });
 
   const { messages, sendMessage, status, error, stop: stopChat, regenerate, clearError } = useChat<ChatMessage>({
     id: threadId,
@@ -44,7 +56,8 @@ export function useTutorChat(opts: {
     // At most one render per 50 ms while an answer streams (the server no longer smooths word by word).
     throttle: 50,
     // The server titles the thread from the first message; refresh so the header shows it.
-    onFinish: () => {
+    onFinish: ({ isError, isAbort, isDisconnect }) => {
+      if (!isError && !isAbort && !isDisconnect) threadCreated();
       if (!initialMessages.length && !titled.current) {
         titled.current = true;
         onFirstAnswer?.();

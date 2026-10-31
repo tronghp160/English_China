@@ -30,6 +30,11 @@ const SCENARIOS = [
   { name: "tool_mywords", language: "en", texts: ["Trong sổ của mình có từ nào về gia đình không?"] },
   { name: "tool_rare", language: "en", texts: ["Giải thích từ 'sesquipedalian'"] },
   { name: "followup", language: "en", texts: ["happy nghĩa là gì?", "Cho mình thêm 2 ví dụ nữa nhé."] },
+  // First message of a new conversation, timed from "send" including creating the thread:
+  // first_old creates it first (like the old server action, but cheaper: straight to Supabase),
+  // first_new sends at once with newThread and lets /api/chat create it.
+  { name: "first_old", language: "en", texts: ["cat nghĩa là gì?"], fresh: "old" },
+  { name: "first_new", language: "en", texts: ["dog nghĩa là gì?"], fresh: "new" },
 ].filter((s) => !ONLY || ONLY.includes(s.name));
 
 // Sign in through @supabase/ssr with an in-memory cookie jar, so the cookie format is exactly the app's.
@@ -51,15 +56,15 @@ const cookie = process.env.BENCH_COOKIE ?? [...jar].map(([n, v]) => `${n}=${enco
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const created = [];
 
-/** Sends one message and times the SSE stream. */
-async function send(threadId, text) {
-  const t0 = performance.now();
+/** Sends one message and times the SSE stream (from `t0`, default now). */
+async function send(threadId, text, { t0 = performance.now(), newThread } = {}) {
   const res = await fetch(`${BASE_URL}/api/chat`, {
     method: "POST",
     headers: { "content-type": "application/json", cookie },
     body: JSON.stringify({
       id: threadId,
       message: { id: crypto.randomUUID().replaceAll("-", "").slice(0, 32), role: "user", parts: [{ type: "text", text }] },
+      ...(newThread ? { newThread } : {}),
     }),
   });
   const serverTiming = res.headers.get("server-timing");
@@ -124,11 +129,24 @@ try {
     for (let i = 0; i < RUNS; i++) {
       let run;
       try {
-        const threadId = await newThread(s.language);
-        for (const text of s.texts) {
+        if (s.fresh) {
           if (!firstCall) await sleep(GAP_MS);
           firstCall = false;
-          run = await send(threadId, text); // the last message of the scenario is the one measured
+          const t0 = performance.now();
+          if (s.fresh === "old") {
+            run = await send(await newThread(s.language), s.texts[0], { t0 });
+          } else {
+            const id = crypto.randomUUID();
+            created.push(id);
+            run = await send(id, s.texts[0], { t0, newThread: {} });
+          }
+        } else {
+          const threadId = await newThread(s.language);
+          for (const text of s.texts) {
+            if (!firstCall) await sleep(GAP_MS);
+            firstCall = false;
+            run = await send(threadId, text); // the last message of the scenario is the one measured
+          }
         }
       } catch (e) {
         run = { error: String(e).slice(0, 200) };

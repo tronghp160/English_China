@@ -46,6 +46,21 @@ export async function userIdByEmail(email: string) {
   return data?.users.find((u) => u.email === email)?.id ?? null;
 }
 
+/**
+ * For tests that mock POST /api/chat: does what the route does with a first question that carries
+ * `newThread` (the client picks the thread id), so the conversation exists on reload.
+ */
+export async function createMockedThread(email: string, body: unknown) {
+  const b = body as { id?: string; newThread?: { deckId?: string | null }; message?: { parts?: { text?: string }[] } } | null;
+  if (!b?.id || !b.newThread) return;
+  const userId = await userIdByEmail(email);
+  if (!userId) return;
+  const title = b.message?.parts?.[0]?.text?.slice(0, 60) ?? null;
+  await admin()
+    .from("chat_threads")
+    .upsert({ id: b.id, user_id: userId, language: "en", deck_id: b.newThread.deckId ?? null, title }, { onConflict: "id", ignoreDuplicates: true });
+}
+
 export async function deleteUserByEmail(email: string) {
   const sb = admin();
   const { data } = await sb.auth.admin.listUsers({ perPage: 200 });

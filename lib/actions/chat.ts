@@ -6,6 +6,7 @@ import { z } from "zod";
 import { CHAT_MAX_CHARS, threadTitle } from "@/lib/ai/chat-prompt";
 import type { ChatMessage } from "@/lib/ai/chat-tools";
 import { guessLanguage } from "@/lib/ai/tutor/starters";
+import { insertThread } from "@/lib/ai/tutor/threads";
 import { requireMe, requireUser } from "@/lib/auth";
 import type { LangCode } from "@/lib/lang/types";
 import { createClient } from "@/lib/supabase/server";
@@ -20,21 +21,8 @@ const startSchema = z.object({
   prompt: z.string().trim().min(1).max(CHAT_MAX_CHARS).optional(),
 });
 
-async function insertThread(
-  userId: string,
-  opts: { language: LangCode; deckId?: string; title?: string | null },
-) {
-  const supabase = await createClient();
-  return supabase
-    .from("chat_threads")
-    .insert({
-      user_id: userId,
-      language: opts.language,
-      deck_id: opts.deckId ?? null,
-      title: opts.title ?? null,
-    })
-    .select("id")
-    .single();
+async function createThread(userId: string, opts: { language: LangCode; deckId?: string; title?: string | null }) {
+  return insertThread(await createClient(), { userId, ...opts });
 }
 
 /** Creates a tutor thread and opens it. Called from plain forms, so it reads FormData. */
@@ -57,7 +45,7 @@ export async function startChat(formData: FormData) {
   const language = (parsed.data.language ?? guessLanguage(prompt, fallback)) as LangCode;
   const title = threadTitle(prompt);
 
-  const { data } = await insertThread(me.user.id, { language, deckId: deck_id, title });
+  const { data } = await createThread(me.user.id, { language, deckId: deck_id, title });
   if (!data) redirect("/chat?error=1");
   revalidatePath("/chat");
   redirect(chatUrl(data.id, prompt));
@@ -99,7 +87,11 @@ export async function loadTutorThread(
   };
 }
 
-/** Creates a thread for the panel's first question (no redirect). Language: guessLanguage(prompt, study_langs[0]). */
+/**
+ * Creates a thread for a first question (no redirect). Language: guessLanguage(prompt, study_langs[0]).
+ * Not used by the panel or /chat any more: they pick the thread id themselves and /api/chat creates
+ * the thread with the first message (one round trip less). Kept for other callers.
+ */
 export async function createTutorThread(prompt: string): Promise<ActionResult<{ id: string }>> {
   const me = await requireMe();
   const parsed = z.string().trim().min(1).max(CHAT_MAX_CHARS).safeParse(prompt);
@@ -109,7 +101,7 @@ export async function createTutorThread(prompt: string): Promise<ActionResult<{ 
   const language = guessLanguage(parsed.data, fallback) as LangCode;
   const title = threadTitle(parsed.data);
 
-  const { data, error } = await insertThread(me.user.id, { language, title });
+  const { data, error } = await createThread(me.user.id, { language, title });
   if (error || !data) return fail("Không tạo được cuộc trò chuyện.");
 
   // No revalidatePath: the tutor page adds the thread to its own list, and a refresh here could

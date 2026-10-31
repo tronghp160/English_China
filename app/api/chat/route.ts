@@ -11,6 +11,8 @@ import { learnerSnapshot } from "@/lib/ai/tutor/learner";
 import { tutorModel } from "@/lib/ai/tutor/model";
 import { pageContextLine } from "@/lib/ai/tutor/page-context";
 import { slimHistory } from "@/lib/ai/tutor/slim-history";
+import { guessLanguage } from "@/lib/ai/tutor/starters";
+import { insertThread } from "@/lib/ai/tutor/threads";
 import { tutorTimer } from "@/lib/ai/tutor/timing";
 import { getMe } from "@/lib/auth";
 import { preloadChineseDict } from "@/lib/dict/zh";
@@ -34,6 +36,8 @@ const bodySchema = z.object({
       .length(1),
   }),
   context: z.object({ path: z.string().max(200) }).optional(),
+  /** First message of a conversation the client opened itself: create the thread with this id if missing. */
+  newThread: z.object({ deckId: z.string().uuid().nullable().optional() }).optional(),
 });
 
 // Thinking delays the first word: quick questions get "minimal", corrections and comparisons "low"
@@ -69,7 +73,7 @@ export async function POST(request: Request) {
   if (!me) return fail("Bạn cần đăng nhập.", 401);
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return fail(`Tin nhắn trống hoặc dài quá ${CHAT_MAX_CHARS} ký tự.`, 400);
-  const { id: threadId, message, context } = parsed.data;
+  const { id: threadId, message, context, newThread } = parsed.data;
   const text = message.parts[0].text;
   const effort = tutorEffort(text);
   // lookupWord (zh) would otherwise parse the whole dictionary on its first call after a cold start.
@@ -105,8 +109,10 @@ export async function POST(request: Request) {
 
   // One round for the thread and both limits. A request for a missing thread now also counts
   // towards the rate limit (acceptable). The error order stays 404 → rate → quota.
-  const [{ data: thread }, allowed, quotaError] = await Promise.all([
-    supabase.from("chat_threads").select("id, language, deck_id, title, deck:decks(name, language)").eq("id", threadId).maybeSingle(),
+  const readThread = () =>
+    supabase.from("chat_threads").select("id, language, deck_id, title, deck:decks(name, language)").eq("id", threadId).maybeSingle();
+  const [{ data: found }, allowed, quotaError] = await Promise.all([
+    readThread(),
     hitRateLimit(me.user.id, "chat", 12, 60),
     // the unit is recorded only once an answer was written (onEnd)
     checkQuota(me.user.id).then(
@@ -115,9 +121,27 @@ export async function POST(request: Request) {
     ),
   ]);
   timer.mark("limits");
-  if (!thread) return fail("Không tìm thấy cuộc trò chuyện.", 404);
+  if (!found && !newThread) return fail("Không tìm thấy cuộc trò chuyện.", 404);
   if (!allowed) return fail("Bạn gửi nhanh quá. Đợi một chút rồi gửi tiếp nhé.", 429, { kind: "rate", retryAfter: 20 });
   if (quotaError) return limitFailure(quotaError);
+
+  // The first question of a conversation the client just opened (it picked the id): create the
+  // thread here instead of in a server action before sending. One extra round, first message only.
+  // A thread id that belongs to someone else is ignored by the upsert and stays invisible (404).
+  let thread = found;
+  if (!thread) {
+    const { error } = await insertThread(supabase, {
+      id: threadId,
+      userId: me.user.id,
+      language: guessLanguage(text, me.settings.study_langs[0] ?? "en"),
+      deckId: newThread?.deckId,
+      title: threadTitle(text),
+    });
+    if (error) console.error("[tutor] create thread", error.message);
+    thread = (await readThread()).data;
+    timer.mark("thread_created");
+    if (!thread) return fail("Không tạo được cuộc trò chuyện.", 404);
+  }
   if (thread.language === "zh") preloadChineseDict();
 
   const userMessage: ChatMessage = { id: message.id, role: "user", parts: [{ type: "text", text }] };
