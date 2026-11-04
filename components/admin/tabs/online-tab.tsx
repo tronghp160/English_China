@@ -43,7 +43,16 @@ export async function OnlineTab({ meId }: { meId: string }) {
               {describePath(u.path)}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-muted">
-              <PlaceLine city={u.city} region={u.region} country={u.country} ip={u.ip} />
+              <PlaceLine
+                city={u.city}
+                region={u.region}
+                country={u.country}
+                ip={u.ip}
+                latitude={u.latitude}
+                longitude={u.longitude}
+                compact
+                showMap
+              />
               <span>·</span>
               <DeviceChip
                 deviceType={u.deviceType}

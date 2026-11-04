@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  countryFlag,
   countryName,
   describePath,
+  formatCoordinates,
+  formatLocation,
   isLocalIp,
   mapLinks,
+  normalizeCityName,
   parseUserAgent,
   placeLabel,
   presenceStatus,
   readRequestMeta,
+  resolveRegionName,
 } from "@/lib/presence";
 
 describe("presenceStatus", () => {
@@ -142,17 +147,75 @@ describe("readRequestMeta", () => {
     expect(meta.longitude).toBeNull();
     expect(meta.city).toBe("%E0%A4%A");
   });
+
+  it("extracts IP and geo data from Cloudflare headers when Vercel headers are absent", () => {
+    const headers = new Map<string, string>([
+      ["cf-connecting-ip", "116.106.24.183"],
+      ["cf-ipcountry", "VN"],
+      ["cf-region", "61"],
+      ["cf-ipcity", "Thuan An"],
+      ["cf-iplatitude", "10.9239"],
+      ["cf-iplongitude", "106.7143"],
+      ["cf-timezone", "Asia/Ho_Chi_Minh"],
+    ]);
+    const meta = readRequestMeta(headers);
+    expect(meta.ip).toBe("116.106.24.183");
+    expect(meta.country).toBe("VN");
+    expect(meta.region).toBe("61");
+    expect(meta.city).toBe("Thuan An");
+    expect(meta.latitude).toBe(10.9239);
+    expect(meta.longitude).toBe(106.7143);
+    expect(meta.timezone).toBe("Asia/Ho_Chi_Minh");
+  });
 });
 
 describe("placeLabel & mapLinks & countryName", () => {
-  it("formats place labels in Vietnamese", () => {
+  it("formats place labels in Vietnamese, resolves codes and deduplicates", () => {
+    // City matches resolved region (DN -> Đà Nẵng): deduplicates cleanly
     expect(
       placeLabel({
         city: "Đà Nẵng",
         region: "DN",
         country: "VN",
       }),
-    ).toBe("Đà Nẵng, DN, Việt Nam");
+    ).toBe("Đà Nẵng, Việt Nam");
+
+    // Resolves numeric ISO-3166-2:VN codes (61 -> Bình Dương)
+    expect(
+      placeLabel({
+        city: "Thuận An",
+        region: "61",
+        country: "VN",
+      }),
+    ).toBe("Thuận An, Bình Dương, Việt Nam");
+
+    // Normalizes English city names and deduplicates (Ho Chi Minh City + SG)
+    expect(
+      placeLabel({
+        city: "Ho Chi Minh City",
+        region: "SG",
+        country: "VN",
+      }),
+    ).toBe("TP. Hồ Chí Minh, Việt Nam");
+
+    // Formats with flag prefix
+    expect(
+      formatLocation({
+        city: "Thuận An",
+        region: "61",
+        country: "VN",
+        withFlag: true,
+      }),
+    ).toBe("🇻🇳 Thuận An, Bình Dương, Việt Nam");
+
+    // Handles city states cleanly (Singapore)
+    expect(
+      formatLocation({
+        city: "Singapore",
+        region: "01",
+        country: "SG",
+      }),
+    ).toBe("Singapore");
 
     expect(
       placeLabel({
@@ -163,7 +226,16 @@ describe("placeLabel & mapLinks & countryName", () => {
     ).toBe("Không rõ vị trí");
   });
 
-  it("creates Google and OSM map links or null", () => {
+  it("normalizes city names and resolves regions", () => {
+    expect(normalizeCityName("hanoi")).toBe("Hà Nội");
+    expect(normalizeCityName("Saigon")).toBe("TP. Hồ Chí Minh");
+    expect(normalizeCityName("thu dau mot")).toBe("Thủ Dầu Một");
+    expect(resolveRegionName("61", "VN")).toBe("Bình Dương");
+    expect(resolveRegionName("HN", "VN")).toBe("Hà Nội");
+    expect(resolveRegionName("CA", "US")).toBe("California");
+  });
+
+  it("creates Google and OSM map links or search links", () => {
     expect(mapLinks(null, null)).toBeNull();
     expect(mapLinks(10, null)).toBeNull();
 
@@ -171,12 +243,27 @@ describe("placeLabel & mapLinks & countryName", () => {
     expect(links).not.toBeNull();
     expect(links?.google).toContain("query=21.0285,105.8542");
     expect(links?.osm).toContain("mlat=21.0285&mlon=105.8542");
+
+    // Query fallback when coordinates are null
+    const queryLinks = mapLinks(null, null, "Hà Nội, Việt Nam");
+    expect(queryLinks).not.toBeNull();
+    expect(queryLinks?.google).toContain("query=H%C3%A0%20N%E1%BB%99i%2C%20Vi%E1%BB%87t%20Nam");
   });
 
-  it("translates country codes", () => {
+  it("translates country codes and generates flag emojis", () => {
     expect(countryName("VN")).toBe("Việt Nam");
     expect(countryName("US")).toBe("Hoa Kỳ");
     expect(countryName(null)).toBeNull();
+
+    expect(countryFlag("VN")).toBe("🇻🇳");
+    expect(countryFlag("US")).toBe("🇺🇸");
+    expect(countryFlag("JP")).toBe("🇯🇵");
+    expect(countryFlag(null)).toBe("");
+  });
+
+  it("formats coordinates with standard precision", () => {
+    expect(formatCoordinates(10.923912, 106.714283, 4)).toBe("10.9239, 106.7143");
+    expect(formatCoordinates(null, 106.71)).toBeNull();
   });
 });
 

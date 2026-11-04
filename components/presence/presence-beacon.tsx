@@ -20,11 +20,13 @@ async function getDeviceModel(): Promise<string | undefined> {
 function beat(path: string) {
   if (typeof document === "undefined" || document.visibilityState !== "visible") return;
   if (typeof navigator !== "undefined" && !navigator.onLine) return;
+  const timezone =
+    typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined;
   void getDeviceModel().then((deviceModel) => {
     void fetch("/api/presence", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ path, deviceModel }),
+      body: JSON.stringify({ path, deviceModel, timezone }),
       keepalive: true,
       cache: "no-store",
     }).catch(() => undefined);

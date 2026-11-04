@@ -246,9 +246,12 @@ async function Overview() {
             <ul className="divide-y divide-border">
               {act.topCities.map((c, i) => (
                 <li key={i} className="flex items-center justify-between py-2 text-sm">
-                  <span>
-                    {c.city}
-                    {c.country && <span className="text-xs text-fg-muted"> ({c.country})</span>}
+                  <span className="flex items-center gap-1.5">
+                    {c.flag && <span className="text-base leading-none">{c.flag}</span>}
+                    <span className="font-medium text-fg">{c.city}</span>
+                    {c.countryName && (
+                      <span className="text-xs text-fg-muted">({c.countryName})</span>
+                    )}
                   </span>
                   <span className="font-semibold tabular-nums text-fg">
                     {c.users} người

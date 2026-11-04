@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 const bodySchema = z.object({
   path: z.string().max(200).startsWith("/"),
   deviceModel: z.string().max(80).optional(),
+  timezone: z.string().max(80).optional(),
 });
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const lastBeat = new Map<string, number>(); // per server instance: drop bursts under 5s without touching the database
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
     p_city: meta.city ?? undefined,
     p_latitude: meta.latitude ?? undefined,
     p_longitude: meta.longitude ?? undefined,
-    p_timezone: meta.timezone ?? undefined,
+    p_timezone: meta.timezone ?? parsed.data.timezone ?? undefined,
     p_device_type: device.deviceType,
     p_browser: device.browser,
     p_os: device.os,

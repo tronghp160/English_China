@@ -16,8 +16,12 @@ import { buildPetSummary, type AdminBuddyEntry, type AdminLatestTrip, type Admin
 import type { BuddySpecies } from "@/lib/bin/buddies";
 import { placeById } from "@/lib/bin/places";
 import {
+  countryFlag,
+  countryName,
+  normalizeCityName,
   placeLabel,
   presenceStatus,
+  resolveRegionName,
   type DeviceType,
   type PresenceStatus,
 } from "@/lib/presence";
@@ -528,7 +532,13 @@ export type ActivitySummary = {
   mau: number;
   activeByDay: { day: string; active: number }[];
   newByDay: { day: string; count: number }[];
-  topCities: { city: string; country: string; users: number }[];
+  topCities: {
+    city: string;
+    country: string;
+    countryName?: string | null;
+    flag?: string;
+    users: number;
+  }[];
   levelBuckets: LevelBuckets;
   topXp: {
     userId: string;
@@ -557,7 +567,7 @@ export async function getActivitySummary(): Promise<ActivitySummary> {
     sb.from("user_presence").select("user_id", { count: "exact", head: true }).gte("last_seen_at", twoMinutesAgo),
     sb.from("daily_stats").select("user_id, day, reviews").gte("day", thirtyDaysAgo).gt("reviews", 0),
     allAuthUsers(),
-    sb.from("login_events").select("user_id, city, country, created_at").gte("created_at", new Date(Date.now() - 30 * 86_400_000).toISOString()),
+    sb.from("login_events").select("user_id, city, region, country, created_at").gte("created_at", new Date(Date.now() - 30 * 86_400_000).toISOString()),
     getRollupMap(),
     sb.from("profiles").select("id, display_name, username"),
   ]);
@@ -605,12 +615,17 @@ export async function getActivitySummary(): Promise<ActivitySummary> {
   }
 
   // Top cities (30 days) - distinct users per city/country
-  const cityUsersMap = new Map<string, { city: string; country: string; users: Set<string> }>();
+  const cityUsersMap = new Map<
+    string,
+    { city: string; region: string | null; country: string; users: Set<string> }
+  >();
   for (const l of recentLogins ?? []) {
     if (l.city) {
-      const key = `${l.country ?? ""}|${l.city}`;
+      const normCity = normalizeCityName(l.city, l.country) || l.city;
+      const key = `${l.country ?? ""}|${normCity}`;
       const existing = cityUsersMap.get(key) ?? {
-        city: l.city,
+        city: normCity,
+        region: l.region ?? null,
         country: l.country ?? "",
         users: new Set<string>(),
       };
@@ -620,11 +635,25 @@ export async function getActivitySummary(): Promise<ActivitySummary> {
   }
 
   const topCities = [...cityUsersMap.values()]
-    .map((c) => ({
-      city: c.city,
-      country: c.country,
-      users: c.users.size,
-    }))
+    .map((c) => {
+      const resolvedRegion = resolveRegionName(c.region, c.country);
+      const isRedundant =
+        !resolvedRegion ||
+        c.city.toLowerCase() === resolvedRegion.toLowerCase() ||
+        (c.city.includes("Hồ Chí Minh") && resolvedRegion.includes("Hồ Chí Minh")) ||
+        (c.city.includes("Hà Nội") && resolvedRegion.includes("Hà Nội")) ||
+        (c.city.includes("Đà Nẵng") && resolvedRegion.includes("Đà Nẵng")) ||
+        (c.city.includes("Hải Phòng") && resolvedRegion.includes("Hải Phòng")) ||
+        (c.city.includes("Cần Thơ") && resolvedRegion.includes("Cần Thơ"));
+      const displayCity = isRedundant || !resolvedRegion ? c.city : `${c.city}, ${resolvedRegion}`;
+      return {
+        city: displayCity,
+        country: c.country,
+        countryName: countryName(c.country) ?? c.country,
+        flag: countryFlag(c.country),
+        users: c.users.size,
+      };
+    })
     .sort((a, b) => b.users - a.users)
     .slice(0, 5);
 

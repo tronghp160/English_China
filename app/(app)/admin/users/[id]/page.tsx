@@ -25,6 +25,7 @@ import { OnlineDot } from "@/components/admin/online-dot";
 import { PetChip } from "@/components/admin/pet-chip";
 import { PetPanel } from "@/components/admin/pet-panel";
 import { PlaceLine } from "@/components/admin/place-line";
+import { UserLocationMap } from "@/components/admin/user-location-map";
 import { UserNoteForm } from "@/components/admin/user-note-form";
 import { UserAvatar } from "@/components/app-shell/user-menu";
 import { LangMark } from "@/components/lang-mark";
@@ -422,62 +423,37 @@ function UserLoginTab({
   };
 }) {
   const pStatus = presenceStatus(presence?.last_seen_at);
-  const coords =
-    presence?.latitude != null && presence?.longitude != null
-      ? `${presence.latitude.toFixed(2)}, ${presence.longitude.toFixed(2)}`
-      : "Chưa có";
 
   return (
     <div className="flex flex-col gap-6">
       {/* Current / latest presence */}
-      <Section title="Hiện tại / gần nhất">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <p className="text-xs text-fg-muted">Trạng thái & Lần cuối</p>
-            <div className="mt-1 flex items-center gap-2">
-              <OnlineDot status={pStatus} withLabel />
-              <span className="text-xs text-fg-muted">
-                ({dateTime(presence?.last_seen_at, true)})
-              </span>
-            </div>
-            <div className="mt-3">
-              <p className="text-xs text-fg-muted">Vị trí ước tính</p>
-              <div className="mt-1">
-                <PlaceLine
-                  city={presence?.city}
-                  region={presence?.region}
-                  country={presence?.country}
-                  ip={presence?.ip}
-                  latitude={presence?.latitude}
-                  longitude={presence?.longitude}
-                  showMap
-                />
-              </div>
-            </div>
+      <Section title="Hiện tại & Phiên gần nhất">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+          <div className="flex items-center gap-2">
+            <OnlineDot status={pStatus} withLabel />
+            <span className="text-xs text-fg-muted">
+              ({dateTime(presence?.last_seen_at, true)})
+            </span>
           </div>
-
-          <div className="space-y-3 text-sm">
-            <div>
-              <p className="text-xs text-fg-muted">Thiết bị & Trình duyệt</p>
-              <div className="mt-1">
-                <DeviceChip
-                  deviceType={presence?.device_type}
-                  browser={presence?.browser}
-                  os={presence?.os}
-                  deviceModel={presence?.device_model}
-                />
-              </div>
-            </div>
-            <div>
-              <p className="text-xs text-fg-muted">Múi giờ</p>
-              <p className="mt-0.5 text-fg">{presence?.timezone ?? "Chưa rõ"}</p>
-            </div>
-            <div>
-              <p className="text-xs text-fg-muted">Tọa độ xấp xỉ</p>
-              <p className="mt-0.5 font-mono text-xs text-fg">{coords}</p>
-            </div>
+          <div>
+            <DeviceChip
+              deviceType={presence?.device_type}
+              browser={presence?.browser}
+              os={presence?.os}
+              deviceModel={presence?.device_model}
+            />
           </div>
         </div>
+
+        <UserLocationMap
+          city={presence?.city}
+          region={presence?.region}
+          country={presence?.country}
+          ip={presence?.ip}
+          latitude={presence?.latitude}
+          longitude={presence?.longitude}
+          timezone={presence?.timezone}
+        />
       </Section>
 
       {/* History and places */}
