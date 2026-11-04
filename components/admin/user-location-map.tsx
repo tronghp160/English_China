@@ -99,7 +99,7 @@ export function UserLocationMap({
           </div>
           <p className="text-xs text-fg-muted">
             {hasCoords
-              ? "Vị trí ước tính theo dải IP mạng · Tọa độ GPS có độ lệch tương đối"
+              ? "Vị trí ước tính theo dải IP mạng (cấp thành phố / tỉnh) · Bảo vệ quyền riêng tư, không thu thập GPS"
               : isLocal
                 ? "Kết nối nội bộ trong máy chủ hoặc mạng LAN"
                 : "Chưa có dữ liệu tọa độ chi tiết"}
@@ -213,12 +213,12 @@ export function UserLocationMap({
           </p>
         </div>
 
-        {/* GPS Coordinates */}
+        {/* Coordinates */}
         <div className="rounded-lg border border-border bg-surface-2/60 p-3">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs text-fg-muted">
               <Navigation className="size-3.5" aria-hidden="true" />
-              Tọa độ GPS
+              Tọa độ xấp xỉ
             </span>
             {coordsFormatted && (
               <button
