@@ -649,7 +649,7 @@ export function mapLinks(
   if (hasCoords) {
     return {
       google: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
-      osm: `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=18/${lat}/${lng}`,
+      osm: `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=13/${lat}/${lng}`,
       apple: `https://maps.apple.com/?q=${lat},${lng}&ll=${lat},${lng}`,
     };
   }

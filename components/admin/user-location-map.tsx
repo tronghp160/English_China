@@ -25,7 +25,7 @@ export function UserLocationMap({
 }) {
   const [copiedCoords, setCopiedCoords] = useState(false);
   const [copiedIp, setCopiedIp] = useState(false);
-  const [zoomDelta, setZoomDelta] = useState(0.006); // ~ 500m radius (street level)
+  const [zoomDelta, setZoomDelta] = useState(0.03); // ~ 3km radius
 
   const hasLocation = Boolean(
     (city && city.trim().length > 0) ||
@@ -99,7 +99,7 @@ export function UserLocationMap({
           </div>
           <p className="text-xs text-fg-muted">
             {hasCoords
-              ? "Tọa độ GPS định vị chính xác · Bấm Google Maps để mở thẳng đến vị trí số nhà / tuyến đường"
+              ? "Vị trí ước tính theo dải IP mạng · Tọa độ GPS có độ lệch tương đối"
               : isLocal
                 ? "Kết nối nội bộ trong máy chủ hoặc mạng LAN"
                 : "Chưa có dữ liệu tọa độ chi tiết"}
