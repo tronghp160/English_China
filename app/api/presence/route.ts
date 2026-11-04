@@ -8,6 +8,11 @@ const bodySchema = z.object({
   path: z.string().max(200).startsWith("/"),
   deviceModel: z.string().max(80).optional(),
   timezone: z.string().max(80).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  accuracy: z.number().nonnegative().optional(),
+  city: z.string().max(120).optional(),
+  region: z.string().max(80).optional(),
 });
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const lastBeat = new Map<string, number>(); // per server instance: drop bursts under 5s without touching the database
@@ -31,16 +36,29 @@ export async function POST(request: Request) {
   const device = parseUserAgent(request.headers.get("user-agent"));
   const deviceModel = parsed.data.deviceModel || device.deviceModel || undefined;
   const rawSession = claims?.session_id;
+
+  // Prioritize high-accuracy browser GPS coordinates if allowed by user; fallback to IP geolocation
+  const hasGps =
+    typeof parsed.data.latitude === "number" &&
+    Number.isFinite(parsed.data.latitude) &&
+    typeof parsed.data.longitude === "number" &&
+    Number.isFinite(parsed.data.longitude);
+
+  const latitude = hasGps ? parsed.data.latitude : (meta.latitude ?? undefined);
+  const longitude = hasGps ? parsed.data.longitude : (meta.longitude ?? undefined);
+  const city = parsed.data.city || meta.city || undefined;
+  const region = parsed.data.region || meta.region || undefined;
+
   const { error } = await createAdminClient().rpc("record_presence", {
     p_user_id: userId,
     p_path: parsed.data.path.split("?")[0].split("#")[0],
     p_session_id: typeof rawSession === "string" && UUID.test(rawSession) ? rawSession : undefined,
     p_ip: meta.ip ?? undefined,
     p_country: meta.country ?? undefined,
-    p_region: meta.region ?? undefined,
-    p_city: meta.city ?? undefined,
-    p_latitude: meta.latitude ?? undefined,
-    p_longitude: meta.longitude ?? undefined,
+    p_region: region,
+    p_city: city,
+    p_latitude: latitude,
+    p_longitude: longitude,
     p_timezone: meta.timezone ?? parsed.data.timezone ?? undefined,
     p_device_type: device.deviceType,
     p_browser: device.browser,
