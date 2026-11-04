@@ -114,10 +114,7 @@ export function NearbyBuddies() {
             <Compass className="size-5" aria-hidden="true" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-fg">Bạn học quanh đây</h2>
-              <Badge tone="mint" variant="soft">Mới</Badge>
-            </div>
+            <h2 className="text-lg font-bold text-fg">Bạn học quanh đây</h2>
             <p className="mt-0.5 text-xs text-fg-muted sm:text-sm">
               Tìm các bạn học tiếng Anh & tiếng Trung trong bán kính 10–20km quanh bạn để cùng tạo nhóm và thi đua.
             </p>
