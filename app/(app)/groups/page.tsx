@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronRight, Plus } from "lucide-react";
 import { GroupAvatar } from "@/components/group/group-avatar";
 import { JoinCodeForm } from "@/components/group/join-code-form";
+import { NearbyBuddies } from "@/components/group/nearby-buddies";
 import { EndPup } from "@/components/mascot/end-pup";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,28 +31,35 @@ export default async function GroupsPage() {
         <JoinCodeForm />
       </div>
 
+      <div className="mt-6">
+        <NearbyBuddies />
+      </div>
+
       {groups.length ? (
-        <ul className="mt-8 grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
-          {groups.map((g) => (
-            <li key={g.id} className="min-w-0">
-              <Link
-                href={`/groups/${g.id}`}
-                className="group flex items-center gap-4 rounded-lg border border-border/60 bg-surface p-4 shadow-sm transition-[transform,box-shadow] duration-[var(--dur-base)] hover:-translate-y-0.5 hover:shadow-md dark:border-border"
-              >
-                <GroupAvatar id={g.id} name={g.name} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold text-fg">{g.name}</span>
-                  <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-fg-muted">
-                    <span>{g.member_count} thành viên</span>
-                    <span>{g.deck_count} bộ từ</span>
-                    {g.role === "owner" && <Badge variant="soft" tone="sun">Chủ nhóm</Badge>}
+        <div className="mt-8">
+          <h2 className="mb-3 text-lg font-bold">Nhóm của bạn</h2>
+          <ul className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+            {groups.map((g) => (
+              <li key={g.id} className="min-w-0">
+                <Link
+                  href={`/groups/${g.id}`}
+                  className="group flex items-center gap-4 rounded-lg border border-border/60 bg-surface p-4 shadow-sm transition-[transform,box-shadow] duration-[var(--dur-base)] hover:-translate-y-0.5 hover:shadow-md dark:border-border"
+                >
+                  <GroupAvatar id={g.id} name={g.name} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-semibold text-fg">{g.name}</span>
+                    <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-fg-muted">
+                      <span>{g.member_count} thành viên</span>
+                      <span>{g.deck_count} bộ từ</span>
+                      {g.role === "owner" && <Badge variant="soft" tone="sun">Chủ nhóm</Badge>}
+                    </span>
                   </span>
-                </span>
-                <ChevronRight className="size-4 shrink-0 text-fg-subtle" aria-hidden />
-              </Link>
-            </li>
-          ))}
-        </ul>
+                  <ChevronRight className="size-4 shrink-0 text-fg-subtle" aria-hidden />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : (
         <EmptyState
           className="mt-8"
