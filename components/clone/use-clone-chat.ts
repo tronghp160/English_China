@@ -22,23 +22,23 @@ export const hasText = (m: UIMessage) => m.parts.some((p) => p.type === "text" &
  *   or closing the tab. Moving to another page inside the app is not blocked (the page says so under the box).
  */
 export function useCloneChat(userId: string) {
-  const threadIdRef = useRef<string>("");
-  if (!threadIdRef.current) {
-    threadIdRef.current = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : "";
-  }
-
-  const [transport] = useState(
-    () =>
-      new DefaultChatTransport<UIMessage>({
+  const [{ transport, setThreadId }] = useState(() => {
+    let currentThreadId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : "";
+    return {
+      transport: new DefaultChatTransport<UIMessage>({
         api: "/api/clone",
         prepareSendMessagesRequest: ({ messages }) => ({
           body: {
-            threadId: threadIdRef.current || undefined,
+            threadId: currentThreadId || undefined,
             messages: toRequestMessages(messages),
           },
         }),
       }),
-  );
+      setThreadId: (id: string) => {
+        currentThreadId = id;
+      },
+    };
+  });
   const { messages, setMessages, sendMessage, status, error, stop: stopChat, regenerate, clearError } = useChat<UIMessage>({
     id: `clone-${userId}`,
     transport,
@@ -104,7 +104,7 @@ export function useCloneChat(userId: string) {
   const reset = () => {
     void stopChat();
     setMessages([]);
-    threadIdRef.current = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : "";
+    setThreadId(typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : "");
     if (error) clearError();
   };
 

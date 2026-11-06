@@ -5,7 +5,6 @@ import {
   CalendarDays,
   Download,
   Flame,
-  HeartHandshake,
   MapPin,
   MessageCircle,
   Radio,
