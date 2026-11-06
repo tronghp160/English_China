@@ -125,7 +125,7 @@ describe("runChecks and tally", () => {
 
 describe("tutor-cases.json", () => {
   const spec = JSON.parse(fs.readFileSync("scripts/eval/tutor-cases.json", "utf8"));
-  it("has about 30 cases with unique ids, a language and only known checks", () => {
+  it("has about 32 cases with unique ids, a language and only known checks", () => {
     expect(spec.cases.length).toBeGreaterThanOrEqual(28);
     const ids = spec.cases.map((c: { id: string }) => c.id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -146,6 +146,7 @@ describe("tutor-cases.json", () => {
     expect(count("translate")).toBe(2);
     expect(count("roleplay")).toBe(2);
     expect(count("quiz")).toBe(1);
+    expect(count("ielts")).toBe(2);
     expect(count("offtopic")).toBe(2);
   });
 });

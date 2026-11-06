@@ -83,6 +83,18 @@ export function chatStarters(
     },
   ];
 
+  // IELTS is English: only for learners who study it. The box is filled, not sent: the essay or answer comes next.
+  if (langs.includes("en")) {
+    const at = list.findIndex((s) => s.icon === "fix") + 1;
+    list.splice(at, 0, {
+      label: "Chấm bài IELTS Writing",
+      text: "Chấm giúp mình bài IELTS Writing này, cho band ước lượng theo 4 tiêu chí:\n\n",
+      send: false,
+      icon: "fix",
+      tone: "orange",
+    });
+  }
+
   if (opts?.hardWord?.term) {
     const term = opts.hardWord.term;
     list.push({

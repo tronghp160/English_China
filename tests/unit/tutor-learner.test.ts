@@ -6,11 +6,13 @@ const { learnerBlock } = await import("@/lib/ai/chat-prompt");
 
 type Overview = { language: "en" | "zh"; total_cards: number; due_count: number; reviews_left: number | null };
 type Args = { p_language: string; p_source: string; p_limit: number };
+/** Optional: the words each list returns, per language and source (default: one hard and one recent word). */
+type Lists = Partial<Record<string, ReturnType<typeof row>[]>>;
 
-const row = (term: string, lapses: number) => ({ word: { term, reading: null, meaning_vi: `nghĩa ${term}` }, lapses });
+const row = (term: string, lapses: number, lang_extra?: unknown) => ({ word: { term, reading: null, meaning_vi: `nghĩa ${term}`, lang_extra }, lapses });
 
 /** A fake RLS client: today_overview resolves only when `release` is called; every call is logged in order. */
-function fakeSupabase(overview: Overview[]) {
+function fakeSupabase(overview: Overview[], lists: Lists = {}) {
   const log: string[] = [];
   let release = () => {};
   const gate = new Promise<void>((r) => (release = r));
@@ -23,6 +25,8 @@ function fakeSupabase(overview: Overview[]) {
         return { data: overview, error: null };
       }
       log.push(`words:${args!.p_language}:${args!.p_source}`);
+      const custom = lists[`${args!.p_language}:${args!.p_source}`];
+      if (custom) return { data: custom, error: null };
       const words = args!.p_source === "hard" ? [row(`${args!.p_language}-hard`, 2), row(`${args!.p_language}-easy`, 0)] : [row(`${args!.p_language}-new`, 0)];
       return { data: words, error: null };
     },
@@ -31,8 +35,8 @@ function fakeSupabase(overview: Overview[]) {
 }
 
 /** Same fake, with the overview already answered. */
-const fakeSupabaseReady = (overview: Overview[]) => {
-  const f = fakeSupabase(overview);
+const fakeSupabaseReady = (overview: Overview[], lists: Lists = {}) => {
+  const f = fakeSupabase(overview, lists);
   f.release();
   return f.supabase;
 };
@@ -89,6 +93,26 @@ describe("learnerSnapshot", () => {
     const one = await learnerSnapshot(fakeSupabaseReady([{ language: "zh", total_cards: 3, due_count: 1, reviews_left: null }]), ["en", "zh"]);
     expect(learnerBlock(one)).toContain("Tiếng Trung: 3 từ");
     expect(learnerBlock(one)).not.toContain("Tiếng Anh");
+  });
+
+  it("estimates the level from the CEFR / HSK labels of the words it already reads", async () => {
+    const overview: Overview[] = [
+      { language: "en", total_cards: 9, due_count: 0, reviews_left: null },
+      { language: "zh", total_cards: 4, due_count: 0, reviews_left: null },
+    ];
+    const result = await learnerSnapshot(
+      fakeSupabaseReady(overview, {
+        "en:hard": [row("a", 2, { cefr: "B1" }), row("b", 1, { cefr: "B1" })],
+        "en:recent": [row("c", 0, { cefr: "B1" }), row("d", 0, { cefr: "A2" })],
+        "zh:hard": [row("e", 1, { hsk: { level: 2 } })],
+        "zh:recent": [row("f", 0, { hsk: { level: 2 } })], // only two leveled words: too few to say
+      }),
+      ["en", "zh"],
+    );
+    expect(result.find((s) => s.language === "en")?.level).toBe("B1");
+    expect(result.find((s) => s.language === "zh")).not.toHaveProperty("level");
+    // the words the prompt lists are unchanged by the extra data
+    expect(result[0].hard[0]).toEqual({ term: "a", reading: null, meaning_vi: "nghĩa a", lapses: 2 });
   });
 
   it("returns nothing when a read fails", async () => {

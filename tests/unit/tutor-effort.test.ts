@@ -14,4 +14,25 @@ describe("tutorEffort", () => {
     expect(tutorEffort("x".repeat(300))).toBe("low");
     expect(tutorEffort("I goes to school yesterday. She don't like it!")).toBe("low");
   });
+
+  it("thinks more for exam writing, speaking and rewriting work", () => {
+    for (const text of [
+      "Chấm bài IELTS Writing task 2 giúp mình",
+      "mình cần luyện speaking part 1",
+      "Band 6.5 cần gì",
+      "viết đoạn văn về gia đình bằng tiếng Anh",
+      "dịch đoạn này sang tiếng Việt",
+      "chữa bài giúp mình",
+      "Câu này vì sao sai vậy",
+    ]) {
+      expect(tutorEffort(text), text).toBe("low");
+    }
+  });
+
+  it("does not take a word that merely contains a keyword for exam work", () => {
+    expect(tutorEffort("writing nghĩa là gì")).toBe("minimal");
+    expect(tutorEffort("band đọc thế nào")).toBe("minimal");
+    expect(tutorEffort("husband nghĩa là gì")).toBe("minimal");
+    expect(tutorEffort("Giải thích từ 'bandwidth'")).toBe("minimal");
+  });
 });

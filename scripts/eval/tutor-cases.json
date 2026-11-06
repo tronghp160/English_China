@@ -75,6 +75,15 @@
     { "id": "quiz_first_turn", "kind": "quiz", "language": "en", "text": "Kiểm tra từ vựng tiếng Anh của mình nhé",
       "checks": [{ "max_words": 70 }, { "max_question_marks": 1 }, { "not_contains_any": ["đáp án"] }] },
 
+    { "id": "ielts_writing_task2", "kind": "ielts", "language": "en",
+      "text": "Chấm giúp mình bài IELTS Writing Task 2 này: Some people think that children should learn foreign languages from a young age. I agree with this opinion because children brain is more flexible and they can pronounce better. However, parents must not force their children if they dont like it. In conclusion, learning languages early have many benefits.",
+      "omit": ["max_words"],
+      "checks": [{ "max_words": 380 }, { "contains_all": ["Coherence", "Lexical", "Grammatical"] }, { "contains_any": ["Task Response"] }, { "contains_any": ["band"] }, { "contains_any": ["ước lượng", "ước tính"] }] },
+    { "id": "ielts_speaking_part1", "kind": "ielts", "language": "en",
+      "text": "Chấm câu trả lời IELTS Speaking Part 1 của mình nhé. Question: Do you like cooking? Answer: Yes, I like cooking very much. I usually cook with my mother in weekend. It is relax for me.",
+      "omit": ["max_words"],
+      "checks": [{ "max_words": 380 }, { "contains_all": ["Fluency", "Lexical", "Grammatical"] }, { "contains_any": ["band"] }, { "contains_any": ["ước lượng", "ước tính"] }] },
+
     { "id": "offtopic_gold_price", "kind": "offtopic", "language": "en", "text": "Hôm nay giá vàng bao nhiêu vậy?",
       "checks": [{ "max_words": 80 }, { "contains_any": ["học", "tiếng Anh", "tiếng Trung", "ngoại ngữ"] }] },
     { "id": "offtopic_python_code", "kind": "offtopic", "language": "en", "text": "Viết giúp mình đoạn code Python sắp xếp một danh sách",
