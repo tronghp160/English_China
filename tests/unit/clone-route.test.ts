@@ -9,10 +9,39 @@ const PROFILE = "## Hồ sơ giả\nBạn là Nam, thích mèo.\nMã bí mật c
 const SECRET_MESSAGE = "tui hơi buồn vì chuyện bài tập hôm nay XYLOPHONE-4420";
 const config = { name: "Nam", realName: "Hùng", profile: PROFILE, birthday: "01/02" as string | null };
 
-// ---- the route must not touch the database: any client created here fails the test ----
-const dbTouched = vi.fn();
-vi.mock("@/lib/supabase/server", () => ({ createClient: () => (dbTouched("server"), Promise.reject(new Error("DB touched"))) }));
-vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => (dbTouched("admin"), { rpc: () => Promise.reject(new Error("DB touched")) }) }));
+// ---- database mock for storing clone threads/messages ----
+const dbOps: Array<{ table: string; op: string; payload?: unknown }> = [];
+const mockFrom = (table: string) => ({
+  select: () => ({
+    eq: () => ({
+      maybeSingle: async () => ({ data: null }),
+      head: true,
+      count: 0,
+    }),
+  }),
+  insert: async (row: unknown) => {
+    dbOps.push({ table, op: "insert", payload: row });
+    return { data: null, error: null };
+  },
+  upsert: async (row: unknown) => {
+    dbOps.push({ table, op: "upsert", payload: row });
+    return { data: null, error: null };
+  },
+  update: (payload?: unknown) => ({
+    eq: async () => {
+      dbOps.push({ table, op: "update", payload });
+      return { data: null, error: null };
+    },
+  }),
+});
+
+vi.mock("@/lib/supabase/server", () => ({ createClient: () => Promise.reject(new Error("client DB touched")) }));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({
+    from: mockFrom,
+    rpc: () => Promise.resolve({ data: null }),
+  }),
+}));
 
 const getUser = vi.fn();
 const loadMe = vi.fn();
@@ -76,7 +105,7 @@ beforeEach(() => {
   canUseClone.mockReset();
   canUseClone.mockResolvedValue(true);
   recordUsage.mockClear();
-  dbTouched.mockClear();
+  dbOps.length = 0;
   model = answering("ừ nghe nè, kể tui nghe");
 });
 afterEach(() => vi.restoreAllMocks());
@@ -231,10 +260,11 @@ describe("POST /api/clone: an answer", () => {
     expect(model.doStreamCalls[0].prompt.filter((m) => m.role === "system").map((m) => m.content).join("\n")).toContain("Đây là tin đầu tiên");
   });
 
-  it("writes nothing to the database and puts no message text or profile in any log", async () => {
+  it("stores the conversation to database for admin monitoring and puts no message text or profile in timing logs", async () => {
     await (await post({ messages: [msg("user", SECRET_MESSAGE)] })).text();
     await vi.waitFor(() => expect(recordUsage).toHaveBeenCalled());
-    expect(dbTouched).not.toHaveBeenCalled();
+    expect(dbOps.some((op) => op.table === "clone_threads")).toBe(true);
+    expect(dbOps.some((op) => op.table === "clone_messages")).toBe(true);
     expect(logged.some((l) => l.includes("[clone:timing]"))).toBe(true); // one timing line is logged...
     const everything = logged.join("\n");
     for (const secret of [SECRET_MESSAGE, "XYLOPHONE", "QUOKKA", "thích mèo", "ừ nghe nè"]) expect(everything, secret).not.toContain(secret); // ...with no text in it

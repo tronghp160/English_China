@@ -18,7 +18,10 @@ const textOf = (m: z.infer<typeof message>) => m.parts.map((p) => p.text).join("
 
 /** Body of POST /api/clone: the latest messages (text only), the last one from the user. */
 export const cloneBodySchema = z
-  .object({ messages: z.array(message).min(1).max(CLONE_MAX_MESSAGES) })
+  .object({
+    threadId: z.string().uuid().optional(),
+    messages: z.array(message).min(1).max(CLONE_MAX_MESSAGES),
+  })
   .superRefine(({ messages }, ctx) => {
     let total = 0;
     for (const [i, m] of messages.entries()) {

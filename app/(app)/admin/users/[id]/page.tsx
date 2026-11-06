@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Download,
   Flame,
+  HeartHandshake,
   MapPin,
   MessageCircle,
   Radio,
@@ -18,6 +19,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminAction } from "@/components/admin/admin-actions";
 import { AdminChatViewer } from "@/components/admin/admin-chat-viewer";
+import { AdminCloneChatViewer } from "@/components/admin/admin-clone-chat-viewer";
 import { AdminWordTable } from "@/components/admin/admin-word-table";
 import { CloneAccessSwitch } from "@/components/admin/clone-access-switch";
 import { DeviceChip } from "@/components/admin/device-chip";
@@ -44,8 +46,10 @@ import {
   getAdminUserDetail,
   getUserAccount,
   getUserChat,
+  getUserCloneChat,
   getUserDailyStats30,
   listUserChats,
+  listUserCloneChats,
   listUserReviews,
   listUserWords,
 } from "@/lib/data/admin";
@@ -89,6 +93,7 @@ const TABS = [
   { value: "decks", label: "Bộ từ" },
   { value: "reviews", label: "Ôn tập" },
   { value: "chat", label: "Gia sư" },
+  { value: "tamsu", label: "Tâm sự" },
   { value: "account", label: "Tài khoản" },
 ] as const;
 type Tab = (typeof TABS)[number]["value"];
@@ -271,6 +276,13 @@ export default async function AdminUserPage({
         {tab === "decks" && <UserDecksTab u={u} />}
         {tab === "reviews" && <UserReviewsTab userId={u.id} sp={sp} />}
         {tab === "chat" && <UserChatTab userId={u.id} sp={sp} />}
+        {tab === "tamsu" && (
+          <UserCloneChatTab
+            userId={u.id}
+            cloneName={cloneConfig()?.name ?? CONTACT.nickname}
+            sp={sp}
+          />
+        )}
         {tab === "account" && <UserAccountTab userId={u.id} self={self} isAdmin={u.admin} />}
       </div>
     </div>
@@ -312,10 +324,19 @@ function OverviewTab({
 
       <Section title="Tâm sự">
         <CloneAccessSwitch userId={u.id} name={clone.name} enabled={u.cloneAccess} isAdmin={u.admin} />
-        <p className="mt-1 text-sm text-fg-muted">
-          Mặc định không ai thấy, chỉ quản trị viên. Bật ở đây thì người này thấy mục Tâm sự và nhắn được; tắt thì mục biến mất
-          và /tam-su là trang 404. Cuộc trò chuyện không được lưu ở đâu cả, nên quản trị viên cũng không đọc được.
-        </p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+          <p className="text-sm text-fg-muted">
+            Đã có <strong className="text-fg">{u.cloneChat.threads}</strong> phiên tâm sự ({u.cloneChat.messages} tin nhắn).
+          </p>
+          {u.cloneChat.threads > 0 && (
+            <Link
+              href={`/admin/users/${u.id}?tab=tamsu`}
+              className="text-sm font-semibold text-primary hover:underline"
+            >
+              Xem nhật ký tâm sự →
+            </Link>
+          )}
+        </div>
         {!clone.configured && (
           <p className="mt-2 text-sm text-fg-muted">
             Tính năng đang tắt trên máy chủ (chưa có hồ sơ CLONE_PROFILE), nên bật ở đây chưa có tác dụng cho tới khi bật nó.
@@ -809,6 +830,37 @@ async function UserChatTab({
         activeThreadId={activeThreadId}
         messages={messages}
         userId={userId}
+      />
+    </section>
+  );
+}
+
+async function UserCloneChatTab({
+  userId,
+  cloneName,
+  sp,
+}: {
+  userId: string;
+  cloneName: string;
+  sp: Record<string, string | string[] | undefined>;
+}) {
+  const threads = await listUserCloneChats(userId);
+  const requestedThread = typeof sp.thread === "string" ? sp.thread : undefined;
+  const activeThreadId = requestedThread || (threads.length > 0 ? threads[0].id : undefined);
+
+  let messages = undefined;
+  if (activeThreadId) {
+    messages = await getUserCloneChat(activeThreadId);
+  }
+
+  return (
+    <section aria-label="Cuộc trò chuyện tâm sự">
+      <AdminCloneChatViewer
+        threads={threads}
+        activeThreadId={activeThreadId}
+        messages={messages}
+        userId={userId}
+        cloneName={cloneName}
       />
     </section>
   );

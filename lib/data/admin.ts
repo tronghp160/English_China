@@ -254,6 +254,8 @@ export type AdminUserDetail = {
   ai: { today: number; last7: number };
   /** Only how many: what someone asked the tutor stays private. */
   chat: { threads: number; messages: number };
+  /** How many clone companion ("Tâm sự") threads and messages this user has. */
+  cloneChat: { threads: number; messages: number };
   /** An admin switched "Tâm sự" on for this account (row in clone_access). Admins always have it, with or without a row. */
   cloneAccess: boolean;
 };
@@ -264,7 +266,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
   const { data: auth } = await sb.auth.admin.getUserById(userId);
   const u = auth.user;
   if (!u) return null;
-  const [profile, settings, stats, cards, decks, subs, memberships, reviews, ai, threads, messages, adminRow, freezes, cloneRow] = await Promise.all([
+  const [profile, settings, stats, cards, decks, subs, memberships, reviews, ai, threads, messages, adminRow, freezes, cloneRow, cloneThreads, cloneMessages] = await Promise.all([
     sb.from("profiles").select("display_name, username, avatar_url").eq("id", userId).maybeSingle(),
     sb.from("user_settings").select("study_langs, daily_goal, daily_new_limit, timezone, onboarded").eq("user_id", userId).maybeSingle(),
     sb.from("daily_stats").select("day, reviews, correct, xp, words_added").eq("user_id", userId),
@@ -279,6 +281,8 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
     sb.from("app_admins").select("user_id").eq("user_id", userId).maybeSingle(),
     sb.from("bin_freezes").select("day").eq("user_id", userId),
     sb.from("clone_access").select("user_id").eq("user_id", userId).maybeSingle(),
+    sb.from("clone_threads").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    sb.from("clone_messages").select("id", { count: "exact", head: true }).eq("user_id", userId),
   ]);
 
   const groupIds = (memberships.data ?? []).map((m) => m.group_id).filter((g): g is string => Boolean(g));
@@ -368,6 +372,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
     })),
     ai: { today: aiRows.find((r) => r.day === todayVn())?.requests ?? 0, last7: aiRows.reduce((n, r) => n + r.requests, 0) },
     chat: { threads: threads.count ?? 0, messages: messages.count ?? 0 },
+    cloneChat: { threads: cloneThreads.count ?? 0, messages: cloneMessages.count ?? 0 },
     cloneAccess: Boolean(cloneRow.data),
   };
 }
@@ -848,4 +853,66 @@ export async function getUserAccount(userId: string): Promise<AdminAccount | nul
       };
     }),
   };
+}
+
+export type AdminCloneThread = {
+  id: string;
+  userId: string;
+  title: string;
+  firstMessage: string | null;
+  messageCount: number;
+  createdAt: string;
+  updatedAt: string;
+  lastMessageAt: string;
+};
+
+export type AdminCloneMessage = {
+  id: string;
+  threadId: string;
+  userId: string;
+  role: "user" | "assistant";
+  content: string;
+  parts: unknown;
+  createdAt: string;
+};
+
+/** List all clone companion chat sessions for a user, newest first. */
+export async function listUserCloneChats(userId: string): Promise<AdminCloneThread[]> {
+  const sb = createAdminClient();
+  const { data } = await sb
+    .from("clone_threads")
+    .select("id, user_id, title, first_message, message_count, created_at, updated_at, last_message_at")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false });
+
+  return (data ?? []).map((t) => ({
+    id: t.id,
+    userId: t.user_id,
+    title: t.title ?? "Cuộc trò chuyện",
+    firstMessage: t.first_message,
+    messageCount: t.message_count,
+    createdAt: t.created_at,
+    updatedAt: t.updated_at,
+    lastMessageAt: t.last_message_at,
+  }));
+}
+
+/** Full message history of a clone companion chat session. */
+export async function getUserCloneChat(threadId: string): Promise<AdminCloneMessage[]> {
+  const sb = createAdminClient();
+  const { data } = await sb
+    .from("clone_messages")
+    .select("id, thread_id, user_id, role, content, parts, created_at")
+    .eq("thread_id", threadId)
+    .order("created_at", { ascending: true });
+
+  return (data ?? []).map((m) => ({
+    id: m.id,
+    threadId: m.thread_id,
+    userId: m.user_id,
+    role: m.role as "user" | "assistant",
+    content: m.content,
+    parts: m.parts,
+    createdAt: m.created_at,
+  }));
 }

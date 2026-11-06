@@ -488,6 +488,92 @@ export type Database = {
 
         ];
       };
+      clone_messages: {
+        Row: {
+          content: string;
+          created_at: string;
+          id: string;
+          parts: Json;
+          role: string;
+          thread_id: string;
+          user_id: string;
+        };
+        Insert: {
+          content?: string;
+          created_at?: string;
+          id: string;
+          parts?: Json;
+          role: string;
+          thread_id: string;
+          user_id: string;
+        };
+        Update: {
+          content?: string;
+          created_at?: string;
+          id?: string;
+          parts?: Json;
+          role?: string;
+          thread_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "clone_messages_thread_id_fkey";
+            columns: ["thread_id"];
+            isOneToOne: false;
+            referencedRelation: "clone_threads";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "clone_messages_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      clone_threads: {
+        Row: {
+          created_at: string;
+          first_message: string | null;
+          id: string;
+          last_message_at: string;
+          message_count: number;
+          title: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          first_message?: string | null;
+          id?: string;
+          last_message_at?: string;
+          message_count?: number;
+          title?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          first_message?: string | null;
+          id?: string;
+          last_message_at?: string;
+          message_count?: number;
+          title?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "clone_threads_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       daily_stats: {
         Row: {
           correct: number;
@@ -1328,9 +1414,9 @@ export type Database = {
           p_user?: string | null;
         };
         Returns: {
-          language: Database["public"]["Enums"]["lang_code"];
-          n: number;
-        }[];
+            language: Database["public"]["Enums"]["lang_code"];
+            n: number;
+          }[];
       };
       bin_recent_misses: {
         Args: {

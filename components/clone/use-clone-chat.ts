@@ -22,11 +22,21 @@ export const hasText = (m: UIMessage) => m.parts.some((p) => p.type === "text" &
  *   or closing the tab. Moving to another page inside the app is not blocked (the page says so under the box).
  */
 export function useCloneChat(userId: string) {
+  const threadIdRef = useRef<string>("");
+  if (!threadIdRef.current) {
+    threadIdRef.current = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : "";
+  }
+
   const [transport] = useState(
     () =>
       new DefaultChatTransport<UIMessage>({
         api: "/api/clone",
-        prepareSendMessagesRequest: ({ messages }) => ({ body: { messages: toRequestMessages(messages) } }),
+        prepareSendMessagesRequest: ({ messages }) => ({
+          body: {
+            threadId: threadIdRef.current || undefined,
+            messages: toRequestMessages(messages),
+          },
+        }),
       }),
   );
   const { messages, setMessages, sendMessage, status, error, stop: stopChat, regenerate, clearError } = useChat<UIMessage>({
@@ -90,10 +100,11 @@ export function useCloneChat(userId: string) {
     void stopChat();
   };
 
-  /** Forgets the conversation at once: stops an answer in progress and empties the screen. */
+  /** Forgets the conversation at once: stops an answer in progress, empties the screen, and starts a fresh thread. */
   const reset = () => {
     void stopChat();
     setMessages([]);
+    threadIdRef.current = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : "";
     if (error) clearError();
   };
 

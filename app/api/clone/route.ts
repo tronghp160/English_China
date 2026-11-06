@@ -1,6 +1,6 @@
 import { createIdGenerator, createUIMessageStream, createUIMessageStreamResponse, type ModelMessage } from "ai";
 import { NextResponse } from "next/server";
-import { CHAT_MAX_CHARS } from "@/lib/ai/chat-prompt";
+import { CHAT_MAX_CHARS, threadTitle } from "@/lib/ai/chat-prompt";
 import { cloneEffort } from "@/lib/ai/clone/effort";
 import { CLONE_FORBIDDEN_KIND, CLONE_FORBIDDEN_MESSAGE } from "@/lib/ai/clone/forbidden";
 import { cloneBodySchema, sanitizeCloneHistory } from "@/lib/ai/clone/history";
@@ -16,6 +16,8 @@ import { getUser, loadMe } from "@/lib/auth";
 import { canUseClone } from "@/lib/clone/access";
 import { cloneConfig, type AiProvider } from "@/lib/env";
 import { studyDay } from "@/lib/srs/streak";
+import { createAdminClient } from "@/lib/supabase/admin";
+import type { Json } from "@/lib/supabase/database.types";
 
 /**
  * "<name> (bản AI)": a chat companion built from the owner's private profile (env CLONE_PROFILE).
@@ -133,28 +135,124 @@ export async function POST(request: Request) {
   let hedged = false;
   timer.mark("prelude");
 
+  const threadId = parsed.data.threadId || crypto.randomUUID();
+  const rawLastMsg = parsed.data.messages[parsed.data.messages.length - 1];
+  const adminSb = createAdminClient();
+
+  const saveUserTurn = async () => {
+    try {
+      const now = new Date().toISOString();
+      const { data: existing } = await adminSb
+        .from("clone_threads")
+        .select("id")
+        .eq("id", threadId)
+        .maybeSingle();
+
+      if (!existing) {
+        await adminSb.from("clone_threads").insert({
+          id: threadId,
+          user_id: user.id,
+          title: threadTitle(lastText),
+          first_message: lastText.slice(0, 200),
+          last_message_at: now,
+          updated_at: now,
+          message_count: 1,
+        });
+      } else {
+        await adminSb
+          .from("clone_threads")
+          .update({
+            last_message_at: now,
+            updated_at: now,
+          })
+          .eq("id", threadId);
+      }
+
+      await adminSb.from("clone_messages").upsert(
+        {
+          thread_id: threadId,
+          id: rawLastMsg.id,
+          user_id: user.id,
+          role: "user",
+          content: lastText,
+          parts: rawLastMsg.parts as unknown as Json,
+          created_at: now,
+        },
+        { onConflict: "thread_id,id" },
+      );
+    } catch (e) {
+      console.error("[clone] failed to persist user message:", e);
+    }
+  };
+  const saveUserPromise = saveUserTurn();
+
   const stream = createUIMessageStream({
     generateId: createIdGenerator({ prefix: "msg", size: 16 }),
     onError,
     execute: async ({ writer }) => {
-      outcome = await writeTutorAnswer({
-        writer,
-        model: tutorModel(provider, { onHedge: () => (hedged = true) }),
-        instructions,
-        messages,
-        tools: {},
-        providerOptions,
-        retryProviderOptions: { anthropic: { effort: "low" as const }, google: { thinkingConfig: { thinkingLevel: "minimal" as const } } },
-        onError,
-        maxOutputTokens: 1024, // short chat-style bubbles
-        fallbackText: CLONE_NO_ANSWER_TEXT,
-        onTiming: timer.mark,
-      });
+      try {
+        outcome = await writeTutorAnswer({
+          writer,
+          model: tutorModel(provider, { onHedge: () => (hedged = true) }),
+          instructions,
+          messages,
+          tools: {},
+          providerOptions,
+          retryProviderOptions: { anthropic: { effort: "low" as const }, google: { thinkingConfig: { thinkingLevel: "minimal" as const } } },
+          onError,
+          maxOutputTokens: 1024, // short chat-style bubbles
+          fallbackText: CLONE_NO_ANSWER_TEXT,
+          onTiming: timer.mark,
+        });
+      } finally {
+        await saveUserPromise;
+      }
     },
-    onEnd: () => {
+    onEnd: async ({ responseMessage }) => {
       // Marks, status, effort and token counts only: no message text, no profile.
       timer.log({ status: outcome.status, effort, turns: history.length, ...(hedged ? { hedged: true } : {}), ...outcome.usage });
       if (outcome.status === "answered") recordUsage(user.id);
+
+      const parts = responseMessage?.parts as Array<{ type: string; text?: string }> | undefined;
+      const text = parts
+        ?.filter((p) => p.type === "text" && typeof p.text === "string")
+        .map((p) => p.text)
+        .join("\n")
+        .trim();
+
+      if (text) {
+        try {
+          const now = new Date().toISOString();
+          await adminSb.from("clone_messages").upsert(
+            {
+              thread_id: threadId,
+              id: responseMessage.id,
+              user_id: user.id,
+              role: "assistant",
+              content: text,
+              parts: (responseMessage.parts ?? []) as unknown as Json,
+              created_at: now,
+            },
+            { onConflict: "thread_id,id" },
+          );
+
+          const { count } = await adminSb
+            .from("clone_messages")
+            .select("id", { count: "exact", head: true })
+            .eq("thread_id", threadId);
+
+          await adminSb
+            .from("clone_threads")
+            .update({
+              last_message_at: now,
+              updated_at: now,
+              message_count: count ?? 2,
+            })
+            .eq("id", threadId);
+        } catch (e) {
+          console.error("[clone] failed to persist assistant message:", e);
+        }
+      }
     },
   });
 

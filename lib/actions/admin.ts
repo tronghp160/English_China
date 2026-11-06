@@ -239,3 +239,24 @@ export async function saveUserNote(input: { userId: string; note: string }): Pro
   revalidatePath(`/admin/users/${parsed.data.userId}`);
   return ok();
 }
+
+export async function deleteCloneThreadAsAdmin(input: { threadId: string; userId: string }): Promise<ActionResult> {
+  const me = await guard();
+  if (!me) return fail("Bạn không có quyền quản trị.");
+  const parsed = z.object({ threadId: id, userId: id }).safeParse(input);
+  if (!parsed.success) return fail("Tham số không hợp lệ.");
+
+  const sb = createAdminClient();
+  const { error } = await sb.from("clone_threads").delete().eq("id", parsed.data.threadId);
+  if (error) return fail(error.message);
+
+  await logAdminAction({
+    admin: me,
+    action: "delete_deck", // or log action
+    target: { userId: parsed.data.userId },
+    meta: { threadId: parsed.data.threadId },
+  });
+
+  revalidatePath(`/admin/users/${parsed.data.userId}`);
+  return ok();
+}
