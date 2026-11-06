@@ -147,6 +147,14 @@ Thay đổi (chưa đo, cần Vercel; nghiệm thu: prelude p50 giảm ≥ 40% s
 - `preloadChineseDict()` chạy ngay khi tin có chữ Hán, không đợi cài đặt.
 - Mốc `Server-Timing` mới: `user` (sau `getUser` + body), `parallel_done` (mọi truy vấn xong). `auth` = hồ sơ xong, `limits` = thread + giới hạn xong, `context` = lịch sử + snapshot + ngữ cảnh xong; tất cả tính từ lúc request tới route, nên `parallel_done` ≈ mốc lớn nhất trong ba mốc kia.
 
+## P2: một RPC cho rate limit + hạn mức
+
+- Migration `supabase/migrations/20261106000018_ai_gate.sql` thêm hàm `ai_gate(...)` (chỉ `service_role`). Nó gọi lại `hit_rate_limit` và `ai_usage_total`, đọc số lượt của người dùng, rồi trả `{ allowed, reason, used, total }` với `reason` là `null | rate | quota_global | quota_user` (kiểm theo đúng thứ tự cũ: rate, global, user). Không tăng usage; `recordUsage` vẫn gọi sau khi có câu trả lời. Hàm chỉ thêm, không sửa bảng nào.
+- `lib/ai/gate.ts` (`aiGate`) gọi RPC đó: 1 request thay cho 3 (`hit_rate_limit`, `ai_usage_total`, select `ai_usage`). Rate limit vẫn fail open (hàm SQL bắt lỗi của limiter), hạn mức fail closed (`AiError("failed")`). Khi RPC chưa tồn tại (`PGRST202` / `42883`) nó tự lùi về 3 lệnh cũ, log một dòng mỗi phút và thử lại RPC sau 1 phút, nên **deploy code trước khi chạy `pnpm db:push` vẫn an toàn**.
+- `/api/chat` dùng `aiGate` (qua `startPrelude`); `checkQuota` và `hitRateLimit` vẫn dùng ở các chỗ khác.
+- Test: `tests/db/ai-gate.test.ts` (hành vi thật của hàm SQL trên PGlite: ngưỡng, thứ tự ưu tiên, không tự tăng usage, fail open, quyền) và `tests/unit/ai-gate.test.ts` (RPC trả từng lý do, fail closed, đường lùi).
+- **Chủ repo cần chạy `pnpm db:push`** (hoặc `pnpm db:push --dry-run` để xem trước) để RPC có hiệu lực. `lib/supabase/database.types.ts` đã có kiểu của hàm này (tạo bằng `pnpm db:types:local`, chạy trên PGlite, không chạm database thật). Chưa đo lợi ích (cần Vercel): kỳ vọng mốc `limits` bớt 2 request HTTP.
+
 ## Việc còn lại (cho chủ repo)
 
 1. **Đo trên Vercel**: deploy preview, copy cookie phiên từ DevTools rồi `BASE_URL=https://<preview> BENCH_COOKIE='sb-…' pnpm bench:tutor`. Xem mốc `prelude` trong `Server-Timing`: nếu vẫn > 600 ms thì kiểm Function Region và cold start (mốc `auth` của request đầu).

@@ -35,6 +35,8 @@ export class AiError extends Error {
 export const QUOTA_MESSAGE =
   "Bạn đã dùng hết lượt gợi ý hôm nay. Bạn vẫn có thể tự nhập, lượt gợi ý sẽ có lại vào ngày mai.";
 
+export const QUOTA_GLOBAL_MESSAGE = "Hệ thống đã dùng hết lượt gợi ý hôm nay. Bạn vẫn có thể tự nhập từ.";
+
 export const BUSY_MESSAGE = "AI đang bận vì nhiều người dùng. Đã điền từ từ điển, AI sẽ tự bổ sung sau ít giây.";
 const DEFAULT_RETRY_AFTER = 20;
 
@@ -76,7 +78,7 @@ function schemaFor(lang: LangCode) {
 }
 
 /** Calendar day in Vietnam time, used for AI quotas. */
-function quotaDay() {
+export function quotaDay() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
 }
 
@@ -133,7 +135,7 @@ export async function checkQuota(userId: string, units = 1): Promise<number> {
   ]);
   if (total.error || mine.error) throw new AiError("failed", "Không kiểm tra được hạn mức gợi ý.");
   if ((total.data ?? 0) + units > env.AI_GLOBAL_DAILY_LIMIT) {
-    throw new AiError("quota_global", "Hệ thống đã dùng hết lượt gợi ý hôm nay. Bạn vẫn có thể tự nhập từ.");
+    throw new AiError("quota_global", QUOTA_GLOBAL_MESSAGE);
   }
   const used = mine.data?.requests ?? 0;
   if (used + units > env.AI_DAILY_LIMIT_PER_USER) throw new AiError("quota_user", QUOTA_MESSAGE);

@@ -1247,6 +1247,19 @@ export type Database = {
             last_active_day: string;
           }[];
       };
+      ai_gate: {
+        Args: {
+          p_user_id: string | null;
+          p_bucket: string | null;
+          p_window_seconds: number | null;
+          p_max: number | null;
+          p_day: string | null;
+          p_units: number | null;
+          p_user_limit: number | null;
+          p_global_limit: number | null;
+        };
+        Returns: Json;
+      };
       ai_usage_total: {
         Args: {
           p_day: string | null;

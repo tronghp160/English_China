@@ -1,6 +1,6 @@
 import "server-only";
 import { CHAT_HISTORY_LIMIT } from "@/lib/ai/chat-prompt";
-import { checkQuota } from "@/lib/ai/enrich";
+import { aiGate } from "@/lib/ai/gate";
 import { learnerSnapshot, type LangSnapshot } from "@/lib/ai/tutor/learner";
 import { pageContextLine } from "@/lib/ai/tutor/page-context";
 import { snapshotCache as defaultCache, type SnapshotCache } from "@/lib/ai/tutor/snapshot-cache";
@@ -8,7 +8,6 @@ import type { tutorTimer } from "@/lib/ai/tutor/timing";
 import { loadMe, type SessionUser } from "@/lib/auth";
 import { LANGUAGES } from "@/lib/lang/registry";
 import type { LangCode } from "@/lib/lang/types";
-import { hitRateLimit } from "@/lib/rate-limit";
 import type { ServerSupabase } from "@/lib/supabase/server";
 
 /** Both languages, so the snapshot does not wait for the learner's settings (a language with no cards is dropped later). */
@@ -47,7 +46,7 @@ export type PreludeArgs = {
 /**
  * Starts every read /api/chat needs before it can call the model, all at once, so the wait is one round
  * to Supabase (the slowest read) instead of one round after another:
- *   me (profile + settings), the thread, rate limit + quota, the stored history, the learner snapshot,
+ *   me (profile + settings), the thread, rate limit + quota (one request), the stored history, the learner snapshot,
  *   the page context and, for a new conversation on a deck, that deck's name.
  * Nothing here waits for another read: the snapshot no longer needs the learner's study languages,
  * and the thread is read by id. The caller awaits the returned promises together and then applies the
@@ -64,15 +63,15 @@ export function startPrelude({ supabase, user, threadId, newThread, contextPath,
 
   const me = loadMe(user).then(tap("auth"));
 
+  // One request for the rate limit and the quota (aiGate); the unit is recorded only once an answer was written (onEnd).
+  // A quota failure is returned as a value, so the caller can still answer 404 first.
   const gate = Promise.all([
     readThread(supabase, threadId),
-    hitRateLimit(user.id, "chat", 12, 60),
-    // the unit is recorded only once an answer was written (onEnd)
-    checkQuota(user.id).then(
-      () => null,
-      (e: unknown) => e ?? new Error("checkQuota failed"),
+    aiGate(user.id, "chat", 12, 60).then(
+      (g) => ({ allowed: g.allowed, quotaError: null as unknown }),
+      (e: unknown) => ({ allowed: true, quotaError: e ?? new Error("aiGate failed") }),
     ),
-  ]).then(tap("limits"));
+  ]).then(([thread, g]) => tap("limits")([thread, g.allowed, g.quotaError] as const));
 
   const deck = newThread?.deckId ? readDeck(supabase, newThread.deckId).then((r) => r.data) : Promise.resolve(null);
 

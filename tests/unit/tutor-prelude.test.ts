@@ -14,9 +14,8 @@ const pending = <T>(name: string, value: T) => {
 
 const loadMe = vi.fn((user: { id: string }) => pending("me", { user, profile: {}, settings: { study_langs: ["en"] } }));
 vi.mock("@/lib/auth", () => ({ loadMe: (u: { id: string }) => loadMe(u) }));
-vi.mock("@/lib/rate-limit", () => ({ hitRateLimit: () => pending("rateLimit", true) }));
-const checkQuota = vi.fn((): Promise<number> => pending("quota", 0));
-vi.mock("@/lib/ai/enrich", () => ({ checkQuota: () => checkQuota() }));
+const aiGate = vi.fn((): Promise<{ allowed: boolean }> => pending("gate", { allowed: true }));
+vi.mock("@/lib/ai/gate", () => ({ aiGate: () => aiGate() }));
 const learnerSnapshot = vi.fn((_s: unknown, langs: string[]) => pending(`snapshot:${langs.join("+")}`, [{ language: "en", total: 1, due: 0, hard: [], recent: [] }]));
 vi.mock("@/lib/ai/tutor/learner", () => ({ learnerSnapshot: (s: unknown, l: string[]) => learnerSnapshot(s, l) }));
 vi.mock("@/lib/ai/tutor/page-context", () => ({ pageContextLine: (_s: unknown, path: string) => pending(`page:${path}`, "context line") }));
@@ -46,7 +45,7 @@ beforeEach(() => {
   timer.marks.length = 0;
   loadMe.mockClear();
   learnerSnapshot.mockClear();
-  checkQuota.mockClear();
+  aiGate.mockClear();
   gateOpen = new Promise<void>((r) => (release = r));
 });
 
@@ -60,9 +59,9 @@ describe("startPrelude", () => {
     const p = startPrelude({ ...base(), contextPath: "/decks/abc" });
     // nothing is released yet: all reads must already have started
     expect(log).toEqual(
-      expect.arrayContaining(["me", "db:chat_threads", "rateLimit", "quota", "db:chat_messages", "snapshot:en+zh", "page:/decks/abc"]),
+      expect.arrayContaining(["me", "db:chat_threads", "gate", "db:chat_messages", "snapshot:en+zh", "page:/decks/abc"]),
     );
-    expect(log).toHaveLength(7);
+    expect(log).toHaveLength(6); // one request for both limits
     await settle(p);
   });
 
@@ -84,9 +83,10 @@ describe("startPrelude", () => {
   });
 
   it("returns the quota failure as a value instead of throwing", async () => {
-    checkQuota.mockImplementationOnce(() => pending("quota", 0).then(() => Promise.reject(new Error("quota_user"))));
+    aiGate.mockImplementationOnce(() => pending("gate", 0).then(() => Promise.reject(new Error("quota_user"))));
     const p = startPrelude(base());
-    const [, [, , quotaError]] = await settle(p);
+    const [, [, allowed, quotaError]] = await settle(p);
+    expect(allowed).toBe(true); // a quota error is not a rate limit
     expect((quotaError as Error).message).toBe("quota_user");
   });
 
