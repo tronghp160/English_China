@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 const { learnerSnapshot } = await import("@/lib/ai/tutor/learner");
+const { learnerBlock } = await import("@/lib/ai/chat-prompt");
 
 type Overview = { language: "en" | "zh"; total_cards: number; due_count: number; reviews_left: number | null };
 type Args = { p_language: string; p_source: string; p_limit: number };
@@ -28,6 +29,13 @@ function fakeSupabase(overview: Overview[]) {
   };
   return { supabase: supabase as never, log, release: () => release() };
 }
+
+/** Same fake, with the overview already answered. */
+const fakeSupabaseReady = (overview: Overview[]) => {
+  const f = fakeSupabase(overview);
+  f.release();
+  return f.supabase;
+};
 
 describe("learnerSnapshot", () => {
   it("asks for the word lists before the overview has answered", async () => {
@@ -65,6 +73,22 @@ describe("learnerSnapshot", () => {
     expect(result.map((s) => s.language)).toEqual(["en", "zh"]);
     expect(result[1].recent[0].term).toBe("zh-new");
     expect(f.log.indexOf("words:zh:hard")).toBeGreaterThan(f.log.indexOf("overview:done"));
+  });
+
+  it("asked for both languages, a learner with no cards gets empty entries that learnerBlock drops", async () => {
+    // /api/chat no longer waits for study_langs, so it always asks for ["en", "zh"].
+    const f = fakeSupabase([]);
+    f.release();
+    const result = await learnerSnapshot(f.supabase, ["en", "zh"]);
+    expect(result).toEqual([
+      { language: "en", total: 0, due: 0, hard: [], recent: [] },
+      { language: "zh", total: 0, due: 0, hard: [], recent: [] },
+    ]);
+    expect(learnerBlock(result)).toContain("chưa có từ nào");
+    // only a language with cards is described
+    const one = await learnerSnapshot(fakeSupabaseReady([{ language: "zh", total_cards: 3, due_count: 1, reviews_left: null }]), ["en", "zh"]);
+    expect(learnerBlock(one)).toContain("Tiếng Trung: 3 từ");
+    expect(learnerBlock(one)).not.toContain("Tiếng Anh");
   });
 
   it("returns nothing when a read fails", async () => {

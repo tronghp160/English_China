@@ -1,23 +1,21 @@
 import { convertToModelMessages, createIdGenerator, createUIMessageStream, createUIMessageStreamResponse, validateUIMessages } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { CHAT_HISTORY_LIMIT, CHAT_MAX_CHARS, threadTitle, tutorInstructionParts } from "@/lib/ai/chat-prompt";
+import { CHAT_MAX_CHARS, threadTitle, tutorInstructionParts } from "@/lib/ai/chat-prompt";
 import { chatTools, type ChatMessage } from "@/lib/ai/chat-tools";
-import { AiError, checkQuota, recordUsage, requireProvider } from "@/lib/ai/enrich";
+import { AiError, recordUsage, requireProvider } from "@/lib/ai/enrich";
 import { writeTutorAnswer, type AnswerOutcome, type TutorInstructions } from "@/lib/ai/tutor/answer";
 import { tutorEffort, type TutorEffort } from "@/lib/ai/tutor/effort";
 import { classifyTutorError, tutorErrorMessage } from "@/lib/ai/tutor/errors";
-import { learnerSnapshot } from "@/lib/ai/tutor/learner";
 import { tutorModel } from "@/lib/ai/tutor/model";
-import { pageContextLine } from "@/lib/ai/tutor/page-context";
+import { readThread, startPrelude, type ThreadRow } from "@/lib/ai/tutor/prelude";
 import { slimHistory } from "@/lib/ai/tutor/slim-history";
 import { guessLanguage } from "@/lib/ai/tutor/starters";
-import { insertThread } from "@/lib/ai/tutor/threads";
+import { ensureThread } from "@/lib/ai/tutor/threads";
 import { tutorTimer } from "@/lib/ai/tutor/timing";
-import { getMe } from "@/lib/auth";
+import { getUser } from "@/lib/auth";
 import { preloadChineseDict } from "@/lib/dict/zh";
 import type { AiProvider } from "@/lib/env";
-import { hitRateLimit } from "@/lib/rate-limit";
 import { studyDay } from "@/lib/srs/streak";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/database.types";
@@ -66,18 +64,22 @@ export async function GET() {
   return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
 }
 
+/** Chinese characters: the message needs the dictionary, whatever the learner's settings say. */
+const HAS_HAN = /\p{Script=Han}/u;
+
 export async function POST(request: Request) {
   const timer = tutorTimer();
-  const [me, body] = await Promise.all([getMe(), request.json().catch(() => null)]);
-  timer.mark("auth");
-  if (!me) return fail("Bạn cần đăng nhập.", 401);
+  // The session is verified from the JWT without a network call, so the body and the user are ready at once.
+  const [user, body] = await Promise.all([getUser(), request.json().catch(() => null)]);
+  timer.mark("user");
+  if (!user) return fail("Bạn cần đăng nhập.", 401);
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return fail(`Tin nhắn trống hoặc dài quá ${CHAT_MAX_CHARS} ký tự.`, 400);
   const { id: threadId, message, context, newThread } = parsed.data;
   const text = message.parts[0].text;
   const effort = tutorEffort(text);
   // lookupWord (zh) would otherwise parse the whole dictionary on its first call after a cold start.
-  if (me.settings.study_langs.includes("zh")) preloadChineseDict();
+  if (HAS_HAN.test(text)) preloadChineseDict();
 
   const limitFailure = (e: unknown) => {
     const err = classifyTutorError(e);
@@ -93,52 +95,41 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
-  // The context needs only the thread id and the user, so it loads alongside the checks below;
-  // when a check fails it is simply dropped (a few wasted reads).
-  const contextPromise = Promise.all([
-    supabase
-      .from("chat_messages")
-      .select("id, role, parts")
-      .eq("thread_id", threadId)
-      .order("created_at", { ascending: false })
-      .limit(CHAT_HISTORY_LIMIT),
-    learnerSnapshot(supabase, me.settings.study_langs),
-    context?.path ? pageContextLine(supabase, context.path) : Promise.resolve(null),
+  // Everything the answer needs is read in ONE round (startPrelude): the learner's profile, the thread,
+  // both limits, the history, the snapshot and the page context. When a check below fails, the other
+  // reads are simply dropped (a few wasted reads). A request for a missing thread also counts towards
+  // the rate limit (acceptable).
+  const prelude = startPrelude({ supabase, user, threadId, newThread, contextPath: context?.path, timer });
+  const [me, [{ data: found }, allowed, quotaError], newDeck, [{ data: rows }, firstSnapshot, pageContext]] = await Promise.all([
+    prelude.me,
+    prelude.gate,
+    prelude.deck,
+    prelude.context,
   ]);
-  contextPromise.catch(() => {}); // awaited below; this only avoids an unhandled rejection on an early return
-
-  // One round for the thread and both limits. A request for a missing thread now also counts
-  // towards the rate limit (acceptable). The error order stays 404 → rate → quota.
-  const readThread = () =>
-    supabase.from("chat_threads").select("id, language, deck_id, title, deck:decks(name, language)").eq("id", threadId).maybeSingle();
-  const [{ data: found }, allowed, quotaError] = await Promise.all([
-    readThread(),
-    hitRateLimit(me.user.id, "chat", 12, 60),
-    // the unit is recorded only once an answer was written (onEnd)
-    checkQuota(me.user.id).then(
-      () => null,
-      (e: unknown) => e ?? new Error("checkQuota failed"),
-    ),
-  ]);
-  timer.mark("limits");
+  timer.mark("parallel_done");
+  // The error order stays 401 → 404 → rate → quota.
+  if (!me) return fail("Bạn cần đăng nhập.", 401);
   if (!found && !newThread) return fail("Không tìm thấy cuộc trò chuyện.", 404);
   if (!allowed) return fail("Bạn gửi nhanh quá. Đợi một chút rồi gửi tiếp nhé.", 429, { kind: "rate", retryAfter: 20 });
   if (quotaError) return limitFailure(quotaError);
+  if (me.settings.study_langs.includes("zh")) preloadChineseDict();
 
   // The first question of a conversation the client just opened (it picked the id): create the
   // thread here instead of in a server action before sending. One extra round, first message only.
-  // A thread id that belongs to someone else is ignored by the upsert and stays invisible (404).
-  let thread = found;
+  // The row is built from what was inserted, not read back; only a conflict (a repeat, or an id that
+  // belongs to someone else, which the upsert ignores) reads it again and may end in a 404.
+  let thread: ThreadRow | null = found;
   if (!thread) {
-    const { error } = await insertThread(supabase, {
-      id: threadId,
-      userId: me.user.id,
+    const created = {
       language: guessLanguage(text, me.settings.study_langs[0] ?? "en"),
-      deckId: newThread?.deckId,
+      deckId: newThread?.deckId ?? null,
       title: threadTitle(text),
-    });
+    };
+    const { data: inserted, error } = await ensureThread(supabase, { id: threadId, userId: user.id, ...created });
     if (error) console.error("[tutor] create thread", error.message);
-    thread = (await readThread()).data;
+    thread = inserted?.length
+      ? { id: threadId, language: created.language, deck_id: created.deckId, title: created.title, deck: newDeck }
+      : (await readThread(supabase, threadId)).data;
     timer.mark("thread_created");
     if (!thread) return fail("Không tạo được cuộc trò chuyện.", 404);
   }
@@ -164,12 +155,13 @@ export async function POST(request: Request) {
     (e: unknown) => console.error("[tutor] save user", e),
   );
 
-  const [{ data: rows }, snapshot, pageContext] = await contextPromise;
-  timer.mark("context");
   const history = (rows ?? [])
     .reverse()
     .filter((r) => r.id !== message.id)
     .map((r) => ({ id: r.id, role: r.role, parts: r.parts }) as unknown as ChatMessage);
+  // A follow-up reuses the snapshot of the last two minutes, but a conversation with no stored turns yet
+  // (started from a word page by a server action, so it had no `newThread` flag) is a first turn: read fresh.
+  const snapshot = prelude.usedCachedSnapshot && history.length === 0 ? await prelude.freshSnapshot() : firstSnapshot;
 
   const tools = chatTools(supabase, { language: thread.language, deckId: thread.deck_id, deckLanguage: thread.deck?.language });
   let messages: ChatMessage[];

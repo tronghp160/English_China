@@ -27,10 +27,12 @@ export type Me = {
   settings: Tables<"user_settings">;
 };
 
-/** Current user's profile + private settings (cached per request). */
-export const getMe = cache(async (): Promise<Me | null> => {
-  const user = await getUser();
-  if (!user) return null;
+/**
+ * Profile + private settings of a user whose session is already verified (one round, both reads together).
+ * Null when either row is missing (the account was deleted). Routes that have the user from `getUser()` call
+ * this directly so they can start their other queries at the same time instead of after it.
+ */
+export async function loadMe(user: SessionUser): Promise<Me | null> {
   const supabase = await createClient();
   const [{ data: profile }, { data: settings }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
@@ -38,6 +40,12 @@ export const getMe = cache(async (): Promise<Me | null> => {
   ]);
   if (!profile || !settings) return null;
   return { user, profile, settings };
+}
+
+/** Current user's profile + private settings (cached per request). */
+export const getMe = cache(async (): Promise<Me | null> => {
+  const user = await getUser();
+  return user ? loadMe(user) : null;
 });
 
 export async function requireMe(): Promise<Me> {

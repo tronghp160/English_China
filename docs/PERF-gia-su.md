@@ -136,6 +136,17 @@ Các số ở trên đo trên máy dev ở Việt Nam, nên bị mạng tới Si
 
 Cũng ghi môi trường đo (commit, provider và model trả lời, ngày). Đo cả `pnpm eval:tutor` (xem `docs/EVAL-gia-su.md`) trên cùng cấu hình để có điểm chất lượng đi kèm.
 
+## P1: prelude một nhịp (`tam-su-va-gia-su-nhanh`)
+
+Thay đổi (chưa đo, cần Vercel; nghiệm thu: prelude p50 giảm ≥ 40% so với bảng "Baseline Vercel"):
+
+- `/api/chat` chỉ chờ `getUser()` (xác thực JWT tại chỗ, ~1 ms) và body, rồi **bắt đầu mọi truy vấn cùng lúc** qua `startPrelude` (`lib/ai/tutor/prelude.ts`): hồ sơ + cài đặt (`loadMe`), đọc thread, rate limit + hạn mức, lịch sử, snapshot người học, ngữ cảnh trang, và tên bộ từ nếu là cuộc trò chuyện mới có `deckId`. Trước đây `getMe()` (một nhịp) phải xong thì các truy vấn kia mới bắt đầu. Thứ tự lỗi trả về giữ nguyên: 401, 400, 404, 429 (rate), hạn mức.
+- Snapshot không còn chờ `study_langs`: luôn hỏi `["en","zh"]`. Ngôn ngữ chưa có thẻ nào bị `learnerBlock` bỏ qua; `practice_words` cho ngôn ngữ không có từ trả tập rỗng, không lỗi. Giá phải trả: người chỉ học một ngôn ngữ tốn thêm 2 RPC nhỏ chạy song song.
+- Cache snapshot trong bộ nhớ (`lib/ai/tutor/snapshot-cache.ts`): TTL 120 s, tối đa 500 người dùng, cho tin **tiếp theo** của cuộc trò chuyện (không có cờ `newThread`). Tin đầu luôn đọc mới; cuộc trò chuyện chưa có lượt nào được lưu (mở từ trang từ qua server action) cũng đọc mới. Người học ôn bài giữa hai tin thấy số liệu cũ tối đa 2 phút. Chỉ có tác dụng khi instance còn ấm (Fluid Compute). Snapshot rỗng do lỗi đọc không được nhớ.
+- Tin đầu của thread mới: `ensureThread` (upsert có `.select("id")`) trả về hàng vừa chèn, nên bỏ lần đọc lại thread; chỉ khi upsert báo trùng (id đã có, hoặc của người khác) mới đọc lại và có thể 404. Một nhịp ít hơn ở tin đầu.
+- `preloadChineseDict()` chạy ngay khi tin có chữ Hán, không đợi cài đặt.
+- Mốc `Server-Timing` mới: `user` (sau `getUser` + body), `parallel_done` (mọi truy vấn xong). `auth` = hồ sơ xong, `limits` = thread + giới hạn xong, `context` = lịch sử + snapshot + ngữ cảnh xong; tất cả tính từ lúc request tới route, nên `parallel_done` ≈ mốc lớn nhất trong ba mốc kia.
+
 ## Việc còn lại (cho chủ repo)
 
 1. **Đo trên Vercel**: deploy preview, copy cookie phiên từ DevTools rồi `BASE_URL=https://<preview> BENCH_COOKIE='sb-…' pnpm bench:tutor`. Xem mốc `prelude` trong `Server-Timing`: nếu vẫn > 600 ms thì kiểm Function Region và cold start (mốc `auth` của request đầu).
