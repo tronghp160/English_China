@@ -16,7 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { CLONE_INTRO_KEY, CLONE_STARTERS, warmClone } from "@/lib/ai/clone/client";
+import { CLONE_INTRO_KEY, CLONE_STARTERS, shortName, warmClone } from "@/lib/ai/clone/client";
 import { CloneAvatar, CloneMessages } from "./clone-messages";
 import { useCloneChat } from "./use-clone-chat";
 
@@ -101,15 +101,8 @@ export function CloneChat({
             {title}
           </h1>
           {/* Wraps instead of truncating: "không phải … thật" must never be cut off. */}
-          <p className="text-sm leading-snug opacity-90" aria-live="polite">
-            {busy ? "Đang nhắn…" : (
-              <>
-                <span className="sm:hidden">Bản AI · không phải {cloneName} thật</span>
-                <span className="hidden sm:inline">
-                  Bản AI do {cloneName} tạo từ những gì {cloneName} tự kể · không phải {cloneName} thật
-                </span>
-              </>
-            )}
+          <p className="text-[0.8125rem] leading-snug opacity-90 sm:text-sm" aria-live="polite">
+            {busy ? "Đang nhắn…" : `Bản AI do ${cloneName} tạo từ những gì ${cloneName} tự kể · không phải ${cloneName} thật`}
           </p>
         </div>
         {messages.length > 0 && (
@@ -171,7 +164,7 @@ export function CloneChat({
                 data-check-overflow
                 className="max-w-[85%] rounded-2xl rounded-tl-md bg-surface px-4 py-2.5 text-fg shadow-sm dark:border dark:border-border"
               >
-                Chào {displayName}! Mình là bản AI của {cloneName}. Bạn muốn tâm sự hay hỏi gì cứ nhắn nhé.
+                Hello {shortName(displayName)} nha, tui là bản AI của {cloneName} á. Muốn tâm sự hay hỏi gì cứ nhắn tui nha
               </div>
             </div>
             <ul className="flex flex-wrap gap-2 pl-10.5" aria-label="Gợi ý tin nhắn">

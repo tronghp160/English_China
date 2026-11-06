@@ -7,7 +7,7 @@ vi.mock("server-only", () => ({}));
 // ---- made-up data: the real profile never appears in the repo ----
 const PROFILE = "## Hồ sơ giả\nBạn là Nam, thích mèo.\nMã bí mật của hồ sơ giả: QUOKKA-7731";
 const SECRET_MESSAGE = "tui hơi buồn vì chuyện bài tập hôm nay XYLOPHONE-4420";
-const config = { name: "Nam", profile: PROFILE, birthday: "01/02" as string | null };
+const config = { name: "Nam", realName: "Hùng", profile: PROFILE, birthday: "01/02" as string | null };
 
 // ---- the route must not touch the database: any client created here fails the test ----
 const dbTouched = vi.fn();
@@ -156,6 +156,7 @@ describe("POST /api/clone: an answer", () => {
     const prompt = model.doStreamCalls[0].prompt;
     const system = prompt.filter((m) => m.role === "system").map((m) => m.content).join("\n");
     expect(system).toContain("phiên bản AI của Nam");
+    expect(system).toContain("Nam là biệt danh của chủ app; trong hồ sơ tên thật là Hùng"); // the profile's name: same person
     expect(system).toContain("QUOKKA-7731");
     expect(system).toContain("Người đang nhắn: Mai");
     expect(system).toContain("Đang giữa cuộc trò chuyện"); // not the first turn

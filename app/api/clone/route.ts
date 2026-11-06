@@ -95,6 +95,7 @@ export async function POST(request: Request) {
   const effort = cloneEffort(lastText);
   const parts = cloneInstructionParts({
     name: config.name,
+    realName: config.realName,
     profile: config.profile,
     listenerName: me.profile.display_name,
     today: studyDay(new Date(), me.settings.timezone),

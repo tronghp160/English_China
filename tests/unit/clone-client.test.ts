@@ -1,7 +1,7 @@
 import type { UIMessage } from "ai";
 import { describe, expect, it } from "vitest";
 import { MAX_BUBBLES, splitBubbles } from "@/lib/ai/clone/bubbles";
-import { CLONE_STARTERS, CLONE_STORED_MAX, cloneStorageKey, parseStored, serializeMessages, textMessages, toRequestMessages } from "@/lib/ai/clone/client";
+import { CLONE_STARTERS, CLONE_STORED_MAX, cloneStorageKey, parseStored, serializeMessages, shortName, textMessages, toRequestMessages } from "@/lib/ai/clone/client";
 
 const ui = (id: string, role: "user" | "assistant", ...texts: string[]): UIMessage => ({
   id,
@@ -92,6 +92,27 @@ describe("localStorage round trip", () => {
     for (const raw of [null, "", "not json", "{}", '{"a":1}', '[{"id":1}]', '[{"id":"a","role":"system","text":"x"}]', '[{"id":"a","role":"user","text":""}]', "null"]) {
       expect(parseStored(raw), String(raw)).toEqual([]);
     }
+  });
+});
+
+describe("shortName", () => {
+  it("greets by the last word of the name, the given name in Vietnamese order", () => {
+    expect(shortName("Nguyễn Văn Minh")).toBe("Minh");
+    expect(shortName("Lan Chi")).toBe("Chi");
+    expect(shortName("  Phạm   Thu Hà ")).toBe("Hà");
+  });
+
+  it("keeps a one-word name as it is, whatever it looks like", () => {
+    expect(shortName("Hà")).toBe("Hà");
+    expect(shortName("user123")).toBe("user123");
+  });
+
+  it("falls back to bạn, and cannot carry angle brackets or a very long word", () => {
+    expect(shortName("")).toBe("bạn");
+    expect(shortName("   ")).toBe("bạn");
+    expect(shortName("<>")).toBe("bạn");
+    expect(shortName("An <b>Bình</b>")).not.toMatch(/[<>]/);
+    expect(shortName("x".repeat(80))).toHaveLength(30);
   });
 });
 

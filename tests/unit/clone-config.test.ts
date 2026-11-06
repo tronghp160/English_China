@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CONTACT } from "@/lib/contact";
 
 // Only made-up profile text appears in tests. The real one lives in .env.local and Vercel.
 const FAKE_PROFILE = "# Hồ sơ\nBạn là Nam, thích mèo.\n\n## Cách nói chuyện\nNhắn ngắn.";
@@ -12,7 +13,7 @@ const BASE = {
 /** Fresh module (serverEnv caches its first parse) under the given environment. */
 async function load(env: Record<string, string | undefined>) {
   vi.resetModules();
-  for (const k of ["ANTHROPIC_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY", "AI_PROVIDER", "CLONE_PROFILE", "CLONE_NAME", "CLONE_BIRTHDAY"]) {
+  for (const k of ["ANTHROPIC_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY", "AI_PROVIDER", "CLONE_PROFILE", "CLONE_NAME", "CLONE_REAL_NAME", "CLONE_BIRTHDAY"]) {
     vi.stubEnv(k, "");
   }
   for (const [k, v] of Object.entries({ ...BASE, ...env })) vi.stubEnv(k, v ?? "");
@@ -38,14 +39,24 @@ describe("cloneConfig", () => {
     expect(cloneConfig()).toBeNull();
   });
 
-  it("is on with a profile and a key, keeping the profile's lines and defaulting the name", async () => {
+  it("is on with a profile and a key, keeping the profile's lines; the name falls back to the owner's nickname", async () => {
     const { cloneConfig } = await load({ GOOGLE_GENERATIVE_AI_API_KEY: "k", CLONE_PROFILE: `\n${FAKE_PROFILE}\n` });
-    expect(cloneConfig()).toEqual({ name: "Trọng", profile: FAKE_PROFILE, birthday: null });
+    expect(cloneConfig()).toEqual({ name: CONTACT.nickname, realName: "Trọng", profile: FAKE_PROFILE, birthday: null });
   });
 
   it("reads the name and the birthday", async () => {
     const { cloneConfig } = await load({ ANTHROPIC_API_KEY: "k", CLONE_PROFILE: FAKE_PROFILE, CLONE_NAME: "Nam", CLONE_BIRTHDAY: "01/02" });
-    expect(cloneConfig()).toEqual({ name: "Nam", profile: FAKE_PROFILE, birthday: "01/02" });
+    expect(cloneConfig()).toMatchObject({ name: "Nam", profile: FAKE_PROFILE, birthday: "01/02" });
+  });
+
+  it("reads the name the profile uses for the owner, separately from the display name", async () => {
+    const { cloneConfig } = await load({ ANTHROPIC_API_KEY: "k", CLONE_PROFILE: FAKE_PROFILE, CLONE_NAME: "Bi", CLONE_REAL_NAME: "Hùng" });
+    expect(cloneConfig()).toMatchObject({ name: "Bi", realName: "Hùng" });
+  });
+
+  it("falls back to the nickname when CLONE_NAME is only blanks", async () => {
+    const { cloneConfig } = await load({ ANTHROPIC_API_KEY: "k", CLONE_PROFILE: FAKE_PROFILE, CLONE_NAME: "   " });
+    expect(cloneConfig()?.name).toBe(CONTACT.nickname);
   });
 
   it("ignores a malformed birthday instead of breaking the environment", async () => {

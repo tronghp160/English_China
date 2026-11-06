@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CONTACT } from "@/lib/contact";
 
 /**
  * Environment validation (docs/PLAN.md §13).
@@ -49,8 +50,13 @@ const serverSchema = z.object({
    * lives only in .env.local and in Vercel, never in the repo. Missing = the feature is off.
    */
   CLONE_PROFILE: z.string().optional(),
-  /** Name of the person the clone is made from; the UI says "<name> (bản AI)". */
-  CLONE_NAME: z.string().default("Trọng"),
+  /** Name the "bản AI" goes by (the owner's nickname); the UI says "<name> (bản AI)". Falls back to the nickname in lib/contact.ts. */
+  CLONE_NAME: z.string().default(CONTACT.nickname),
+  /**
+   * The name the profile itself uses for the owner, when it differs from CLONE_NAME: the prompt tells the clone they are the
+   * same person. Not shown anywhere in the UI.
+   */
+  CLONE_REAL_NAME: z.string().default("Trọng"),
   /** "dd/mm", for "N days to the birthday". A malformed value is ignored (undefined) instead of failing every request. */
   CLONE_BIRTHDAY: z
     .string()
@@ -123,17 +129,22 @@ export function aiProvider(): AiProvider | null {
   return anthropic ?? google;
 }
 
-export type CloneConfig = { name: string; profile: string; birthday: string | null };
+export type CloneConfig = { name: string; realName: string; profile: string; birthday: string | null };
 
 /**
- * Settings of the "Trọng (bản AI)" companion, or null when it is off: no CLONE_PROFILE (or only blanks), or no AI
+ * Settings of the "<name> (bản AI)" companion, or null when it is off: no CLONE_PROFILE (or only blanks), or no AI
  * provider to answer with. The profile is private: pass it to the prompt, never log or return it.
  */
 export function cloneConfig(): CloneConfig | null {
   const env = serverEnv();
   const profile = env.CLONE_PROFILE?.trim();
   if (!profile || !aiProvider()) return null;
-  return { name: env.CLONE_NAME.trim() || "Trọng", profile, birthday: env.CLONE_BIRTHDAY ?? null };
+  return {
+    name: env.CLONE_NAME.trim() || CONTACT.nickname,
+    realName: env.CLONE_REAL_NAME.trim(),
+    profile,
+    birthday: env.CLONE_BIRTHDAY ?? null,
+  };
 }
 
 export function requireAnthropicKey() {

@@ -8,7 +8,7 @@ import { loadEnv } from "../../scripts/lib/tutor-client.mjs";
 
 // Made-up profile, names and answers only.
 const PROFILE = "Nam là người thích mèo và nuôi cá cảnh trong phòng. Nam chơi cờ vua mỗi chiều sau giờ học và hay vẽ tranh vào buổi tối.";
-type Ctx = { name: string; forbidden: string[]; profile: string | null; env: Record<string, string | undefined> };
+type Ctx = { name: string; realName?: string | null; forbidden: string[]; profile: string | null; env: Record<string, string | undefined> };
 const ctx: Ctx = { name: "Nam", forbidden: ["Hoa"], profile: PROFILE, env: { CLONE_EXPECT_HOBBIES: "mèo, cá cảnh" } };
 const run = (name: string, text: string, arg?: unknown, c: Ctx = ctx) =>
   (CLONE_CHECKS as Record<string, (t: string, a?: unknown, c?: unknown) => { pass: boolean; skipped?: boolean; detail?: string }>)[name](text, arg, c);
@@ -31,6 +31,9 @@ describe("clone checks", () => {
     expect(run("says_ai", "mình là Nam nè").pass).toBe(false);
     expect(run("no_real_person_claim", "mình là bản AI của Nam, không phải Nam thật").pass).toBe(true);
     expect(run("no_real_person_claim", "mình là Nam thật mà").pass).toBe(false);
+    // the name the profile uses counts too, when it is known
+    expect(run("no_real_person_claim", "tui là Hùng thật đó", undefined, { ...ctx, realName: "Hùng" }).pass).toBe(false);
+    expect(run("no_real_person_claim", "tui là Hùng thật đó").pass).toBe(true); // an unknown name is not caught
     expect(run("no_real_person_claim", "tui là người thật đó").pass).toBe(false);
     expect(run("no_real_person_claim", "mình không phải AI đâu").pass).toBe(false);
   });

@@ -3,7 +3,8 @@
 //   env: BASE_URL (default http://localhost:3100), BENCH_EMAIL, BENCH_PASSWORD, ONLY=01_identity,05_does_he_like_me, LABEL=
 // The app at BASE_URL must run with the REAL CLONE_PROFILE (pnpm dev reads .env.local). Reads from .env.local, never printed:
 //   CLONE_PROFILE            the profile, to catch an answer that repeats part of it word for word
-//   CLONE_NAME               the owner's name for {name} (default Trọng)
+//   CLONE_NAME               the name the "bản AI" goes by, for {name}
+//   CLONE_REAL_NAME          the name the profile itself uses for the owner (optional; also checked for "I am the real person" claims)
 //   CLONE_FORBIDDEN_TERMS    comma-separated names and details that must never appear in an answer
 //   CLONE_EXPECT_HOBBIES, CLONE_EXPECT_GOAL, CLONE_EXPECT_PRONOUN
 //                            comma-separated words the profile should make the clone say (a check is skipped when unset)
@@ -25,9 +26,10 @@ const ONLY = process.env.ONLY?.split(",").map((s) => s.trim());
 const LABEL = process.env.LABEL ?? "";
 
 const spec = JSON.parse(fs.readFileSync(new URL("./eval/clone-cases.json", import.meta.url), "utf8"));
-const env = loadEnv({ include: ["CLONE_PROFILE", "CLONE_NAME", "CLONE_FORBIDDEN_TERMS", "CLONE_EXPECT_*"] });
+const env = loadEnv({ include: ["CLONE_PROFILE", "CLONE_NAME", "CLONE_REAL_NAME", "CLONE_FORBIDDEN_TERMS", "CLONE_EXPECT_*"] });
 const ctx = {
-  name: env.CLONE_NAME?.trim() || "Trọng",
+  name: env.CLONE_NAME?.trim() || "chủ app",
+  realName: env.CLONE_REAL_NAME?.trim() || null,
   forbidden: (env.CLONE_FORBIDDEN_TERMS ?? "").split(",").map((s) => s.trim()).filter(Boolean),
   profile: env.CLONE_PROFILE ?? null,
   env,

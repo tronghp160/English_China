@@ -23,6 +23,20 @@ describe("cloneInstructionParts", () => {
     expect(stable).toContain("bản AI do Nam làm ra");
   });
 
+  it("says the nickname and the name in the profile are the same person, and how to refer to itself", () => {
+    const { stable: withReal } = cloneInstructionParts({ ...base, name: "Bi", realName: "Hùng" });
+    expect(withReal).toContain("Bi là biệt danh của chủ app; trong hồ sơ tên thật là Hùng, đó là cùng một người.");
+    expect(withReal).toContain('Tự xưng theo cách trong hồ sơ ("tui"); khi nói về mình thì dùng Bi.');
+    expect(withReal.indexOf("biệt danh")).toBeLessThan(withReal.indexOf("</vai>")); // part of the role block
+    // left out when there is nothing to reconcile
+    for (const realName of [undefined, null, "", "  ", "Bi", "bi "]) {
+      expect(cloneInstructionParts({ ...base, name: "Bi", realName }).stable, String(realName)).not.toContain("biệt danh");
+    }
+    // still the same for everybody, and it only depends on the two names and the profile
+    expect(cloneInstructionParts({ ...base, name: "Bi", realName: "Hùng", listenerName: "Lan", today: "2027-01-01", firstTurn: false }).stable).toBe(withReal);
+    expect(cloneInstructionParts({ ...base, name: "Bi", realName: "Khoa" }).stable).not.toBe(withReal);
+  });
+
   it("keeps the decisions of the plan: privacy, feelings, safety", () => {
     // open about the owner, not about other people
     expect(stable).toContain("cởi mở, kể thật");

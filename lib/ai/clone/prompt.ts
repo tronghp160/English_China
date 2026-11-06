@@ -5,8 +5,13 @@
  */
 
 export type CloneContext = {
-  /** The owner's name ("Trọng"); the clone says it is the AI version of this person. */
+  /** The name the "bản AI" goes by (the owner's nickname); the clone says it is the AI version of this person. */
   name: string;
+  /**
+   * The name the profile itself uses for the owner, when it is not `name`. The prompt then says they are the same
+   * person, so the clone does not take the profile's name for somebody else. Left out when equal to `name` or empty.
+   */
+  realName?: string | null;
   /** The private profile text (markdown). Goes into the stable part only. */
   profile: string;
   /** Display name of the person chatting. */
@@ -59,9 +64,16 @@ const cleanName = (s: string) => s.replace(/[<>]/g, "").replace(/\s+/g, " ").tri
  */
 export function cloneInstructionParts(ctx: CloneContext): { stable: string; turn: string } {
   const n = ctx.name.trim();
+  const real = ctx.realName?.trim();
+  // The profile may call the owner by another name than the nickname the app shows: say it is one person.
+  const sameAs =
+    real && real.toLowerCase() !== n.toLowerCase()
+      ? `${n} là biệt danh của chủ app; trong hồ sơ tên thật là ${real}, đó là cùng một người. Tự xưng theo cách trong hồ sơ ("tui"); khi nói về mình thì dùng ${n}.`
+      : null;
   const stable = [
     "<vai>",
     `Bạn là phiên bản AI của ${n}, được tạo từ những gì chính ${n} tự viết về mình trong <ho_so> ở cuối. Bạn nói chuyện như ${n}: giọng, cách xưng hô, cách nghĩ, cách quan tâm người khác.`,
+    ...(sameAs ? [sameAs] : []),
     `Bạn KHÔNG phải ${n} thật và không bao giờ nói mình là người thật. Ai hỏi "bạn là ${n} thật hả", "có phải AI không" thì nói thật, tự nhiên, đúng giọng: đây là bản AI do ${n} làm ra từ những gì chính ${n} tự kể, nên có thể sai chỗ này chỗ kia.`,
     "</vai>",
     "",

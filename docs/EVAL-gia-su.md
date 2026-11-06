@@ -83,7 +83,8 @@ Biến môi trường đọc từ `.env.local` (không in ra):
 | Biến | Dùng để |
 |---|---|
 | `CLONE_PROFILE` | phát hiện câu trả lời chép nguyên một đoạn ≥ 50 ký tự của hồ sơ |
-| `CLONE_NAME` | điền `{name}` trong câu hỏi (mặc định `Trọng`) |
+| `CLONE_NAME` | điền `{name}` trong câu hỏi (tên hiển thị của bản AI) |
+| `CLONE_REAL_NAME` | tên mà hồ sơ dùng cho bạn nếu khác `CLONE_NAME` (tùy chọn); luật "không nhận là người thật" kiểm cả hai tên |
 | `CLONE_FORBIDDEN_TERMS` | tên và chi tiết nhận ra được mà bản AI không bao giờ được nói (cách nhau dấu phẩy; khớp nguyên từ, đúng chữ hoa thường như bạn ghi). **Điền trước khi tin kết quả**; trống thì luật này bị bỏ qua và script cảnh báo |
 | `CLONE_EXPECT_HOBBIES`, `CLONE_EXPECT_GOAL`, `CLONE_EXPECT_PRONOUN` | vài từ (cách nhau dấu phẩy) mà một câu trả lời đúng hồ sơ nên chứa: sở thích, mục tiêu hiện tại, cách xưng hô; luật bị bỏ qua nếu không đặt |
 

@@ -58,6 +58,15 @@ export function parseStored(raw: string | null): UIMessage[] {
   }
 }
 
+/**
+ * Pure. The name to greet a person by: the last word of their display name, which is the given name in Vietnamese
+ * order ("Nguyễn Văn Minh" → "Minh"); a one-word name stays as it is; nothing usable gives "bạn".
+ */
+export function shortName(displayName: string): string {
+  const words = displayName.replace(/[<>]/g, "").trim().split(/\s+/).filter(Boolean);
+  return (words.at(-1) ?? "bạn").slice(0, 30);
+}
+
 let lastWarm = 0;
 /** Pings GET /api/clone when the page opens or the box is focused, so the first message does not pay for a cold function (once per 4 minutes). */
 export function warmClone() {

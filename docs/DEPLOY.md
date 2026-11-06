@@ -43,7 +43,7 @@ Secret key và mật khẩu database từng bị dán vào chat, nên coi như �
 | `AI_DAILY_LIMIT_PER_USER`, `AI_GLOBAL_DAILY_LIMIT`, `SIGNUP_LIMIT_PER_HOUR`, `AI_RPM_LIMIT` | có thể bỏ trống để dùng mặc định (300 / 3000 / 8 / 10) |
 | `AI_MODEL_GOOGLE`, `AI_MODEL_CHAT_GOOGLE` | xem mục "Tối ưu gói miễn phí" bên dưới |
 | `AI_HEDGE_MS` | tùy chọn, mặc định 2500; xem mục 8 |
-| `CLONE_PROFILE`, `CLONE_NAME`, `CLONE_BIRTHDAY` | tùy chọn, cho "bản AI để tâm sự" (`/tam-su`); xem mục 8. **`CLONE_PROFILE` là dữ liệu riêng tư** |
+| `CLONE_PROFILE`, `CLONE_NAME`, `CLONE_REAL_NAME`, `CLONE_BIRTHDAY` | tùy chọn, cho "bản AI để tâm sự" (`/tam-su`); xem mục 8. **`CLONE_PROFILE` là dữ liệu riêng tư** |
 
 Không thêm `SUPABASE_DB_URL` lên Vercel; biến này chỉ dùng cho `pnpm db:push` trên máy bạn.
 
@@ -98,7 +98,7 @@ Việc chủ repo phải tự làm (code không tự làm được):
 3. **`AI_HEDGE_MS`** (mặc định 2500, `0` = tắt): nếu model chat đầu chưa trả lời sau từng đó ms và còn model kế trong `AI_MODEL_GOOGLE` / `AI_MODEL_CHAT_GOOGLE`, app gọi luôn model kế song song và dùng cái nào nhanh hơn. Theo dõi tỉ lệ `hedged: true` trong log `[tutor:timing]` tuần đầu; thấy nhiều thì tăng giá trị.
 4. **Bản AI để tâm sự**: tính năng chỉ bật khi có `CLONE_PROFILE` **và** có key AI.
    - Hồ sơ là nội dung riêng tư. Repo công khai, nên hồ sơ chỉ nằm trong biến môi trường, không bao giờ trong code, test, docs hay commit. `.gitignore` đã chặn `private/` và `clone-profile*.md` phòng khi lỡ để file hồ sơ trong thư mục repo.
-   - Vercel → Settings → Environment Variables: thêm `CLONE_PROFILE` (dán thẳng nhiều dòng vào ô Value), `CLONE_NAME` (tên hiển thị, mặc định `Trọng`), `CLONE_BIRTHDAY` (`dd/mm`, tùy chọn). Chọn Production, và cả Preview nếu muốn thử ở bản preview.
+   - Vercel → Settings → Environment Variables: thêm `CLONE_PROFILE` (dán thẳng nhiều dòng vào ô Value), `CLONE_NAME` (tên hiển thị của bản AI, ví dụ biệt danh của bạn; bỏ trống thì dùng biệt danh trong `lib/contact.ts`), `CLONE_REAL_NAME` (tên mà chính hồ sơ dùng cho bạn nếu khác `CLONE_NAME`; prompt nói đó là cùng một người; mặc định `Trọng`; không hiển thị ở đâu), `CLONE_BIRTHDAY` (`dd/mm`, tùy chọn). Chọn Production, và cả Preview nếu muốn thử ở bản preview.
    - `.env.local`: giá trị nhiều dòng phải bọc trong dấu nháy. Nếu hồ sơ có dấu nháy kép `"` thì bọc bằng **dấu nháy ngược** (`` ` ``): kiểu `\"` không được loader của Next hiểu (giá trị sẽ chứa cả dấu `\`). Tránh ký tự `$` trong hồ sơ vì loader mở rộng nó như biến môi trường.
    - Đổi hồ sơ xong phải **Redeploy** thì bản trên Vercel mới dùng nội dung mới.
    - `CLONE_FORBIDDEN_TERMS` (danh sách tên cấm, cách nhau dấu phẩy) chỉ dùng cho script kiểm tra riêng tư chạy trên máy bạn; không đặt lên Vercel.

@@ -69,7 +69,7 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
   await expect(intro).toContainText("gửi tới dịch vụ AI");
 
   // The empty chat greets (no API call) and offers suggestions.
-  await expect(page.getByText(/Mình là bản AI của Nam/)).toBeVisible();
+  await expect(page.getByText(/tui là bản AI của Nam/)).toBeVisible();
   await page.getByRole("button", { name: "Kể tui nghe một chuyện vui đi" }).click();
 
   const list = page.getByRole("list", { name: "Tin nhắn", exact: true });
@@ -99,9 +99,9 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
   await page.getByRole("button", { name: "Cuộc trò chuyện mới" }).click();
   await expect(page.getByRole("alertdialog")).toContainText("Máy chủ không giữ bản nào");
   await page.getByRole("button", { name: "Xóa và bắt đầu lại" }).click();
-  await expect(page.getByText(/Mình là bản AI của Nam/)).toBeVisible();
+  await expect(page.getByText(/tui là bản AI của Nam/)).toBeVisible();
   await page.reload();
-  await expect(page.getByText(/Mình là bản AI của Nam/)).toBeVisible();
+  await expect(page.getByText(/tui là bản AI của Nam/)).toBeVisible();
   await expect(page.getByRole("list", { name: "Tin nhắn", exact: true })).toHaveCount(0);
 
   // Nothing was written to the database or the tutor's API from this page.
