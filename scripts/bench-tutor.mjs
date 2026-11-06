@@ -2,19 +2,16 @@
 // Usage: pnpm bench:tutor   (env: BASE_URL, BENCH_EMAIL, BENCH_PASSWORD, RUNS, ONLY=simple_en,correct, BENCH_COOKIE)
 // Needs a running app (pnpm dev --port 3100, or pnpm build && pnpm start --port 3200) and the demo
 // account from pnpm db:seed. Each scenario runs in a fresh thread, 6 s apart (rate limit 12/min).
+// For real numbers run it against a Vercel preview (BASE_URL=https://<preview>): the demo account's
+// session works on any deployment that uses the same Supabase project; BENCH_COOKIE is only for a
+// deployment behind protection. See docs/PERF-gia-su.md.
 // Results go to bench-results/tutor-<timestamp>.json; the threads are deleted at the end.
+// "marks" are the Server-Timing marks of the prelude (auth, limits, thread_created, context, prelude):
+// milliseconds since the request reached the route (cumulative, not per step), median per scenario.
 
 import fs from "node:fs";
 import crypto from "node:crypto";
-import { createServerClient } from "@supabase/ssr";
-
-const env = Object.fromEntries(
-  fs
-    .readFileSync(".env.local", "utf8")
-    .split(/\r?\n/)
-    .filter((l) => /^[A-Z_]+=/.test(l))
-    .map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1).trim()]),
-);
+import { connect, median, parseServerTiming, pct, sleep } from "./lib/tutor-client.mjs";
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:3100";
 const EMAIL = process.env.BENCH_EMAIL ?? "demo@example.com";
@@ -37,88 +34,12 @@ const SCENARIOS = [
   { name: "first_new", language: "en", texts: ["dog nghĩa là gì?"], fresh: "new" },
 ].filter((s) => !ONLY || ONLY.includes(s.name));
 
-// Sign in through @supabase/ssr with an in-memory cookie jar, so the cookie format is exactly the app's.
-const jar = new Map();
-const supabase = createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
-  cookies: {
-    getAll: () => [...jar].map(([name, value]) => ({ name, value })),
-    setAll: (list) => list.forEach(({ name, value }) => (value ? jar.set(name, value) : jar.delete(name))),
-  },
-});
-const { data: auth, error: authError } = await supabase.auth.signInWithPassword({ email: EMAIL, password: PASSWORD });
-if (authError) {
-  console.error(`Sign-in failed for ${EMAIL}: ${authError.message} (run pnpm db:seed?)`);
+let client;
+try {
+  client = await connect({ baseUrl: BASE_URL, email: EMAIL, password: PASSWORD, cookie: process.env.BENCH_COOKIE });
+} catch (e) {
+  console.error(String(e.message ?? e));
   process.exit(1);
-}
-const userId = auth.user.id;
-const cookie = process.env.BENCH_COOKIE ?? [...jar].map(([n, v]) => `${n}=${encodeURIComponent(v)}`).join("; ");
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const created = [];
-
-/** Sends one message and times the SSE stream (from `t0`, default now). */
-async function send(threadId, text, { t0 = performance.now(), newThread } = {}) {
-  const res = await fetch(`${BASE_URL}/api/chat`, {
-    method: "POST",
-    headers: { "content-type": "application/json", cookie },
-    body: JSON.stringify({
-      id: threadId,
-      message: { id: crypto.randomUUID().replaceAll("-", "").slice(0, 32), role: "user", parts: [{ type: "text", text }] },
-      ...(newThread ? { newThread } : {}),
-    }),
-  });
-  const serverTiming = res.headers.get("server-timing");
-  if (!res.ok || !res.body) {
-    return { error: `${res.status} ${await res.text().catch(() => "")}`.slice(0, 200), serverTiming };
-  }
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let ttfb, ttft;
-  let tools = 0;
-  let chars = 0;
-  let answer = "";
-  let error;
-  let buf = "";
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    ttfb ??= performance.now() - t0;
-    buf += decoder.decode(value, { stream: true });
-    const lines = buf.split("\n");
-    buf = lines.pop() ?? "";
-    for (const line of lines) {
-      if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
-      let ev;
-      try {
-        ev = JSON.parse(line.slice(6));
-      } catch {
-        continue;
-      }
-      if (ev.type === "text-delta" && ev.delta) {
-        if (ev.delta.trim()) ttft ??= performance.now() - t0;
-        chars += ev.delta.length;
-        answer += ev.delta;
-      }
-      if (ev.type === "tool-input-available") tools++;
-      if (ev.type === "error") error = ev.errorText;
-    }
-  }
-  const total = performance.now() - t0;
-  const r = (n) => (n === undefined ? null : Math.round(n));
-  // The answer is kept (in the JSON file only) so quality can be read next to the timings.
-  return { ttfb: r(ttfb), ttft: r(ttft), total: r(total), tools, chars, error, serverTiming, answer };
-}
-
-async function newThread(language) {
-  for (let attempt = 1; ; attempt++) {
-    const { data, error } = await supabase.from("chat_threads").insert({ user_id: userId, language }).select("id").single();
-    if (!error) {
-      created.push(data.id);
-      return data.id;
-    }
-    if (attempt === 3) throw new Error(`create thread: ${error.message}`);
-    await sleep(2000); // a flaky network: try again
-  }
 }
 
 const results = {};
@@ -134,18 +55,18 @@ try {
           firstCall = false;
           const t0 = performance.now();
           if (s.fresh === "old") {
-            run = await send(await newThread(s.language), s.texts[0], { t0 });
+            run = await client.send(await client.newThread(s.language), s.texts[0], { t0 });
           } else {
             const id = crypto.randomUUID();
-            created.push(id);
-            run = await send(id, s.texts[0], { t0, newThread: {} });
+            client.created.push(id);
+            run = await client.send(id, s.texts[0], { t0, newThread: {} });
           }
         } else {
-          const threadId = await newThread(s.language);
+          const threadId = await client.newThread(s.language);
           for (const text of s.texts) {
             if (!firstCall) await sleep(GAP_MS);
             firstCall = false;
-            run = await send(threadId, text); // the last message of the scenario is the one measured
+            run = await client.send(threadId, text); // the last message of the scenario is the one measured
           }
         }
       } catch (e) {
@@ -159,17 +80,9 @@ try {
     }
   }
 } finally {
-  if (created.length) {
-    const { error } = await supabase.from("chat_threads").delete().in("id", created);
-    if (error) console.error(`cleanup failed: ${error.message}`);
-  }
+  await client.cleanup();
 }
 
-const pct = (xs, p) => {
-  const v = xs.filter((x) => typeof x === "number").sort((a, b) => a - b);
-  if (!v.length) return null;
-  return v[Math.min(v.length - 1, Math.ceil((p / 100) * v.length) - 1)];
-};
 const summary = Object.entries(results).map(([name, runs]) => {
   const ok = runs.filter((r) => !r.error);
   return {
@@ -184,7 +97,21 @@ const summary = Object.entries(results).map(([name, runs]) => {
 });
 console.table(summary);
 
+// Median of every Server-Timing mark per scenario (a mark a run did not have, e.g. thread_created, is skipped).
+const markNames = [...new Set(Object.values(results).flat().flatMap((r) => Object.keys(parseServerTiming(r.serverTiming))))];
+const marks = Object.entries(results).map(([name, runs]) => {
+  const parsed = runs.filter((r) => !r.error).map((r) => parseServerTiming(r.serverTiming));
+  return { scenario: name, ...Object.fromEntries(markNames.map((m) => [m, median(parsed.map((p) => p[m]))])) };
+});
+if (markNames.length) {
+  console.log("Server-Timing marks, median ms since the request reached the route:");
+  console.table(marks);
+}
+
 fs.mkdirSync("bench-results", { recursive: true });
 const file = `bench-results/tutor-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
-fs.writeFileSync(file, JSON.stringify({ baseUrl: BASE_URL, runs: RUNS, date: new Date().toISOString(), summary, results }, null, 2));
+fs.writeFileSync(
+  file,
+  JSON.stringify({ baseUrl: BASE_URL, runs: RUNS, date: new Date().toISOString(), summary, marks, results }, null, 2),
+);
 console.log(`Saved ${file}`);

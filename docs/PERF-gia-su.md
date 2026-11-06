@@ -114,6 +114,28 @@ Log server lần cuối: model → chữ đầu p50 1346 ms, chữ đầu → xo
 - Phần model gần đạt mục tiêu: từ lúc gọi model tới chữ đầu ~1,1–1,3 s; câu trả lời xong ngay sau chữ đầu. Lỗi lớn nhất (treo ~2 phút rồi xin lỗi) đã hết.
 - Phần còn lại là **prelude** (các nhịp tới Supabase). Trên máy dev ở Việt Nam mỗi nhịp 0,3–0,9 s, có lúc nhiều giây, nên TTFT ở đây vẫn 3–5 s. Mục tiêu ≤ 1,5 s cho câu đơn giản chỉ kiểm được trên Vercel `sin1` cạnh Supabase.
 
+## Baseline trên Vercel (P0 của `PLAN-tam-su-va-gia-su.md`)
+
+Các số ở trên đo trên máy dev ở Việt Nam, nên bị mạng tới Singapore làm sai. Mục tiêu của phần A (TTFT p50 ≤ 2,0 s cho `simple_en` / `simple_zh`, p90 ≤ 4 s, `correct` p50 ≤ 3,5 s) chỉ kiểm được trên Vercel. **Chưa đo**: cần deploy và dashboard, việc của chủ repo. Các bước:
+
+1. Vercel dashboard → Settings → Functions: **Function Region = `sin1`** và bật **Fluid Compute** (giữ instance ấm; nếu tắt thì cache trong bộ nhớ ở P1 và cooldown model gần như vô dụng).
+2. Deploy bản cần đo (preview hoặc production). Preview bật Deployment Protection sẽ trả 401 cho script: tắt tạm cho lần đo hoặc đo trên domain production.
+3. Chạy trên máy dev: `BASE_URL=https://<domain> RUNS=5 pnpm bench:tutor`. Script đăng nhập bằng tài khoản demo (cùng project Supabase nên phiên dùng được trên mọi bản deploy); `BENCH_COOKIE` chỉ để ghi đè cookie. Mỗi lần chạy tốn ~45 lượt AI, và các kịch bản chạy cách nhau 6 s.
+4. Script in thêm bảng **Server-Timing marks**: trung vị từng mốc của prelude theo kịch bản (`auth`, `limits`, `thread_created`, `context`, `prelude`), tính bằng ms **từ lúc request tới route (tích lũy, không phải thời gian từng bước)**. Mốc `prelude` là lúc bắt đầu gọi model. Lưu cả vào `bench-results/tutor-*.json`.
+5. Điền bảng:
+
+| Kịch bản | TTFT p50 | TTFT p90 | Total p50 | prelude p50 | tools tb |
+|---|---|---|---|---|---|
+| simple_en | _chưa đo_ | | | | |
+| simple_zh | _chưa đo_ | | | | |
+| correct | _chưa đo_ | | | | |
+| tool_mywords | _chưa đo_ | | | | |
+| tool_rare | _chưa đo_ | | | | |
+| followup | _chưa đo_ | | | | |
+| first_new | _chưa đo_ | | | | |
+
+Cũng ghi môi trường đo (commit, provider và model trả lời, ngày). Đo cả `pnpm eval:tutor` (xem `docs/EVAL-gia-su.md`) trên cùng cấu hình để có điểm chất lượng đi kèm.
+
 ## Việc còn lại (cho chủ repo)
 
 1. **Đo trên Vercel**: deploy preview, copy cookie phiên từ DevTools rồi `BASE_URL=https://<preview> BENCH_COOKIE='sb-…' pnpm bench:tutor`. Xem mốc `prelude` trong `Server-Timing`: nếu vẫn > 600 ms thì kiểm Function Region và cold start (mốc `auth` của request đầu).

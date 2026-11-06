@@ -1,0 +1,83 @@
+{
+  "_comment": "Cases for scripts/eval-tutor.mjs. 'defaults' run on every case unless the case lists the name in 'omit'. Checks are in scripts/eval/checks.mjs. Learner texts are made-up study questions.",
+  "defaults": [
+    "no_emoji",
+    "no_table",
+    "no_heading",
+    "no_greeting_unprompted",
+    "vi_explanation",
+    { "max_words": 220 }
+  ],
+  "cases": [
+    { "id": "en_word_apple", "kind": "word_en", "language": "en", "text": "apple nghĩa là gì?",
+      "checks": ["has_ipa", "asks_one_question", { "contains_any": ["táo"] }] },
+    { "id": "en_word_run", "kind": "word_en", "language": "en", "text": "run dùng thế nào?",
+      "checks": ["has_ipa", "asks_one_question", { "contains_any": ["chạy"] }] },
+    { "id": "en_word_library", "kind": "word_en", "language": "en", "text": "library đọc thế nào?",
+      "checks": ["has_ipa", "asks_one_question", { "contains_any": ["thư viện"] }] },
+    { "id": "en_word_rare_sesquipedalian", "kind": "word_en", "language": "en", "text": "Giải thích từ 'sesquipedalian'",
+      "checks": ["has_ipa", "asks_one_question", { "contains_any": ["dài"] }] },
+    { "id": "en_word_rare_ubiquitous", "kind": "word_en", "language": "en", "text": "ubiquitous là gì?",
+      "checks": ["has_ipa", "asks_one_question", { "contains_any": ["khắp nơi", "phổ biến", "mọi nơi", "ở đâu cũng"] }] },
+    { "id": "en_word_phrasal_give_up", "kind": "word_en", "language": "en", "text": "give up nghĩa là gì?",
+      "checks": ["asks_one_question", { "contains_any": ["bỏ cuộc", "từ bỏ", "bỏ"] }] },
+
+    { "id": "zh_word_nihao", "kind": "word_zh", "language": "zh", "text": "你好 đọc thế nào?",
+      "checks": ["has_pinyin_tones", "asks_one_question", { "contains_any": ["xin chào"] }] },
+    { "id": "zh_word_le", "kind": "word_zh", "language": "zh", "text": "了 dùng thế nào?",
+      "checks": ["has_pinyin_tones", "asks_one_question", { "contains_any": ["hoàn thành", "đã", "xong", "thay đổi"] }] },
+    { "id": "zh_word_de_three", "kind": "word_zh", "language": "zh", "text": "的 得 地 khác nhau thế nào?",
+      "checks": ["has_pinyin_tones", "asks_one_question", { "contains_all": ["的", "得", "地"] }] },
+    { "id": "zh_word_measure_words", "kind": "word_zh", "language": "zh", "text": "Lượng từ trong tiếng Trung là gì? Cho mình vài ví dụ",
+      "checks": ["has_pinyin_tones", "asks_one_question", { "contains_any": ["个", "只", "本", "条"] }] },
+    { "id": "zh_word_xuexi", "kind": "word_zh", "language": "zh", "text": "学习 nghĩa là gì?",
+      "checks": ["has_pinyin_tones", "asks_one_question", { "contains_any": ["học tập", "học"] }] },
+    { "id": "zh_word_rare_chengyu", "kind": "word_zh", "language": "zh", "text": "囫囵吞枣 nghĩa là gì?",
+      "checks": ["has_pinyin_tones", "asks_one_question", { "contains_any": ["nuốt", "qua loa", "không hiểu", "nguyên"] }] },
+
+    { "id": "en_fix_goes_yesterday", "kind": "fix_en", "language": "en", "text": "Sửa giúp mình: I goes to school yesterday.",
+      "checks": ["asks_one_question", { "contains_any": ["went"] }] },
+    { "id": "en_fix_dont_like", "kind": "fix_en", "language": "en", "text": "Sửa câu này: She don't like coffee.",
+      "checks": ["asks_one_question", { "contains_any": ["doesn't like", "does not like"] }] },
+    { "id": "en_fix_years_old", "kind": "fix_en", "language": "en", "text": "Check giúp mình: I have 20 years old.",
+      "checks": ["asks_one_question", { "contains_any": ["am 20", "'m 20"] }] },
+    { "id": "en_fix_more_taller", "kind": "fix_en", "language": "en", "text": "Câu này đúng chưa: He is more taller than me.",
+      "checks": ["asks_one_question", { "contains_any": ["taller than me", "taller than I"] }] },
+    { "id": "en_fix_am_agree", "kind": "fix_en", "language": "en", "text": "Sửa: I am agree with you.",
+      "checks": ["asks_one_question", { "contains_any": ["I agree"] }] },
+
+    { "id": "zh_fix_time_position", "kind": "fix_zh", "language": "zh", "text": "Sửa câu giúp mình: 我去学校昨天。",
+      "checks": ["has_pinyin_tones", "asks_one_question", { "contains_any": ["我昨天去学校"] }] },
+    { "id": "zh_fix_degree_complement", "kind": "fix_zh", "language": "zh", "text": "Sửa giúp mình: 他跑很快。",
+      "checks": ["has_pinyin_tones", "asks_one_question", { "contains_any": ["跑得很快"] }] },
+    { "id": "zh_fix_missing_measure_word", "kind": "fix_zh", "language": "zh", "text": "Câu này sai ở đâu: 我有三书。",
+      "checks": ["has_pinyin_tones", "asks_one_question", { "contains_any": ["三本书"] }] },
+
+    { "id": "diff_make_do", "kind": "compare", "language": "en", "text": "Phân biệt make và do",
+      "checks": ["asks_one_question", { "contains_all": ["make", "do"] }] },
+    { "id": "diff_hui_neng", "kind": "compare", "language": "zh", "text": "Phân biệt 会 và 能",
+      "checks": ["has_pinyin_tones", "asks_one_question", { "contains_all": ["会", "能"] }] },
+    { "id": "diff_borrow_lend", "kind": "compare", "language": "en", "text": "borrow khác lend thế nào?",
+      "checks": ["asks_one_question", { "contains_all": ["borrow", "lend"] }, { "contains_any": ["mượn", "cho mượn"] }] },
+
+    { "id": "translate_vi_en", "kind": "translate", "language": "en", "text": "Dịch sang tiếng Anh: Hôm qua tôi đi chợ với mẹ.",
+      "checks": ["asks_one_question", { "contains_any": ["yesterday"] }, { "contains_any": ["market"] }] },
+    { "id": "translate_vi_zh", "kind": "translate", "language": "zh", "text": "Dịch sang tiếng Trung: Tôi muốn uống một ly cà phê.",
+      "checks": ["has_pinyin_tones", "asks_one_question", { "contains_any": ["咖啡"] }] },
+
+    { "id": "roleplay_en_cafe", "kind": "roleplay", "language": "en", "text": "Luyện hội thoại tiếng Anh: mình là khách, bạn là nhân viên quán cà phê nhé",
+      "omit": ["no_greeting_unprompted", "vi_explanation"],
+      "checks": [{ "max_words": 90 }, "has_italic_line", { "max_question_marks": 2 }] },
+    { "id": "roleplay_zh_shopping", "kind": "roleplay", "language": "zh", "text": "Nói chuyện với mình bằng tiếng Trung nhé, chủ đề đi mua sắm",
+      "omit": ["no_greeting_unprompted", "vi_explanation"],
+      "checks": ["has_pinyin_tones", { "max_words": 90 }, "has_italic_line", { "max_question_marks": 2 }] },
+
+    { "id": "quiz_first_turn", "kind": "quiz", "language": "en", "text": "Kiểm tra từ vựng tiếng Anh của mình nhé",
+      "checks": [{ "max_words": 70 }, { "max_question_marks": 1 }, { "not_contains_any": ["đáp án"] }] },
+
+    { "id": "offtopic_gold_price", "kind": "offtopic", "language": "en", "text": "Hôm nay giá vàng bao nhiêu vậy?",
+      "checks": [{ "max_words": 80 }, { "contains_any": ["học", "tiếng Anh", "tiếng Trung", "ngoại ngữ"] }] },
+    { "id": "offtopic_python_code", "kind": "offtopic", "language": "en", "text": "Viết giúp mình đoạn code Python sắp xếp một danh sách",
+      "checks": [{ "max_words": 80 }, { "not_contains_any": ["```", "def ", "sorted(", ".sort("] }, { "contains_any": ["học", "tiếng Anh", "tiếng Trung", "ngoại ngữ"] }] }
+  ]
+}
