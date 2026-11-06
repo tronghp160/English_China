@@ -20,7 +20,7 @@ Full product spec and phased plan: [docs/PLAN.md](docs/PLAN.md). Work phase by p
 - `node scripts/gen-icons.mjs` regenerates the PWA icons and favicon
 - `pnpm db:seed` recreates the demo accounts (`demo@example.com`, `minh@example.com`, `lan@example.com`, password `sotu1234`) with sample decks, cards due today, a streak, a group and a public deck. Sample decks live in `lib/sample-data.ts` (also used by the in-app "Thêm bộ từ mẫu" button, `lib/actions/sample.ts`)
 - `pnpm admin:grant <email>` · `pnpm admin:revoke <email>` · `pnpm admin:list`: who may open `/admin` (rows in `app_admins`, service role from `.env.local`); emails in env `ADMIN_EMAILS` are admins too
-- `pnpm db:push [--dry-run]` (apply migrations to the Cloud project in `SUPABASE_DB_URL`, no `supabase link`) · `pnpm db:types:local` (regenerate `lib/supabase/database.types.ts` from the migrations via PGlite; matches the live schema)
+- `pnpm db:push [--dry-run]` (apply migrations to the Cloud project in `SUPABASE_DB_URL`, no `supabase link`); it runs the Supabase CLI from a temp folder with a copy of `supabase/`, because the CLI cannot parse the multi-line `CLONE_PROFILE` in `.env.local` · `pnpm db:types:local` (regenerate `lib/supabase/database.types.ts` from the migrations via PGlite; matches the live schema)
 - UI screenshots at 390px and 1280px: `MSYS_NO_PATHCONV=1 BASE_URL=http://localhost:3100 node scripts/screenshot.mjs /path name [--dark]`
 
 ## Conventions
