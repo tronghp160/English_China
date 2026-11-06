@@ -29,8 +29,25 @@ export function classifyTutorError(e: unknown): TutorError {
   return { kind: "unknown" };
 }
 
-/** Friendly Vietnamese text for the chat bubble. */
-export function tutorErrorMessage({ kind, retryAfter }: TutorError): string {
+/** Friendly Vietnamese text for the chat bubble; `who` picks the wording for the study tutor or the "bản AI" companion. */
+export function tutorErrorMessage({ kind, retryAfter }: TutorError, who: "tutor" | "clone" = "tutor"): string {
+  if (who === "clone") {
+    switch (kind) {
+      case "rate":
+        return retryAfter
+          ? `Đang có nhiều người nhắn nên bản AI chưa trả lời được. Đợi khoảng ${Math.ceil(retryAfter)} giây rồi bấm "Thử lại" nhé.`
+          : 'Đang có nhiều người nhắn nên bản AI chưa trả lời được. Đợi chút rồi bấm "Thử lại" nhé.';
+      case "quota":
+        return "Hôm nay bạn đã dùng hết lượt hỏi AI. Mai quay lại nhé.";
+      case "no_key":
+      case "config":
+        return "Bản AI chưa được cấu hình đúng trên máy chủ (khóa AI hoặc tên model). Báo quản trị viên giúp mình nhé.";
+      case "timeout":
+        return 'Bản AI trả lời lâu quá nên đã dừng. Bấm "Thử lại" nhé.';
+      default:
+        return 'Bản AI gặp trục trặc khi trả lời. Bấm "Thử lại" nhé.';
+    }
+  }
   switch (kind) {
     case "rate":
       return retryAfter

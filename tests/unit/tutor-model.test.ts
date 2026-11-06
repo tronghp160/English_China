@@ -278,6 +278,15 @@ describe("classifyTutorError", () => {
     expect(classifyTutorError(Object.assign(new Error("x"), { name: "TimeoutError" })).kind).toBe("timeout");
     expect(classifyTutorError(new Error("???")).kind).toBe("unknown");
   });
+  it("words each kind for the companion without talking about the tutor", () => {
+    for (const kind of ["rate", "quota", "no_key", "config", "timeout", "unknown"] as const) {
+      const text = tutorErrorMessage({ kind, retryAfter: 12.2 }, "clone");
+      expect(text, kind).not.toMatch(/gia sư/i);
+      expect(text.length, kind).toBeGreaterThan(20);
+    }
+    expect(tutorErrorMessage({ kind: "rate", retryAfter: 12.2 }, "clone")).toContain("13 giây");
+    expect(tutorErrorMessage({ kind: "rate", retryAfter: 12.2 })).toContain("Gia sư"); // the tutor's wording is unchanged
+  });
   it("words each kind in Vietnamese", () => {
     expect(tutorErrorMessage({ kind: "rate", retryAfter: 12.2 })).toContain("13 giây");
     expect(tutorErrorMessage({ kind: "quota" })).toContain("hết lượt");

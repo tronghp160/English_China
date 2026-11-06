@@ -4,10 +4,11 @@ import { z } from "zod";
 import { CHAT_MAX_CHARS, threadTitle, tutorInstructionParts } from "@/lib/ai/chat-prompt";
 import { chatTools, type ChatMessage } from "@/lib/ai/chat-tools";
 import { AiError, recordUsage, requireProvider } from "@/lib/ai/enrich";
-import { writeTutorAnswer, type AnswerOutcome, type TutorInstructions } from "@/lib/ai/tutor/answer";
+import { writeTutorAnswer, type AnswerOutcome } from "@/lib/ai/tutor/answer";
 import { tutorEffort, type TutorEffort } from "@/lib/ai/tutor/effort";
 import { classifyTutorError, tutorErrorMessage } from "@/lib/ai/tutor/errors";
 import { tutorModel } from "@/lib/ai/tutor/model";
+import { toInstructions } from "@/lib/ai/tutor/instructions";
 import { formatLookups, prefetchTerms } from "@/lib/ai/tutor/prefetch";
 import { readThread, startPrelude, type ThreadRow } from "@/lib/ai/tutor/prelude";
 import { slimHistory } from "@/lib/ai/tutor/slim-history";
@@ -191,15 +192,7 @@ export async function POST(request: Request) {
     pageContext,
     lookups: formatLookups(prefetched),
   });
-  // Stable part first, so providers can reuse it from their prompt cache: Gemini does that on its own
-  // for a repeated prefix; Anthropic needs the marker on the stable system message.
-  const instructions: TutorInstructions =
-    provider.provider === "anthropic"
-      ? [
-          { role: "system", content: parts.stable, providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } } },
-          { role: "system", content: parts.turn },
-        ]
-      : `${parts.stable}\n\n${parts.turn}`;
+  const instructions = toInstructions(provider, parts); // stable part first, for prompt caching
   const modelMessages = await convertToModelMessages(messages);
   const onError = (e: unknown) => {
     const err = classifyTutorError(e);

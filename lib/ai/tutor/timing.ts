@@ -1,5 +1,8 @@
-/** Per-request stopwatch for the tutor route. Logs one line per request; no PII except ids. */
-export function tutorTimer() {
+/**
+ * Per-request stopwatch for the tutor routes. Logs one line per request (`[<label>:timing]`); no PII except ids
+ * and never any message text.
+ */
+export function tutorTimer(label = "tutor") {
   const t0 = performance.now();
   const marks: Record<string, number> = {};
   return {
@@ -13,7 +16,7 @@ export function tutorTimer() {
         .join(", ");
     },
     log(extra: Record<string, unknown>) {
-      console.info("[tutor:timing]", JSON.stringify({ ...marks, ...extra }));
+      console.info(`[${label}:timing]`, JSON.stringify({ ...marks, ...extra }));
     },
   };
 }

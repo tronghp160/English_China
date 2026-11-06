@@ -40,7 +40,7 @@ const tools = {
   }),
 };
 
-async function run(model: MockLanguageModelV4) {
+async function run(model: MockLanguageModelV4, extra: { fallbackText?: string } = {}) {
   let outcome: AnswerOutcome | undefined;
   const stream = createUIMessageStream<UIMessage>({
     execute: async ({ writer }) => {
@@ -52,6 +52,7 @@ async function run(model: MockLanguageModelV4) {
         tools,
         onError: () => "lỗi",
         smooth: false,
+        ...extra,
       });
     },
   });
@@ -99,6 +100,14 @@ describe("writeTutorAnswer", () => {
     const { model } = scripted([[finish("stop")], [finish("stop")]]);
     const r = await run(model);
     expect(r.text).toBe(NO_ANSWER_TEXT);
+    expect(r.outcome?.status).toBe("fallback");
+  });
+
+  it("writes the caller's own apology when it has one (the companion's)", async () => {
+    const { model } = scripted([[finish("stop")], [finish("stop")]]);
+    const r = await run(model, { fallbackText: "Mình đơ mất rồi, nhắn lại nhé." });
+    expect(r.text).toBe("Mình đơ mất rồi, nhắn lại nhé.");
+    expect(r.text).not.toContain("Bạn hỏi lại");
     expect(r.outcome?.status).toBe("fallback");
   });
 

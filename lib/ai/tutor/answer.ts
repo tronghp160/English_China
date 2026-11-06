@@ -83,6 +83,8 @@ export async function writeTutorAnswer<UI extends UIMessage>(opts: {
   smooth?: boolean;
   /** Stopwatch marks for the route: model_start, first_text, tool_call, retry, done. */
   onTiming?: (name: string) => void;
+  /** Written when even the retry produced no text (default: NO_ANSWER_TEXT, worded for the tutor). */
+  fallbackText?: string;
 }): Promise<AnswerOutcome> {
   const { writer, model, instructions, messages, tools, onError } = opts;
   const mark = opts.onTiming ?? (() => {});
@@ -178,7 +180,7 @@ export async function writeTutorAnswer<UI extends UIMessage>(opts: {
   if (!two.text) {
     const id = "tutor-fallback";
     writer.write({ type: "text-start", id });
-    writer.write({ type: "text-delta", id, delta: NO_ANSWER_TEXT });
+    writer.write({ type: "text-delta", id, delta: opts.fallbackText ?? NO_ANSWER_TEXT });
     writer.write({ type: "text-end", id });
     writer.write({ type: "finish" });
     return end("fallback");
