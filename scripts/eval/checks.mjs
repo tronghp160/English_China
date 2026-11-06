@@ -14,7 +14,11 @@ const VN_DIACRITIC = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽ�
 const GREETING = /^[\s*_>"'“‘]*(?:xin\s+chào|chào|hi|hello|hey|hế\s*lô|alo)(?![\p{L}\p{N}])/iu;
 
 export const wordCount = (text) => text.trim().split(/\s+/).filter(Boolean).length;
-const lower = (s) => norm(s).toLowerCase();
+/**
+ * Lower-case text for the "contains" checks, without markdown emphasis marks: an answer that writes
+ * `She **doesn't** like coffee` does contain "doesn't like".
+ */
+const lower = (s) => norm(s).replace(/\*+/g, "").toLowerCase();
 const lastParagraph = (text) => text.trim().split(/\n\s*\n/).pop() ?? "";
 const count = (text, re) => (text.match(re) ?? []).length;
 
@@ -106,6 +110,18 @@ export const CHECKS = {
   max_question_marks(text, n) {
     const q = count(text, /[?？]/g);
     return { pass: q <= n, detail: `${q} question marks (max ${n})` };
+  },
+
+  /**
+   * At most n questions, not counting the *italic* translation line and the pinyin in parentheses: a role-play
+   * turn that asks one question and writes it in Chinese, pinyin and Vietnamese still asks one.
+   */
+  max_questions(text, n) {
+    const asked = text
+      .replace(/\*[^*\n]+\*/g, "")
+      .replace(/[(（][^()（）\n]*[)）]/g, "");
+    const q = count(asked, /[?？]/g);
+    return { pass: q <= n, detail: `${q} questions (max ${n}), not counting translation and pinyin` };
   },
 
   /** A line in *italics* (the Vietnamese translation line of a role-play turn). */

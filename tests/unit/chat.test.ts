@@ -138,6 +138,16 @@ describe("tutor instructions v2 (one free chat)", () => {
     expect(stable).toContain("<gioi_han>"); // the limits stay
   });
 
+  it("makes the IELTS reply name every criterion, role-play in Chinese carry pinyin, and a refusal skip the greeting", () => {
+    const { stable } = tutorInstructionParts({ language: "en", learnerName: "A" });
+    expect(stable).toContain("MỖI tiêu chí một dòng ngắn");
+    expect(stable).toContain('dùng đúng chữ "band"');
+    expect(stable).toContain("Không bỏ tiêu chí nào");
+    expect(stable).toContain("tiếng Trung thì kèm pinyin có dấu thanh trong ngoặc ngay sau câu");
+    expect(stable).toContain("không chào, không giới thiệu tên mình");
+    expect(stable).toContain("<gioi_han>"); // the limits stay
+  });
+
   it("carries three short style examples in the stable prefix, in the format it asks for", () => {
     const { stable } = tutorInstructionParts({ language: "en", learnerName: "A" });
     const block = stable.slice(stable.indexOf("<vi_du_mau>"), stable.indexOf("</vi_du_mau>"));

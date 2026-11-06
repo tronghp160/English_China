@@ -67,10 +67,10 @@
 
     { "id": "roleplay_en_cafe", "kind": "roleplay", "language": "en", "text": "Luyện hội thoại tiếng Anh: mình là khách, bạn là nhân viên quán cà phê nhé",
       "omit": ["no_greeting_unprompted", "vi_explanation"],
-      "checks": [{ "max_words": 90 }, "has_italic_line", { "max_question_marks": 2 }] },
+      "checks": [{ "max_words": 90 }, "has_italic_line", { "max_questions": 2 }] },
     { "id": "roleplay_zh_shopping", "kind": "roleplay", "language": "zh", "text": "Nói chuyện với mình bằng tiếng Trung nhé, chủ đề đi mua sắm",
       "omit": ["no_greeting_unprompted", "vi_explanation"],
-      "checks": ["has_pinyin_tones", { "max_words": 90 }, "has_italic_line", { "max_question_marks": 2 }] },
+      "checks": ["has_pinyin_tones", { "max_words": 90 }, "has_italic_line", { "max_questions": 2 }] },
 
     { "id": "quiz_first_turn", "kind": "quiz", "language": "en", "text": "Kiểm tra từ vựng tiếng Anh của mình nhé",
       "checks": [{ "max_words": 70 }, { "max_question_marks": 1 }, { "not_contains_any": ["đáp án"] }] },

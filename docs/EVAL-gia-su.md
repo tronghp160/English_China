@@ -23,7 +23,10 @@ Bộ chấm tự động cho Gia sư Bin, để mọi thay đổi prompt hay mod
 | `vi_explanation` | tỉ lệ chữ Latin có dấu tiếng Việt ≥ ngưỡng (mặc định 0,12), tức phần giải thích bằng tiếng Việt |
 | `asks_one_question` | đoạn cuối có tối đa 1 dấu `?` |
 | `max_question_marks N` | cả câu trả lời có tối đa N dấu `?` (lượt đầu của quiz hỏi đúng một câu) |
+| `max_questions N` | tối đa N câu hỏi, **không tính** dòng dịch *in nghiêng* và pinyin trong ngoặc (một câu hỏi viết bằng chữ Hán, pinyin và tiếng Việt vẫn là một câu hỏi); dùng cho roleplay |
 | `has_italic_line` | có một dòng *in nghiêng* (dòng dịch tiếng Việt của lượt đóng vai) |
+
+Các luật `contains_*` bỏ dấu `*` (in đậm, in nghiêng) trước khi so khớp, nên `She **doesn't** like` vẫn chứa "doesn't like".
 
 Giới hạn cần biết: luật là heuristic. `contains_any` chỉ kiểm có từ khóa chứ không kiểm nghĩa đúng; `not_contains_any ["đáp án"]` của case quiz có thể bắt nhầm một câu nhắc "không đưa đáp án". Một case trượt thì đọc tay câu trả lời trong file JSON trước khi sửa prompt. `JUDGE=1` để bổ sung chấm đúng/tự nhiên/hợp trình độ, nhưng điểm LLM dao động nên chỉ so sánh khi chênh rõ.
 
@@ -57,6 +60,9 @@ Plan yêu cầu chạy lại `pnpm eval:tutor` sau mỗi thay đổi prompt và 
 | 7 | Mức thinking "low" cho IELTS / viết đoạn (`effort.ts`) | `HEAVY_WORK` | TTFT các case `ielts`; câu "writing nghĩa là gì" vẫn "minimal" |
 | 8 | Trình độ ước lượng trong `<du_lieu_nguoi_hoc>` + luật "chỉ khó hơn một chút" (P6.1) | `learnerBlock`, `<cach_tra_loi>` | không có luật tự động (tài khoản demo có thể chưa đủ từ có cấp độ); đọc tay ví dụ đóng vai |
 | 9 | Chấm IELTS Writing / Speaking theo tiêu chí và band theo khoảng (P6.2) | `<cach_hieu_yeu_cau>` | 2 case `ielts` |
+| 10 | IELTS: dòng đầu có chữ "band", mỗi tiêu chí một dòng mở đầu bằng tên tiêu chí in đậm, không bỏ tiêu chí nào (sau lần chấm trên production: câu trả lời cho band nhưng không nêu tiêu chí) | `<cach_hieu_yeu_cau>` | 2 case `ielts` |
+| 11 | Roleplay tiếng Trung kèm pinyin có dấu thanh trong ngoặc ngay sau câu | `<cach_tra_loi>`, dòng "Đóng vai" | `roleplay_zh_shopping` (`has_pinyin_tones`) |
+| 12 | Từ chối ngoài lề: vào thẳng, không chào, không giới thiệu tên | `<gioi_han>` | `offtopic_*` (`no_greeting_unprompted`) |
 
 Hai chỗ khác với plan: (a) plan chỉ nêu bộ 4 tiêu chí của Writing; prompt nêu thêm bộ của Speaking (Fluency & Coherence, Lexical Resource, Grammatical Range & Accuracy, Pronunciation), kèm lời dặn chữ viết không chấm được phát âm; (b) ước lượng trình độ cần tối thiểu 3 từ có cấp độ (`MIN_LEVELED_WORDS`), ít hơn thì bỏ qua thay vì đoán từ một hai từ.
 
@@ -89,14 +95,13 @@ Kết quả: **chưa chạy** (lúc làm P11 không có tài khoản đăng nh�
 |---|---|---|---|---|
 | _chưa chạy_ | | | | |
 
-## Điểm baseline
+## Điểm đã đo
 
-**Chưa chạy.** Lúc làm P0 tài khoản `demo@example.com` không đăng nhập được trên project Supabase (chưa seed hoặc đã đổi mật khẩu), và chạy `pnpm db:seed` sẽ ghi vào database thật nên chủ repo quyết định. Cách điền:
+Không có lần chấm "trước phần A và B": lần chấm đầu tiên (2026-11-06, tài khoản của chủ repo, Vercel production) đã chạy trên code có cả hai phần. Các lần chạy đều gọi `/api/chat` thật của Gemini (production ép `AI_PROVIDER` về Google; khi chạy local cũng đặt `AI_PROVIDER=google` để cùng nhà cung cấp). Điểm dao động giữa các lần chạy vì model không tất định, nên chỉ coi chênh lệch lớn là có ý nghĩa.
 
-1. `pnpm db:seed` (hoặc đặt `BENCH_EMAIL` / `BENCH_PASSWORD` của một tài khoản test), `pnpm dev --port 3100`.
-2. `LABEL=baseline pnpm eval:tutor`.
-3. Dán `casesPassed`, `checksPassed/checksTotal`, tỉ lệ từng luật và `ttft_p50/p90` vào bảng dưới, kèm model đã trả lời (xem dòng `[tutor] model …` trong log server).
+| Ngày | Cấu hình | Case đạt | Luật đạt | has_ipa | has_pinyin_tones | no_greeting_unprompted | vi_explanation | TTFT p50 / p90 | Ghi chú |
+|---|---|---|---|---|---|---|---|---|---|
+| 2026-11-06 | Vercel production, Gemini, commit `578b3e3` (phần A + B) | 26/32 | 270/278 (97%) | 5/5 | 11/12 | 29/30 | 30/30 | 1770 / 2456 ms | 6 case trượt: 2 do luật chấm (câu đúng nhưng có in đậm giữa cụm), roleplay tiếng Trung thiếu pinyin, 2 case IELTS không nêu tên từng tiêu chí, 1 câu từ chối ngoài lề mở đầu bằng "Chào bạn" |
+| 2026-11-06 | Server local, `AI_PROVIDER=google`, sau 4 sửa | 31/32 | 277/278 (99,6%) | 5/5 | 12/12 | 30/30 | 30/30 | (máy dev, không có ý nghĩa) | 4 sửa: luật chấm bỏ dấu `*` khi so khớp chuỗi; roleplay tiếng Trung kèm pinyin; IELTS mỗi tiêu chí một dòng và dùng chữ "band"; từ chối ngoài lề không chào. Case trượt duy nhất (roleplay tiếng Trung, 3 dấu `?` cho một câu hỏi viết ba lần) được sửa bằng luật `max_questions` (không tính dòng dịch và pinyin); chạy lại hai case roleplay hai lần đều đạt |
 
-| Ngày | Model / cấu hình | Case đạt | Luật đạt | has_ipa | has_pinyin_tones | no_greeting_unprompted | vi_explanation | Ghi chú |
-|---|---|---|---|---|---|---|---|---|
-| _chưa chạy_ | | | | | | | | baseline trước phần B |
+Đọc tay phần còn lại: không có luật tự động cho giọng văn, ví dụ ở mức trình độ người học, hay việc nhắc lỗi lặp lại. Trình độ ước lượng (P6.1) cần tài khoản có đủ từ có cấp độ CEFR / HSK.

@@ -57,6 +57,16 @@ describe("format checks", () => {
     expect(run("max_question_marks", "A? B?", 1).pass).toBe(false);
     expect(run("max_question_marks", "A? B.", 1).pass).toBe(true);
   });
+  it("counts questions without the translation line and the pinyin", () => {
+    // one question written in Chinese, pinyin and Vietnamese
+    expect(run("max_questions", "你想买什么？(Nǐ xiǎng mǎi shénme?)\n*Bạn muốn mua gì?*", 1).pass).toBe(true);
+    // a Vietnamese lead-in with a question, the English question, its translation
+    expect(run("max_questions", "Chào bạn! Mình giúp gì được nhỉ?\n\nWhat can I get for you? *Bạn muốn dùng gì ạ?*", 2).pass).toBe(true);
+    // two real questions in the foreign language
+    expect(run("max_questions", "What would you like? Would you like a cake? *Bạn muốn gì? Bạn muốn bánh không?*", 1).pass).toBe(false);
+    expect(run("max_questions", "Hi? Hello? Anyone?", 2).pass).toBe(false);
+  });
+
   it("finds an italic translation line", () => {
     expect(run("has_italic_line", "Welcome! What would you like?\n*Chào mừng! Bạn muốn dùng gì?*").pass).toBe(true);
     expect(run("has_italic_line", "**Chào mừng** bạn").pass).toBe(false);
@@ -80,6 +90,14 @@ describe("no_greeting_unprompted", () => {
 });
 
 describe("content checks", () => {
+  it("contains checks look through bold and italic marks inside a phrase", () => {
+    expect(run("contains_any", "Câu đúng: She **doesn't** like coffee.", ["doesn't like"]).pass).toBe(true);
+    expect(run("contains_any", "Câu đúng: 我昨天**去学校**。", ["我昨天去学校"]).pass).toBe(true);
+    expect(run("contains_all", "**Coherence** & *Cohesion*, **Lexical** Resource", ["Coherence & Cohesion", "Lexical Resource"]).pass).toBe(true);
+    expect(run("not_contains_any", "đáp **án** là A", ["đáp án"]).pass).toBe(false);
+    expect(run("contains_any", "She does not like it", ["doesn't like"]).pass).toBe(false); // still a real check
+  });
+
   it("contains_any / contains_all / not_contains_any ignore case", () => {
     expect(run("contains_any", "She WENT home", ["went"]).pass).toBe(true);
     expect(run("contains_any", "She goes home", ["went"]).pass).toBe(false);

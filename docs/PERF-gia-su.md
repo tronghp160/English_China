@@ -147,6 +147,24 @@ Thay đổi (chưa đo, cần Vercel; nghiệm thu: prelude p50 giảm ≥ 40% s
 - `preloadChineseDict()` chạy ngay khi tin có chữ Hán, không đợi cài đặt.
 - Mốc `Server-Timing` mới: `user` (sau `getUser` + body), `parallel_done` (mọi truy vấn xong). `auth` = hồ sơ xong, `limits` = thread + giới hạn xong, `context` = lịch sử + snapshot + ngữ cảnh xong; tất cả tính từ lúc request tới route, nên `parallel_done` ≈ mốc lớn nhất trong ba mốc kia.
 
+## Đo trên Vercel production (2026-11-06)
+
+Tài khoản của chủ repo, `https://xeudungdung.vercel.app`, Gemini, commit `578b3e3`, 3 lượt mỗi kịch bản (ít, nên p50 và p90 còn nhiễu):
+
+| Kịch bản | TTFT p50 | TTFT p90 | Total p50 | prelude p50 | tools tb |
+|---|---|---|---|---|---|
+| simple_en | 3300 | 5229 | 3504 | 401 | 0 |
+| simple_zh | 1978 | 2758 | 2207 | 481 | 0 |
+| correct | 2572 | 2748 | 2718 | 194 | 0 |
+| tool_rare | 1603 | 1855 | 2075 | 423 | 0 |
+| first_new | 1733 | 1922 | 1867 | 216 | 0 |
+| clone_hi | 1683 | 26395 | 2115 | 143 | 0 |
+| clone_sad | 1616 | 2695 | 1898 | 99 | 0 |
+
+- So với máy dev (prelude p50 ~2,9 s, `docs/PERF-gia-su.md` mục "Kết luận"): prelude còn 100–480 ms, và các mốc `auth`, `context`, `limits` đều dưới 400 ms ở lượt ấm. `tool_rare` không còn gọi công cụ nào (tra sẵn hoạt động).
+- Mục tiêu phần A (p50 ≤ 2,0 s cho `simple_*`, p90 ≤ 4 s; `correct` p50 ≤ 3,5 s): `simple_zh` p50 đạt, `correct` đạt, `simple_en` chưa đạt (p50 3,3 s, nhưng chỉ có 3 lượt và một lượt 5,2 s do model; cần đo ≥ 5 lượt). Trong bộ chấm 32 case (một lượt mỗi case) TTFT p50 là 1,77 s và p90 là 2,46 s.
+- **Hai lượt chậm ~25–26 s** (một ở bộ chấm Gia sư, một ở `clone_hi`) trong khoảng 55 request, dù prelude của chúng chỉ ~126 ms: chậm nằm ở phía model. Nếu `AI_MODEL_GOOGLE` trên Vercel chỉ có một model thì hedge không có model nào để gọi song song; đặt hai model (ví dụ `gemini-3.8-flash,gemini-3.5-flash-lite`) rồi xem log `hedged: true` / `rate-limited`.
+
 ## P2: một RPC cho rate limit + hạn mức
 
 - Migration `supabase/migrations/20261106000018_ai_gate.sql` thêm hàm `ai_gate(...)` (chỉ `service_role`). Nó gọi lại `hit_rate_limit` và `ai_usage_total`, đọc số lượt của người dùng, rồi trả `{ allowed, reason, used, total }` với `reason` là `null | rate | quota_global | quota_user` (kiểm theo đúng thứ tự cũ: rate, global, user). Không tăng usage; `recordUsage` vẫn gọi sau khi có câu trả lời. Hàm chỉ thêm, không sửa bảng nào.
