@@ -49,3 +49,7 @@ next-env.d.ts
 
 # tutor benchmark output (pnpm bench:tutor)
 /bench-results/
+
+# private data that must never reach the public repo
+private/
+clone-profile*.md
