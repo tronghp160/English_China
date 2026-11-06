@@ -134,13 +134,14 @@ export function normalizeCheck(check) {
  * `defaults` come first; the case's own `omit` names drop default checks that do not fit (e.g. a role-play greeting).
  * @param {{ checks?: CheckSpec[], defaults?: CheckSpec[], omit?: string[] }} spec
  * @param {string} answer
- * @param {{ userText?: string }} [ctx]
+ * @param {{ userText?: string }} [ctx] (more keys are passed on to the checks of a custom registry)
+ * @param {Record<string, (text: string, arg: any, ctx: any) => any>} [registry] the checks that exist (default: CHECKS)
  * @returns {{ name: string, arg: any, pass: boolean, skipped?: boolean, detail?: string }[]}
  */
-export function runChecks({ checks = [], defaults = [], omit = [] }, answer, ctx = {}) {
+export function runChecks({ checks = [], defaults = [], omit = [] }, answer, ctx = {}, registry = CHECKS) {
   const wanted = [...defaults.map(normalizeCheck).filter((c) => !omit.includes(c.name)), ...checks.map(normalizeCheck)];
   return wanted.map(({ name, arg }) => {
-    const fn = CHECKS[name];
+    const fn = registry[name];
     if (!fn) throw new Error(`Unknown check "${name}"`);
     return { name, arg, ...fn(answer, arg, ctx) };
   });

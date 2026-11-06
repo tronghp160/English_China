@@ -14,6 +14,7 @@
     "test:e2e": "playwright test",
     "bench:tutor": "node scripts/bench-tutor.mjs",
     "eval:tutor": "node scripts/eval-tutor.mjs",
+    "eval:clone": "node scripts/eval-clone.mjs",
     "db:types": "supabase gen types typescript --linked --schema public > lib/supabase/database.types.ts",
     "db:push": "node scripts/db-push.mjs",
     "db:types:local": "node scripts/gen-db-types.mjs",

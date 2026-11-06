@@ -10,13 +10,15 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Reads .env.local (quoted multi-line values included). Keys that start with CLONE_ (the private
- * "bản AI" profile) are left out unless listed in `include`, so scripts that do not need them never hold them.
+ * "bản AI" profile) are left out unless listed in `include` (an entry ending in * is a prefix, e.g. "CLONE_EXPECT_*"),
+ * so scripts that do not need them never hold them.
  * @param {{ include?: string[], file?: string }} [options]
  * @returns {Record<string, string>}
  */
 export function loadEnv({ include = [], file = ".env.local" } = {}) {
   const all = parseEnv(fs.readFileSync(file, "utf8"));
-  return Object.fromEntries(Object.entries(all).filter(([k]) => !k.startsWith("CLONE_") || include.includes(k)));
+  const wanted = (k) => include.some((i) => (i.endsWith("*") ? k.startsWith(i.slice(0, -1)) : i === k));
+  return Object.fromEntries(Object.entries(all).filter(([k]) => !k.startsWith("CLONE_") || wanted(k)));
 }
 
 /** Percentile of the numbers in `xs` (nearest rank); null when there are none. */
@@ -139,5 +141,20 @@ export async function connect({ baseUrl, email, password, cookie, env = loadEnv(
     if (err) console.error(`cleanup failed: ${err.message}`);
   }
 
-  return { supabase, userId, cookie: cookieHeader, created, newThread, send, cleanup };
+  /** POST /api/clone with a conversation (the "bản AI" keeps nothing on the server). `messages`: [{ role, text }]. */
+  async function sendClone(messages) {
+    const t0 = performance.now();
+    const res = await fetch(`${baseUrl}/api/clone`, {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: cookieHeader },
+      body: JSON.stringify({
+        messages: messages.map((m, i) => ({ id: `m${i}`, role: m.role, parts: [{ type: "text", text: m.text }] })),
+      }),
+    });
+    const serverTiming = res.headers.get("server-timing");
+    if (!res.ok || !res.body) return { error: `${res.status} ${await res.text().catch(() => "")}`.slice(0, 200), serverTiming };
+    return { ...(await readChatStream(res, t0)), serverTiming };
+  }
+
+  return { supabase, userId, cookie: cookieHeader, created, newThread, send, sendClone, cleanup };
 }
