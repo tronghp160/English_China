@@ -20,6 +20,11 @@ const serverSchema = z.object({
   AI_MODEL_GOOGLE: z.string().default("gemini-3.8-flash"),
   /** Optional model for the AI tutor chat, so it does not use the word-suggestion quota. */
   AI_MODEL_CHAT_GOOGLE: z.string().optional(),
+  /**
+   * Tutor: when the first model has not answered after this many ms and another model is configured, start the
+   * next one at the same time and use whichever answers first. 0 turns it off (lib/ai/tutor/model.ts).
+   */
+  AI_HEDGE_MS: z.coerce.number().int().min(0).max(30_000).default(2500),
   /** Requests per minute the app lets through to the AI provider (stay under the free-tier limit). */
   AI_RPM_LIMIT: z.coerce.number().int().positive().default(10),
   /** Which provider word suggestions use when both keys are set (default: anthropic). */

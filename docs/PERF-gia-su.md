@@ -155,6 +155,25 @@ Thay đổi (chưa đo, cần Vercel; nghiệm thu: prelude p50 giảm ≥ 40% s
 - Test: `tests/db/ai-gate.test.ts` (hành vi thật của hàm SQL trên PGlite: ngưỡng, thứ tự ưu tiên, không tự tăng usage, fail open, quyền) và `tests/unit/ai-gate.test.ts` (RPC trả từng lý do, fail closed, đường lùi).
 - **Chủ repo cần chạy `pnpm db:push`** (hoặc `pnpm db:push --dry-run` để xem trước) để RPC có hiệu lực. `lib/supabase/database.types.ts` đã có kiểu của hàm này (tạo bằng `pnpm db:types:local`, chạy trên PGlite, không chạm database thật). Chưa đo lợi ích (cần Vercel): kỳ vọng mốc `limits` bớt 2 request HTTP.
 
+## P3: model nhanh và ổn định hơn
+
+**P3.2 Hedge (đã làm trong code).** `raceModels` (`lib/ai/tutor/model.ts`): nếu model đầu chưa trả header sau `AI_HEDGE_MS` (mặc định 2500 ms; `0` tắt) và còn model sau trong danh sách, gọi luôn model sau **song song**, dùng cái nào trả header trước và hủy cái kia (`AbortController`, đóng stream nếu nó đã kịp trả lời). Mỗi request hedge tối đa một lần.
+
+- Model thua không bị cooldown, trừ khi chính nó trả 429/503 (cũng như trước). Model đầu lỗi khác 429/503 (sai key, sai tên model) vẫn ném ra ngay và bỏ hedge; hedge lỗi khác 429/503 thì bị bỏ qua khi model đầu còn đang chạy. Cả hai lỗi thì ném lỗi cuối. `FIRST_BYTE_MS` (15 s) vẫn là trần cuối cùng, như cũ.
+- Log: `[tutor] hedge won=<model>` khi model hedge thắng; dòng `[tutor:timing]` có `hedged: true` mỗi khi một hedge đã được gọi (kể cả khi nó thua).
+- Chi phí: hedge chỉ xảy ra khi model đầu chậm bất thường (> 2,5 s tới header, trong khi bình thường ~1 s), nên tốn thêm rất ít; nhưng nó là một request thêm tới Google đúng lúc đó. **Theo dõi tỉ lệ `hedged` trong log tuần đầu**: nếu thấy nhiều, tăng `AI_HEDGE_MS` hoặc kiểm hạn mức/phút của key.
+- Chỉ có tác dụng khi có ít nhất hai model (`AI_MODEL_GOOGLE` là danh sách, hoặc `AI_MODEL_CHAT_GOOGLE` + `AI_MODEL_GOOGLE`). Với Anthropic (không có fallback) hedge không làm gì.
+- Test: `tests/unit/tutor-model.test.ts` (nhóm "hedge": model đầu chậm thì model sau thắng và model đầu bị abort, model đầu nhanh thì không hedge, `hedgeMs` 0 như cũ, cả hai lỗi, sai key, hedge lỗi bị bỏ qua, model thứ ba, request bị hủy).
+
+**P3.3** Không đổi: `rejectedLevels` theo instance là đủ với Fluid Compute. **P3.4** Phần `stable` của prompt là tiền tố giống hệt nhau giữa mọi request cùng tên gia sư: đã có test (`tests/unit/chat.test.ts`, "keeps everything that changes per learner or turn out of the stable prefix"); mọi thứ đổi theo người học, ngày, trang, lượt nằm ở `turn`. Ghi `cachedTokens` trung vị vào đây sau P12.
+
+**P3.1 Chọn model chat bằng số đo: chưa đo** (cần tài khoản đo và chủ repo chọn). Danh sách model mà key Gemini hiện có gọi được `generateContent` (lấy từ `models.list` ngày 2026-11-06, bỏ bản image / tts / omni): `gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-3-flash-preview`, `gemini-3.1-flash-lite`, `gemini-3.1-flash-lite-preview`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.6-flash`, `gemini-3.7-flash`, `gemini-3.8-flash`, cùng hai alias `gemini-flash-latest` và `gemini-flash-lite-latest`. Hiện cấu hình là `AI_MODEL_GOOGLE=gemini-3.8-flash,gemini-3.5-flash-lite` và không đặt `AI_MODEL_CHAT_GOOGLE`. Không có model nào được chọn thay: đây chỉ là danh sách ứng viên, đặc biệt các bản `*-flash-lite` mới nhất (`gemini-3.1-flash-lite`, `gemini-3.5-flash-lite`) và `gemini-3.7-flash`. Cách so sánh (mỗi lựa chọn một lần chạy, restart server giữa các lần):
+
+1. Đặt `AI_MODEL_CHAT_GOOGLE=<model>` và `AI_HEDGE_MS=0` (để hedge không làm nhiễu số đo từng model) trong `.env.local`, chạy `pnpm dev --port 3100` (hoặc build production).
+2. `ONLY=simple_en,simple_zh,correct RUNS=5 pnpm bench:tutor` rồi `LABEL=<model> pnpm eval:tutor`. Xác nhận model nào thực sự trả lời bằng dòng `[tutor] model …` trong log server.
+3. Ghi một bảng: TTFT p50 / p90, tỉ lệ 503 (số dòng `rate-limited` / số request), điểm eval. Nếu có `ANTHROPIC_API_KEY` thì so luôn Haiku hiện tại (`AI_PROVIDER=anthropic`; hiện `.env.local` có cả hai key và mặc định chọn Anthropic).
+4. Đặt model thắng vào `AI_MODEL_CHAT_GOOGLE` trên Vercel (Production + Preview), redeploy, bật lại `AI_HEDGE_MS`.
+
 ## Việc còn lại (cho chủ repo)
 
 1. **Đo trên Vercel**: deploy preview, copy cookie phiên từ DevTools rồi `BASE_URL=https://<preview> BENCH_COOKIE='sb-…' pnpm bench:tutor`. Xem mốc `prelude` trong `Server-Timing`: nếu vẫn > 600 ms thì kiểm Function Region và cold start (mốc `auth` của request đầu).

@@ -201,6 +201,7 @@ export async function POST(request: Request) {
     return tutorErrorMessage(err);
   };
   let outcome: AnswerOutcome = { status: "failed" };
+  let hedged = false; // a second model was started early because the first was slow (AI_HEDGE_MS)
   timer.mark("prelude");
 
   const stream = createUIMessageStream<ChatMessage>({
@@ -211,7 +212,7 @@ export async function POST(request: Request) {
       try {
         outcome = await writeTutorAnswer({
           writer,
-          model: tutorModel(provider),
+          model: tutorModel(provider, { onHedge: () => (hedged = true) }),
           instructions,
           messages: modelMessages,
           tools,
@@ -225,7 +226,7 @@ export async function POST(request: Request) {
       }
     },
     onEnd: async ({ responseMessage }) => {
-      timer.log({ threadId, status: outcome.status, toolCalls: outcome.toolCalls ?? 0, effort, ...outcome.usage });
+      timer.log({ threadId, status: outcome.status, toolCalls: outcome.toolCalls ?? 0, effort, ...(hedged ? { hedged: true } : {}), ...outcome.usage });
       const hasText = responseMessage.parts.some((p) => p.type === "text" && p.text.trim());
       if (!hasText) return; // failed turns are not stored (the question is; "Thử lại" answers it)
       if (outcome.status === "answered") recordUsage(me.user.id);
