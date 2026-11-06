@@ -42,13 +42,13 @@ afterEach(() => {
 });
 
 describe("useCloneChat: nothing is stored", () => {
-  it("deletes what an earlier version kept in localStorage and keeps every other key", () => {
+  it("deletes what an earlier version kept in localStorage (chats and the 'card closed' flag) and keeps every other key", () => {
     localStorage.setItem("sotu:clone:v1:user-a", '[{"id":"1","role":"user","text":"cũ"}]');
     localStorage.setItem("sotu:clone:v1:user-b", "[]");
-    localStorage.setItem("sotu:clone:intro:v1", "1"); // the closed-card flag has no chat content
+    localStorage.setItem("sotu:clone:intro:v1", "1");
     localStorage.setItem("sotu-theme", "dark");
     renderHook(() => useCloneChat("user-a"));
-    expect(Object.keys(localStorage).sort()).toEqual(["sotu-theme", "sotu:clone:intro:v1"]);
+    expect(Object.keys(localStorage)).toEqual(["sotu-theme"]);
   });
 
   it("does not break when the browser blocks storage", () => {

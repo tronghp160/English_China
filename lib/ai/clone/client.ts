@@ -3,25 +3,26 @@ import { CLONE_MAX_MESSAGES } from "@/lib/ai/clone/history";
 
 /**
  * Browser side of the "bản AI" chat. PRIVACY: nothing of the conversation is stored anywhere: it lives in React state
- * while the page is open (use-clone-chat.ts) and each request carries the latest messages. The only thing kept in the
- * browser is the flag that the first-visit card was closed, which holds no chat content. No server-only imports.
+ * while the page is open (use-clone-chat.ts) and each request carries the latest messages. Nothing at all is kept in
+ * the browser: the notice card is shown at the start of every conversation, so there is no "closed" flag either.
+ * No server-only imports.
  */
-
-/** The flag "the first-visit card was closed". Holds no chat content. */
-export const CLONE_INTRO_KEY = "sotu:clone:intro:v1";
 
 /** Keys an earlier version used to keep conversations in localStorage (one per user): deleted when the page opens. */
 export const LEGACY_CLONE_STORAGE_PREFIX = "sotu:clone:v1:";
 
+/** The flag an earlier version set when the first-visit card was closed (the card is always shown now): deleted too. */
+export const LEGACY_CLONE_INTRO_KEY = "sotu:clone:intro:v1";
+
 /**
- * Deletes every leftover conversation of the earlier version from a Storage ("sotu:clone:v1:*"), and nothing else:
- * the intro flag and every other key stay. Returns how many keys it removed.
+ * Deletes everything an earlier version left in a Storage: the conversations ("sotu:clone:v1:*") and the "card closed"
+ * flag, and nothing else (every other key stays). Returns how many keys it removed.
  */
 export function clearLegacyCloneStorage(storage: Pick<Storage, "length" | "key" | "removeItem">): number {
   const stale: string[] = [];
   for (let i = 0; i < storage.length; i++) {
     const key = storage.key(i);
-    if (key?.startsWith(LEGACY_CLONE_STORAGE_PREFIX)) stale.push(key);
+    if (key && (key.startsWith(LEGACY_CLONE_STORAGE_PREFIX) || key === LEGACY_CLONE_INTRO_KEY)) stale.push(key);
   }
   for (const key of stale) storage.removeItem(key);
   return stale.length;

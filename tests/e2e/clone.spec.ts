@@ -63,23 +63,35 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
     if (/\/rest\/v1\/|\/api\/chat/.test(r.url()) && r.method() !== "GET") apiCalls.push(`${r.method()} ${r.url()}`);
   });
 
-  // An earlier version kept conversations in localStorage: opening the page deletes them.
-  await page.evaluate(() => localStorage.setItem("sotu:clone:v1:old-user", '[{"id":"1","role":"user","text":"tin cũ"}]'));
+  // An earlier version kept conversations and a "card closed" flag in localStorage: opening the page deletes them.
+  await page.evaluate(() => {
+    localStorage.setItem("sotu:clone:v1:old-user", '[{"id":"1","role":"user","text":"tin cũ"}]');
+    localStorage.setItem("sotu:clone:intro:v1", "1"); // used to hide the card for good
+  });
   await page.goto("/tam-su");
   await expect(page.getByRole("heading", { level: 1, name: "Nam (bản AI)" })).toBeVisible();
   await expect(page).toHaveTitle(/Tâm sự với Nam/);
   await expect.poll(() => page.evaluate(() => localStorage.getItem("sotu:clone:v1:old-user"))).toBeNull();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("sotu:clone:intro:v1"))).toBeNull();
 
-  // The first-visit card says it is an AI, that nothing is kept, and who answers.
-  const intro = page.getByRole("region", { name: "Trước khi nhắn" });
-  await expect(intro).toBeVisible();
-  await expect(intro).toContainText("Đây là bản AI của Nam");
-  await expect(intro).toContainText("Cuộc trò chuyện không được lưu ở đâu cả");
-  await expect(intro).toContainText("rời trang, tải lại hoặc bấm “Cuộc trò chuyện mới” là xóa hết");
-  await expect(intro).toContainText("quản trị viên không đọc được");
-  await expect(intro).toContainText("gửi tới dịch vụ AI");
-  // …and so does the line under the box.
-  await expect(page.getByText("Cuộc trò chuyện tự xóa khi bạn rời trang hoặc bắt đầu cuộc mới. Không ai đọc được, kể cả Nam.")).toBeVisible();
+  // The privacy card is there even though the old flag said "closed": it says what is kept (nothing), who can read it
+  // (nobody) and who answers. It has no close button, and it is part of the message area (it scrolls, it is not pinned).
+  const intro = page.getByRole("region", { name: "Cuộc trò chuyện này được giữ riêng tư" });
+  const expectIntro = async () => {
+    await expect(intro).toBeVisible();
+    await expect(intro).toContainText(
+      "Vì có thể chứa thông tin cá nhân, cuộc trò chuyện sẽ tự xóa khi bạn thoát, chuyển trang hoặc bắt đầu cuộc mới. Không ai đọc được, kể cả Nam.",
+    );
+    await expect(intro).toContainText("Đây là bản AI của Nam, có thể nhầm. Tin nhắn được gửi tới dịch vụ AI (");
+    await expect(intro).toContainText(") để trả lời.");
+  };
+  await expectIntro();
+  await expect(intro.getByRole("button")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Đóng phần giải thích" })).toHaveCount(0);
+  expect(await intro.evaluate((el) => getComputedStyle(el).position)).toBe("static");
+  // The line under the box is only a short reminder, not the card's sentence again.
+  await expect(page.getByText("Tự xóa khi bạn rời trang", { exact: true })).toBeVisible();
+  await expect(page.getByText("Không ai đọc được, kể cả Nam.")).toHaveCount(1);
 
   // The empty chat greets in the owner's voice (the display name is "Người Thử": greeted by the last word) and offers suggestions.
   await expect(page.getByText("Hello Thử nha, tui là bản AI của Nam á. Muốn tâm sự hay hỏi gì cứ nhắn tui nha")).toBeVisible();
@@ -104,14 +116,12 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
     const all = (s: Storage) => Object.keys(s).map((k) => `${k}=${s.getItem(k)}`);
     return { entries: [...all(localStorage), ...all(sessionStorage), document.cookie], keys: Object.keys(localStorage) };
   });
-  expect(stored.keys.filter((k) => k.startsWith("sotu:clone:v1:"))).toEqual([]);
+  expect(stored.keys.filter((k) => k.startsWith("sotu:clone:"))).toEqual([]); // no chat, and no "card closed" flag either
   expect(stored.entries.join("\n")).not.toContain("Kể tui nghe một chuyện vui đi");
   expect(stored.entries.join("\n")).not.toContain("ừ nghe nè");
 
-  // Closing the card is the one thing remembered (it holds no chat content).
-  await intro.getByRole("button", { name: "Đóng phần giải thích" }).click();
-  await expect(intro).toBeHidden();
-  await expect.poll(() => page.evaluate(() => localStorage.getItem("sotu:clone:intro:v1"))).toBe("1");
+  // The card stays at the top of the conversation while it goes on (it is part of what scrolls).
+  await expectIntro();
 
   // With a message of the user on the screen, a reload asks first (the browser's own box); accepting loses the chat.
   const asked = page.waitForEvent("dialog");
@@ -122,15 +132,16 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
   await reloaded;
   await expect(page.getByText(/tui là bản AI của Nam á/)).toBeVisible();
   await expect(page.getByRole("list", { name: "Tin nhắn", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("region", { name: "Trước khi nhắn" })).toBeHidden(); // the card stays closed
+  await expectIntro(); // shown again at the start of the new conversation
 
-  // "Cuộc trò chuyện mới" clears at once: no confirmation box; and an empty chat does not ask before a reload.
+  // "Cuộc trò chuyện mới" clears at once: no confirmation box; the card is there again; an empty chat does not ask before a reload.
   await page.getByRole("button", { name: "Kể tui nghe một chuyện vui đi" }).click();
   await expect(list.getByText("Kể tui nghe một chuyện vui đi")).toBeVisible();
   await page.getByRole("button", { name: "Cuộc trò chuyện mới" }).click();
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
   await expect(page.getByText(/tui là bản AI của Nam á/)).toBeVisible();
   await expect(page.getByRole("list", { name: "Tin nhắn", exact: true })).toHaveCount(0);
+  await expectIntro();
   let askedWhenEmpty = false;
   page.on("dialog", (d) => {
     askedWhenEmpty = true;
@@ -138,7 +149,11 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
   });
   await page.reload();
   await expect(page.getByText(/tui là bản AI của Nam á/)).toBeVisible();
+  await expectIntro();
   expect(askedWhenEmpty).toBe(false);
+
+  // Still nothing in the browser after all of that.
+  expect(await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("sotu:clone:")))).toEqual([]);
 
   // Nothing was written to the database or the tutor's API from this page.
   expect(apiCalls).toEqual([]);

@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest";
 import { MAX_BUBBLES, splitBubbles } from "@/lib/ai/clone/bubbles";
 import { CLONE_FORBIDDEN_KIND, CLONE_FORBIDDEN_MESSAGE, isCloneForbidden } from "@/lib/ai/clone/forbidden";
 import {
-  CLONE_INTRO_KEY,
   CLONE_STARTERS,
   clearLegacyCloneStorage,
   greetingName,
+  LEGACY_CLONE_INTRO_KEY,
   LEGACY_CLONE_STORAGE_PREFIX,
   toRequestMessages,
 } from "@/lib/ai/clone/client";
@@ -86,17 +86,24 @@ describe("legacy storage cleanup", () => {
     };
   };
 
-  it("deletes every conversation an earlier version kept and nothing else", () => {
+  it("deletes every conversation an earlier version kept, and the 'card closed' flag, and nothing else", () => {
     const s = fakeStorage({
       "sotu:clone:v1:user-a": "[]",
       "sotu:clone:v1:user-b": '[{"id":"1"}]',
-      "sotu:clone:intro:v1": "1", // the closed-card flag has no chat content: it stays
+      "sotu:clone:intro:v1": "1", // the card is always shown now: this flag is dead weight and goes too
       "sotu-theme": "dark",
       "sotu:lookup:v2": "{}",
       "other:sotu:clone:v1:x": "y", // only keys that START with the prefix
+      "other:sotu:clone:intro:v1": "1", // the flag is matched by its exact name
     });
-    expect(clearLegacyCloneStorage(s)).toBe(2);
-    expect(s.keys()).toEqual(["sotu:clone:intro:v1", "sotu-theme", "sotu:lookup:v2", "other:sotu:clone:v1:x"]);
+    expect(clearLegacyCloneStorage(s)).toBe(3);
+    expect(s.keys()).toEqual(["sotu-theme", "sotu:lookup:v2", "other:sotu:clone:v1:x", "other:sotu:clone:intro:v1"]);
+  });
+
+  it("removes the flag even when nothing else is there", () => {
+    const s = fakeStorage({ [LEGACY_CLONE_INTRO_KEY]: "1" });
+    expect(clearLegacyCloneStorage(s)).toBe(1);
+    expect(s.keys()).toEqual([]);
   });
 
   it("is harmless on an empty storage and when run twice", () => {
@@ -107,7 +114,7 @@ describe("legacy storage cleanup", () => {
   });
 
   it("keeps the two key names apart", () => {
-    expect(CLONE_INTRO_KEY.startsWith(LEGACY_CLONE_STORAGE_PREFIX)).toBe(false);
+    expect(LEGACY_CLONE_INTRO_KEY.startsWith(LEGACY_CLONE_STORAGE_PREFIX)).toBe(false);
   });
 });
 

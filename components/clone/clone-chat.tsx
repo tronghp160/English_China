@@ -1,11 +1,11 @@
 "use client";
 
-import { Info, Lock, SquarePen, X } from "lucide-react";
+import { Lock, SquarePen } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { useFollowScroll } from "@/components/chat/use-follow-scroll";
 import { Button } from "@/components/ui/button";
-import { CLONE_INTRO_KEY, CLONE_STARTERS, greetingName, warmClone } from "@/lib/ai/clone/client";
+import { CLONE_STARTERS, greetingName, warmClone } from "@/lib/ai/clone/client";
 import { CloneAvatar, CloneMessages } from "./clone-messages";
 import { useCloneChat } from "./use-clone-chat";
 
@@ -43,28 +43,6 @@ export function CloneChat({
   useEffect(() => {
     if (window.matchMedia("(pointer: fine)").matches) inputRef.current?.focus({ preventScroll: true });
   }, []);
-
-  // The explanation card shows until it is closed once. Only this flag is kept in the browser (no chat content).
-  // Decided after mounting, so it never differs from the server render.
-  const [introOpen, setIntroOpen] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        setIntroOpen(window.localStorage.getItem(CLONE_INTRO_KEY) !== "1");
-      } catch {
-        setIntroOpen(true);
-      }
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
-  const closeIntro = () => {
-    setIntroOpen(false);
-    try {
-      window.localStorage.setItem(CLONE_INTRO_KEY, "1");
-    } catch {
-      // not remembered
-    }
-  };
 
   const handleSend = (text: string) => {
     if (send(text)) setInput("");
@@ -104,29 +82,21 @@ export function CloneChat({
       </header>
 
       <div ref={scroller} className="flex-1 overflow-y-auto overscroll-contain px-4 py-5 lg:px-6">
-        {introOpen && (
-          <section aria-labelledby="clone-intro" className="mb-5 rounded-lg border border-border/60 bg-surface p-4 shadow-xs dark:border-border">
-            <div className="flex items-start gap-3">
-              <Info className="mt-0.5 size-5 shrink-0 text-primary-fg" strokeWidth={2} aria-hidden />
-              <div className="min-w-0 flex-1 space-y-1.5 text-sm text-fg">
-                <h2 id="clone-intro" className="font-bold">
-                  Trước khi nhắn
-                </h2>
-                <p>
-                  Đây là bản AI của {cloneName}, nói chuyện theo những gì {cloneName} tự kể về mình. Có thể sai chỗ này chỗ kia.
-                </p>
-                <p>
-                  Cuộc trò chuyện không được lưu ở đâu cả: rời trang, tải lại hoặc bấm “Cuộc trò chuyện mới” là xóa hết. {cloneName} và
-                  quản trị viên không đọc được.
-                </p>
-                <p>Để trả lời, tin nhắn được gửi tới dịch vụ AI ({providerLabel}).</p>
-              </div>
-              <Button type="button" variant="ghost" size="icon" aria-label="Đóng phần giải thích" onClick={closeIntro} className="-mt-1 -mr-1 size-10 shrink-0">
-                <X className="size-5" aria-hidden />
-              </Button>
-            </div>
-          </section>
-        )}
+        {/* Always the first thing of a conversation (at the start and after "Cuộc trò chuyện mới"): no close button,
+            nothing remembered. It sits in the message area, so it scrolls away with the messages. */}
+        <section aria-labelledby="clone-intro" className="mb-5 rounded-lg border border-border/60 bg-surface p-4 shadow-xs dark:border-border">
+          <h2 id="clone-intro" data-check-overflow className="flex items-start gap-2 text-sm font-bold text-fg">
+            <Lock className="size-5 shrink-0 text-primary-fg" strokeWidth={2} aria-hidden />
+            <span className="text-balance">Cuộc trò chuyện này được giữ riêng tư</span>
+          </h2>
+          <p data-check-overflow className="mt-2 text-sm text-pretty text-fg">
+            Vì có thể chứa thông tin cá nhân, cuộc trò chuyện sẽ tự xóa khi bạn thoát, chuyển trang hoặc bắt đầu cuộc mới. Không ai đọc được, kể
+            cả {cloneName}.
+          </p>
+          <p data-check-overflow className="mt-1.5 text-xs leading-relaxed text-pretty text-fg-muted">
+            Đây là bản AI của {cloneName}, có thể nhầm. Tin nhắn được gửi tới dịch vụ AI ({providerLabel}) để trả lời.
+          </p>
+        </section>
 
         {empty ? (
           <div className="space-y-4">
@@ -176,9 +146,9 @@ export function CloneChat({
             placeholder={locked ? "Chưa mở cho bạn" : "Nhắn gì đó…"}
           />
         </form>
-        <p className="mt-1.5 flex items-start justify-center gap-1.5 text-center text-[0.8125rem] leading-snug text-fg-muted">
-          <Lock className="mt-0.5 size-3.5 shrink-0" strokeWidth={2} aria-hidden />
-          <span>Cuộc trò chuyện tự xóa khi bạn rời trang hoặc bắt đầu cuộc mới. Không ai đọc được, kể cả {cloneName}.</span>
+        <p className="mt-1.5 flex items-center justify-center gap-1.5 text-[0.8125rem] leading-snug text-fg-muted">
+          <Lock className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+          <span>Tự xóa khi bạn rời trang</span>
         </p>
       </div>
     </section>
