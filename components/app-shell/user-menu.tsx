@@ -1,6 +1,6 @@
 "use client";
 
-import { Bone, LogOut, MessageSquareHeart, Palette, Settings, ShieldCheck, User, Users } from "lucide-react";
+import { Bone, HeartHandshake, LogOut, MessageSquareHeart, Palette, Settings, ShieldCheck, User, Users } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useOptionalMe } from "@/components/app-shell/me-provider";
@@ -103,6 +103,13 @@ export function UserMenu({
             <Users aria-hidden /> Nhóm
           </Link>
         </DropdownMenuItem>
+        {me?.cloneName && (
+          <DropdownMenuItem asChild className="lg:hidden">
+            <Link href="/tam-su">
+              <HeartHandshake aria-hidden /> Tâm sự với {me.cloneName} (bản AI)
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link href="/settings">
             <Settings aria-hidden /> Cài đặt

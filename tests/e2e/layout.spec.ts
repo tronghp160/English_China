@@ -32,6 +32,7 @@ const APP_ROUTES = [
   "/stats",
   "/groups",
   "/chat",
+  "/tam-su",
   "/settings",
   "/explore",
   "/hard-words",

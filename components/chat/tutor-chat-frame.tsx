@@ -39,6 +39,8 @@ export function TutorChatFrame(
     title: string | null;
     initialMessages: ChatMessage[];
     initialPrompt?: string;
+    /** Text to put in the box of the empty chat (a link from the "bản AI"). */
+    draft?: string;
     /** The thread does not exist yet: the first message creates it (useTutorChat newThread). */
     isNew?: boolean;
     onCreated: (thread: { id: string; title: string; prompt: string }) => void;
@@ -133,8 +135,9 @@ function EmptyFrame({
   onCreated,
   expanded,
   onToggleExpand,
-}: Common & { onCreated: (thread: { id: string; title: string; prompt: string }) => void }) {
-  const [input, setInput] = useState("");
+  draft,
+}: Common & { onCreated: (thread: { id: string; title: string; prompt: string }) => void; draft?: string }) {
+  const [input, setInput] = useState(draft ?? "");
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Ready to type as soon as the page opens (keyboard devices only: a phone keyboard would cover the window).

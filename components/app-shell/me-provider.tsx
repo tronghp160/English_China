@@ -13,6 +13,8 @@ export type MeContextValue = {
   prefs: Required<Prefs>;
   /** Cards due today across languages (the badge on the sidebar review button) */
   dueCount: number;
+  /** Name of the "bản AI" companion when it is switched on (CLONE_PROFILE is set); null or absent = off. */
+  cloneName?: string | null;
 };
 
 const MeContext = createContext<MeContextValue | null>(null);

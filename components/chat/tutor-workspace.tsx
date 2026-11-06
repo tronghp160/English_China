@@ -28,6 +28,7 @@ function setUrl(path: string) {
 export function TutorWorkspace({
   thread,
   initialPrompt,
+  draft,
   threads,
   timeZone,
   language,
@@ -40,6 +41,8 @@ export function TutorWorkspace({
 }: {
   thread: { id: string; title: string | null; messages: ChatMessage[] } | null;
   initialPrompt?: string;
+  /** Text for the box of the empty chat, from /chat?q=… (not sent). Used once. */
+  draft?: string;
   threads: ThreadSummary[];
   timeZone: string;
   language: LangCode;
@@ -55,6 +58,7 @@ export function TutorWorkspace({
   const [frameKey, setFrameKey] = useState(thread?.id ?? "new");
   const [created, setCreated] = useState<ThreadSummary[]>([]);
   const [deleted, setDeleted] = useState<string[]>([]);
+  const [pendingDraft, setPendingDraft] = useState(draft);
 
   useEffect(() => warmTutor(), []); // the learner opened /chat to ask something
 
@@ -78,6 +82,10 @@ export function TutorWorkspace({
   useEffect(() => {
     if (thread && initialPrompt) setUrl(chatUrl(thread.id));
   }, [thread, initialPrompt]);
+  // Same for a draft: it is in the box now, so the address goes back to plain /chat.
+  useEffect(() => {
+    if (draft) setUrl(chatUrl());
+  }, [draft]);
 
   // The page got another conversation from the server (a link or back/forward changed ?c=): show it.
   // Compared with the previous prop, not with what is open, so a refresh of the same page changes nothing.
@@ -102,11 +110,13 @@ export function TutorWorkspace({
   const groups = useMemo(() => groupThreadsByDay(list, new Date(), timeZone), [list, timeZone]);
 
   const newChat = () => {
+    setPendingDraft(undefined);
     setActive(null);
     setFrameKey((k) => (k === "new-a" ? "new-b" : "new-a"));
     setUrl(chatUrl());
   };
   const onCreated = ({ id, title, prompt }: { id: string; title: string; prompt: string }) => {
+    setPendingDraft(undefined);
     setCreated((c) => [{ id, title, updated_at: new Date().toISOString() }, ...c]);
     setActive({ id, title, messages: [], prompt, isNew: true });
     setFrameKey(id);
@@ -140,6 +150,7 @@ export function TutorWorkspace({
         title={active?.title ?? null}
         initialMessages={active?.messages ?? []}
         initialPrompt={active?.prompt}
+        draft={active ? undefined : pendingDraft}
         isNew={active?.isNew}
         language={language}
         starters={starters}

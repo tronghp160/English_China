@@ -36,7 +36,13 @@ export default async function ChatHomePage({ searchParams }: PageProps<"/chat">)
     <>
       {sp.error && <p className="mb-4 text-sm text-danger-fg">Không mở được cuộc trò chuyện mới. Thử lại.</p>}
       {c && !thread && <p className="mb-4 text-sm text-fg-muted">Không tìm thấy cuộc trò chuyện này (có thể đã bị xóa).</p>}
-      <TutorWorkspacePage me={me} thread={thread} initialPrompt={thread && !thread.messages.length ? q : undefined} />
+      <TutorWorkspacePage
+        me={me}
+        thread={thread}
+        initialPrompt={thread && !thread.messages.length ? q : undefined}
+        // /chat?q=… with no conversation (a link from the "bản AI"): the question is put in the box, not sent
+        draft={!c ? q : undefined}
+      />
     </>
   );
 }

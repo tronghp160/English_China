@@ -29,6 +29,8 @@ export const ChatComposer = forwardRef<
     inputId?: string;
     /** Screen-reader label; defaults by size ("Tin nhắn cho gia sư" / "… (khung nổi)"). */
     label?: string;
+    /** Called when the box is focused, to wake the route that will answer (default: the tutor's warm-up ping). */
+    onWarm?: () => void;
   }
 >(function ChatComposer(
   {
@@ -44,6 +46,7 @@ export const ChatComposer = forwardRef<
     size = "page",
     inputId = "chat-input",
     label,
+    onWarm = warmTutor,
   },
   ref,
 ) {
@@ -73,7 +76,7 @@ export const ChatComposer = forwardRef<
           name={name}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onFocus={warmTutor}
+          onFocus={onWarm}
           onKeyDown={(e) => {
             if (enterSends(e)) {
               e.preventDefault();

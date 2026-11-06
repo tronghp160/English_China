@@ -48,6 +48,14 @@ Keep these texts. Emoji next to them may go. If one must change, edit the test i
   - Admin word actions: button "Xóa từ", alertdialog "Xóa từ".
   - Privacy policy: page `/quyen-rieng-tu` (heading "Quyền riêng tư"), signup notice "Bằng việc đăng ký, bạn đồng ý với quyền riêng tư của Sổ Từ.".
 
+## Added for the "bản AI" companion (tests/e2e/clone.spec.ts; the E2E server runs with a made-up profile named "Nam")
+- `/tam-su`: title "Tâm sự với Nam", h1 "Nam (bản AI)", region "Trước khi nhắn" (first-visit card: "Đây là bản AI của Nam", "chỉ lưu trên trình duyệt này", "quản trị viên không đọc được", "gửi tới dịch vụ AI") with button "Đóng phần giải thích".
+- Empty chat: greeting "Mình là bản AI của Nam", suggestion buttons (e.g. "Kể tui nghe một chuyện vui đi"), list "Gợi ý tin nhắn". Messages: list "Tin nhắn" (use `exact: true`: the name of the suggestions list contains it); each answer paragraph is a `[data-check-overflow]` bubble; sender label "Nam (bản AI)".
+- Box: label "Tin nhắn cho Nam (bản AI)", button "Gửi". Header button "Cuộc trò chuyện mới" opens an alertdialog ("Máy chủ không giữ bản nào") with "Xóa và bắt đầu lại" / "Giữ lại". Errors: `[role=alert]` with the server text and "Thử lại" (Next's route announcer is also a `role=alert`, filter by text).
+- Link in an answer that mentions "Gia sư": "Hỏi Bin cho kỹ" (the tutor's name) → `/chat?q=…`, which puts the question in the tutor's box (label "Tin nhắn cho gia sư") and goes back to `/chat`.
+- Entry points: `/chat` card heading "Tâm sự với Nam (bản AI)" with link "Mở trò chuyện"; avatar menu item "Tâm sự với Nam (bản AI)" (phones); sidebar "Tâm sự" (desktop); `/lien-he` link "trò chuyện với bản AI của mình". All appear only when CLONE_PROFILE is set. The floating tutor button ("Mở gia sư AI") is hidden on `/tam-su`.
+- localStorage keys: `sotu:clone:v1:<userId>` (conversation, at most 100 messages) and `sotu:clone:intro:v1` (first-visit card closed).
+
 ## Added in Tutor UI V2 (tests/e2e/tutor-widget.spec.ts, chat.spec.ts)
 - Tutor floating widget:
   - Launcher button: `aria-label="Mở gia sư AI"`, `aria-label="Đóng gia sư AI"`

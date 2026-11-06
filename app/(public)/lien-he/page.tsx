@@ -6,6 +6,7 @@ import { CopyPhone } from "@/components/contact/copy-phone";
 import { Pup } from "@/components/mascot/pup";
 import { IconTile } from "@/components/ui/icon-tile";
 import { CONTACT, formatPhone, zaloUrl } from "@/lib/contact";
+import { cloneConfig } from "@/lib/env";
 import { TONE_CLASSES, type Tone } from "@/lib/tone";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ const BUG_REPORT = [
 
 export default function ContactPage() {
   const phone = formatPhone(CONTACT.zaloPhone);
+  const cloneOn = cloneConfig() !== null;
   return (
     <div className="flex flex-col gap-8 py-4">
       <section className="relative overflow-hidden rounded-xl bg-primary p-6 text-on-primary shadow-hero sm:p-8">
@@ -100,6 +102,15 @@ export default function ContactPage() {
           </div>
         </div>
         <p className="mt-3 text-sm text-fg-muted">Hoặc bấm nút chat tròn ở góc dưới bên phải, ở trang nào cũng có.</p>
+        {cloneOn && (
+          <p className="mt-1 text-sm text-fg-muted">
+            Hoặc{" "}
+            <Link href="/tam-su" data-inline-link className="font-semibold text-primary-fg underline underline-offset-2">
+              trò chuyện với bản AI của mình
+            </Link>
+            .
+          </p>
+        )}
       </section>
 
       <section aria-labelledby="contact-topics">

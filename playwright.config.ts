@@ -40,6 +40,13 @@ export default defineConfig({
         timeout: 300_000,
         // The "Gợi ý" button only renders when a key is configured; the mock covers the call itself.
         // Sign-up limits live in Postgres, so repeated runs from one IP would hit the default.
-        env: { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || "e2e-mock-key", SIGNUP_LIMIT_PER_HOUR: "200" },
+        // The "bản AI" page (/tam-su) needs a profile to exist: a made-up one, never the real CLONE_PROFILE.
+        env: {
+          ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || "e2e-mock-key",
+          SIGNUP_LIMIT_PER_HOUR: "200",
+          CLONE_PROFILE: "# Hồ sơ giả cho E2E\nBạn là Nam, thích mèo.",
+          CLONE_NAME: "Nam",
+          CLONE_BIRTHDAY: "01/02",
+        },
       },
 });

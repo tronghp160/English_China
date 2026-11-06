@@ -13,7 +13,7 @@ import { TopBar } from "@/components/app-shell/top-bar";
 import { isAdmin } from "@/lib/admin";
 import { requireMe } from "@/lib/auth";
 import { getStudySummary } from "@/lib/data/study";
-import { aiProvider } from "@/lib/env";
+import { aiProvider, cloneConfig } from "@/lib/env";
 import { cjkFontVariables } from "@/lib/fonts";
 import { readPrefs } from "@/lib/validation";
 
@@ -32,6 +32,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         studyLangs: me.settings.study_langs,
         prefs: readPrefs(me.settings.prefs),
         dueCount,
+        cloneName: cloneConfig()?.name ?? null,
       }}
     >
       <PresenceBeacon />

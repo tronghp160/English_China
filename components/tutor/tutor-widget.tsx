@@ -22,7 +22,8 @@ export function TutorWidget({ aiEnabled = true }: { aiEnabled?: boolean }) {
   const [unread, setUnread] = useState(false);
   const launcherRef = useRef<HTMLDivElement>(null);
 
-  const hidden = pathname === "/chat" || pathname.startsWith("/chat/");
+  // The dedicated chat pages have their own window; so does the "bản AI" companion.
+  const hidden = pathname === "/chat" || pathname.startsWith("/chat/") || pathname === "/tam-su" || pathname.startsWith("/tam-su/");
   const keyboard = useKeyboardOpen();
   const isPhone = useMediaQuery("(max-width: 639px)");
 

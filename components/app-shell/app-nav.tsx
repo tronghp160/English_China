@@ -4,6 +4,7 @@ import {
   BarChart3,
   BookOpen,
   Compass,
+  HeartHandshake,
   House,
   MessageCircle,
   MessageSquareHeart,
@@ -117,6 +118,11 @@ export function BottomNav() {
 /** Left column on desktop (≥ 1024px, 248px): on the canvas itself, the active row is a white pill. */
 export function SideNav() {
   const pathname = usePathname();
+  const { cloneName } = useMe();
+  // "Tâm sự" (the AI version of the owner) is listed only when it is switched on.
+  const secondary = cloneName
+    ? [SECONDARY[0], SECONDARY[1], { href: "/tam-su", label: "Tâm sự", icon: HeartHandshake }, ...SECONDARY.slice(2)]
+    : SECONDARY;
   const item = ({ href, label, icon: Icon }: NavItem) => {
     const active = isActive(pathname, href);
     return (
@@ -158,7 +164,7 @@ export function SideNav() {
         </div>
         <div>
           <p className="mb-1 px-3 text-xs font-semibold text-fg-muted">Khác</p>
-          <ul className="space-y-1">{SECONDARY.map(item)}</ul>
+          <ul className="space-y-1">{secondary.map(item)}</ul>
         </div>
       </nav>
 
