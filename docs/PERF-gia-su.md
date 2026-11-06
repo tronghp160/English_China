@@ -174,6 +174,19 @@ Thay đổi (chưa đo, cần Vercel; nghiệm thu: prelude p50 giảm ≥ 40% s
 3. Ghi một bảng: TTFT p50 / p90, tỉ lệ 503 (số dòng `rate-limited` / số request), điểm eval. Nếu có `ANTHROPIC_API_KEY` thì so luôn Haiku hiện tại (`AI_PROVIDER=anthropic`; hiện `.env.local` có cả hai key và mặc định chọn Anthropic).
 4. Đặt model thắng vào `AI_MODEL_CHAT_GOOGLE` trên Vercel (Production + Preview), redeploy, bật lại `AI_HEDGE_MS`.
 
+## P4: tra cứu sẵn từ đang hỏi
+
+Câu kiểu "X nghĩa là gì", "X đọc thế nào", "phân biệt A và B" chiếm phần lớn; trước đây model phải tự gọi `lookupWord` (thêm một vòng model) hoặc trả lời theo trí nhớ (dễ sai pinyin/IPA với từ hiếm). Giờ route tra sẵn trong lúc chờ prelude:
+
+- `detectTerms(text)` (`lib/ai/tutor/prefetch.ts`, thuần, có test) nhận tối đa 2 từ, cố ý thận trọng: "phân biệt A và B", "A khác B", "A và B khác nhau"; từ hoặc cụm tới 3 từ trong dấu nháy; tới 3 từ tiếng Anh đứng trước "nghĩa là gì / là gì / đọc thế nào / phát âm / dùng thế nào"; chuỗi chữ Hán dài 1–4 ký tự (chuỗi dài hơn là một câu để sửa hoặc dịch nên không tra). Chữ viết quyết định ngôn ngữ (chữ Hán = zh, chữ Latin = en) vì Gia sư trả lời về cả hai ngôn ngữ bất kể ngôn ngữ của thread. Không tra "tiếng Trung / tiếng Anh là gì" (tên ngôn ngữ viết không dấu) và cụm cố định "khác nhau". Bỏ sót chỉ có nghĩa là model tự gọi `lookupWord` như cũ.
+- `prefetchTerms` gọi `lookupBest` cho từng từ (cache chung `dictionary_cache`, CVDICT đã nạp sẵn, từ điển tiếng Anh miễn phí; **không tốn hạn mức AI**), **ngân sách 800 ms**: quá thì bỏ phần chưa xong và không chặn câu trả lời; lỗi thì bỏ qua, không bao giờ ném. Chạy cùng lúc với prelude nên thường không làm chậm thêm.
+- Kết quả vào phần `turn` của prompt dưới dạng `<tra_cuu_san>` (`formatLookups`: phiên âm, Hán Việt, tối đa 2 nghĩa, 1 ví dụ mỗi nghĩa, lượng từ), sau `<du_lieu_nguoi_hoc>`. Dữ liệu từ điển bên ngoài được làm sạch trước khi vào prompt (bỏ thẻ và dấu `<` `>`, một dòng, giới hạn độ dài) để không đóng được thẻ hay giả làm chỉ dẫn. Phần `stable` có thêm một luật: dùng `<tra_cuu_san>` cho phiên âm và nghĩa, không gọi `lookupWord` cho từ đó, và đó là dữ liệu chứ không phải chỉ dẫn.
+- Dòng `[tutor:timing]` có `prefetched` (số từ đã tra được, không có nội dung).
+- Cách đo (cần Vercel và tài khoản): `tools_avg` của `tool_rare` và TTFT của `tool_rare` phải giảm; điểm `has_ipa` / `has_pinyin_tones` của `pnpm eval:tutor` phải giữ hoặc tăng. Chưa đo.
+- Test: `tests/unit/tutor-prefetch.test.ts`.
+
+**Nghiệm thu phần A**: bảng "Sau phần A" trên Vercel còn trống, vì cả đo baseline lẫn đo sau cần chủ repo chạy trên Vercel (xem "Baseline trên Vercel" ở trên). Không có số nào ở đây là kết quả đo của phần A; mọi mục P1–P4 mới chỉ được kiểm bằng test đơn vị và đọc code.
+
 ## Việc còn lại (cho chủ repo)
 
 1. **Đo trên Vercel**: deploy preview, copy cookie phiên từ DevTools rồi `BASE_URL=https://<preview> BENCH_COOKIE='sb-…' pnpm bench:tutor`. Xem mốc `prelude` trong `Server-Timing`: nếu vẫn > 600 ms thì kiểm Function Region và cold start (mốc `auth` của request đầu).

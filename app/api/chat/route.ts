@@ -8,6 +8,7 @@ import { writeTutorAnswer, type AnswerOutcome, type TutorInstructions } from "@/
 import { tutorEffort, type TutorEffort } from "@/lib/ai/tutor/effort";
 import { classifyTutorError, tutorErrorMessage } from "@/lib/ai/tutor/errors";
 import { tutorModel } from "@/lib/ai/tutor/model";
+import { formatLookups, prefetchTerms } from "@/lib/ai/tutor/prefetch";
 import { readThread, startPrelude, type ThreadRow } from "@/lib/ai/tutor/prelude";
 import { slimHistory } from "@/lib/ai/tutor/slim-history";
 import { guessLanguage } from "@/lib/ai/tutor/starters";
@@ -100,11 +101,15 @@ export async function POST(request: Request) {
   // reads are simply dropped (a few wasted reads). A request for a missing thread also counts towards
   // the rate limit (acceptable).
   const prelude = startPrelude({ supabase, user, threadId, newThread, contextPath: context?.path, timer });
-  const [me, [{ data: found }, allowed, quotaError], newDeck, [{ data: rows }, firstSnapshot, pageContext]] = await Promise.all([
+  // Words the message asks about are looked up (free sources, 800 ms at most) during the same wait, so the
+  // model usually needs no lookupWord call. Never rejects.
+  const prefetch = prefetchTerms(text);
+  const [me, [{ data: found }, allowed, quotaError], newDeck, [{ data: rows }, firstSnapshot, pageContext], prefetched] = await Promise.all([
     prelude.me,
     prelude.gate,
     prelude.deck,
     prelude.context,
+    prefetch,
   ]);
   timer.mark("parallel_done");
   // The error order stays 401 → 404 → rate → quota.
@@ -184,6 +189,7 @@ export async function POST(request: Request) {
     firstTurn: history.length === 0,
     today: studyDay(new Date(), me.settings.timezone),
     pageContext,
+    lookups: formatLookups(prefetched),
   });
   // Stable part first, so providers can reuse it from their prompt cache: Gemini does that on its own
   // for a repeated prefix; Anthropic needs the marker on the stable system message.
@@ -226,7 +232,7 @@ export async function POST(request: Request) {
       }
     },
     onEnd: async ({ responseMessage }) => {
-      timer.log({ threadId, status: outcome.status, toolCalls: outcome.toolCalls ?? 0, effort, ...(hedged ? { hedged: true } : {}), ...outcome.usage });
+      timer.log({ threadId, status: outcome.status, toolCalls: outcome.toolCalls ?? 0, effort, prefetched: prefetched.length, ...(hedged ? { hedged: true } : {}), ...outcome.usage });
       const hasText = responseMessage.parts.some((p) => p.type === "text" && p.text.trim());
       if (!hasText) return; // failed turns are not stored (the question is; "Thử lại" answers it)
       if (outcome.status === "answered") recordUsage(me.user.id);
