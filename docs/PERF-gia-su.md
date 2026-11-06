@@ -187,6 +187,21 @@ Câu kiểu "X nghĩa là gì", "X đọc thế nào", "phân biệt A và B" ch
 
 **Nghiệm thu phần A**: bảng "Sau phần A" trên Vercel còn trống, vì cả đo baseline lẫn đo sau cần chủ repo chạy trên Vercel (xem "Baseline trên Vercel" ở trên). Không có số nào ở đây là kết quả đo của phần A; mọi mục P1–P4 mới chỉ được kiểm bằng test đơn vị và đọc code.
 
+## Bản AI (`/api/clone`) và bảng "Sau phần A + B"
+
+- Bench có hai kịch bản cho bản AI: `clone_hi` (1 tin) và `clone_sad` (3 tin lịch sử, tin cuối về tâm trạng, nên chạy mức thinking "low"). Chúng **chỉ chạy khi gọi rõ tên**: `ONLY=clone_hi,clone_sad RUNS=5 pnpm bench:tutor` với app có `CLONE_PROFILE` (nếu không, route trả 404). Câu trả lời **không được lưu** vào file kết quả vì có thể lặp lại hồ sơ. Dòng log của route là `[clone:timing]` (mốc `user`, `limits`, `prelude`, `model_start`, `first_text`, `done`, trạng thái, effort, số lượt, token); không có nội dung tin nhắn.
+- Prelude của `/api/clone` ngắn hơn của Gia sư: chỉ `getUser` + body, rồi `loadMe` và `aiGate` song song (không có thread, lịch sử hay snapshot). Phần `stable` của prompt (luật + hồ sơ, vài nghìn token) giống hệt giữa mọi người nên được prompt cache (Anthropic có marker `cacheControl`; Gemini cache ngầm): sau vài request, `cachedTokens` trong log phải lớn.
+- **Chưa đo.** Bảng sau chờ chủ repo chạy trên Vercel (cùng cách ở "Baseline trên Vercel"), kèm số `eval:tutor` đã chạy lại sau phần B:
+
+| Kịch bản | TTFT p50 | TTFT p90 | Total p50 | prelude p50 | cachedTokens (log) |
+|---|---|---|---|---|---|
+| simple_en | _chưa đo_ | | | | |
+| simple_zh | _chưa đo_ | | | | |
+| correct | _chưa đo_ | | | | |
+| tool_rare | _chưa đo_ | | | | |
+| clone_hi | _chưa đo_ | | | | |
+| clone_sad | _chưa đo_ | | | | |
+
 ## Việc còn lại (cho chủ repo)
 
 1. **Đo trên Vercel**: deploy preview, copy cookie phiên từ DevTools rồi `BASE_URL=https://<preview> BENCH_COOKIE='sb-…' pnpm bench:tutor`. Xem mốc `prelude` trong `Server-Timing`: nếu vẫn > 600 ms thì kiểm Function Region và cold start (mốc `auth` của request đầu).

@@ -6,6 +6,8 @@
 // session works on any deployment that uses the same Supabase project; BENCH_COOKIE is only for a
 // deployment behind protection. See docs/PERF-gia-su.md.
 // Results go to bench-results/tutor-<timestamp>.json; the threads are deleted at the end.
+// clone_hi and clone_sad time /api/clone (the "bản AI") with 1 and 3 messages of history. They run only when named
+// (ONLY=clone_hi,clone_sad: the app must have CLONE_PROFILE set) and their answers are NOT saved (they may repeat the profile).
 // "marks" are the Server-Timing marks of the prelude (auth, limits, thread_created, context, prelude):
 // milliseconds since the request reached the route (cumulative, not per step), median per scenario.
 
@@ -32,7 +34,17 @@ const SCENARIOS = [
   // first_new sends at once with newThread and lets /api/chat create it.
   { name: "first_old", language: "en", texts: ["cat nghĩa là gì?"], fresh: "old" },
   { name: "first_new", language: "en", texts: ["dog nghĩa là gì?"], fresh: "new" },
-].filter((s) => !ONLY || ONLY.includes(s.name));
+  // The companion: no thread, the whole conversation goes with the request.
+  { name: "clone_hi", clone: [{ role: "user", text: "Dạo này sao rồi?" }] },
+  {
+    name: "clone_sad",
+    clone: [
+      { role: "user", text: "alo" },
+      { role: "assistant", text: "ừ nghe nè" },
+      { role: "user", text: "nay tui buồn quá, học hoài mà không vô" },
+    ],
+  },
+].filter((s) => (ONLY ? ONLY.includes(s.name) : !s.clone));
 
 let client;
 try {
@@ -50,7 +62,12 @@ try {
     for (let i = 0; i < RUNS; i++) {
       let run;
       try {
-        if (s.fresh) {
+        if (s.clone) {
+          if (!firstCall) await sleep(GAP_MS);
+          firstCall = false;
+          run = await client.sendClone(s.clone);
+          delete run.answer; // private: may repeat the profile
+        } else if (s.fresh) {
           if (!firstCall) await sleep(GAP_MS);
           firstCall = false;
           const t0 = performance.now();
