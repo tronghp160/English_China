@@ -44,6 +44,19 @@ const serverSchema = z.object({
   ADMIN_EMAILS: z.string().optional(),
   PEXELS_API_KEY: z.string().optional(),
   UNSPLASH_ACCESS_KEY: z.string().optional(),
+  /**
+   * "Bản AI để tâm sự" (/tam-su): the profile text the clone speaks from (markdown, many lines). The real value
+   * lives only in .env.local and in Vercel, never in the repo. Missing = the feature is off.
+   */
+  CLONE_PROFILE: z.string().optional(),
+  /** Name of the person the clone is made from; the UI says "<name> (bản AI)". */
+  CLONE_NAME: z.string().default("Trọng"),
+  /** "dd/mm", for "N days to the birthday". A malformed value is ignored (undefined) instead of failing every request. */
+  CLONE_BIRTHDAY: z
+    .string()
+    .regex(/^\d{2}\/\d{2}$/)
+    .optional()
+    .catch(undefined),
 });
 
 function formatIssues(error: z.ZodError) {
@@ -108,6 +121,19 @@ export function aiProvider(): AiProvider | null {
     : null;
   if (env.AI_PROVIDER === "google") return google ?? anthropic;
   return anthropic ?? google;
+}
+
+export type CloneConfig = { name: string; profile: string; birthday: string | null };
+
+/**
+ * Settings of the "Trọng (bản AI)" companion, or null when it is off: no CLONE_PROFILE (or only blanks), or no AI
+ * provider to answer with. The profile is private: pass it to the prompt, never log or return it.
+ */
+export function cloneConfig(): CloneConfig | null {
+  const env = serverEnv();
+  const profile = env.CLONE_PROFILE?.trim();
+  if (!profile || !aiProvider()) return null;
+  return { name: env.CLONE_NAME.trim() || "Trọng", profile, birthday: env.CLONE_BIRTHDAY ?? null };
 }
 
 export function requireAnthropicKey() {

@@ -42,6 +42,8 @@ Secret key và mật khẩu database từng bị dán vào chat, nên coi như �
 | `CRON_SECRET` | một chuỗi ngẫu nhiên dài; Vercel tự gửi nó khi chạy lịch nhắc ôn 19:00 (`vercel.json`) |
 | `AI_DAILY_LIMIT_PER_USER`, `AI_GLOBAL_DAILY_LIMIT`, `SIGNUP_LIMIT_PER_HOUR`, `AI_RPM_LIMIT` | có thể bỏ trống để dùng mặc định (300 / 3000 / 8 / 10) |
 | `AI_MODEL_GOOGLE`, `AI_MODEL_CHAT_GOOGLE` | xem mục "Tối ưu gói miễn phí" bên dưới |
+| `AI_HEDGE_MS` | tùy chọn, mặc định 2500; xem mục 8 |
+| `CLONE_PROFILE`, `CLONE_NAME`, `CLONE_BIRTHDAY` | tùy chọn, cho "bản AI để tâm sự" (`/tam-su`); xem mục 8. **`CLONE_PROFILE` là dữ liệu riêng tư** |
 
 Không thêm `SUPABASE_DB_URL` lên Vercel; biến này chỉ dùng cho `pnpm db:push` trên máy bạn.
 
@@ -86,3 +88,17 @@ Chạy E2E với AI thật trên máy (tốn vài lượt AI): `E2E_REAL_AI=1 pn
   - Chạy `pnpm db:push` để đẩy các migration mới (`20261028000012_presence.sql`, `20261028000013_admin_audit.sql`) lên Supabase production.
 - **Quyền riêng tư:**
   - Chính sách quyền riêng tư (`/quyen-rieng-tu`) và tính năng xuất dữ liệu người dùng (`/cai-dat`) đã tự động cập nhật công khai việc thu thập thông tin phiên đăng nhập (lưu tối đa 90 ngày) và minh bạch nhật ký quản trị viên.
+
+## 8. Gia sư nhanh hơn và bản AI để tâm sự (nhánh `tam-su-va-gia-su-nhanh`)
+
+Việc chủ repo phải tự làm (code không tự làm được):
+
+1. **`pnpm db:push`** để áp migration `20261106000018_ai_gate.sql` (thêm hàm `ai_gate`, không sửa bảng). Chưa chạy thì Gia sư vẫn chạy bằng 3 truy vấn cũ (log `[ai-gate] RPC ai_gate is missing`), nên deploy trước hay sau đều an toàn. Xem trước bằng `pnpm db:push --dry-run`.
+2. **Vercel → Settings → Functions**: Function Region = `sin1` và bật **Fluid Compute** (cache snapshot 2 phút và cooldown model chỉ có tác dụng khi instance được giữ ấm).
+3. **`AI_HEDGE_MS`** (mặc định 2500, `0` = tắt): nếu model chat đầu chưa trả lời sau từng đó ms và còn model kế trong `AI_MODEL_GOOGLE` / `AI_MODEL_CHAT_GOOGLE`, app gọi luôn model kế song song và dùng cái nào nhanh hơn. Theo dõi tỉ lệ `hedged: true` trong log `[tutor:timing]` tuần đầu; thấy nhiều thì tăng giá trị.
+4. **Bản AI để tâm sự**: tính năng chỉ bật khi có `CLONE_PROFILE` **và** có key AI.
+   - Hồ sơ là nội dung riêng tư. Repo công khai, nên hồ sơ chỉ nằm trong biến môi trường, không bao giờ trong code, test, docs hay commit. `.gitignore` đã chặn `private/` và `clone-profile*.md` phòng khi lỡ để file hồ sơ trong thư mục repo.
+   - Vercel → Settings → Environment Variables: thêm `CLONE_PROFILE` (dán thẳng nhiều dòng vào ô Value), `CLONE_NAME` (tên hiển thị, mặc định `Trọng`), `CLONE_BIRTHDAY` (`dd/mm`, tùy chọn). Chọn Production, và cả Preview nếu muốn thử ở bản preview.
+   - `.env.local`: giá trị nhiều dòng phải bọc trong dấu nháy. Nếu hồ sơ có dấu nháy kép `"` thì bọc bằng **dấu nháy ngược** (`` ` ``): kiểu `\"` không được loader của Next hiểu (giá trị sẽ chứa cả dấu `\`). Tránh ký tự `$` trong hồ sơ vì loader mở rộng nó như biến môi trường.
+   - Đổi hồ sơ xong phải **Redeploy** thì bản trên Vercel mới dùng nội dung mới.
+   - `CLONE_FORBIDDEN_TERMS` (danh sách tên cấm, cách nhau dấu phẩy) chỉ dùng cho script kiểm tra riêng tư chạy trên máy bạn; không đặt lên Vercel.
