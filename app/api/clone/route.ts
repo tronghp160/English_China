@@ -2,6 +2,7 @@ import { createIdGenerator, createUIMessageStream, createUIMessageStreamResponse
 import { NextResponse } from "next/server";
 import { CHAT_MAX_CHARS } from "@/lib/ai/chat-prompt";
 import { cloneEffort } from "@/lib/ai/clone/effort";
+import { CLONE_FORBIDDEN_KIND, CLONE_FORBIDDEN_MESSAGE } from "@/lib/ai/clone/forbidden";
 import { cloneBodySchema, sanitizeCloneHistory } from "@/lib/ai/clone/history";
 import { cloneInstructionParts } from "@/lib/ai/clone/prompt";
 import { AiError, recordUsage, requireProvider } from "@/lib/ai/enrich";
@@ -12,6 +13,7 @@ import { toInstructions } from "@/lib/ai/tutor/instructions";
 import { tutorModel } from "@/lib/ai/tutor/model";
 import { tutorTimer } from "@/lib/ai/tutor/timing";
 import { getUser, loadMe } from "@/lib/auth";
+import { canUseClone } from "@/lib/clone/access";
 import { cloneConfig, type AiProvider } from "@/lib/env";
 import { studyDay } from "@/lib/srs/streak";
 
@@ -22,6 +24,9 @@ import { studyDay } from "@/lib/srs/streak";
  * which sends its latest messages with every request. This route stores nothing: no database write of any kind (the
  * only counter is the AI usage unit, no text), no message text and no profile in any log, and it is in neither the
  * admin pages nor the account export. Do not log `e` of a failed model call as is: the SDK attaches the request body.
+ *
+ * ACCESS: only admins and the accounts an admin switched it on for (table clone_access, lib/clone/access.ts). Anyone
+ * else gets a 404 before the model is called, and no usage unit is counted (a unit is recorded only after an answer).
  */
 export const maxDuration = 60;
 
@@ -78,8 +83,13 @@ export async function POST(request: Request) {
     return limitFailure(e);
   }
 
-  // The name and time zone, and the limits (a separate per-minute bucket; the daily quota is shared with the tutor).
-  const [me, gate] = await Promise.all([
+  // Access, the name and time zone, and the limits (a separate per-minute bucket; the daily quota is shared with the tutor),
+  // all together: the access check adds no wait of its own.
+  const [allowed, me, gate] = await Promise.all([
+    canUseClone(user).then(
+      (ok) => ({ ok, error: null as unknown }),
+      (error: unknown) => ({ ok: false, error: error ?? new Error("access check failed") }),
+    ),
     loadMe(user),
     aiGate(user.id, "clone", 12, 60).then(
       (g) => ({ allowed: g.allowed, error: null as unknown }),
@@ -87,6 +97,12 @@ export async function POST(request: Request) {
     ),
   ]);
   timer.mark("limits");
+  // Checked first: no access means a plain 404 whatever the limits say, and the model is never called.
+  if (allowed.error) {
+    console.error("[clone] access check failed"); // no error object: nothing but this line
+    return fail("Chưa kiểm tra được quyền dùng tính năng này. Thử lại sau một chút nhé.", 503, { kind: "unknown" });
+  }
+  if (!allowed.ok) return fail(CLONE_FORBIDDEN_MESSAGE, 404, { kind: CLONE_FORBIDDEN_KIND });
   if (!me) return fail("Bạn cần đăng nhập.", 401);
   if (!gate.allowed) return fail("Bạn gửi nhanh quá. Đợi một chút rồi gửi tiếp nhé.", 429, { kind: "rate", retryAfter: 20 });
   if (gate.error) return limitFailure(gate.error);

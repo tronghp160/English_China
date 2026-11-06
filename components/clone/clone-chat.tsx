@@ -31,7 +31,7 @@ export function CloneChat({
   providerLabel: string;
   tutorName: string;
 }) {
-  const { messages, status, busy, waiting, error, send, retry, stop, reset } = useCloneChat(userId);
+  const { messages, status, busy, waiting, error, locked, send, retry, stop, reset } = useCloneChat(userId);
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
@@ -154,7 +154,7 @@ export function CloneChat({
             </ul>
           </div>
         ) : (
-          <CloneMessages messages={messages} busy={busy} waiting={waiting} error={error} onRetry={retry} name={cloneName} tutorName={tutorName} />
+          <CloneMessages messages={messages} busy={busy} waiting={waiting} error={error} locked={locked} onRetry={retry} name={cloneName} tutorName={tutorName} />
         )}
         <div ref={endRef} />
       </div>
@@ -170,9 +170,10 @@ export function CloneChat({
             onStop={stop}
             onWarm={warmClone}
             busy={busy}
+            disabled={locked}
             size="panel"
             label={`Tin nhắn cho ${title}`}
-            placeholder="Nhắn gì đó…"
+            placeholder={locked ? "Chưa mở cho bạn" : "Nhắn gì đó…"}
           />
         </form>
         <p className="mt-1.5 flex items-start justify-center gap-1.5 text-center text-[0.8125rem] leading-snug text-fg-muted">

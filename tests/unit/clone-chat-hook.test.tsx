@@ -130,6 +130,42 @@ describe("useCloneChat: asking before a reload or closing the tab", () => {
   });
 });
 
+describe("useCloneChat: access taken away in the middle of a chat", () => {
+  const forbidden = () => new Error(JSON.stringify({ error: "Tính năng này hiện chưa mở cho bạn.", kind: "forbidden" }));
+
+  it("is not locked normally, nor after another kind of failure", () => {
+    const { result, rerender } = renderHook(() => useCloneChat("u"));
+    expect(result.current.locked).toBe(false);
+    chat.error = new Error("Failed to fetch");
+    rerender();
+    expect(result.current.locked).toBe(false);
+    chat.error = new Error(JSON.stringify({ error: "Bạn gửi nhanh quá.", kind: "rate" }));
+    rerender();
+    expect(result.current.locked).toBe(false);
+  });
+
+  it("locks when the route says there is no access, and sends nothing more", () => {
+    const { result, rerender } = renderHook(() => useCloneChat("u"));
+    chat.error = forbidden();
+    rerender();
+    expect(result.current.locked).toBe(true);
+    chat.sendMessage.mockClear();
+    expect(result.current.send("còn ai ở đó không")).toBe(false);
+    expect(chat.sendMessage).not.toHaveBeenCalled();
+  });
+
+  it("starting a new conversation clears the error, so the page can try again", () => {
+    chat.error = forbidden();
+    const { result, rerender } = renderHook(() => useCloneChat("u"));
+    expect(result.current.locked).toBe(true);
+    result.current.reset();
+    expect(chat.clearError).toHaveBeenCalled();
+    chat.error = undefined;
+    rerender();
+    expect(result.current.locked).toBe(false);
+  });
+});
+
 describe("useCloneChat: sending", () => {
   it("sends a trimmed message and refuses empty, too long or while an answer is coming", () => {
     const { result, rerender } = renderHook(() => useCloneChat("u"));

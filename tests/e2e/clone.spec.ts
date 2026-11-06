@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { deleteUserByEmail, signUp, testEmail, watchErrors } from "./helpers";
+import { deleteUserByEmail, grantClone, signUp, testEmail, watchErrors } from "./helpers";
 
 // Every test signs up its own account (a second sign-up with the same address skips onboarding).
 const emails: string[] = [];
@@ -12,6 +12,13 @@ const freshEmail = () => {
 test.afterAll(async () => {
   for (const e of emails) await deleteUserByEmail(e);
 });
+
+/** A fresh account with "Tâm sự" switched on: it is off for everybody by default (clone-access.spec.ts covers that). */
+async function signUpAllowed(page: Page) {
+  const email = freshEmail();
+  await signUp(page, email);
+  await grantClone(email);
+}
 
 /** An answer in the AI SDK UI message stream format (SSE): the given text as one message. */
 function stream(text: string) {
@@ -49,7 +56,7 @@ async function mockClone(page: Page, reply: (body: Body) => string) {
 
 test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng, không lưu ở đâu cả", async ({ page }) => {
   const errors = watchErrors(page);
-  await signUp(page, freshEmail());
+  await signUpAllowed(page);
   const sent = await mockClone(page, () => "ừ nghe nè\n\nkể tui nghe đi, nay có chuyện gì");
   const apiCalls: string[] = [];
   page.on("request", (r) => {
@@ -141,7 +148,7 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
 test("bản AI: rời trang trong app là mất cuộc trò chuyện, không bị chặn", async ({ page }) => {
   test.skip(process.env.E2E_REAL_AI === "1", "needs a scripted answer");
   const errors = watchErrors(page);
-  await signUp(page, freshEmail());
+  await signUpAllowed(page);
   await mockClone(page, () => "ừ nghe nè");
   let asked = false;
   page.on("dialog", (d) => {
@@ -172,7 +179,7 @@ test("bản AI: rời trang trong app là mất cuộc trò chuyện, không b�
 test("bản AI: gõ tin, nhận trả lời, rủ qua Gia sư và mở Gia sư với câu hỏi đã điền sẵn", async ({ page }) => {
   test.skip(process.env.E2E_REAL_AI === "1", "needs a scripted answer");
   const errors = watchErrors(page);
-  await signUp(page, freshEmail());
+  await signUpAllowed(page);
   await mockClone(page, () => "Câu này dài, hỏi Gia sư Bin cho kỹ nha.");
 
   await page.goto("/tam-su");
@@ -191,7 +198,7 @@ test("bản AI: lỗi từ máy chủ hiện câu báo và nút Thử lại", as
   test.skip(process.env.E2E_REAL_AI === "1", "needs a scripted answer");
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await signUp(page, freshEmail());
+  await signUpAllowed(page);
   let calls = 0;
   await page.route("**/api/clone", async (route) => {
     if (route.request().method() !== "POST") return route.fulfill({ status: 204 });
@@ -215,7 +222,7 @@ test("bản AI: lỗi từ máy chủ hiện câu báo và nút Thử lại", as
 
 test("bản AI: lối vào từ trang Gia sư, menu tài khoản và trang Liên hệ; khung gia sư nổi không che trang", async ({ page }) => {
   const errors = watchErrors(page);
-  await signUp(page, freshEmail());
+  await signUpAllowed(page);
 
   await page.goto("/chat");
   await expect(page.getByRole("heading", { name: "Tâm sự với Nam (bản AI)" })).toBeVisible();

@@ -7,6 +7,7 @@ import type { ChatMessage } from "@/lib/ai/chat-tools";
 import { learnerSnapshot } from "@/lib/ai/tutor/learner";
 import { chatStarters } from "@/lib/ai/tutor/starters";
 import type { Me } from "@/lib/auth";
+import { cloneAvailable } from "@/lib/clone/access";
 import { getStudySummary } from "@/lib/data/study";
 import { aiProvider, cloneConfig } from "@/lib/env";
 import type { LangCode } from "@/lib/lang/types";
@@ -37,7 +38,7 @@ export async function TutorWorkspacePage({
   draft?: string;
 }) {
   const supabase = await createClient();
-  const [summary, { data: threads }, snapshot] = await Promise.all([
+  const [summary, { data: threads }, snapshot, cloneOn] = await Promise.all([
     getStudySummary(),
     supabase
       .from("chat_threads")
@@ -46,12 +47,13 @@ export async function TutorWorkspacePage({
       .order("updated_at", { ascending: false })
       .limit(40),
     learnerSnapshot(supabase, me.settings.study_langs),
+    cloneAvailable(), // beside the other reads: the door to "Tâm sự" is shown only to accounts allowed to use it
   ]);
   after(() => void cleanupEmptyThreads(supabase));
 
   const prefs = readPrefs(me.settings.prefs);
   const tutorName = prefs.mascot ? prefs.mascot_name : "Gia sư";
-  const clone = cloneConfig(); // only its name leaves the server
+  const clone = cloneOn ? cloneConfig() : null; // only its name leaves the server
   const hardest = snapshot.flatMap((s) => s.hard).sort((a, b) => b.lapses - a.lapses)[0];
 
   return (

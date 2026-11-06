@@ -18,6 +18,10 @@ const getUser = vi.fn();
 const loadMe = vi.fn();
 vi.mock("@/lib/auth", () => ({ getUser: () => getUser(), loadMe: (u: unknown) => loadMe(u) }));
 
+// Who may use it is read by lib/clone/access (a read; the route itself still never touches the database).
+const canUseClone = vi.fn();
+vi.mock("@/lib/clone/access", () => ({ canUseClone: (u: unknown) => canUseClone(u) }));
+
 const aiGate = vi.fn();
 vi.mock("@/lib/ai/gate", () => ({ aiGate: (...a: unknown[]) => aiGate(...a) }));
 
@@ -69,6 +73,8 @@ beforeEach(() => {
   getUser.mockResolvedValue({ id: "u1", email: null });
   loadMe.mockResolvedValue({ user: { id: "u1" }, profile: { display_name: "Mai" }, settings: { timezone: "Asia/Ho_Chi_Minh" } });
   aiGate.mockResolvedValue({ allowed: true });
+  canUseClone.mockReset();
+  canUseClone.mockResolvedValue(true);
   recordUsage.mockClear();
   dbTouched.mockClear();
   model = answering("ừ nghe nè, kể tui nghe");
@@ -140,6 +146,61 @@ describe("POST /api/clone: refusals", () => {
   it("uses its own per-minute bucket", async () => {
     await post({ messages: [msg("user", "hi")] });
     expect(aiGate).toHaveBeenCalledWith("u1", "clone", 12, 60);
+  });
+});
+
+describe("POST /api/clone: access", () => {
+  const modelCalled = () => model.doStreamCalls.length > 0;
+
+  it("404 for an account without access: no model call, no usage unit", async () => {
+    canUseClone.mockResolvedValue(false);
+    const res = await post({ messages: [msg("user", SECRET_MESSAGE)] });
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body).toEqual({ error: "Tính năng này hiện chưa mở cho bạn.", kind: "forbidden" });
+    expect(canUseClone).toHaveBeenCalledWith({ id: "u1", email: null });
+    expect(modelCalled()).toBe(false);
+    expect(recordUsage).not.toHaveBeenCalled();
+    expect(logged.join("\n")).not.toContain("XYLOPHONE");
+  });
+
+  it("says no access before anything about limits or the account, even when those would fail too", async () => {
+    canUseClone.mockResolvedValue(false);
+    aiGate.mockResolvedValue({ allowed: false });
+    loadMe.mockResolvedValue(null);
+    const res = await post({ messages: [msg("user", "hi")] });
+    expect(res.status).toBe(404);
+    expect((await res.json()).kind).toBe("forbidden");
+  });
+
+  it("checks access together with the profile and the limits, not after them", async () => {
+    const order: string[] = [];
+    let release: () => void = () => {};
+    const gateOpen = new Promise<void>((r) => (release = r));
+    canUseClone.mockImplementation(async () => (order.push("access"), true));
+    loadMe.mockImplementation(async () => (order.push("me"), { user: { id: "u1" }, profile: { display_name: "Mai" }, settings: { timezone: "Asia/Ho_Chi_Minh" } }));
+    aiGate.mockImplementation(async () => (order.push("gate"), await gateOpen, { allowed: true }));
+    const pending = post({ messages: [msg("user", "hi")] });
+    // all three were started before the slowest one finished
+    await vi.waitFor(() => expect([...order].sort()).toEqual(["access", "gate", "me"]));
+    release();
+    expect((await pending).status).toBe(200);
+  });
+
+  it("503 (not 404) when the access check itself fails, still without calling the model", async () => {
+    canUseClone.mockRejectedValue(new Error("clone_access read failed"));
+    const res = await post({ messages: [msg("user", "hi")] });
+    expect(res.status).toBe(503);
+    expect((await res.json()).kind).toBe("unknown");
+    expect(modelCalled()).toBe(false);
+    expect(recordUsage).not.toHaveBeenCalled();
+  });
+
+  it("answers an account that has access", async () => {
+    const res = await post({ messages: [msg("user", "hi")] });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("ừ nghe nè");
+    expect(modelCalled()).toBe(true);
   });
 });
 

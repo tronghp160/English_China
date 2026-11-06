@@ -254,6 +254,8 @@ export type AdminUserDetail = {
   ai: { today: number; last7: number };
   /** Only how many: what someone asked the tutor stays private. */
   chat: { threads: number; messages: number };
+  /** An admin switched "Tâm sự" on for this account (row in clone_access). Admins always have it, with or without a row. */
+  cloneAccess: boolean;
 };
 
 /** Everything /admin/users/[id] shows about one account, or null when it does not exist. */
@@ -262,7 +264,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
   const { data: auth } = await sb.auth.admin.getUserById(userId);
   const u = auth.user;
   if (!u) return null;
-  const [profile, settings, stats, cards, decks, subs, memberships, reviews, ai, threads, messages, adminRow, freezes] = await Promise.all([
+  const [profile, settings, stats, cards, decks, subs, memberships, reviews, ai, threads, messages, adminRow, freezes, cloneRow] = await Promise.all([
     sb.from("profiles").select("display_name, username, avatar_url").eq("id", userId).maybeSingle(),
     sb.from("user_settings").select("study_langs, daily_goal, daily_new_limit, timezone, onboarded").eq("user_id", userId).maybeSingle(),
     sb.from("daily_stats").select("day, reviews, correct, xp, words_added").eq("user_id", userId),
@@ -276,6 +278,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
     sb.from("chat_messages").select("id", { count: "exact", head: true }).eq("user_id", userId),
     sb.from("app_admins").select("user_id").eq("user_id", userId).maybeSingle(),
     sb.from("bin_freezes").select("day").eq("user_id", userId),
+    sb.from("clone_access").select("user_id").eq("user_id", userId).maybeSingle(),
   ]);
 
   const groupIds = (memberships.data ?? []).map((m) => m.group_id).filter((g): g is string => Boolean(g));
@@ -365,6 +368,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
     })),
     ai: { today: aiRows.find((r) => r.day === todayVn())?.requests ?? 0, last7: aiRows.reduce((n, r) => n + r.requests, 0) },
     chat: { threads: threads.count ?? 0, messages: messages.count ?? 0 },
+    cloneAccess: Boolean(cloneRow.data),
   };
 }
 

@@ -468,6 +468,26 @@ export type Database = {
           },
         ];
       };
+      clone_access: {
+        Row: {
+          granted_at: string;
+          granted_by: string | null;
+          user_id: string;
+        };
+        Insert: {
+          granted_at?: string;
+          granted_by?: string | null;
+          user_id: string;
+        };
+        Update: {
+          granted_at?: string;
+          granted_by?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+
+        ];
+      };
       daily_stats: {
         Row: {
           correct: number;

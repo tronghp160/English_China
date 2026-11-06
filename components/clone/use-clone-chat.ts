@@ -5,6 +5,7 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CHAT_MAX_CHARS } from "@/lib/ai/chat-prompt";
 import { clearLegacyCloneStorage, toRequestMessages, warmClone } from "@/lib/ai/clone/client";
+import { isCloneForbidden } from "@/lib/ai/clone/forbidden";
 
 export const hasText = (m: UIMessage) => m.parts.some((p) => p.type === "text" && p.text.trim());
 
@@ -15,6 +16,8 @@ export const hasText = (m: UIMessage) => m.parts.some((p) => p.type === "text" &
  * user id). Every request carries the latest messages as text (the server stores nothing too).
  *
  * - On mount it deletes what an earlier version left in localStorage ("sotu:clone:v1:*").
+ * - If an admin switches the access off in the middle of a chat, the next message gets a 404: `locked` turns true and
+ *   the page locks the box (nothing can be sent until the page is opened again).
  * - While there is at least one message from the user, the browser's own "leave this page?" prompt guards a reload
  *   or closing the tab. Moving to another page inside the app is not blocked (the page says so under the box).
  */
@@ -32,6 +35,7 @@ export function useCloneChat(userId: string) {
     throttle: 50, // at most one render per 50 ms while an answer streams
   });
   const busy = status === "submitted" || status === "streaming";
+  const locked = isCloneForbidden(error);
 
   // On mount: wake the route and delete the conversations an earlier version kept in this browser.
   useEffect(() => {
@@ -70,7 +74,7 @@ export function useCloneChat(userId: string) {
 
   const send = (text: string) => {
     const t = text.trim();
-    if (!t || busy || t.length > CHAT_MAX_CHARS) return false;
+    if (!t || busy || locked || t.length > CHAT_MAX_CHARS) return false;
     if (error) clearError();
     void sendMessage({ text: t });
     return true;
@@ -97,5 +101,5 @@ export function useCloneChat(userId: string) {
   // While the answer has no text yet, the bubble shows that the companion is writing.
   const waiting = busy && (last?.role === "user" || (last?.role === "assistant" && !hasText(last)));
 
-  return { messages, status, busy, waiting, error, send, retry, stop, reset };
+  return { messages, status, busy, waiting, error, locked, send, retry, stop, reset };
 }

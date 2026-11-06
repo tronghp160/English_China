@@ -19,6 +19,8 @@ export const AUDIT_LABELS: Record<string, string> = {
   view_chat: "Xem trò chuyện gia sư",
   export_user: "Xuất dữ liệu người dùng",
   save_note: "Lưu ghi chú",
+  clone_on: "Bật Tâm sự cho người dùng",
+  clone_off: "Tắt Tâm sự cho người dùng",
 };
 
 export const AUDIT_PER_PAGE = 50;

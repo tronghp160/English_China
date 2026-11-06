@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { admin, deleteUserByEmail, signUp, testEmail, userIdByEmail, watchErrors } from "./helpers";
+import { admin, deleteUserByEmail, grantClone, signUp, testEmail, userIdByEmail, watchErrors } from "./helpers";
 
 // REDESIGN_V3 §10.3: every main screen at five widths must not scroll sideways, clip its text or hide
 // a control that is too small to tap. One account with the sample decks (onboarding default) serves all routes.
@@ -43,6 +43,7 @@ test.beforeAll(async ({ browser }) => {
   page = await browser.newPage({ locale: "vi-VN", timezoneId: "Asia/Ho_Chi_Minh", reducedMotion: "reduce" });
   errors = watchErrors(page);
   await signUp(page, email, "Người Thử", { samples: true });
+  await grantClone(email); // /tam-su is a 404 for accounts an admin has not switched it on for
   const userId = await userIdByEmail(email);
   const { data } = await admin()
     .from("decks")

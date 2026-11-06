@@ -6,7 +6,7 @@ import { CopyPhone } from "@/components/contact/copy-phone";
 import { Pup } from "@/components/mascot/pup";
 import { IconTile } from "@/components/ui/icon-tile";
 import { CONTACT, formatPhone, zaloUrl } from "@/lib/contact";
-import { cloneConfig } from "@/lib/env";
+import { cloneAvailable } from "@/lib/clone/access";
 import { TONE_CLASSES, type Tone } from "@/lib/tone";
 import { cn } from "@/lib/utils";
 
@@ -28,9 +28,10 @@ const BUG_REPORT = [
   "Bạn dùng điện thoại hay máy tính, trình duyệt nào",
 ];
 
-export default function ContactPage() {
+export default async function ContactPage() {
   const phone = formatPhone(CONTACT.zaloPhone);
-  const cloneOn = cloneConfig() !== null;
+  // Public page: the line shows only to a signed-in account that may use "Tâm sự" (false for everybody else).
+  const cloneOn = await cloneAvailable();
   return (
     <div className="flex flex-col gap-8 py-4">
       <section className="relative overflow-hidden rounded-xl bg-primary p-6 text-on-primary shadow-hero sm:p-8">

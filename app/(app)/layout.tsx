@@ -12,6 +12,7 @@ import { ThemeSwitch } from "@/components/app-shell/theme-switch";
 import { TopBar } from "@/components/app-shell/top-bar";
 import { isAdmin } from "@/lib/admin";
 import { requireMe } from "@/lib/auth";
+import { cloneAvailable } from "@/lib/clone/access";
 import { getStudySummary } from "@/lib/data/study";
 import { aiProvider, cloneConfig } from "@/lib/env";
 import { cjkFontVariables } from "@/lib/fonts";
@@ -20,7 +21,8 @@ import { readPrefs } from "@/lib/validation";
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const me = await requireMe();
   if (!me.settings.onboarded) redirect("/welcome");
-  const [summary, admin] = await Promise.all([getStudySummary(), isAdmin()]);
+  // The access check runs beside the other reads (and shares the admin lookup), so it adds no wait.
+  const [summary, admin, cloneOn] = await Promise.all([getStudySummary(), isAdmin(), cloneAvailable()]);
   const dueCount = summary.langs.reduce((n, l) => n + l.due, 0);
 
   return (
@@ -32,7 +34,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         studyLangs: me.settings.study_langs,
         prefs: readPrefs(me.settings.prefs),
         dueCount,
-        cloneName: cloneConfig()?.name ?? null,
+        // Only for accounts allowed to use it (admins and those an admin switched it on for); null hides every entry point.
+        cloneName: cloneOn ? (cloneConfig()?.name ?? null) : null,
       }}
     >
       <PresenceBeacon />

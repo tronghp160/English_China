@@ -1,13 +1,13 @@
 import type { UIMessage } from "ai";
 import { describe, expect, it } from "vitest";
 import { MAX_BUBBLES, splitBubbles } from "@/lib/ai/clone/bubbles";
+import { CLONE_FORBIDDEN_KIND, CLONE_FORBIDDEN_MESSAGE, isCloneForbidden } from "@/lib/ai/clone/forbidden";
 import {
   CLONE_INTRO_KEY,
   CLONE_STARTERS,
   clearLegacyCloneStorage,
   greetingName,
   LEGACY_CLONE_STORAGE_PREFIX,
-  textMessages,
   toRequestMessages,
 } from "@/lib/ai/clone/client";
 
@@ -136,6 +136,30 @@ describe("greetingName", () => {
 
   it("drops punctuation stuck to the last word", () => {
     expect(greetingName("Anh Tuấn,")).toBe("Tuấn");
+  });
+});
+
+describe("isCloneForbidden", () => {
+  const bodyError = (body: unknown) => new Error(JSON.stringify(body));
+
+  it("recognizes the route's \"no access\" answer, which the SDK puts in the error message", () => {
+    expect(isCloneForbidden(bodyError({ error: CLONE_FORBIDDEN_MESSAGE, kind: CLONE_FORBIDDEN_KIND }))).toBe(true);
+  });
+
+  it("does not mistake any other failure for it", () => {
+    expect(isCloneForbidden(undefined)).toBe(false);
+    expect(isCloneForbidden(null)).toBe(false);
+    expect(isCloneForbidden(new Error(""))).toBe(false);
+    expect(isCloneForbidden(new Error("Failed to fetch"))).toBe(false); // a network error
+    expect(isCloneForbidden(new Error("not json {"))).toBe(false);
+    expect(isCloneForbidden(bodyError({ error: "Tính năng chưa bật.", kind: "other" }))).toBe(false); // another 404
+    expect(isCloneForbidden(bodyError({ error: "Bạn gửi nhanh quá.", kind: "rate" }))).toBe(false);
+    expect(isCloneForbidden(bodyError(null))).toBe(false);
+    expect(isCloneForbidden(bodyError("forbidden"))).toBe(false);
+  });
+
+  it("says the text the page shows", () => {
+    expect(CLONE_FORBIDDEN_MESSAGE).toBe("Tính năng này hiện chưa mở cho bạn.");
   });
 });
 

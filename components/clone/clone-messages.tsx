@@ -140,6 +140,7 @@ export function CloneMessages({
   busy,
   waiting,
   error,
+  locked = false,
   onRetry,
   name,
   tutorName,
@@ -148,6 +149,8 @@ export function CloneMessages({
   busy: boolean;
   waiting: boolean;
   error?: Error;
+  /** The account has no access (any more): the message says so and there is nothing to retry. */
+  locked?: boolean;
   onRetry: () => void;
   name: string;
   tutorName: string;
@@ -182,10 +185,12 @@ export function CloneMessages({
       {error && (
         <div role="alert" className="mt-4 flex flex-wrap items-center gap-3 rounded-md border-l-[3px] border-danger bg-danger-soft px-4 py-3 text-sm text-danger-fg">
           <span className="min-w-0 flex-1">{errorText(error)}</span>
-          <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-            <RotateCcw aria-hidden />
-            Thử lại
-          </Button>
+          {!locked && (
+            <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+              <RotateCcw aria-hidden />
+              Thử lại
+            </Button>
+          )}
         </div>
       )}
     </div>

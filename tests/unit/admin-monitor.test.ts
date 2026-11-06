@@ -134,6 +134,13 @@ describe("filterAndSortUsers", () => {
     expect(filterAndSortUsers(users, { status: "unstudied" })).toHaveLength(1);
   });
 
+  it("filters the accounts an admin switched Tâm sự on for", () => {
+    const withClone = users.map((u) => (u.id === "u2" ? { ...u, cloneAccess: true } : u));
+    expect(filterAndSortUsers(withClone, { status: "clone" }).map((u) => u.id)).toEqual(["u2"]);
+    // rows without the flag count as off
+    expect(filterAndSortUsers(users, { status: "clone" })).toEqual([]);
+  });
+
   it("sorts by level descending", () => {
     const res = filterAndSortUsers(users, { sort: "level" });
     expect(res[0].id).toBe("u1"); // 500 XP

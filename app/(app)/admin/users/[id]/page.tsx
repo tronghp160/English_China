@@ -19,6 +19,7 @@ import { notFound } from "next/navigation";
 import { AdminAction } from "@/components/admin/admin-actions";
 import { AdminChatViewer } from "@/components/admin/admin-chat-viewer";
 import { AdminWordTable } from "@/components/admin/admin-word-table";
+import { CloneAccessSwitch } from "@/components/admin/clone-access-switch";
 import { DeviceChip } from "@/components/admin/device-chip";
 import { LoginHistory } from "@/components/admin/login-history";
 import { OnlineDot } from "@/components/admin/online-dot";
@@ -37,6 +38,7 @@ import { SegmentedNav } from "@/components/ui/segmented";
 import { deleteUserAccount, setUserBanned } from "@/lib/actions/admin";
 import { ago, dateTime } from "@/lib/admin-format";
 import { requireAdmin } from "@/lib/admin";
+import { CONTACT } from "@/lib/contact";
 import { getUserNote, logAdminAction } from "@/lib/data/admin-audit";
 import {
   getAdminUserDetail,
@@ -55,6 +57,7 @@ import {
   type PresenceRow,
 } from "@/lib/data/admin-monitor";
 import type { FlaggedLoginEvent, PlaceSummary } from "@/lib/admin-monitor-utils";
+import { cloneConfig } from "@/lib/env";
 import type { PracticeMode } from "@/lib/lang/registry";
 import { MODE_INFO } from "@/lib/practice/questions";
 import { describePath, presenceStatus } from "@/lib/presence";
@@ -259,6 +262,7 @@ export default async function AdminUserPage({
             presence={presence}
             placesCount={loginHistory.places.length}
             note={note}
+            clone={{ name: cloneConfig()?.name ?? CONTACT.nickname, configured: cloneConfig() !== null }}
           />
         )}
         {tab === "pet" && <PetPanel pet={pet} />}
@@ -278,11 +282,14 @@ function OverviewTab({
   presence,
   placesCount,
   note,
+  clone,
 }: {
   u: NonNullable<Awaited<ReturnType<typeof getAdminUserDetail>>>;
   presence?: PresenceRow;
   placesCount: number;
   note: string | null;
+  /** The companion's name, and whether the server has a profile for it (CLONE_PROFILE). */
+  clone: { name: string; configured: boolean };
 }) {
   const s = u.study;
   const accuracy = s.reviews ? Math.round((s.correct / s.reviews) * 100) : 0;
@@ -302,6 +309,19 @@ function OverviewTab({
         <Figure icon={Bot} tone="orange" value={`${u.ai.today} / ${u.ai.last7}`} label="Lượt AI hôm nay / 7 ngày" />
         <Figure icon={MessageCircle} tone="pink" value={String(u.chat.threads)} label={`Cuộc trò chuyện gia sư · ${u.chat.messages} tin`} />
       </div>
+
+      <Section title="Tâm sự">
+        <CloneAccessSwitch userId={u.id} name={clone.name} enabled={u.cloneAccess} isAdmin={u.admin} />
+        <p className="mt-1 text-sm text-fg-muted">
+          Mặc định không ai thấy, chỉ quản trị viên. Bật ở đây thì người này thấy mục Tâm sự và nhắn được; tắt thì mục biến mất
+          và /tam-su là trang 404. Cuộc trò chuyện không được lưu ở đâu cả, nên quản trị viên cũng không đọc được.
+        </p>
+        {!clone.configured && (
+          <p className="mt-2 text-sm text-fg-muted">
+            Tính năng đang tắt trên máy chủ (chưa có hồ sơ CLONE_PROFILE), nên bật ở đây chưa có tác dụng cho tới khi bật nó.
+          </p>
+        )}
+      </Section>
 
       <Section title="Lượt ôn 30 ngày qua">
         <div role="img" aria-label={`Lượt ôn mỗi ngày trong 30 ngày, nhiều nhất ${maxDay}`} className="flex h-28 items-end gap-[3px]">

@@ -75,6 +75,7 @@ export const ChatComposer = forwardRef<
           ref={ref}
           name={name}
           value={value}
+          disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
           onFocus={onWarm}
           onKeyDown={(e) => {
@@ -87,7 +88,7 @@ export const ChatComposer = forwardRef<
           maxLength={CHAT_MAX_CHARS}
           placeholder={placeholder ?? "Hỏi gia sư bất cứ điều gì…"}
           className={cn(
-            "field-sizing-content flex-1 resize-none bg-transparent outline-none placeholder:text-fg-subtle",
+            "field-sizing-content flex-1 resize-none bg-transparent outline-none placeholder:text-fg-subtle disabled:cursor-not-allowed disabled:opacity-60",
             isPanel
               ? "max-h-32 min-h-10 px-2.5 py-2 text-[0.9375rem] text-fg"
               : "max-h-40 min-h-11 px-3 py-2.5 text-base text-fg",

@@ -74,6 +74,8 @@ export type AdminUserMonitoring = {
   admin: boolean;
   isBanned: boolean;
   isAdmin: boolean;
+  /** "Tâm sự" switched on by an admin (row in clone_access). */
+  cloneAccess: boolean;
   envAdmin: boolean;
   decks: number;
   lastSeenAt: string | null;
@@ -420,18 +422,20 @@ export async function listUsersForAdmin({
   totalPages: number;
 }> {
   const sb = createAdminClient();
-  const [authUsers, { data: profiles }, { data: decks }, { data: admins }, presenceMap, rollupMap] =
+  const [authUsers, { data: profiles }, { data: decks }, { data: admins }, { data: cloneRows }, presenceMap, rollupMap] =
     await Promise.all([
       allAuthUsers(),
       sb.from("profiles").select("id, username, display_name"),
       sb.from("decks").select("owner_id"),
       sb.from("app_admins").select("user_id"),
+      sb.from("clone_access").select("user_id"),
       getPresenceMap(),
       getRollupMap(),
     ]);
 
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
   const adminSet = new Set((admins ?? []).map((a) => a.user_id));
+  const cloneSet = new Set((cloneRows ?? []).map((r) => r.user_id));
   const deckCounts = new Map<string, number>();
   for (const d of decks ?? []) {
     deckCounts.set(d.owner_id, (deckCounts.get(d.owner_id) ?? 0) + 1);
@@ -468,6 +472,7 @@ export async function listUsersForAdmin({
       lastSignInAt: u.last_sign_in_at ?? null,
       isBanned,
       isAdmin: isAdminUser,
+      cloneAccess: cloneSet.has(u.id),
       envAdmin: isEnvAdmin,
       decks: deckCounts.get(u.id) ?? 0,
       lastSeenAt: presence?.last_seen_at ?? null,
@@ -504,6 +509,7 @@ export async function listUsersForAdmin({
       admin: u.isAdmin,
       isBanned: u.isBanned,
       isAdmin: u.isAdmin,
+      cloneAccess: u.cloneAccess,
       envAdmin: u.envAdmin,
       decks: u.decks,
       lastSeenAt: u.lastSeenAt,

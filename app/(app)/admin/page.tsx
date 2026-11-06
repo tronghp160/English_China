@@ -416,6 +416,7 @@ async function UsersTab({
             <option value="unstudied">Chưa học bài nào</option>
             <option value="banned">Bị khóa</option>
             <option value="admin">Quản trị</option>
+            <option value="clone">Đã bật Tâm sự</option>
           </select>
         </div>
         <div className="w-full sm:w-44">
@@ -467,6 +468,11 @@ async function UsersTab({
                   {u.banned && (
                     <Badge variant="soft" tone="red">
                       Đã khóa
+                    </Badge>
+                  )}
+                  {u.cloneAccess && !u.admin && (
+                    <Badge variant="soft" tone="pink">
+                      Tâm sự
                     </Badge>
                   )}
                 </div>

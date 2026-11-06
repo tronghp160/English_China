@@ -41,6 +41,14 @@ export async function signUp(page: Page, email: string, displayName = "Người 
   return { username };
 }
 
+/** Switches "Tâm sự" on for an account, like the admin switch does (a row in clone_access; off for everybody by default). */
+export async function grantClone(email: string) {
+  const id = await userIdByEmail(email);
+  if (!id) throw new Error(`no account for ${email}`);
+  const { error } = await admin().from("clone_access").upsert({ user_id: id }, { onConflict: "user_id" });
+  if (error) throw error;
+}
+
 export async function userIdByEmail(email: string) {
   const { data } = await admin().auth.admin.listUsers({ perPage: 200 });
   return data?.users.find((u) => u.email === email)?.id ?? null;

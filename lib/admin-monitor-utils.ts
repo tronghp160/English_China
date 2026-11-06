@@ -133,6 +133,8 @@ export type UserFilterRow = {
   createdAt: string;
   isBanned: boolean;
   isAdmin: boolean;
+  /** An admin switched "Tâm sự" on for this account (row in clone_access). */
+  cloneAccess?: boolean;
   lastSeenAt?: string | null;
   status: "online" | "away" | "offline" | "never";
   totalXp: number;
@@ -185,6 +187,8 @@ export function filterAndSortUsers<T extends UserFilterRow>(
           return u.isBanned;
         case "admin":
           return u.isAdmin;
+        case "clone":
+          return Boolean(u.cloneAccess);
         case "unstudied":
           return u.activeDays === 0;
         case "inactive7": {
