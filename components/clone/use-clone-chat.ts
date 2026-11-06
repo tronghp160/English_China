@@ -2,20 +2,23 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CHAT_MAX_CHARS } from "@/lib/ai/chat-prompt";
-import { cloneStorageKey, parseStored, serializeMessages, toRequestMessages, warmClone } from "@/lib/ai/clone/client";
+import { clearLegacyCloneStorage, toRequestMessages, warmClone } from "@/lib/ai/clone/client";
 
 export const hasText = (m: UIMessage) => m.parts.some((p) => p.type === "text" && p.text.trim());
 
 /**
- * Chat with "<name> (bản AI)". The conversation lives only in this browser: it is read from localStorage after the
- * page mounted (so it never differs from the server render), written after each turn, and every request carries the
- * latest messages as text (the server stores nothing). Storage that fails (private mode, full, blocked) just means
- * the conversation is not remembered; chatting still works.
+ * Chat with "<name> (bản AI)". PRIVACY: the conversation exists only in React state while the page is open. It is
+ * written nowhere: not localStorage, sessionStorage, IndexedDB, a cookie or the server. It is gone when the page is
+ * left, reloaded or closed, when "Cuộc trò chuyện mới" is pressed, and when the account changes (the chat is keyed by the
+ * user id). Every request carries the latest messages as text (the server stores nothing too).
+ *
+ * - On mount it deletes what an earlier version left in localStorage ("sotu:clone:v1:*").
+ * - While there is at least one message from the user, the browser's own "leave this page?" prompt guards a reload
+ *   or closing the tab. Moving to another page inside the app is not blocked (the page says so under the box).
  */
 export function useCloneChat(userId: string) {
-  const key = cloneStorageKey(userId);
   const [transport] = useState(
     () =>
       new DefaultChatTransport<UIMessage>({
@@ -28,37 +31,42 @@ export function useCloneChat(userId: string) {
     transport,
     throttle: 50, // at most one render per 50 ms while an answer streams
   });
-  const [restored, setRestored] = useState(false);
   const busy = status === "submitted" || status === "streaming";
 
-  // Wake the route and read the saved conversation, once, after mounting. Done on the next tick and cancelled by the
-  // cleanup, so StrictMode's second run of this effect restores only once.
+  // On mount: wake the route and delete the conversations an earlier version kept in this browser.
   useEffect(() => {
     warmClone();
-    const timer = setTimeout(() => {
-      try {
-        const saved = parseStored(window.localStorage.getItem(key));
-        if (saved.length) setMessages(saved);
-      } catch {
-        // storage blocked: start empty
-      }
-      setRestored(true);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [key, setMessages]);
-
-  // Save when a message is sent (status "submitted") and when a turn ends, not on every streamed chunk.
-  // Nothing is written before the saved conversation was read back, so it cannot be wiped by the empty start.
-  useEffect(() => {
-    if (!restored || status === "streaming") return;
     try {
-      const raw = serializeMessages(messages);
-      if (raw === "[]") window.localStorage.removeItem(key);
-      else window.localStorage.setItem(key, raw);
+      clearLegacyCloneStorage(window.localStorage);
     } catch {
-      // full or blocked: the conversation is just not remembered
+      // storage blocked: nothing was kept there
     }
-  }, [messages, status, restored, key]);
+  }, []);
+
+  // Leaving the page: stop an answer that is still coming and drop the messages (the latest functions, read at unmount).
+  const latest = useRef({ stop: stopChat, setMessages });
+  useEffect(() => {
+    latest.current = { stop: stopChat, setMessages };
+  });
+  useEffect(
+    () => () => {
+      void latest.current.stop();
+      latest.current.setMessages([]);
+    },
+    [],
+  );
+
+  // A reload or closing the tab loses the conversation: ask first, but only when there is something to lose.
+  const hasUserMessage = messages.some((m) => m.role === "user");
+  useEffect(() => {
+    if (!hasUserMessage) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = ""; // the browser shows its own wording; some need this set
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [hasUserMessage]);
 
   const send = (text: string) => {
     const t = text.trim();
@@ -78,21 +86,16 @@ export function useCloneChat(userId: string) {
     void stopChat();
   };
 
-  /** Forgets the conversation: here and in this browser's storage. */
+  /** Forgets the conversation at once: stops an answer in progress and empties the screen. */
   const reset = () => {
     void stopChat();
     setMessages([]);
     if (error) clearError();
-    try {
-      window.localStorage.removeItem(key);
-    } catch {
-      // nothing to remove
-    }
   };
 
   const last = messages.at(-1);
   // While the answer has no text yet, the bubble shows that the companion is writing.
   const waiting = busy && (last?.role === "user" || (last?.role === "assistant" && !hasText(last)));
 
-  return { messages, status, busy, waiting, error, restored, send, retry, stop, reset };
+  return { messages, status, busy, waiting, error, send, retry, stop, reset };
 }

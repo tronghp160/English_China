@@ -15,7 +15,7 @@ export function TutorCloneCard({ name }: { name: string }) {
         </h2>
       </div>
       <p className="text-sm leading-snug font-medium">
-        Muốn nói chuyện thay vì hỏi bài? Bản AI này nói theo những gì {name} tự kể về mình. Cuộc trò chuyện chỉ lưu trên máy bạn.
+        Muốn nói chuyện thay vì hỏi bài? Bản AI này nói theo những gì {name} tự kể về mình. Cuộc trò chuyện không được lưu ở đâu cả: rời trang là xóa.
       </p>
       <Button asChild variant="outline" size="sm">
         <Link href="/tam-su">Mở trò chuyện</Link>

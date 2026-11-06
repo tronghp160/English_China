@@ -1,17 +1,31 @@
 import type { UIMessage } from "ai";
-import { z } from "zod";
 import { CLONE_MAX_MESSAGES } from "@/lib/ai/clone/history";
 
 /**
- * Browser side of the "bản AI" chat. The conversation exists only here (localStorage of the person chatting);
- * the server stores nothing and each request carries the latest messages. No server-only imports.
+ * Browser side of the "bản AI" chat. PRIVACY: nothing of the conversation is stored anywhere: it lives in React state
+ * while the page is open (use-clone-chat.ts) and each request carries the latest messages. The only thing kept in the
+ * browser is the flag that the first-visit card was closed, which holds no chat content. No server-only imports.
  */
 
-/** Messages kept in localStorage. */
-export const CLONE_STORED_MAX = 100;
-
-export const cloneStorageKey = (userId: string) => `sotu:clone:v1:${userId}`;
+/** The flag "the first-visit card was closed". Holds no chat content. */
 export const CLONE_INTRO_KEY = "sotu:clone:intro:v1";
+
+/** Keys an earlier version used to keep conversations in localStorage (one per user): deleted when the page opens. */
+export const LEGACY_CLONE_STORAGE_PREFIX = "sotu:clone:v1:";
+
+/**
+ * Deletes every leftover conversation of the earlier version from a Storage ("sotu:clone:v1:*"), and nothing else:
+ * the intro flag and every other key stay. Returns how many keys it removed.
+ */
+export function clearLegacyCloneStorage(storage: Pick<Storage, "length" | "key" | "removeItem">): number {
+  const stale: string[] = [];
+  for (let i = 0; i < storage.length; i++) {
+    const key = storage.key(i);
+    if (key?.startsWith(LEGACY_CLONE_STORAGE_PREFIX)) stale.push(key);
+  }
+  for (const key of stale) storage.removeItem(key);
+  return stale.length;
+}
 
 const textOf = (m: UIMessage) =>
   m.parts
@@ -32,39 +46,21 @@ export function toRequestMessages(messages: UIMessage[]) {
     .map((m) => ({ id: m.id, role: m.role, parts: [{ type: "text" as const, text: m.text }] }));
 }
 
-const storedSchema = z.array(
-  z.object({
-    id: z.string().min(1).max(64),
-    role: z.enum(["user", "assistant"]),
-    text: z.string().min(1).max(8000),
-  }),
-);
-export type StoredMessage = z.infer<typeof storedSchema>[number];
-
-/** Pure. What goes into localStorage: the latest CLONE_STORED_MAX messages that have text. */
-export function serializeMessages(messages: UIMessage[]): string {
-  return JSON.stringify(textMessages(messages).slice(-CLONE_STORED_MAX));
-}
-
-/** Pure. Reads localStorage back; anything unreadable or not shaped like a conversation gives an empty one. */
-export function parseStored(raw: string | null): UIMessage[] {
-  if (!raw) return [];
-  try {
-    const parsed = storedSchema.safeParse(JSON.parse(raw));
-    if (!parsed.success) return [];
-    return parsed.data.slice(-CLONE_STORED_MAX).map((m) => ({ id: m.id, role: m.role, parts: [{ type: "text" as const, text: m.text }] }));
-  } catch {
-    return [];
-  }
-}
-
 /**
- * Pure. The name to greet a person by: the last word of their display name, which is the given name in Vietnamese
- * order ("Nguyễn Văn Minh" → "Minh"); a one-word name stays as it is; nothing usable gives "bạn".
+ * Pure. The name to greet a person by: the last word of their display name, which is the given name in Vietnamese order
+ * ("Nguyễn Văn Minh" → "Minh"); a one-word name stays as it is. A display name that looks like a username or an email
+ * (the word has a digit, "@", "_" or ".") is not a name: null, and the greeting says only "Hello nha".
  */
-export function shortName(displayName: string): string {
-  const words = displayName.replace(/[<>]/g, "").trim().split(/\s+/).filter(Boolean);
-  return (words.at(-1) ?? "bạn").slice(0, 30);
+export function greetingName(displayName: string): string | null {
+  const word = displayName
+    .replace(/[<>]/g, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .at(-1)
+    ?.replace(/[,;:!?]+$/u, "");
+  if (!word || word.length > 30 || /[\d@_.]/.test(word)) return null;
+  return word;
 }
 
 let lastWarm = 0;

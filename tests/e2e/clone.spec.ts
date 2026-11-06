@@ -47,7 +47,7 @@ async function mockClone(page: Page, reply: (body: Body) => string) {
   return sent;
 }
 
-test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng, lưu trên máy, xóa khi bắt đầu lại", async ({ page }) => {
+test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng, không lưu ở đâu cả", async ({ page }) => {
   const errors = watchErrors(page);
   await signUp(page, freshEmail());
   const sent = await mockClone(page, () => "ừ nghe nè\n\nkể tui nghe đi, nay có chuyện gì");
@@ -56,20 +56,26 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
     if (/\/rest\/v1\/|\/api\/chat/.test(r.url()) && r.method() !== "GET") apiCalls.push(`${r.method()} ${r.url()}`);
   });
 
+  // An earlier version kept conversations in localStorage: opening the page deletes them.
+  await page.evaluate(() => localStorage.setItem("sotu:clone:v1:old-user", '[{"id":"1","role":"user","text":"tin cũ"}]'));
   await page.goto("/tam-su");
   await expect(page.getByRole("heading", { level: 1, name: "Nam (bản AI)" })).toBeVisible();
   await expect(page).toHaveTitle(/Tâm sự với Nam/);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("sotu:clone:v1:old-user"))).toBeNull();
 
-  // The first-visit card says it is an AI, where the chat is kept and who answers.
+  // The first-visit card says it is an AI, that nothing is kept, and who answers.
   const intro = page.getByRole("region", { name: "Trước khi nhắn" });
   await expect(intro).toBeVisible();
   await expect(intro).toContainText("Đây là bản AI của Nam");
-  await expect(intro).toContainText("chỉ lưu trên trình duyệt này");
+  await expect(intro).toContainText("Cuộc trò chuyện không được lưu ở đâu cả");
+  await expect(intro).toContainText("rời trang, tải lại hoặc bấm “Cuộc trò chuyện mới” là xóa hết");
   await expect(intro).toContainText("quản trị viên không đọc được");
   await expect(intro).toContainText("gửi tới dịch vụ AI");
+  // …and so does the line under the box.
+  await expect(page.getByText("Cuộc trò chuyện tự xóa khi bạn rời trang hoặc bắt đầu cuộc mới. Không ai đọc được, kể cả Nam.")).toBeVisible();
 
-  // The empty chat greets (no API call) and offers suggestions.
-  await expect(page.getByText(/tui là bản AI của Nam/)).toBeVisible();
+  // The empty chat greets in the owner's voice (the display name is "Người Thử": greeted by the last word) and offers suggestions.
+  await expect(page.getByText("Hello Thử nha, tui là bản AI của Nam á. Muốn tâm sự hay hỏi gì cứ nhắn tui nha")).toBeVisible();
   await page.getByRole("button", { name: "Kể tui nghe một chuyện vui đi" }).click();
 
   const list = page.getByRole("list", { name: "Tin nhắn", exact: true });
@@ -79,33 +85,87 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
     const answer = list.getByRole("listitem").filter({ hasText: "Nam (bản AI)" });
     await expect(answer.getByText("ừ nghe nè", { exact: true })).toBeVisible();
     await expect(answer.getByText("kể tui nghe đi, nay có chuyện gì")).toBeVisible();
-    const bubbles = answer.locator("[data-check-overflow]");
-    await expect(bubbles).toHaveCount(2);
+    await expect(answer.locator("[data-check-overflow]")).toHaveCount(2);
     expect(sent).toHaveLength(1);
     expect(sent[0].messages.at(-1)).toMatchObject({ role: "user", parts: [{ type: "text", text: "Kể tui nghe một chuyện vui đi" }] });
   } else {
     await expect(list.locator("li", { hasText: "Nam (bản AI)" }).first()).toBeVisible({ timeout: 45_000 });
   }
 
-  // Close the card; it stays closed after a reload, and the conversation is still there (kept in this browser).
+  // Nothing of the conversation is stored: no key of the old kind, no message text in any storage or cookie.
+  const stored = await page.evaluate(() => {
+    const all = (s: Storage) => Object.keys(s).map((k) => `${k}=${s.getItem(k)}`);
+    return { entries: [...all(localStorage), ...all(sessionStorage), document.cookie], keys: Object.keys(localStorage) };
+  });
+  expect(stored.keys.filter((k) => k.startsWith("sotu:clone:v1:"))).toEqual([]);
+  expect(stored.entries.join("\n")).not.toContain("Kể tui nghe một chuyện vui đi");
+  expect(stored.entries.join("\n")).not.toContain("ừ nghe nè");
+
+  // Closing the card is the one thing remembered (it holds no chat content).
   await intro.getByRole("button", { name: "Đóng phần giải thích" }).click();
   await expect(intro).toBeHidden();
-  await page.reload();
-  await expect(page.getByRole("heading", { level: 1, name: "Nam (bản AI)" })).toBeVisible();
-  await expect(page.getByRole("list", { name: "Tin nhắn", exact: true }).getByText("Kể tui nghe một chuyện vui đi")).toBeVisible();
-  await expect(page.getByRole("region", { name: "Trước khi nhắn" })).toBeHidden();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("sotu:clone:intro:v1"))).toBe("1");
 
-  // Starting again asks first, then clears the screen and the browser's copy.
-  await page.getByRole("button", { name: "Cuộc trò chuyện mới" }).click();
-  await expect(page.getByRole("alertdialog")).toContainText("Máy chủ không giữ bản nào");
-  await page.getByRole("button", { name: "Xóa và bắt đầu lại" }).click();
-  await expect(page.getByText(/tui là bản AI của Nam/)).toBeVisible();
-  await page.reload();
-  await expect(page.getByText(/tui là bản AI của Nam/)).toBeVisible();
+  // With a message of the user on the screen, a reload asks first (the browser's own box); accepting loses the chat.
+  const asked = page.waitForEvent("dialog");
+  const reloaded = page.reload();
+  const dialog = await asked;
+  expect(dialog.type()).toBe("beforeunload");
+  await dialog.accept();
+  await reloaded;
+  await expect(page.getByText(/tui là bản AI của Nam á/)).toBeVisible();
   await expect(page.getByRole("list", { name: "Tin nhắn", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Trước khi nhắn" })).toBeHidden(); // the card stays closed
+
+  // "Cuộc trò chuyện mới" clears at once: no confirmation box; and an empty chat does not ask before a reload.
+  await page.getByRole("button", { name: "Kể tui nghe một chuyện vui đi" }).click();
+  await expect(list.getByText("Kể tui nghe một chuyện vui đi")).toBeVisible();
+  await page.getByRole("button", { name: "Cuộc trò chuyện mới" }).click();
+  await expect(page.getByRole("alertdialog")).toHaveCount(0);
+  await expect(page.getByText(/tui là bản AI của Nam á/)).toBeVisible();
+  await expect(page.getByRole("list", { name: "Tin nhắn", exact: true })).toHaveCount(0);
+  let askedWhenEmpty = false;
+  page.on("dialog", (d) => {
+    askedWhenEmpty = true;
+    void d.accept();
+  });
+  await page.reload();
+  await expect(page.getByText(/tui là bản AI của Nam á/)).toBeVisible();
+  expect(askedWhenEmpty).toBe(false);
 
   // Nothing was written to the database or the tutor's API from this page.
   expect(apiCalls).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test("bản AI: rời trang trong app là mất cuộc trò chuyện, không bị chặn", async ({ page }) => {
+  test.skip(process.env.E2E_REAL_AI === "1", "needs a scripted answer");
+  const errors = watchErrors(page);
+  await signUp(page, freshEmail());
+  await mockClone(page, () => "ừ nghe nè");
+  let asked = false;
+  page.on("dialog", (d) => {
+    asked = true;
+    void d.dismiss();
+  });
+
+  await page.goto("/tam-su");
+  await page.getByLabel("Tin nhắn cho Nam (bản AI)").fill("tin này sẽ mất");
+  await page.getByRole("button", { name: "Gửi" }).click();
+  await expect(page.getByRole("list", { name: "Tin nhắn", exact: true }).getByText("tin này sẽ mất")).toBeVisible();
+
+  // Moving to another page inside the app is not blocked.
+  await page.getByRole("link", { name: "Hôm nay" }).first().click();
+  await expect(page).toHaveURL(/\/today/);
+  expect(asked).toBe(false);
+
+  // Coming back starts empty.
+  await page.getByRole("button", { name: "Tài khoản và cài đặt" }).click();
+  await page.getByRole("menuitem", { name: "Tâm sự với Nam (bản AI)" }).click();
+  await expect(page).toHaveURL(/\/tam-su$/);
+  await expect(page.getByText(/tui là bản AI của Nam á/)).toBeVisible();
+  await expect(page.getByText("tin này sẽ mất")).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Tin nhắn", exact: true })).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 

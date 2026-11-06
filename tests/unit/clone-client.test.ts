@@ -1,7 +1,15 @@
 import type { UIMessage } from "ai";
 import { describe, expect, it } from "vitest";
 import { MAX_BUBBLES, splitBubbles } from "@/lib/ai/clone/bubbles";
-import { CLONE_STARTERS, CLONE_STORED_MAX, cloneStorageKey, parseStored, serializeMessages, shortName, textMessages, toRequestMessages } from "@/lib/ai/clone/client";
+import {
+  CLONE_INTRO_KEY,
+  CLONE_STARTERS,
+  clearLegacyCloneStorage,
+  greetingName,
+  LEGACY_CLONE_STORAGE_PREFIX,
+  textMessages,
+  toRequestMessages,
+} from "@/lib/ai/clone/client";
 
 const ui = (id: string, role: "user" | "assistant", ...texts: string[]): UIMessage => ({
   id,
@@ -63,56 +71,71 @@ describe("request messages", () => {
   });
 });
 
-describe("localStorage round trip", () => {
-  it("keys the conversation by user", () => {
-    expect(cloneStorageKey("u-1")).toBe("sotu:clone:v1:u-1");
-    expect(cloneStorageKey("u-1")).not.toBe(cloneStorageKey("u-2"));
+
+describe("legacy storage cleanup", () => {
+  /** A minimal Storage with the three members the helper uses. */
+  const fakeStorage = (entries: Record<string, string>) => {
+    const data = new Map(Object.entries(entries));
+    return {
+      get length() {
+        return data.size;
+      },
+      key: (i: number) => [...data.keys()][i] ?? null,
+      removeItem: (k: string) => void data.delete(k),
+      keys: () => [...data.keys()],
+    };
+  };
+
+  it("deletes every conversation an earlier version kept and nothing else", () => {
+    const s = fakeStorage({
+      "sotu:clone:v1:user-a": "[]",
+      "sotu:clone:v1:user-b": '[{"id":"1"}]',
+      "sotu:clone:intro:v1": "1", // the closed-card flag has no chat content: it stays
+      "sotu-theme": "dark",
+      "sotu:lookup:v2": "{}",
+      "other:sotu:clone:v1:x": "y", // only keys that START with the prefix
+    });
+    expect(clearLegacyCloneStorage(s)).toBe(2);
+    expect(s.keys()).toEqual(["sotu:clone:intro:v1", "sotu-theme", "sotu:lookup:v2", "other:sotu:clone:v1:x"]);
   });
 
-  it("stores text only and reads it back as chat messages", () => {
-    const messages = [ui("1", "user", "chào"), ui("2", "assistant", "ừ", "nghe nè"), ui("3", "assistant", "")];
-    const raw = serializeMessages(messages);
-    expect(JSON.parse(raw)).toEqual([
-      { id: "1", role: "user", text: "chào" },
-      { id: "2", role: "assistant", text: "ừ\nnghe nè" },
-    ]);
-    expect(parseStored(raw)).toEqual([ui("1", "user", "chào"), ui("2", "assistant", "ừ\nnghe nè")]);
-    expect(textMessages(messages)).toHaveLength(2);
+  it("is harmless on an empty storage and when run twice", () => {
+    expect(clearLegacyCloneStorage(fakeStorage({}))).toBe(0);
+    const s = fakeStorage({ "sotu:clone:v1:u": "x" });
+    expect(clearLegacyCloneStorage(s)).toBe(1);
+    expect(clearLegacyCloneStorage(s)).toBe(0);
   });
 
-  it("keeps the latest 100", () => {
-    const many = Array.from({ length: 130 }, (_, i) => ui(`m${i}`, i % 2 ? "assistant" : "user", `tin ${i}`));
-    const stored = JSON.parse(serializeMessages(many)) as { id: string }[];
-    expect(stored).toHaveLength(CLONE_STORED_MAX);
-    expect(stored[0].id).toBe("m30");
-    expect(parseStored(JSON.stringify(stored.concat(stored)))).toHaveLength(CLONE_STORED_MAX); // an oversized store is trimmed on read
-  });
-
-  it("ignores anything unreadable", () => {
-    for (const raw of [null, "", "not json", "{}", '{"a":1}', '[{"id":1}]', '[{"id":"a","role":"system","text":"x"}]', '[{"id":"a","role":"user","text":""}]', "null"]) {
-      expect(parseStored(raw), String(raw)).toEqual([]);
-    }
+  it("keeps the two key names apart", () => {
+    expect(CLONE_INTRO_KEY.startsWith(LEGACY_CLONE_STORAGE_PREFIX)).toBe(false);
   });
 });
 
-describe("shortName", () => {
+describe("greetingName", () => {
   it("greets by the last word of the name, the given name in Vietnamese order", () => {
-    expect(shortName("Nguyễn Văn Minh")).toBe("Minh");
-    expect(shortName("Lan Chi")).toBe("Chi");
-    expect(shortName("  Phạm   Thu Hà ")).toBe("Hà");
+    expect(greetingName("Nguyễn Văn Minh")).toBe("Minh");
+    expect(greetingName("Lan Chi")).toBe("Chi");
+    expect(greetingName("  Phạm   Thu Hà ")).toBe("Hà");
   });
 
-  it("keeps a one-word name as it is, whatever it looks like", () => {
-    expect(shortName("Hà")).toBe("Hà");
-    expect(shortName("user123")).toBe("user123");
+  it("keeps a one-word name as it is", () => {
+    expect(greetingName("Hà")).toBe("Hà");
+    expect(greetingName("Xễu")).toBe("Xễu");
   });
 
-  it("falls back to bạn, and cannot carry angle brackets or a very long word", () => {
-    expect(shortName("")).toBe("bạn");
-    expect(shortName("   ")).toBe("bạn");
-    expect(shortName("<>")).toBe("bạn");
-    expect(shortName("An <b>Bình</b>")).not.toMatch(/[<>]/);
-    expect(shortName("x".repeat(80))).toHaveLength(30);
+  it("says no name when the display name looks like a username or an email", () => {
+    for (const looksLikeAccount of ["tronghp160", "user123", "ban_dem", "minh.anh", "someone@example.com", "Nguyễn Văn Minh2", "a1"]) {
+      expect(greetingName(looksLikeAccount), looksLikeAccount).toBeNull();
+    }
+  });
+
+  it("says no name for nothing usable, a very long word or markup only", () => {
+    for (const nothing of ["", "   ", "<>", "x".repeat(80)]) expect(greetingName(nothing), nothing).toBeNull();
+    expect(greetingName("An <b>Bình</b>")).not.toMatch(/[<>]/);
+  });
+
+  it("drops punctuation stuck to the last word", () => {
+    expect(greetingName("Anh Tuấn,")).toBe("Tuấn");
   });
 });
 

@@ -1,22 +1,11 @@
 "use client";
 
-import { Info, SquarePen, X } from "lucide-react";
+import { Info, Lock, SquarePen, X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { useFollowScroll } from "@/components/chat/use-follow-scroll";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { CLONE_INTRO_KEY, CLONE_STARTERS, shortName, warmClone } from "@/lib/ai/clone/client";
+import { CLONE_INTRO_KEY, CLONE_STARTERS, greetingName, warmClone } from "@/lib/ai/clone/client";
 import { CloneAvatar, CloneMessages } from "./clone-messages";
 import { useCloneChat } from "./use-clone-chat";
 
@@ -26,7 +15,7 @@ const FRAME =
 
 /**
  * "<name> (bản AI)": a chat with a companion made from what the owner wrote about themselves. It always says it
- * is an AI; the conversation stays in this browser (localStorage) and the server keeps nothing.
+ * is an AI. The conversation exists only while this page is open: it is stored nowhere (see use-clone-chat.ts).
  */
 export function CloneChat({
   userId,
@@ -42,19 +31,21 @@ export function CloneChat({
   providerLabel: string;
   tutorName: string;
 }) {
-  const { messages, status, busy, waiting, error, restored, send, retry, stop, reset } = useCloneChat(userId);
+  const { messages, status, busy, waiting, error, send, retry, stop, reset } = useCloneChat(userId);
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const endRef = useFollowScroll(messages, { container: scroller, force: status === "submitted" });
   const title = `${cloneName} (bản AI)`;
+  const name = greetingName(displayName);
 
   // Ready to type as soon as the page opens (keyboard devices only: a phone keyboard would cover the window).
   useEffect(() => {
     if (window.matchMedia("(pointer: fine)").matches) inputRef.current?.focus({ preventScroll: true });
   }, []);
 
-  // The explanation card shows until it is closed once (remembered in this browser). Decided after mounting.
+  // The explanation card shows until it is closed once. Only this flag is kept in the browser (no chat content).
+  // Decided after mounting, so it never differs from the server render.
   const [introOpen, setIntroOpen] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -75,13 +66,6 @@ export function CloneChat({
     }
   };
 
-  // A restored conversation starts at its newest message (an empty one stays at the top, on the first-visit card).
-  const hasMessages = messages.length > 0;
-  useEffect(() => {
-    const el = scroller.current;
-    if (el && restored && hasMessages) el.scrollTop = el.scrollHeight;
-  }, [restored, hasMessages]);
-
   const handleSend = (text: string) => {
     if (send(text)) setInput("");
     inputRef.current?.focus();
@@ -90,7 +74,13 @@ export function CloneChat({
     e.preventDefault();
     handleSend(input);
   };
-  const empty = restored && messages.length === 0;
+  // "Cuộc trò chuyện mới": gone at once, no confirmation (the draft in the box too).
+  const startOver = () => {
+    reset();
+    setInput("");
+    inputRef.current?.focus();
+  };
+  const empty = messages.length === 0;
 
   return (
     <section className={FRAME} aria-label={`Khung chat với ${title}`}>
@@ -106,28 +96,10 @@ export function CloneChat({
           </p>
         </div>
         {messages.length > 0 && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button type="button" variant="white" size="sm" aria-label="Cuộc trò chuyện mới" className="shrink-0">
-                <SquarePen aria-hidden />
-                <span className="hidden sm:inline">Cuộc trò chuyện mới</span>
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Bắt đầu cuộc trò chuyện mới?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Cuộc trò chuyện hiện tại sẽ bị xóa khỏi trình duyệt này và không khôi phục được. Máy chủ không giữ bản nào.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="min-h-11 rounded-md">Giữ lại</AlertDialogCancel>
-                <AlertDialogAction className="min-h-11 rounded-md" onClick={reset}>
-                  Xóa và bắt đầu lại
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button type="button" variant="white" size="sm" aria-label="Cuộc trò chuyện mới" onClick={startOver} className="shrink-0">
+            <SquarePen aria-hidden />
+            <span className="hidden sm:inline">Cuộc trò chuyện mới</span>
+          </Button>
         )}
       </header>
 
@@ -144,8 +116,8 @@ export function CloneChat({
                   Đây là bản AI của {cloneName}, nói chuyện theo những gì {cloneName} tự kể về mình. Có thể sai chỗ này chỗ kia.
                 </p>
                 <p>
-                  Cuộc trò chuyện chỉ lưu trên trình duyệt này (bấm “Cuộc trò chuyện mới” để xóa, nhất là trên máy dùng chung).{" "}
-                  {cloneName} và quản trị viên không đọc được.
+                  Cuộc trò chuyện không được lưu ở đâu cả: rời trang, tải lại hoặc bấm “Cuộc trò chuyện mới” là xóa hết. {cloneName} và
+                  quản trị viên không đọc được.
                 </p>
                 <p>Để trả lời, tin nhắn được gửi tới dịch vụ AI ({providerLabel}).</p>
               </div>
@@ -164,7 +136,7 @@ export function CloneChat({
                 data-check-overflow
                 className="max-w-[85%] rounded-2xl rounded-tl-md bg-surface px-4 py-2.5 text-fg shadow-sm dark:border dark:border-border"
               >
-                Hello {shortName(displayName)} nha, tui là bản AI của {cloneName} á. Muốn tâm sự hay hỏi gì cứ nhắn tui nha
+                Hello{name ? ` ${name}` : ""} nha, tui là bản AI của {cloneName} á. Muốn tâm sự hay hỏi gì cứ nhắn tui nha
               </div>
             </div>
             <ul className="flex flex-wrap gap-2 pl-10.5" aria-label="Gợi ý tin nhắn">
@@ -203,7 +175,10 @@ export function CloneChat({
             placeholder="Nhắn gì đó…"
           />
         </form>
-        <p className="mt-1.5 text-center text-[0.8125rem] text-fg-subtle">Bản AI có thể nhầm. Cuộc trò chuyện chỉ lưu trên trình duyệt này.</p>
+        <p className="mt-1.5 flex items-start justify-center gap-1.5 text-center text-[0.8125rem] leading-snug text-fg-muted">
+          <Lock className="mt-0.5 size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+          <span>Cuộc trò chuyện tự xóa khi bạn rời trang hoặc bắt đầu cuộc mới. Không ai đọc được, kể cả {cloneName}.</span>
+        </p>
       </div>
     </section>
   );
