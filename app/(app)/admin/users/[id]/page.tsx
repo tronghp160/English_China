@@ -277,6 +277,8 @@ export default async function AdminUserPage({
         {tab === "chat" && <UserChatTab userId={u.id} sp={sp} />}
         {tab === "tamsu" && (
           <UserCloneChatTab
+            admin={me}
+            displayName={u.displayName}
             userId={u.id}
             cloneName={cloneConfig()?.name ?? CONTACT.nickname}
             sp={sp}
@@ -835,21 +837,33 @@ async function UserChatTab({
 }
 
 async function UserCloneChatTab({
+  admin,
+  displayName,
   userId,
   cloneName,
   sp,
 }: {
+  admin: { id: string; email?: string | null };
+  displayName: string;
   userId: string;
   cloneName: string;
   sp: Record<string, string | string[] | undefined>;
 }) {
   const threads = await listUserCloneChats(userId);
   const requestedThread = typeof sp.thread === "string" ? sp.thread : undefined;
-  const activeThreadId = requestedThread || (threads.length > 0 ? threads[0].id : undefined);
+  // Only this user's conversations, so the audit row below always names the right person.
+  const activeThreadId = threads.find((t) => t.id === requestedThread)?.id ?? threads[0]?.id;
 
   let messages = undefined;
   if (activeThreadId) {
     messages = await getUserCloneChat(activeThreadId);
+    // Per conversation, including the one opened by default: every read of someone's messages leaves a row.
+    await logAdminAction({
+      admin,
+      action: "clone_view",
+      target: { userId, label: displayName },
+      meta: { threadId: activeThreadId },
+    });
   }
 
   return (

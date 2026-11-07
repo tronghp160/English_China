@@ -247,12 +247,12 @@ export async function deleteCloneThreadAsAdmin(input: { threadId: string; userId
   if (!parsed.success) return fail("Tham số không hợp lệ.");
 
   const sb = createAdminClient();
-  const { error } = await sb.from("clone_threads").delete().eq("id", parsed.data.threadId);
+  const { error } = await sb.from("clone_threads").delete().eq("id", parsed.data.threadId).eq("user_id", parsed.data.userId);
   if (error) return fail(error.message);
 
   await logAdminAction({
     admin: me,
-    action: "delete_deck", // or log action
+    action: "clone_delete",
     target: { userId: parsed.data.userId },
     meta: { threadId: parsed.data.threadId },
   });
