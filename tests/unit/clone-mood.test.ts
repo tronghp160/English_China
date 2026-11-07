@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CloneTurn } from "@/lib/ai/clone/history";
-import { conversationHints, detectMood, readConversation } from "@/lib/ai/clone/mood";
+import { asksQuestion, conversationHints, detectMood, readConversation } from "@/lib/ai/clone/mood";
 
 const u = (content: string): CloneTurn => ({ role: "user", content });
 const a = (content: string): CloneTurn => ({ role: "assistant", content });
@@ -58,6 +58,17 @@ describe("readConversation", () => {
     expect(readConversation(h).recentQuestions).toBe(2);
     expect(readConversation([u("a"), a("ừ nghe nè"), u("b"), a("vậy hả?"), u("c")]).recentQuestions).toBe(1);
     expect(readConversation([u("a"), a("ừ"), u("b")]).recentQuestions).toBe(0);
+    // questions typed without "?" count too
+    expect(readConversation([u("a"), a("Đi ăn chè hông, rảnh nè."), u("b"), a("Bài khó không, làm thử coi."), u("c")]).recentQuestions).toBe(2);
+  });
+
+  it("sees a question with or without a question mark, and not a plain sentence", () => {
+    for (const t of ["sao vậy?", "Đi ăn chè hông", "mai rảnh hong, đi chơi nè", "ăn cơm chưa", "vậy hả", "thi xong rồi hả bà", "có mệt ko"]) {
+      expect(asksQuestion(t), t).toBe(true);
+    }
+    for (const t of ["hông sao, để mai làm cũng được nha.", "Bài này dễ mà, làm thử đi nè.", "Ừa, mai gặp nha.", "tui không biết nữa á", "chưa kịp ăn luôn"]) {
+      expect(asksQuestion(t), t).toBe(false);
+    }
   });
 
   it("notices a terse reply only after the first turn", () => {
@@ -113,6 +124,8 @@ describe("conversationHints", () => {
   it("in a crisis points to the safety rules and drops the limits on asking", () => {
     const h = conversationHints({ ...base, mood: "crisis", recentQuestions: 2, terse: true, previousMood: "neutral" });
     expect(h).toContain("<an_toan>");
+    expect(h).toContain("người thân, bạn bè hay thầy cô");
+    expect(h).toContain("115");
     expect(h).not.toContain("KHÔNG hỏi thêm");
     expect(h).not.toContain("trả lời rất ngắn");
     expect(h).not.toContain("chùng xuống");

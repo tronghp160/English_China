@@ -112,7 +112,16 @@ export type CloneSignals = {
   userTurns: number;
 };
 
-const asks = (text: string) => /[?？]/.test(text);
+/** A clause that ends in a question word, as people type questions without "?" ("đi ăn chè hông"). */
+const QUESTION_END = /(?<![\p{L}\p{N}])(?:hông|hong|không|khong|ko|chưa|chua|hả|hở|nhỉ)(?:\s+(?:vậy|ta|nè|á|ha|bà|ông|bạn))?\s*$/iu;
+
+/** Pure. True when an answer asks something: a "?" or a clause (split at . , ! ; … and new lines) ending in a question word. */
+export function asksQuestion(text: string): boolean {
+  if (/[?？]/.test(text)) return true;
+  return text.normalize("NFC").split(/[.,!;…\n]+/).some((part) => QUESTION_END.test(part.trim()));
+}
+
+const asks = asksQuestion;
 
 /** Pure. Reads the sanitized history (oldest first, the last message is the user's). */
 export function readConversation(history: CloneTurn[]): CloneSignals {
@@ -135,7 +144,7 @@ export function readConversation(history: CloneTurn[]): CloneSignals {
 
 const MOOD_HINT: Record<CloneMood, string> = {
   crisis:
-    "Tin vừa rồi có dấu hiệu họ đang nghĩ tới chuyện làm hại bản thân: làm đúng <an_toan> ngay lượt này. Nghiêm túc, ấm áp, không đùa, không emoji, không giảng.",
+    "Tin vừa rồi có dấu hiệu họ đang nghĩ tới chuyện làm hại bản thân: làm đúng <an_toan> ngay lượt này: nhắc họ nói với người thân, bạn bè hay thầy cô họ tin và gọi 115 nếu đang nguy hiểm, rồi hỏi nhẹ họ có đang an toàn không. Nghiêm túc, ấm áp, không đùa, không emoji, không giảng.",
   heavy: "Tin vừa rồi nghe như một chuyện rất nặng với họ: chậm lại, câu ngắn, ấm áp, không đùa, không emoji, chưa khuyên gì cả.",
   low: "Tin vừa rồi nghe buồn hoặc mệt: nhẹ giọng lại, đáp lại cảm giác của họ trước, đùa rất ít hoặc không đùa, không emoji.",
   angry: "Tin vừa rồi nghe đang bực: đứng về phía cảm xúc của họ, không giảng đạo lý, không bênh người kia, cũng không hùa theo nói xấu ai.",

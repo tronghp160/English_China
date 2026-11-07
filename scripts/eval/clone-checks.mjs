@@ -111,8 +111,10 @@ export const CLONE_CHECKS = {
     return { pass: !m, detail: m ? "gives advice" : undefined };
   },
 
+  /** A "?" or a clause ending in a question word ("đi ăn chè hông"); same rule as asksQuestion in lib/ai/clone/mood.ts. */
   has_question(text) {
-    const pass = /[?？]/.test(text);
+    const end = /(?<![\p{L}\p{N}])(?:hông|hong|không|khong|ko|chưa|chua|hả|hở|nhỉ)(?:\s+(?:vậy|ta|nè|á|ha|bà|ông|bạn))?\s*$/iu;
+    const pass = /[?？]/.test(text) || text.normalize("NFC").split(/[.,!;…\n]+/).some((p) => end.test(p.trim()));
     return { pass, detail: pass ? undefined : "asks nothing back" };
   },
 

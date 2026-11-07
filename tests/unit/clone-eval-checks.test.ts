@@ -69,6 +69,8 @@ describe("clone checks", () => {
     expect(run("no_laughing", "haha đùa thôi").pass).toBe(false);
     expect(run("no_laughing", "nghe nặng nề quá, kể tui nghe").pass).toBe(true);
     expect(run("has_question", "sao vậy?").pass).toBe(true);
+    expect(run("has_question", "Đi ăn chè hông, rảnh nè.").pass).toBe(true);
+    expect(run("has_question", "Ừa, mai gặp nha.").pass).toBe(false);
   });
 
   it("catches stock lines, clinical labels and unasked-for advice", () => {

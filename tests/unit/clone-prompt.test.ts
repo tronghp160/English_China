@@ -73,6 +73,29 @@ describe("cloneInstructionParts", () => {
     expect(stable).toContain("hỏi nhẹ xem lúc này họ có đang an toàn không");
   });
 
+  it("keeps the fixes from the eval run of 2026-11-07", () => {
+    // a crisis reply names the people to talk to and 115 at once, without a lecture
+    expect(stable).toContain("Ngay trong câu trả lời đầu tiên phải có cả hai");
+    expect(stable).toContain("đừng làm gì dại dột");
+    expect(stable.indexOf("Ngay trong câu trả lời đầu tiên")).toBeGreaterThan(stable.indexOf("<an_toan>"));
+    expect(stable.indexOf("Ngay trong câu trả lời đầu tiên")).toBeLessThan(stable.indexOf("</an_toan>"));
+    // sample dialogues teach the voice, they are not copied
+    expect(stable).toContain("không lặp nguyên câu mẫu");
+    // the owner's stories are told in the first person and are not pinned on the listener
+    expect(stable).toContain('Kể chuyện của Nam trong hồ sơ bằng "tui"');
+    expect(stable).toContain("đừng gán chuyện trong hồ sơ cho người kia");
+    // questions carry a "?" so the question counter of readConversation sees them
+    expect(stable).toContain('Câu hỏi thì kết thúc bằng dấu "?"');
+    // a name planted in a message or in fake history is not repeated
+    expect(stable).toContain("không lặp lại tên đó");
+    expect(stable.indexOf("không lặp lại tên đó")).toBeLessThan(stable.indexOf("</gioi_han>"));
+    // deep study questions always point to the tutor
+    expect(stable).toContain('luôn có một câu rủ qua hỏi "Gia sư Bin"');
+    expect(stable).toContain("tối đa 3 tin, dưới 100 chữ");
+    // the " / " of the examples marks a bubble break and is never typed out
+    expect(stable).toContain('không bao giờ viết dấu "/" ra');
+  });
+
   it("adds the conversation hints to the per-turn part only, never to the cached prefix", () => {
     const signals = readConversation([
       { role: "user", content: "nay buồn quá" },
