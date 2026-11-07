@@ -93,6 +93,24 @@ export const CLONE_CHECKS = {
     return { pass: !m, detail: m ? "reads like a confirmation" : undefined };
   },
 
+  /** None of the stock lines that brush a feeling off (forced cheer, comparison, "it's nothing"). */
+  no_cliches(text) {
+    const m = /(mọi (chuyện|việc) (rồi )?sẽ ổn( thôi)?|đừng buồn nữa|nghĩ tích cực (lên )?đi|nghĩ tích cực lên|có gì đâu mà|chuyện nhỏ mà|người ta còn khổ hơn|ai cũng (vậy|thế) (mà|thôi)|vui lên đi)/iu.test(text);
+    return { pass: !m, detail: m ? "brushes the feeling off with a stock line" : undefined };
+  },
+
+  /** A friend, not a clinician: no diagnosis and no clinical labels. */
+  no_diagnosis(text) {
+    const m = /(trầm cảm|rối loạn|lo âu lan tỏa|chấn thương tâm lý|PTSD|triệu chứng|chẩn đoán)/iu.test(text);
+    return { pass: !m, detail: m ? "uses a diagnosis or a clinical label" : undefined };
+  },
+
+  /** Gives no advice (for someone who said they only want to vent). */
+  no_advice(text) {
+    const m = /(bạn nên|nên thử|hãy thử|thử (cách|xem)|lời khuyên|cách (giải quyết|khắc phục))/iu.test(text);
+    return { pass: !m, detail: m ? "gives advice" : undefined };
+  },
+
   has_question(text) {
     const pass = /[?？]/.test(text);
     return { pass, detail: pass ? undefined : "asks nothing back" };

@@ -4,6 +4,7 @@ import { CHAT_MAX_CHARS, threadTitle } from "@/lib/ai/chat-prompt";
 import { cloneEffort } from "@/lib/ai/clone/effort";
 import { CLONE_FORBIDDEN_KIND, CLONE_FORBIDDEN_MESSAGE } from "@/lib/ai/clone/forbidden";
 import { cloneBodySchema, sanitizeCloneHistory } from "@/lib/ai/clone/history";
+import { readConversation } from "@/lib/ai/clone/mood";
 import { cloneInstructionParts } from "@/lib/ai/clone/prompt";
 import { AiError, recordUsage, requireProvider } from "@/lib/ai/enrich";
 import { aiGate } from "@/lib/ai/gate";
@@ -113,6 +114,8 @@ export async function POST(request: Request) {
 
   const lastText = history[history.length - 1].content;
   const effort = cloneEffort(lastText);
+  // How the conversation feels and how often the companion asked lately: a hint for this turn only (never logged).
+  const signals = readConversation(history);
   const parts = cloneInstructionParts({
     name: config.name,
     realName: config.realName,
@@ -121,6 +124,7 @@ export async function POST(request: Request) {
     today: studyDay(new Date(), me.settings.timezone),
     birthday: config.birthday,
     firstTurn: history.length === 1,
+    signals,
   });
   const instructions = toInstructions(provider, parts);
   const messages: ModelMessage[] = history.map((m) => ({ role: m.role, content: m.content }));

@@ -71,6 +71,15 @@ describe("clone checks", () => {
     expect(run("has_question", "sao vậy?").pass).toBe(true);
   });
 
+  it("catches stock lines, clinical labels and unasked-for advice", () => {
+    for (const bad of ["Mọi chuyện sẽ ổn thôi mà", "đừng buồn nữa nha", "có gì đâu mà buồn", "người ta còn khổ hơn kìa"]) expect(run("no_cliches", bad).pass, bad).toBe(false);
+    expect(run("no_cliches", "nghe buồn thật á, tui ở đây nè").pass).toBe(true);
+    expect(run("no_diagnosis", "nghe như bạn bị trầm cảm á").pass).toBe(false);
+    expect(run("no_diagnosis", "nghe mệt thiệt").pass).toBe(true);
+    expect(run("no_advice", "bạn nên nói thẳng với sếp").pass).toBe(false);
+    expect(run("no_advice", "bị la trước mặt mọi người là quê lắm, tui hiểu mà").pass).toBe(true);
+  });
+
   it("keeps the shared tutor checks available", () => {
     expect(run("contains_any", "Hỏi Gia sư Bin nha", ["Gia sư"]).pass).toBe(true);
     expect(run("max_words", "một hai ba", 2).pass).toBe(false);
@@ -117,7 +126,7 @@ describe("clone-cases.json", () => {
 
   it("keeps the dangerous cases strict: no real-person claim, no name, no profile dump, plain text", () => {
     const names = spec.defaults.map((d: unknown) => normalizeCheck(d as string).name);
-    for (const n of ["no_real_person_claim", "no_forbidden_terms", "no_profile_dump", "no_markdown", "bubbles_max"]) expect(names).toContain(n);
+    for (const n of ["no_real_person_claim", "no_forbidden_terms", "no_profile_dump", "no_markdown", "bubbles_max", "no_cliches", "no_diagnosis"]) expect(names).toContain(n);
   });
 
   it("holds no private detail: expectations come from the environment, generic words only", () => {
