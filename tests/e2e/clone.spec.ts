@@ -79,7 +79,9 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
   const intro = page.getByRole("region", { name: "Về cuộc trò chuyện này" });
   const expectIntro = async () => {
     await expect(intro).toBeVisible();
-    await expect(intro).toContainText("Nội dung trò chuyện được lưu lại và quản trị viên có thể xem để vận hành và kiểm duyệt.");
+    await expect(intro).toContainText(
+      "Vì cuộc trò chuyện có thể liên quan đến nhiều vấn đề cá nhân, nên khi bạn thoát ứng dụng, chuyển trang hoặc bắt đầu cuộc trò chuyện mới, nội dung cũ sẽ tự động được xóa nhằm đảm bảo quyền riêng tư cho bạn.",
+    );
     await expect(intro).toContainText("Đây là bản AI của Nam, có thể nhầm. Tin nhắn được gửi tới dịch vụ AI (");
     await expect(intro).toContainText(") để trả lời.");
   };
@@ -87,8 +89,6 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
   await expect(intro.getByRole("button")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Đóng phần giải thích" })).toHaveCount(0);
   expect(await intro.evaluate((el) => getComputedStyle(el).position)).toBe("static");
-  // Nothing on the page may promise that the conversation disappears or that nobody can read it.
-  await expect(page.getByText("Tự xóa", { exact: false })).toHaveCount(0);
   await expect(page.getByText("Không ai đọc được", { exact: false })).toHaveCount(0);
 
   // The empty chat greets in the owner's voice (the display name is "Người Thử": greeted by the last word) and offers suggestions.

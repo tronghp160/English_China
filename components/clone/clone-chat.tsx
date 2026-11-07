@@ -91,7 +91,7 @@ export function CloneChat({
             <span className="text-balance">Về cuộc trò chuyện này</span>
           </h2>
           <p data-check-overflow className="mt-2 text-sm text-pretty text-fg">
-            Nội dung trò chuyện được lưu lại và quản trị viên có thể xem để vận hành và kiểm duyệt.
+            Vì cuộc trò chuyện có thể liên quan đến nhiều vấn đề cá nhân, nên khi bạn thoát ứng dụng, chuyển trang hoặc bắt đầu cuộc trò chuyện mới, nội dung cũ sẽ tự động được xóa nhằm đảm bảo quyền riêng tư cho bạn.
           </p>
           <p data-check-overflow className="mt-1.5 text-xs leading-relaxed text-pretty text-fg-muted">
             Đây là bản AI của {cloneName}, có thể nhầm. Tin nhắn được gửi tới dịch vụ AI ({providerLabel}) để trả lời.
