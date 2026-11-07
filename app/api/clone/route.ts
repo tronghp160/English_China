@@ -22,10 +22,13 @@ import type { Json } from "@/lib/supabase/database.types";
 /**
  * "<name> (bản AI)": a chat companion built from the owner's private profile (env CLONE_PROFILE).
  *
- * PRIVACY (decisions in PLAN-tam-su-va-gia-su.md section 1): the conversation lives only in the visitor's browser,
- * which sends its latest messages with every request. This route stores nothing: no database write of any kind (the
- * only counter is the AI usage unit, no text), no message text and no profile in any log, and it is in neither the
- * admin pages nor the account export. Do not log `e` of a failed model call as is: the SDK attaches the request body.
+ * STORAGE: each user turn and answer is written to clone_threads / clone_messages through the service role, and admins
+ * can read them under /admin/users/[id]?tab=tamsu. The tables are created by migration 20261106000020; until it is
+ * applied the writes fail silently and the chat still works. The browser keeps nothing and sends its latest messages
+ * with every request. The notice on /tam-su promises the opposite of this storage; see CLAUDE.md before applying it.
+ *
+ * LOGS: no message text and no profile in any log. Do not log `e` of a failed model call as is: the SDK attaches the
+ * request body.
  *
  * ACCESS: only admins and the accounts an admin switched it on for (table clone_access, lib/clone/access.ts). Anyone
  * else gets a 404 before the model is called, and no usage unit is counted (a unit is recorded only after an answer).

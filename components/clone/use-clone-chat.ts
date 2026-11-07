@@ -10,10 +10,11 @@ import { isCloneForbidden } from "@/lib/ai/clone/forbidden";
 export const hasText = (m: UIMessage) => m.parts.some((p) => p.type === "text" && p.text.trim());
 
 /**
- * Chat with "<name> (bản AI)". PRIVACY: the conversation exists only in React state while the page is open. It is
- * written nowhere: not localStorage, sessionStorage, IndexedDB, a cookie or the server. It is gone when the page is
- * left, reloaded or closed, when "Cuộc trò chuyện mới" is pressed, and when the account changes (the chat is keyed by the
- * user id). Every request carries the latest messages as text (the server stores nothing too).
+ * Chat with "<name> (bản AI)". In the browser the conversation exists only in React state while the page is open: it
+ * is not written to localStorage, sessionStorage, IndexedDB or a cookie. That copy is gone when the page is left,
+ * reloaded or closed, when "Cuộc trò chuyện mới" is pressed, and when the account changes (the chat is keyed by the
+ * user id). Every request carries the latest messages as text and a thread id, and /api/clone stores the turns on the
+ * server (see the note at the top of that route).
  *
  * - On mount it deletes what an earlier version left in localStorage ("sotu:clone:v1:*").
  * - If an admin switches the access off in the middle of a chat, the next message gets a 404: `locked` turns true and

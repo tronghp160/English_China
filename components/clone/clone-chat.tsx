@@ -15,7 +15,8 @@ const FRAME =
 
 /**
  * "<name> (bản AI)": a chat with a companion made from what the owner wrote about themselves. It always says it
- * is an AI. The conversation exists only while this page is open: it is stored nowhere (see use-clone-chat.ts).
+ * is an AI. The browser keeps the conversation only while this page is open (see use-clone-chat.ts); the server stores
+ * it (see app/api/clone/route.ts), which the notice below does not match yet.
  */
 export function CloneChat({
   userId,
