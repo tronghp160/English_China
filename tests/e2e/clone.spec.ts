@@ -54,7 +54,7 @@ async function mockClone(page: Page, reply: (body: Body) => string) {
   return sent;
 }
 
-test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng, không lưu ở đâu cả", async ({ page }) => {
+test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng, trình duyệt không giữ gì", async ({ page }) => {
   const errors = watchErrors(page);
   await signUpAllowed(page);
   const sent = await mockClone(page, () => "ừ nghe nè\n\nkể tui nghe đi, nay có chuyện gì");
@@ -74,14 +74,12 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
   await expect.poll(() => page.evaluate(() => localStorage.getItem("sotu:clone:v1:old-user"))).toBeNull();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("sotu:clone:intro:v1"))).toBeNull();
 
-  // The privacy card is there even though the old flag said "closed": it says what is kept (nothing), who can read it
-  // (nobody) and who answers. It has no close button, and it is part of the message area (it scrolls, it is not pinned).
-  const intro = page.getByRole("region", { name: "Cuộc trò chuyện này được giữ riêng tư" });
+  // The card is there even though the old flag said "closed": it says that the conversation is stored, who can read it
+  // and who answers. It has no close button, and it is part of the message area (it scrolls, it is not pinned).
+  const intro = page.getByRole("region", { name: "Về cuộc trò chuyện này" });
   const expectIntro = async () => {
     await expect(intro).toBeVisible();
-    await expect(intro).toContainText(
-      "Vì có thể chứa thông tin cá nhân, cuộc trò chuyện sẽ tự xóa khi bạn thoát, chuyển trang hoặc bắt đầu cuộc mới. Không ai đọc được, kể cả Nam.",
-    );
+    await expect(intro).toContainText("Nội dung trò chuyện được lưu lại và quản trị viên có thể xem để vận hành và kiểm duyệt.");
     await expect(intro).toContainText("Đây là bản AI của Nam, có thể nhầm. Tin nhắn được gửi tới dịch vụ AI (");
     await expect(intro).toContainText(") để trả lời.");
   };
@@ -89,9 +87,9 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
   await expect(intro.getByRole("button")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Đóng phần giải thích" })).toHaveCount(0);
   expect(await intro.evaluate((el) => getComputedStyle(el).position)).toBe("static");
-  // The line under the box is only a short reminder, not the card's sentence again.
-  await expect(page.getByText("Tự xóa khi bạn rời trang", { exact: true })).toBeVisible();
-  await expect(page.getByText("Không ai đọc được, kể cả Nam.")).toHaveCount(1);
+  // Nothing on the page may promise that the conversation disappears or that nobody can read it.
+  await expect(page.getByText("Tự xóa", { exact: false })).toHaveCount(0);
+  await expect(page.getByText("Không ai đọc được", { exact: false })).toHaveCount(0);
 
   // The empty chat greets in the owner's voice (the display name is "Người Thử": greeted by the last word) and offers suggestions.
   await expect(page.getByText("Hello Thử nha, tui là bản AI của Nam á. Muốn tâm sự hay hỏi gì cứ nhắn tui nha")).toBeVisible();
@@ -111,7 +109,7 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
     await expect(list.locator("li", { hasText: "Nam (bản AI)" }).first()).toBeVisible({ timeout: 45_000 });
   }
 
-  // Nothing of the conversation is stored: no key of the old kind, no message text in any storage or cookie.
+  // Nothing of the conversation is kept in the browser: no key of the old kind, no message text in any storage or cookie.
   const stored = await page.evaluate(() => {
     const all = (s: Storage) => Object.keys(s).map((k) => `${k}=${s.getItem(k)}`);
     return { entries: [...all(localStorage), ...all(sessionStorage), document.cookie], keys: Object.keys(localStorage) };
@@ -155,7 +153,7 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
   // Still nothing in the browser after all of that.
   expect(await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("sotu:clone:")))).toEqual([]);
 
-  // Nothing was written to the database or the tutor's API from this page.
+  // The page itself wrote nothing to the database or the tutor's API (storing is /api/clone's job, on the server).
   expect(apiCalls).toEqual([]);
   expect(errors).toEqual([]);
 });

@@ -62,7 +62,8 @@ export function deckWords(supabase: Client, deckIds: string[]) {
 }
 
 /** Everything that belongs to the user (RLS-scoped reads with their own session). */
-export async function buildAccountExport(supabase: Client, userId: string) {
+/** `serviceClient` reads the "Tâm sự" tables, which only the service role can open. Always scope by `userId`. */
+export async function buildAccountExport(supabase: Client, userId: string, serviceClient: Client = supabase) {
   const [{ data: profile }, { data: settings }, { data: decks }, { data: subscriptions }, { data: groups }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
     supabase.from("user_settings").select("*").eq("user_id", userId).maybeSingle(),
@@ -71,7 +72,7 @@ export async function buildAccountExport(supabase: Client, userId: string) {
     supabase.from("group_members").select("role, joined_at, group:groups(id, name)").eq("user_id", userId),
   ]);
   const ownDecks = decks ?? [];
-  const [words, cards, reviews, daily, chatThreads, chatMessages, loginEvents] = await Promise.all([
+  const [words, cards, reviews, daily, chatThreads, chatMessages, loginEvents, cloneThreads, cloneMessages] = await Promise.all([
     deckWords(supabase, ownDecks.map((d) => d.id)),
     fetchAll<Tables<"user_cards">>((f, t) => supabase.from("user_cards").select("*").eq("user_id", userId).order("word_id").range(f, t)),
     fetchAll<Tables<"review_logs">>((f, t) => supabase.from("review_logs").select("*").eq("user_id", userId).order("id").range(f, t)),
@@ -83,9 +84,16 @@ export async function buildAccountExport(supabase: Client, userId: string) {
     fetchAll<Tables<"login_events">>((f, t) =>
       supabase.from("login_events").select("*").eq("user_id", userId).order("id").range(f, t),
     ),
+    fetchAll<Tables<"clone_threads">>((f, t) => serviceClient.from("clone_threads").select("*").eq("user_id", userId).order("created_at").order("id").range(f, t)),
+    fetchAll<Tables<"clone_messages">>((f, t) =>
+      serviceClient.from("clone_messages").select("*").eq("user_id", userId).order("thread_id").order("created_at").order("id").range(f, t),
+    ),
   ]);
   const messagesByThread = new Map<string, Tables<"chat_messages">[]>();
   for (const m of chatMessages) messagesByThread.set(m.thread_id, [...(messagesByThread.get(m.thread_id) ?? []), m]);
+
+  const cloneMessagesByThread = new Map<string, Tables<"clone_messages">[]>();
+  for (const m of cloneMessages) cloneMessagesByThread.set(m.thread_id, [...(cloneMessagesByThread.get(m.thread_id) ?? []), m]);
 
   const byDeck = new Map<string, Word[]>();
   for (const w of words) byDeck.set(w.deck_id, [...(byDeck.get(w.deck_id) ?? []), w]);
@@ -106,6 +114,10 @@ export async function buildAccountExport(supabase: Client, userId: string) {
     chats: chatThreads.map((t) => ({
       ...t,
       messages: (messagesByThread.get(t.id) ?? []).map((m) => ({ id: m.id, role: m.role, parts: m.parts, created_at: m.created_at })),
+    })),
+    clone_chats: cloneThreads.map((t) => ({
+      ...t,
+      messages: (cloneMessagesByThread.get(t.id) ?? []).map((m) => ({ id: m.id, role: m.role, content: m.content, created_at: m.created_at })),
     })),
   };
 }

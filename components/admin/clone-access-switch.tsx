@@ -10,7 +10,7 @@ import { setCloneAccess } from "@/lib/actions/clone-access";
 /**
  * "Cho phép dùng Tâm sự với {name}": the admin's switch for one account (table clone_access). The whole row is the
  * target (≥ 44px). Admins always have access, so theirs is shown on and locked. It decides who may use the feature
- * and nothing else: there is no conversation to read, the chat is stored nowhere.
+ * and nothing else.
  */
 export function CloneAccessSwitch({
   userId,

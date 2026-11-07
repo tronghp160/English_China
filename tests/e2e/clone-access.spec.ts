@@ -49,6 +49,39 @@ test.afterAll(async () => {
   for (const e of [adminEmail, userEmail, rlsEmail]) await deleteUserByEmail(e);
 });
 
+test("tab Tâm sự: chỉ admin mở được, tìm theo người dùng, mở đúng phiên và ghi nhật ký", async () => {
+  const threadId = crypto.randomUUID();
+  const inserted = await admin().from("clone_threads").insert({ id: threadId, user_id: userId, title: "Phiên thử E2E", message_count: 1 });
+  expect(inserted.error).toBeNull();
+  const message = await admin()
+    .from("clone_messages")
+    .insert({ thread_id: threadId, id: "m1", user_id: userId, role: "user", content: "tin nhắn thử E2E" });
+  expect(message.error).toBeNull();
+
+  expect((await userPage.goto("/admin?tab=tamsu"))?.status()).toBe(404);
+
+  await adminPage.goto(`/admin?tab=tamsu&q=${encodeURIComponent(userEmail)}`);
+  const row = adminPage.getByRole("link", { name: /Phiên thử E2E/ });
+  await expect(row).toBeVisible();
+  await adminPage.goto("/admin?tab=tamsu&q=khong-ai-khop-e2e");
+  await expect(adminPage.getByText("Không có phiên nào khớp.")).toBeVisible();
+
+  await adminPage.goto(`/admin?tab=tamsu&q=${encodeURIComponent(userEmail)}`);
+  await row.click();
+  await expect(adminPage).toHaveURL(new RegExp(`/admin/users/${userId}\\?tab=tamsu&thread=${threadId}`));
+  await expect(adminPage.getByText("tin nhắn thử E2E")).toBeVisible();
+  await expect
+    .poll(async () => (await admin().from("admin_audit_log").select("id").eq("action", "clone_view").eq("target_user_id", userId)).data?.length ?? 0)
+    .toBeGreaterThan(0);
+
+  // The person's own export has the conversation too, though these tables are closed to their session.
+  const exported = (await (await userPage.request.get("/api/export?format=json")).json()) as {
+    clone_chats: { id: string; messages: { content: string }[] }[];
+  };
+  expect(exported.clone_chats.map((t) => t.id)).toEqual([threadId]);
+  expect(exported.clone_chats[0].messages[0].content).toBe("tin nhắn thử E2E");
+});
+
 test("mặc định chưa bật: không thấy lối vào nào, /tam-su là 404, /api/clone trả 404 và không gọi model", async () => {
   await expectNoDoors(userPage);
 

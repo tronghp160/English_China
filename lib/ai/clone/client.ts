@@ -2,9 +2,9 @@ import type { UIMessage } from "ai";
 import { CLONE_MAX_MESSAGES } from "@/lib/ai/clone/history";
 
 /**
- * Browser side of the "bản AI" chat. PRIVACY: nothing of the conversation is stored anywhere: it lives in React state
- * while the page is open (use-clone-chat.ts) and each request carries the latest messages. Nothing at all is kept in
- * the browser: the notice card is shown at the start of every conversation, so there is no "closed" flag either.
+ * Browser side of the "bản AI" chat. The browser keeps nothing: the conversation lives in React state while the page
+ * is open (use-clone-chat.ts), each request carries the latest messages and the server stores them (app/api/clone).
+ * The notice card is shown at the start of every conversation, so there is no "closed" flag either.
  * No server-only imports.
  */
 

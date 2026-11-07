@@ -24,6 +24,7 @@ import { StatCard } from "@/components/admin/stat-card";
 import { AttentionTab } from "@/components/admin/tabs/attention-tab";
 import { AuditTab } from "@/components/admin/tabs/audit-tab";
 import { OnlineTab } from "@/components/admin/tabs/online-tab";
+import { TamSuTab } from "@/components/admin/tabs/tam-su-tab";
 import { WarmCacheCard } from "@/components/admin/warm-cache";
 import { LangMark } from "@/components/lang-mark";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +64,7 @@ const TABS = [
   { value: "words", label: "Từ vựng" },
   { value: "decks", label: "Bộ từ công khai" },
   { value: "groups", label: "Nhóm" },
+  { value: "tamsu", label: "Tâm sự" },
   { value: "audit", label: "Nhật ký" },
   { value: "admins", label: "Quản trị viên" },
 ] as const;
@@ -116,6 +118,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         {tab === "words" && <WordsTab q={q} lang={lang} user={user} page={page} />}
         {tab === "decks" && <DecksTab />}
         {tab === "groups" && <GroupsTab />}
+        {tab === "tamsu" && <TamSuTab admin={me} q={q} page={page} />}
         {tab === "audit" && <AuditTab action={action} page={page} />}
         {tab === "admins" && <AdminsTab meId={me.id} />}
       </div>

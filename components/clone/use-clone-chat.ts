@@ -20,7 +20,7 @@ export const hasText = (m: UIMessage) => m.parts.some((p) => p.type === "text" &
  * - If an admin switches the access off in the middle of a chat, the next message gets a 404: `locked` turns true and
  *   the page locks the box (nothing can be sent until the page is opened again).
  * - While there is at least one message from the user, the browser's own "leave this page?" prompt guards a reload
- *   or closing the tab. Moving to another page inside the app is not blocked (the page says so under the box).
+ *   or closing the tab. Moving to another page inside the app is not blocked.
  */
 export function useCloneChat(userId: string) {
   const [{ transport, setThreadId }] = useState(() => {

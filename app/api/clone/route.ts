@@ -22,10 +22,9 @@ import type { Json } from "@/lib/supabase/database.types";
 /**
  * "<name> (bản AI)": a chat companion built from the owner's private profile (env CLONE_PROFILE).
  *
- * STORAGE: each user turn and answer is written to clone_threads / clone_messages through the service role, and admins
- * can read them under /admin/users/[id]?tab=tamsu. The tables are created by migration 20261106000020; until it is
- * applied the writes fail silently and the chat still works. The browser keeps nothing and sends its latest messages
- * with every request. The notice on /tam-su promises the opposite of this storage; see CLAUDE.md before applying it.
+ * STORAGE: each user turn and answer is written to clone_threads / clone_messages through the service role. Admins read
+ * them in /admin?tab=tamsu and /admin/users/[id]?tab=tamsu, and the notice on /tam-su and /quyen-rieng-tu say so: keep
+ * those two true if this changes. The browser keeps nothing and sends its latest messages with every request.
  *
  * LOGS: no message text and no profile in any log. Do not log `e` of a failed model call as is: the SDK attaches the
  * request body.

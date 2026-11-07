@@ -21,6 +21,7 @@ export const AUDIT_LABELS: Record<string, string> = {
   save_note: "Lưu ghi chú",
   clone_on: "Bật Tâm sự cho người dùng",
   clone_off: "Tắt Tâm sự cho người dùng",
+  clone_list: "Xem danh sách Tâm sự",
   clone_view: "Xem cuộc trò chuyện Tâm sự",
   clone_delete: "Xóa cuộc trò chuyện Tâm sự",
 };

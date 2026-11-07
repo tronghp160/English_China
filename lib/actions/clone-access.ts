@@ -13,8 +13,7 @@ import { fail, ok, type ActionResult } from "./result";
  * means it may not. Actions are public endpoints, so the caller is checked again here (an admin), the input is
  * validated, and the write goes through the service-role client: no client role can write this table.
  *
- * This only decides who may use the feature. It gives the admin no way to read a conversation: there is nothing to
- * read, the chat is stored nowhere.
+ * This only decides who may use the feature. Stored conversations are read under /admin?tab=tamsu.
  */
 const input = z.object({ userId: z.uuid(), enabled: z.boolean() });
 

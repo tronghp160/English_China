@@ -897,6 +897,57 @@ export async function listUserCloneChats(userId: string): Promise<AdminCloneThre
   }));
 }
 
+export type AdminCloneThreadRow = AdminCloneThread & { displayName: string; email: string | null };
+
+export const CLONE_THREADS_PER_PAGE = 30;
+
+/** At most this many matching accounts go into one `in` filter (it travels in the URL of the request). */
+const CLONE_SEARCH_MAX_USERS = 200;
+
+/** Every "Tâm sự" conversation, newest first, optionally of the accounts matching q (email, name or @username). */
+export async function listAllCloneThreads({ q, page }: { q: string; page: number }): Promise<{ rows: AdminCloneThreadRow[]; total: number }> {
+  const sb = createAdminClient();
+  const [authUsers, { data: profiles }] = await Promise.all([allAuthUsers(), sb.from("profiles").select("id, username, display_name")]);
+  const emailOf = new Map(authUsers.map((u) => [u.id, u.email ?? ""]));
+  const people = (profiles ?? []).map((p) => ({ ...p, email: emailOf.get(p.id) ?? "" }));
+  const personOf = new Map(people.map((p) => [p.id, p]));
+
+  const needle = q.trim().toLowerCase().replace(/^@/, "");
+  const matching = needle
+    ? people.filter((p) => [p.email, p.username, p.display_name].some((v) => v.toLowerCase().includes(needle))).map((p) => p.id)
+    : null;
+  if (matching?.length === 0) return { rows: [], total: 0 };
+
+  const from = (Math.max(1, page) - 1) * CLONE_THREADS_PER_PAGE;
+  let query = sb
+    .from("clone_threads")
+    .select("id, user_id, title, first_message, message_count, created_at, updated_at, last_message_at", { count: "exact" })
+    .order("updated_at", { ascending: false })
+    .range(from, from + CLONE_THREADS_PER_PAGE - 1);
+  if (matching) query = query.in("user_id", matching.slice(0, CLONE_SEARCH_MAX_USERS));
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return {
+    rows: (data ?? []).map((t) => {
+      const person = personOf.get(t.user_id);
+      return {
+        id: t.id,
+        userId: t.user_id,
+        title: t.title ?? "Cuộc trò chuyện",
+        firstMessage: t.first_message,
+        messageCount: t.message_count,
+        createdAt: t.created_at,
+        updatedAt: t.updated_at,
+        lastMessageAt: t.last_message_at,
+        displayName: person?.display_name ?? "(chưa có hồ sơ)",
+        email: person?.email || null,
+      };
+    }),
+    total: count ?? 0,
+  };
+}
+
 /** Full message history of a clone companion chat session. */
 export async function getUserCloneChat(threadId: string): Promise<AdminCloneMessage[]> {
   const sb = createAdminClient();

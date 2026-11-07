@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getUser } from "@/lib/auth";
 import { accountWordsCsv, buildAccountExport } from "@/lib/export";
 import { hitRateLimit } from "@/lib/rate-limit";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const maxDuration = 60;
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createClient();
-  const data = await buildAccountExport(supabase, user.id);
+  const data = await buildAccountExport(supabase, user.id, createAdminClient());
   const stamp = data.exported_at.slice(0, 10);
   const name = `so-tu-${data.profile?.username ?? "du-lieu"}-${stamp}`;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, SquarePen } from "lucide-react";
+import { Info, SquarePen } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { useFollowScroll } from "@/components/chat/use-follow-scroll";
@@ -16,7 +16,7 @@ const FRAME =
 /**
  * "<name> (bản AI)": a chat with a companion made from what the owner wrote about themselves. It always says it
  * is an AI. The browser keeps the conversation only while this page is open (see use-clone-chat.ts); the server stores
- * it (see app/api/clone/route.ts), which the notice below does not match yet.
+ * it and admins can read it (see app/api/clone/route.ts), which the notice below says.
  */
 export function CloneChat({
   userId,
@@ -87,12 +87,11 @@ export function CloneChat({
             nothing remembered. It sits in the message area, so it scrolls away with the messages. */}
         <section aria-labelledby="clone-intro" className="mb-5 rounded-lg border border-border/60 bg-surface p-4 shadow-xs dark:border-border">
           <h2 id="clone-intro" data-check-overflow className="flex items-start gap-2 text-sm font-bold text-fg">
-            <Lock className="size-5 shrink-0 text-primary-fg" strokeWidth={2} aria-hidden />
-            <span className="text-balance">Cuộc trò chuyện này được giữ riêng tư</span>
+            <Info className="size-5 shrink-0 text-primary-fg" strokeWidth={2} aria-hidden />
+            <span className="text-balance">Về cuộc trò chuyện này</span>
           </h2>
           <p data-check-overflow className="mt-2 text-sm text-pretty text-fg">
-            Vì có thể chứa thông tin cá nhân, cuộc trò chuyện sẽ tự xóa khi bạn thoát, chuyển trang hoặc bắt đầu cuộc mới. Không ai đọc được, kể
-            cả {cloneName}.
+            Nội dung trò chuyện được lưu lại và quản trị viên có thể xem để vận hành và kiểm duyệt.
           </p>
           <p data-check-overflow className="mt-1.5 text-xs leading-relaxed text-pretty text-fg-muted">
             Đây là bản AI của {cloneName}, có thể nhầm. Tin nhắn được gửi tới dịch vụ AI ({providerLabel}) để trả lời.
@@ -147,10 +146,6 @@ export function CloneChat({
             placeholder={locked ? "Chưa mở cho bạn" : "Nhắn gì đó…"}
           />
         </form>
-        <p className="mt-1.5 flex items-center justify-center gap-1.5 text-[0.8125rem] leading-snug text-fg-muted">
-          <Lock className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
-          <span>Tự xóa khi bạn rời trang</span>
-        </p>
       </div>
     </section>
   );
