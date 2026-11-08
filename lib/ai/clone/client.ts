@@ -72,11 +72,15 @@ export function warmClone() {
   void fetch("/api/clone", { method: "GET", cache: "no-store", keepalive: true }).catch(() => {});
 }
 
-/** Suggestions on the empty screen (no profile details: they are public code). */
+/**
+ * Suggestions on the empty screen. They are about the person, not about the owner: this is a place to talk about
+ * yourself, so every chip starts a conversation where they share (no profile details: they are public code).
+ */
 export const CLONE_STARTERS = [
-  "Dạo này ông sao rồi?",
-  "Ông thích làm gì lúc rảnh?",
-  "Dạo này ông có gì vui không?",
-  "Nay tui hơi buồn…",
-  "Kể tui nghe một chuyện vui đi",
+  "Nay tui có chuyện muốn kể…",
+  "Tui có tin vui muốn khoe nè!",
+  "Tui đang buồn, nghe tui than chút nha",
+  "Dạo này tui áp lực quá",
+  "Tui đang rối, không biết nên làm sao",
+  "Tui chỉ muốn có người nói chuyện thôi",
 ] as const;
