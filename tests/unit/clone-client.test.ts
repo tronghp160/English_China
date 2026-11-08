@@ -175,4 +175,11 @@ describe("starters", () => {
     expect(CLONE_STARTERS.length).toBeGreaterThanOrEqual(4);
     for (const s of CLONE_STARTERS) expect(s.length).toBeLessThan(45);
   });
+
+  it("are about the person, never questions about the owner", () => {
+    for (const s of CLONE_STARTERS) {
+      expect(s, s).toMatch(/(^|\s)tui(\s|,|$)/i);
+      expect(s, s).not.toMatch(/(^|\s)(ông|bà|bạn|anh|chị)(\s|\?|$)/i);
+    }
+  });
 });

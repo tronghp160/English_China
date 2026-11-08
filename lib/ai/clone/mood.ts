@@ -32,7 +32,8 @@ const HEAVY = words([
   "thất tình", "chia tay", "bị đá", "ly hôn", "ly dị", "qua đời", "mất (?:bố|mẹ|ba|má|cha|ông|bà|anh|chị|em|người thân)",
   "đám tang", "trầm cảm", "tuyệt vọng", "bế tắc", "kiệt sức", "cô đơn", "khóc", "bị bắt nạt", "bị đánh", "bạo lực",
   "ghét bản thân", "vô dụng", "tủi thân", "không ai hiểu", "một mình hoài", "suy sụp", "gục ngã",
-  "that tinh", "chia tay", "ly hon", "qua doi", "tuyet vong", "be tac", "kiet suc", "co don", "tram cam", "tui than",
+  // no "tui than" without marks: that is "tui than" (I vent) as often as "tủi thân"
+  "that tinh", "chia tay", "ly hon", "qua doi", "tuyet vong", "be tac", "kiet suc", "co don", "tram cam",
 ], true);
 
 const LOW = words([
@@ -48,7 +49,7 @@ const ANGRY = words([
 ], true);
 
 const ANXIOUS = words([
-  "lo", "lo lắng", "sợ", "hồi hộp", "căng thẳng", "hoảng", "run quá", "bất an", "sắp thi", "không biết phải làm sao",
+  "lo", "lo lắng", "sợ", "hồi hộp", "căng thẳng", "hoảng", "run quá", "bất an", "sắp thi", "không biết (?:phải|nên) làm sao", "đang rối",
   "rối quá", "rối trí", "lo âu", "mất ngủ",
   "lo lang", "hoi hop", "cang thang", "bat an", "sap thi", "lo qua", "so qua",
 ], true);
@@ -63,7 +64,7 @@ const HAPPY = words([
 const EXCITED = /!{2,}|:D|=\)\)|:\)\)/;
 
 const WANTS_ADVICE = words([
-  "nên làm gì", "làm sao (?:giờ|đây|bây giờ|ta)", "phải làm sao", "có nên", "khuyên (?:tui|mình|em|tôi|tao)",
+  "nên làm gì", "làm sao (?:giờ|đây|bây giờ|ta)", "phải làm sao", "nên làm sao", "có nên", "khuyên (?:tui|mình|em|tôi|tao)",
   "cho (?:tui|mình|em|tôi) lời khuyên", "cách nào", "giúp (?:tui|mình|em|tôi) với", "góp ý (?:giúp|cho)", "làm thế nào",
   "nen lam gi", "lam sao gio", "phai lam sao", "co nen", "khuyen (?:tui|minh|em|toi)",
 ]);

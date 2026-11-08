@@ -93,10 +93,10 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
 
   // The empty chat greets in the owner's voice (the display name is "Người Thử": greeted by the last word) and offers suggestions.
   await expect(page.getByText("Hello Thử nha, tui là bản AI của Nam á. Muốn tâm sự hay hỏi gì cứ nhắn tui nha")).toBeVisible();
-  await page.getByRole("button", { name: "Kể tui nghe một chuyện vui đi" }).click();
+  await page.getByRole("button", { name: "Tui có tin vui muốn khoe nè!" }).click();
 
   const list = page.getByRole("list", { name: "Tin nhắn", exact: true });
-  await expect(list.getByText("Kể tui nghe một chuyện vui đi")).toBeVisible();
+  await expect(list.getByText("Tui có tin vui muốn khoe nè!")).toBeVisible();
   if (process.env.E2E_REAL_AI !== "1") {
     // Each paragraph of the answer is its own bubble.
     const answer = list.getByRole("listitem").filter({ hasText: "Nam (bản AI)" });
@@ -104,7 +104,7 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
     await expect(answer.getByText("kể tui nghe đi, nay có chuyện gì")).toBeVisible();
     await expect(answer.locator("[data-check-overflow]")).toHaveCount(2);
     expect(sent).toHaveLength(1);
-    expect(sent[0].messages.at(-1)).toMatchObject({ role: "user", parts: [{ type: "text", text: "Kể tui nghe một chuyện vui đi" }] });
+    expect(sent[0].messages.at(-1)).toMatchObject({ role: "user", parts: [{ type: "text", text: "Tui có tin vui muốn khoe nè!" }] });
   } else {
     await expect(list.locator("li", { hasText: "Nam (bản AI)" }).first()).toBeVisible({ timeout: 45_000 });
   }
@@ -115,7 +115,7 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
     return { entries: [...all(localStorage), ...all(sessionStorage), document.cookie], keys: Object.keys(localStorage) };
   });
   expect(stored.keys.filter((k) => k.startsWith("sotu:clone:"))).toEqual([]); // no chat, and no "card closed" flag either
-  expect(stored.entries.join("\n")).not.toContain("Kể tui nghe một chuyện vui đi");
+  expect(stored.entries.join("\n")).not.toContain("Tui có tin vui muốn khoe nè!");
   expect(stored.entries.join("\n")).not.toContain("ừ nghe nè");
 
   // The card stays at the top of the conversation while it goes on (it is part of what scrolls).
@@ -133,8 +133,8 @@ test("bản AI: thẻ giới thiệu, nhắn tin, mỗi đoạn một bong bóng
   await expectIntro(); // shown again at the start of the new conversation
 
   // "Cuộc trò chuyện mới" clears at once: no confirmation box; the card is there again; an empty chat does not ask before a reload.
-  await page.getByRole("button", { name: "Kể tui nghe một chuyện vui đi" }).click();
-  await expect(list.getByText("Kể tui nghe một chuyện vui đi")).toBeVisible();
+  await page.getByRole("button", { name: "Tui có tin vui muốn khoe nè!" }).click();
+  await expect(list.getByText("Tui có tin vui muốn khoe nè!")).toBeVisible();
   await page.getByRole("button", { name: "Cuộc trò chuyện mới" }).click();
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
   await expect(page.getByText(/tui là bản AI của Nam á/)).toBeVisible();

@@ -26,6 +26,15 @@ describe("detectMood", () => {
     expect(detectMood("tui sợ lắm")).toBe("anxious");
   });
 
+  it("reads every starter chip the way it is meant", () => {
+    expect(detectMood("Tui có tin vui muốn khoe nè!")).toBe("happy");
+    expect(detectMood("Tui đang buồn, nghe tui than chút nha")).toBe("low");
+    expect(detectMood("Dạo này tui áp lực quá")).toBe("low");
+    expect(detectMood("Tui đang rối, không biết nên làm sao")).toBe("anxious");
+    expect(readConversation([u("Tui đang buồn, nghe tui than chút nha")]).justVent).toBe(true);
+    expect(readConversation([u("Tui đang rối, không biết nên làm sao")]).wantsAdvice).toBe(true);
+  });
+
   it("lets hurt win over a laugh", () => {
     expect(detectMood("haha buồn ghê")).toBe("low");
   });
